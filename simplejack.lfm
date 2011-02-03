@@ -1,0 +1,1797 @@
+object MainApp: TMainApp
+  Left = 177
+  Height = 679
+  Top = 80
+  Width = 1095
+  ActiveControl = Panel2
+  AllowDropFiles = True
+  Caption = 'Hybrid 2009'
+  ClientHeight = 664
+  ClientWidth = 1095
+  Font.Height = 7
+  KeyPreview = True
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnDropFiles = FormDropFiles
+  OnKeyDown = FormKeyDown
+  OnKeyPress = FormKeyPress
+  OnKeyUp = FormKeyUp
+  OnResize = FormResize
+  OnShow = FormShow
+  LCLVersion = '0.9.31'
+  object gbTrackDetail: TGroupBox
+    Left = 0
+    Height = 425
+    Top = 25
+    Width = 254
+    Align = alLeft
+    Caption = 'Track'
+    ClientHeight = 414
+    ClientWidth = 250
+    TabOrder = 0
+    object gbMasterTempo: TGroupBox
+      Left = 7
+      Height = 71
+      Top = 224
+      Width = 164
+      Caption = 'MasterTempo'
+      ClientHeight = 60
+      ClientWidth = 160
+      Color = clBackground
+      ParentColor = False
+      TabOrder = 0
+      object rbMidiSync: TRadioButton
+        Left = 1
+        Height = 22
+        Top = -4
+        Width = 73
+        Caption = 'MidiSync Slave'
+        TabOrder = 0
+      end
+      object rbMaster: TRadioButton
+        Left = 1
+        Height = 22
+        Top = 11
+        Width = 47
+        Caption = 'Master'
+        Checked = True
+        TabOrder = 1
+        TabStop = True
+      end
+      object DialControl1: TDialControl
+        Left = 118
+        Height = 60
+        Hint = 'BPM Rate'
+        Top = -4
+        Width = 40
+        Value = 120
+        Caption = 'BPM'
+        Lowest = 20
+        Highest = 300
+        OnChange = DialControl1Change
+        OnStartChange = DialControl1StartChange
+        Enabled = True
+      end
+    end
+    object rgEditMode: TRadioGroup
+      Left = 175
+      Height = 71
+      Top = 224
+      Width = 71
+      AutoFill = True
+      Caption = 'Edit mode'
+      ChildSizing.LeftRightSpacing = 6
+      ChildSizing.TopBottomSpacing = 6
+      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+      ChildSizing.EnlargeVertical = crsHomogenousChildResize
+      ChildSizing.ShrinkHorizontal = crsScaleChilds
+      ChildSizing.ShrinkVertical = crsScaleChilds
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 1
+      ClientHeight = 60
+      ClientWidth = 67
+      ItemIndex = 0
+      Items.Strings = (
+        'Edit'
+        'Select'
+      )
+      OnClick = rgEditModeClick
+      TabOrder = 1
+    end
+    object btnDeleteTrack: TButton
+      Left = 4
+      Height = 25
+      Top = 297
+      Width = 99
+      BorderSpacing.InnerBorder = 4
+      Caption = 'Delete track'
+      OnClick = btnDeleteTrackClick
+      TabOrder = 2
+    end
+    object pnlFileManager: TPanel
+      Left = 4
+      Height = 225
+      Top = -1
+      Width = 243
+      Anchors = [akTop, akLeft, akRight]
+      ClientHeight = 225
+      ClientWidth = 243
+      TabOrder = 3
+      object TreeView1: TTreeView
+        Left = 1
+        Height = 223
+        Top = 1
+        Width = 241
+        Align = alClient
+        BorderStyle = bsNone
+        DefaultItemHeight = 16
+        ExpandSignType = tvestPlusMinus
+        Images = ilGlobalImages
+        ReadOnly = True
+        TabOrder = 0
+        OnChange = TreeView1Change
+        OnCollapsed = TreeView1Collapsed
+        OnDeletion = TreeView1Deletion
+        OnExpanding = TreeView1Expanding
+        OnMouseDown = TreeView1MouseDown
+        Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips]
+      end
+    end
+  end
+  object Panel1: TPanel
+    Left = 265
+    Height = 425
+    Top = 25
+    Width = 830
+    Align = alClient
+    Caption = 'Panel1'
+    ClientHeight = 425
+    ClientWidth = 830
+    TabOrder = 1
+    object sbTracks: TScrollBox
+      Left = 1
+      Height = 423
+      Top = 1
+      Width = 828
+      HorzScrollBar.Page = 621
+      VertScrollBar.Page = 507
+      Align = alClient
+      AutoScroll = False
+      TabOrder = 0
+      OnDragDrop = sbTracksDragDrop
+      OnDragOver = sbTracksDragOver
+      OnResize = sbTracksResize
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Height = 25
+    Top = 0
+    Width = 1095
+    Align = alTop
+    Caption = 'Panel2'
+    ClientHeight = 25
+    ClientWidth = 1095
+    TabOrder = 2
+    object ToolBar1: TToolBar
+      Left = 1
+      Height = 26
+      Top = 1
+      Width = 1093
+      Caption = 'ToolBar1'
+      Images = ilGlobalImages
+      TabOrder = 0
+      object tbPlay: TToolButton
+        Left = 1
+        Hint = 'Play'
+        Top = 2
+        Action = acPlay
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object tbStop: TToolButton
+        Left = 24
+        Hint = 'Stop'
+        Top = 2
+        Action = acStop
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object tbPause: TToolButton
+        Left = 47
+        Hint = 'Pause'
+        Top = 2
+        Action = acPause
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object tbUndo: TToolButton
+        Left = 70
+        Hint = 'Undo'
+        Top = 2
+        Action = acUndo
+        AutoSize = True
+        ParentShowHint = False
+        ShowHint = True
+      end
+      object tbRedo: TToolButton
+        Left = 93
+        Hint = 'Redo'
+        Top = 2
+        Action = acRedo
+        ParentShowHint = False
+        ShowHint = True
+      end
+    end
+  end
+  object LeftSplitter: TCollapseSplitter
+    Left = 254
+    Height = 425
+    Top = 25
+    Width = 11
+    OnDblClick = LeftSplitterDblClick
+  end
+  object BottomSplitter: TCollapseSplitter
+    Cursor = crVSplit
+    Left = 0
+    Height = 14
+    Top = 450
+    Width = 1095
+    Align = alBottom
+    OnDblClick = BottomSplitterDblClick
+    ResizeAnchor = akBottom
+  end
+  object pcPattern: TPageControl
+    Left = 0
+    Height = 200
+    Top = 464
+    Width = 1095
+    ActivePage = tsPattern
+    Align = alBottom
+    TabIndex = 0
+    TabOrder = 5
+    object tsPattern: TTabSheet
+      Caption = 'Pattern'
+    end
+    object tsFX: TTabSheet
+      Caption = 'FX'
+      ClientHeight = 171
+      ClientWidth = 1089
+      object gbFX: TGroupBox
+        Left = 0
+        Height = 171
+        Top = 0
+        Width = 459
+        Align = alLeft
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        Caption = 'FX'
+        ClientHeight = 160
+        ClientWidth = 455
+        TabOrder = 0
+        object sbFXBitRate: TScrollBar
+          Left = 48
+          Height = 18
+          Top = 4
+          Width = 181
+          Max = 32
+          Min = 1
+          PageSize = 0
+          Position = 16
+          TabOrder = 0
+        end
+        object stBitrate: TStaticText
+          Left = 6
+          Height = 17
+          Top = 2
+          Width = 41
+          Caption = 'Bitrate'
+          TabOrder = 2
+        end
+        object sbFXSampleRate: TScrollBar
+          Left = 74
+          Height = 18
+          Top = 22
+          Width = 155
+          PageSize = 0
+          Position = 100
+          TabOrder = 1
+        end
+        object stSampleRate: TStaticText
+          Left = 6
+          Height = 17
+          Top = 20
+          Width = 65
+          Caption = 'SampleRate'
+          TabOrder = 3
+        end
+      end
+    end
+    object tsMonitor: TTabSheet
+      Caption = 'Monitor'
+      ClientHeight = 171
+      ClientWidth = 1089
+      object Splitter5: TSplitter
+        Left = 0
+        Height = 171
+        Top = 0
+        Width = 5
+      end
+    end
+    object tsScripter: TTabSheet
+      Caption = 'Scripter'
+      ClientHeight = 171
+      ClientWidth = 1089
+      object gbScriptControl: TGroupBox
+        Left = 0
+        Height = 171
+        Top = 0
+        Width = 265
+        Align = alLeft
+        Caption = 'Control'
+        ClientHeight = 160
+        ClientWidth = 261
+        TabOrder = 0
+        object btnCompile: TButton
+          Left = 6
+          Height = 21
+          Top = 5
+          Width = 52
+          Caption = 'Compile'
+          OnClick = btnCompileClick
+          TabOrder = 0
+        end
+        object btnExecute: TButton
+          Left = 6
+          Height = 21
+          Top = 34
+          Width = 52
+          Caption = 'Execute'
+          OnClick = btnExecuteClick
+          TabOrder = 1
+        end
+        object cbScriptActions: TComboBox
+          Left = 87
+          Height = 27
+          Top = 5
+          Width = 174
+          ItemHeight = 0
+          TabOrder = 2
+        end
+        object edtScriptActionName: TEdit
+          Left = 87
+          Height = 19
+          Top = 34
+          Width = 160
+          TabOrder = 3
+        end
+        object btnNewScriptAction: TButton
+          Left = 90
+          Height = 21
+          Top = 62
+          Width = 65
+          Action = acNewScriptAction
+          TabOrder = 4
+        end
+        object btnDeleteScriptAction: TButton
+          Left = 177
+          Height = 21
+          Top = 63
+          Width = 77
+          Action = acDeleteScriptAction
+          TabOrder = 5
+        end
+        object btnSaveScriptActionAs: TButton
+          Left = 178
+          Height = 21
+          Top = 92
+          Width = 68
+          Action = acSaveScriptActionAs
+          TabOrder = 6
+        end
+      end
+      object gbScriptEditor: TGroupBox
+        Left = 265
+        Height = 171
+        Top = 0
+        Width = 824
+        Align = alClient
+        Caption = 'Editor'
+        ClientHeight = 160
+        ClientWidth = 820
+        TabOrder = 1
+        object Splitter1: TSplitter
+          Cursor = crVSplit
+          Left = 0
+          Height = 5
+          Top = 116
+          Width = 820
+          Align = alBottom
+          ResizeAnchor = akBottom
+        end
+        object ScriptMessages: TMemo
+          Left = 0
+          Height = 39
+          Top = 121
+          Width = 820
+          Align = alBottom
+          Lines.Strings = (
+            'ScriptMessages'
+          )
+          TabOrder = 1
+        end
+        inline ScriptEditor: TSynEdit
+          Left = 0
+          Height = 116
+          Top = 0
+          Width = 820
+          Align = alClient
+          Font.Height = -10
+          Font.Name = 'Courier New'
+          Font.Pitch = fpFixed
+          Font.Quality = fqNonAntialiased
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 2
+          Gutter.Width = 0
+          Gutter.MouseActions = <          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbLeft
+              ClickCount = ccAny
+              ClickDir = cdDown
+              Command = 13
+              MoveCaret = False
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbRight
+              ClickCount = ccSingle
+              ClickDir = cdUp
+              Command = 12
+              MoveCaret = False
+              Option = 0
+              Priority = 0
+            end>
+          RightGutter.Width = 0
+          RightGutter.MouseActions = <          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbLeft
+              ClickCount = ccAny
+              ClickDir = cdDown
+              Command = 13
+              MoveCaret = False
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbRight
+              ClickCount = ccSingle
+              ClickDir = cdUp
+              Command = 12
+              MoveCaret = False
+              Option = 0
+              Priority = 0
+            end>
+          Highlighter = SynPasSyn1
+          Keystrokes = <          
+            item
+              Command = ecUp
+              ShortCut = 38
+            end          
+            item
+              Command = ecSelUp
+              ShortCut = 8230
+            end          
+            item
+              Command = ecScrollUp
+              ShortCut = 16422
+            end          
+            item
+              Command = ecDown
+              ShortCut = 40
+            end          
+            item
+              Command = ecSelDown
+              ShortCut = 8232
+            end          
+            item
+              Command = ecScrollDown
+              ShortCut = 16424
+            end          
+            item
+              Command = ecLeft
+              ShortCut = 37
+            end          
+            item
+              Command = ecSelLeft
+              ShortCut = 8229
+            end          
+            item
+              Command = ecWordLeft
+              ShortCut = 16421
+            end          
+            item
+              Command = ecSelWordLeft
+              ShortCut = 24613
+            end          
+            item
+              Command = ecRight
+              ShortCut = 39
+            end          
+            item
+              Command = ecSelRight
+              ShortCut = 8231
+            end          
+            item
+              Command = ecWordRight
+              ShortCut = 16423
+            end          
+            item
+              Command = ecSelWordRight
+              ShortCut = 24615
+            end          
+            item
+              Command = ecPageDown
+              ShortCut = 34
+            end          
+            item
+              Command = ecSelPageDown
+              ShortCut = 8226
+            end          
+            item
+              Command = ecPageBottom
+              ShortCut = 16418
+            end          
+            item
+              Command = ecSelPageBottom
+              ShortCut = 24610
+            end          
+            item
+              Command = ecPageUp
+              ShortCut = 33
+            end          
+            item
+              Command = ecSelPageUp
+              ShortCut = 8225
+            end          
+            item
+              Command = ecPageTop
+              ShortCut = 16417
+            end          
+            item
+              Command = ecSelPageTop
+              ShortCut = 24609
+            end          
+            item
+              Command = ecLineStart
+              ShortCut = 36
+            end          
+            item
+              Command = ecSelLineStart
+              ShortCut = 8228
+            end          
+            item
+              Command = ecEditorTop
+              ShortCut = 16420
+            end          
+            item
+              Command = ecSelEditorTop
+              ShortCut = 24612
+            end          
+            item
+              Command = ecLineEnd
+              ShortCut = 35
+            end          
+            item
+              Command = ecSelLineEnd
+              ShortCut = 8227
+            end          
+            item
+              Command = ecEditorBottom
+              ShortCut = 16419
+            end          
+            item
+              Command = ecSelEditorBottom
+              ShortCut = 24611
+            end          
+            item
+              Command = ecToggleMode
+              ShortCut = 45
+            end          
+            item
+              Command = ecCopy
+              ShortCut = 16429
+            end          
+            item
+              Command = ecPaste
+              ShortCut = 8237
+            end          
+            item
+              Command = ecDeleteChar
+              ShortCut = 46
+            end          
+            item
+              Command = ecCut
+              ShortCut = 8238
+            end          
+            item
+              Command = ecDeleteLastChar
+              ShortCut = 8
+            end          
+            item
+              Command = ecDeleteLastChar
+              ShortCut = 8200
+            end          
+            item
+              Command = ecDeleteLastWord
+              ShortCut = 16392
+            end          
+            item
+              Command = ecUndo
+              ShortCut = 32776
+            end          
+            item
+              Command = ecRedo
+              ShortCut = 40968
+            end          
+            item
+              Command = ecLineBreak
+              ShortCut = 13
+            end          
+            item
+              Command = ecSelectAll
+              ShortCut = 16449
+            end          
+            item
+              Command = ecCopy
+              ShortCut = 16451
+            end          
+            item
+              Command = ecBlockIndent
+              ShortCut = 24649
+            end          
+            item
+              Command = ecLineBreak
+              ShortCut = 16461
+            end          
+            item
+              Command = ecInsertLine
+              ShortCut = 16462
+            end          
+            item
+              Command = ecDeleteWord
+              ShortCut = 16468
+            end          
+            item
+              Command = ecBlockUnindent
+              ShortCut = 24661
+            end          
+            item
+              Command = ecPaste
+              ShortCut = 16470
+            end          
+            item
+              Command = ecCut
+              ShortCut = 16472
+            end          
+            item
+              Command = ecDeleteLine
+              ShortCut = 16473
+            end          
+            item
+              Command = ecDeleteEOL
+              ShortCut = 24665
+            end          
+            item
+              Command = ecUndo
+              ShortCut = 16474
+            end          
+            item
+              Command = ecRedo
+              ShortCut = 24666
+            end          
+            item
+              Command = ecGotoMarker0
+              ShortCut = 16432
+            end          
+            item
+              Command = ecGotoMarker1
+              ShortCut = 16433
+            end          
+            item
+              Command = ecGotoMarker2
+              ShortCut = 16434
+            end          
+            item
+              Command = ecGotoMarker3
+              ShortCut = 16435
+            end          
+            item
+              Command = ecGotoMarker4
+              ShortCut = 16436
+            end          
+            item
+              Command = ecGotoMarker5
+              ShortCut = 16437
+            end          
+            item
+              Command = ecGotoMarker6
+              ShortCut = 16438
+            end          
+            item
+              Command = ecGotoMarker7
+              ShortCut = 16439
+            end          
+            item
+              Command = ecGotoMarker8
+              ShortCut = 16440
+            end          
+            item
+              Command = ecGotoMarker9
+              ShortCut = 16441
+            end          
+            item
+              Command = ecSetMarker0
+              ShortCut = 24624
+            end          
+            item
+              Command = ecSetMarker1
+              ShortCut = 24625
+            end          
+            item
+              Command = ecSetMarker2
+              ShortCut = 24626
+            end          
+            item
+              Command = ecSetMarker3
+              ShortCut = 24627
+            end          
+            item
+              Command = ecSetMarker4
+              ShortCut = 24628
+            end          
+            item
+              Command = ecSetMarker5
+              ShortCut = 24629
+            end          
+            item
+              Command = ecSetMarker6
+              ShortCut = 24630
+            end          
+            item
+              Command = ecSetMarker7
+              ShortCut = 24631
+            end          
+            item
+              Command = ecSetMarker8
+              ShortCut = 24632
+            end          
+            item
+              Command = ecSetMarker9
+              ShortCut = 24633
+            end          
+            item
+              Command = EcFoldLevel1
+              ShortCut = 41009
+            end          
+            item
+              Command = EcFoldLevel2
+              ShortCut = 41010
+            end          
+            item
+              Command = EcFoldLevel1
+              ShortCut = 41011
+            end          
+            item
+              Command = EcFoldLevel1
+              ShortCut = 41012
+            end          
+            item
+              Command = EcFoldLevel1
+              ShortCut = 41013
+            end          
+            item
+              Command = EcFoldLevel6
+              ShortCut = 41014
+            end          
+            item
+              Command = EcFoldLevel7
+              ShortCut = 41015
+            end          
+            item
+              Command = EcFoldLevel8
+              ShortCut = 41016
+            end          
+            item
+              Command = EcFoldLevel9
+              ShortCut = 41017
+            end          
+            item
+              Command = EcFoldLevel0
+              ShortCut = 41008
+            end          
+            item
+              Command = EcFoldCurrent
+              ShortCut = 41005
+            end          
+            item
+              Command = EcUnFoldCurrent
+              ShortCut = 41003
+            end          
+            item
+              Command = EcToggleMarkupWord
+              ShortCut = 32845
+            end          
+            item
+              Command = ecNormalSelect
+              ShortCut = 24654
+            end          
+            item
+              Command = ecColumnSelect
+              ShortCut = 24643
+            end          
+            item
+              Command = ecLineSelect
+              ShortCut = 24652
+            end          
+            item
+              Command = ecTab
+              ShortCut = 9
+            end          
+            item
+              Command = ecShiftTab
+              ShortCut = 8201
+            end          
+            item
+              Command = ecMatchBracket
+              ShortCut = 24642
+            end          
+            item
+              Command = ecColSelUp
+              ShortCut = 40998
+            end          
+            item
+              Command = ecColSelDown
+              ShortCut = 41000
+            end          
+            item
+              Command = ecColSelLeft
+              ShortCut = 40997
+            end          
+            item
+              Command = ecColSelRight
+              ShortCut = 40999
+            end          
+            item
+              Command = ecColSelPageDown
+              ShortCut = 40994
+            end          
+            item
+              Command = ecColSelPageBottom
+              ShortCut = 57378
+            end          
+            item
+              Command = ecColSelPageUp
+              ShortCut = 40993
+            end          
+            item
+              Command = ecColSelPageTop
+              ShortCut = 57377
+            end          
+            item
+              Command = ecColSelLineStart
+              ShortCut = 40996
+            end          
+            item
+              Command = ecColSelLineEnd
+              ShortCut = 40995
+            end          
+            item
+              Command = ecColSelEditorTop
+              ShortCut = 57380
+            end          
+            item
+              Command = ecColSelEditorBottom
+              ShortCut = 57379
+            end>
+          MouseActions = <          
+            item
+              Shift = []
+              ShiftMask = [ssShift, ssAlt]
+              Button = mbLeft
+              ClickCount = ccSingle
+              ClickDir = cdDown
+              Command = 1
+              MoveCaret = True
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = [ssShift]
+              ShiftMask = [ssShift, ssAlt]
+              Button = mbLeft
+              ClickCount = ccSingle
+              ClickDir = cdDown
+              Command = 1
+              MoveCaret = True
+              Option = 1
+              Priority = 0
+            end          
+            item
+              Shift = [ssAlt]
+              ShiftMask = [ssShift, ssAlt]
+              Button = mbLeft
+              ClickCount = ccSingle
+              ClickDir = cdDown
+              Command = 3
+              MoveCaret = True
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = [ssShift, ssAlt]
+              ShiftMask = [ssShift, ssAlt]
+              Button = mbLeft
+              ClickCount = ccSingle
+              ClickDir = cdDown
+              Command = 3
+              MoveCaret = True
+              Option = 1
+              Priority = 0
+            end          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbRight
+              ClickCount = ccSingle
+              ClickDir = cdUp
+              Command = 12
+              MoveCaret = False
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbLeft
+              ClickCount = ccDouble
+              ClickDir = cdDown
+              Command = 6
+              MoveCaret = True
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbLeft
+              ClickCount = ccTriple
+              ClickDir = cdDown
+              Command = 7
+              MoveCaret = True
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbLeft
+              ClickCount = ccQuad
+              ClickDir = cdDown
+              Command = 8
+              MoveCaret = True
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbMiddle
+              ClickCount = ccSingle
+              ClickDir = cdDown
+              Command = 10
+              MoveCaret = True
+              Option = 0
+              Priority = 0
+            end          
+            item
+              Shift = [ssCtrl]
+              ShiftMask = [ssShift, ssAlt, ssCtrl]
+              Button = mbLeft
+              ClickCount = ccSingle
+              ClickDir = cdUp
+              Command = 11
+              MoveCaret = False
+              Option = 0
+              Priority = 0
+            end>
+          MouseSelActions = <          
+            item
+              Shift = []
+              ShiftMask = []
+              Button = mbLeft
+              ClickCount = ccSingle
+              ClickDir = cdDown
+              Command = 9
+              MoveCaret = False
+              Option = 0
+              Priority = 0
+            end>
+          Lines.Strings = (
+            'function TestFunction(Param1: Double; Data: String): Longint;'
+            'begin'
+            '  {ShowNewMessage(''Param1: ''+FloatToString(param1)'
+            '                 +#13#10+''Data: ''+Data);}'
+            '  Result := 1234567;'
+            'end;'
+            ''
+            'begin'
+            'end.'
+            ''
+          )
+          BracketHighlightStyle = sbhsBoth
+          inline SynLeftGutterPartList1: TSynGutterPartList
+          end
+        end
+      end
+    end
+    object tsSampler: TTabSheet
+      Caption = 'Sampler'
+    end
+  end
+  object MainMenu1: TMainMenu
+    left = 555
+    top = 131
+    object ControlMenu: TMenuItem
+      Caption = 'Control'
+      object OptionMenu: TMenuItem
+        Caption = 'Options...'
+        OnClick = OptionMenuClick
+      end
+      object MenuItem1: TMenuItem
+        Caption = 'Clear session'
+        OnClick = MenuItem1Click
+      end
+      object MenuItem2: TMenuItem
+        Caption = 'Exit'
+        OnClick = MenuItem2Click
+      end
+    end
+    object SaveMenu: TMenuItem
+      Caption = 'Save'
+      object SaveSession: TMenuItem
+        Caption = 'Session'
+        OnClick = SaveSessionClick
+      end
+      object SaveTrack: TMenuItem
+        Caption = 'Track'
+        OnClick = SaveTrackClick
+      end
+    end
+    object LoadMenu: TMenuItem
+      Caption = 'Load'
+      object LoadSession: TMenuItem
+        Caption = 'Session'
+        OnClick = LoadSessionClick
+      end
+    end
+    object HelpMenu: TMenuItem
+      Caption = 'Help'
+      object MenuItem4: TMenuItem
+        Action = acAbout
+        OnClick = acAboutExecute
+      end
+    end
+  end
+  object alGlobalActions: TActionList
+    Images = ilGlobalImages
+    left = 765
+    top = 129
+    object acPlay: TAction
+      Category = 'MenuItems'
+      Caption = 'Play'
+      ImageIndex = 15
+      OnExecute = acPlayExecute
+    end
+    object acStop: TAction
+      Category = 'MenuItems'
+      Caption = 'Stop'
+      ImageIndex = 14
+      OnExecute = acStopExecute
+    end
+    object acPause: TAction
+      Category = 'MenuItems'
+      Caption = 'Pause'
+      ImageIndex = 16
+      OnExecute = acPauseExecute
+    end
+    object acUndo: TAction
+      Category = 'MenuItems'
+      Caption = 'Undo'
+      ImageIndex = 0
+      OnExecute = acUndoExecute
+      OnUpdate = acUndoUpdate
+    end
+    object acRedo: TAction
+      Category = 'MenuItems'
+      Caption = 'Redo'
+      ImageIndex = 1
+      OnExecute = acRedoExecute
+      OnUpdate = acRedoUpdate
+    end
+    object acAbout: TAction
+      Category = 'MenuItems'
+      Caption = 'About'
+      ImageIndex = 18
+      OnExecute = acAboutExecute
+    end
+    object acNewScriptAction: TAction
+      Category = 'ScriptEditor'
+      Caption = 'New script'
+      OnExecute = acNewScriptActionExecute
+    end
+    object acDeleteScriptAction: TAction
+      Category = 'ScriptEditor'
+      Caption = 'Delete script'
+      OnExecute = acDeleteScriptActionExecute
+    end
+    object acSaveScriptActionAs: TAction
+      Category = 'ScriptEditor'
+      Caption = 'Save script'
+      OnExecute = acSaveScriptActionAsExecute
+    end
+  end
+  object ilGlobalImages: TImageList
+    left = 629
+    top = 239
+    Bitmap = {
+      4C69130000001000000010000000FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0068C7740668C7
+      74BBFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0068C774DB65C3
+      71F7FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0068C774D180CD8BFF7CC9
+      87FF5DB868FF58B162FF53A95CFF4DA156FF47994FFF419149FF3B8842FF3580
+      3BFF2F7835FF2A702FFFFFFFFF00FFFFFF0068C774C97FCC8AFFA2D8ABFF9ED6
+      A7FF9AD4A3FF96D29FFF93CF9AFF8ECC95FF89CA90FF85C78BFF81C587FF7DC2
+      82FF78C07EFF256929FFFFFFFF00FFFFFF0065C371C47BC886FF9CD5A5FF98D3
+      A1FF94D09DFF90CE98FF8BCB93FF87C98EFF82C689FF7EC384FF7AC180FF76BE
+      7CFF72BD78FF216324FFFFFFFF00FFFFFF00FFFFFF005DB868CF71BE7BFF7AC1
+      83FF5BAA64FF47994FFF419149FF3B8842FF35803BFF2F7835FF2A702FFF2569
+      29FF216324FF1D5E20FFFFFFFF00FFFFFF00FFFFFF00FFFFFF0053A95CD94DA1
+      56F747994F38FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF004DA156064799
+      4FB8FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0047994FBB4191
+      4906FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00419149F73B88
+      42DBFFFFFF00FFFFFF00FFFFFF00FFFFFF0068C774FF68C774FF65C371FF61BE
+      6DFF5DB868FF58B162FF53A95CFF4DA156FF47994FFF419149FF5AA362FF559D
+      5CFF2F7835D1FFFFFF00FFFFFF00FFFFFF0068C774FFA5DAAEFFA2D8ABFF9ED6
+      A7FF9AD4A3FF96D29FFF93CF9AFF8ECC95FF89CA90FF85C78BFF81C587FF7DC2
+      82FF4A9150FF256929C9FFFFFF00FFFFFF0065C371FFA0D7A9FF9CD5A5FF98D3
+      A1FF94D09DFF90CE98FF8BCB93FF87C98EFF82C689FF7EC384FF7AC180FF76BE
+      7CFF458C4AFF216324C4FFFFFF00FFFFFF0061BE6DFF5DB868FF58B162FF53A9
+      5CFF4DA156FF47994FFF419149FF3B8842FF35803BFF3F8845FF59A15EFF448B
+      49FF216324CFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF002A702F38256929F72163
+      24D9FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00216324B81D5E
+      2006FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0068C774FF67C673FF65C270FF62BE6DFFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0066C572FFA2D8ABFFA0D7A9FF5DB868FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0063C06FFF9ED6A7FF9CD4A5FF59B263FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF005FBB6AFF9AD4A3FF98D3A1FF53AA5DFFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF005BB465FF96D29FFF94D09CFF4EA257FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0056AD5FFF93CF9AFF90CE98FF489A50FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0050A659FF8ECC95FF8BCB93FF42924AFFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF004A9E53FF8ACA91FF87C98EFF3C8A43FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0045954CFF85C78CFF82C689FF36823DFFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF0043944B384E9A55FF81C587FF7EC385FF317A36FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF004292
+      4AB83D8C45F765AD6CFF7DC282FF7AC180FF4B9250FF276D2CF7246828BBFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF003C8A
+      430638833ED9519957FF79C07EFF76BF7CFF468D4BFF236627DB20622306FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF002D7533CF488F4DFF458C4AFF226526D1FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00256929C4216425C9FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF0067C673C965C270C4FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0066C572D17ECA88FF7BC885FF5DB868CFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0068C7
+      740666C472DB7CCA87FF9ED6A7FF9CD4A5FF73C07DFF55AC5ED950A65906FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0065C3
+      71BB62BF6EF779C683FF9AD4A3FF98D3A1FF7DC386FF4FA458F74A9E53B8FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF005BB465FF96D29FFF94D09CFF5DAC65FF499C5238FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0056AD5FFF93CF9AFF90CE98FF489A50FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0050A659FF8ECC95FF8BCB93FF42924AFFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF004A9E53FF8ACA91FF87C98EFF3C8A43FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0045954CFF85C78CFF82C689FF36823DFFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF003F8D46FF81C587FF7EC385FF317A36FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0039853FFF7DC282FF7AC180FF2B7230FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00337D39FF79C07EFF76BF7CFF266B2BFFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF002D7533FF74BD7AFF72BD78FF226526FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00286E2DFF256929FF216425FF1E6022FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FC00FFFFF700806D5EFF7C614CFF7C614CFF806D5EFFFFFFF700FFFFFC00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FB00FFFFF2007C614CFFE8CDB8FFE8CDB8FF7C614CFFFFFFF200FFFFFA00FFFF
+      FF00FFFFFE00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFC00FFFFFB00FFFF
+      F500FFFFED00836248FFEACEB6FFEACEB6FF836248FFFFFFEB00FFFFF500FFFF
+      F900FFFFFC00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFF700FFFFF200FFFF
+      EB00FFFFE6008A6245FFECCEB5FFECCEB5FF8A6245FFFFFFE600FFFFEB00FFFF
+      F100FFFFF700FFFFFF00FFFFFF00FFFFFF00FFFFFF00806D5EFF7A624CFF8362
+      48FF8A6343FF8A6343FFEDCFB4FFEDCFB4FF8C6343FF8C6342FF856346FF7F63
+      4BFF816F5EFFFFFFFF00FFFFFF00FFFFFF00FFFFFF007C614CFFEED4BCFFEFD2
+      B7FFF2D2B5FFF1CFB2FFEDCFB2FFEFCFB2FFF5CFB1FFF4CEB0FFEFCDB0FFEBCD
+      B2FF7F634BFFFFFFFF00FFFFFF00FFFFFF00FFFFFF007C614CFFE6CCB4FFD3B5
+      9CFFD4B497FFD5B395FFD4B294FFCFAC8BFFCFA989FFCCA688FFC6A487FFDCBE
+      A3FF7E614CFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00806D5EFF7C614DFF8362
+      48FF8A6343FF8E6342FFD2AC8AFFD4AB8AFF906341FF8E6342FF876246FF7E62
+      4AFF826D5EFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFF800FFFFF200FFFF
+      ED00FFFFE6008E6342FFF6D0AEFFD2AC8AFF8E6342FFFFFFE600FFFFED00FFFF
+      F200FFFFF700FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFC00FFFFFB00FFFF
+      F500FFFFED00856346FFEFCFB2FFCBAB8EFF856346FFFFFFEB00FFFFF500FFFF
+      FB00FFFFFC00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FB00FFFFF2007C614CFFECCEB5FFECCEB5FF7C614CFFFFFFF200FFFFFB00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FC00FFFFF700806D5EFF7B604BFF7D624DFF806D5EFFFFFFF700FFFFFC00FDFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00C77947AACC8655CECC8857DECB8856DBCC88
+      56DBCB8757DBCA8350D0C479426EB2673C08FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00CA8554D0FFFFFFDBFDF3E9DEFDF3EADEFCF2
+      E8DEFAEFE3DEFAF2E7DEEABB88DECF85559CB4693D0AFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00CB8656DAFEF5EDDEFCDEC5DEFBE0C7DEF9DC
+      C2DEF5D3B4DEFEF9F3DEFAE2C4DEECC193DEC37D4880FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00CB8655DBFEF6F0DEFCE2CDDEFCE3CDDEFADF
+      C8DEF7D9BCDEF5E9DDDEFAF3EBDEFBF8F3DECD9565DCFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00CB8655DBFEF7F1DEFCE5D2DEFCE4D1DEFBE2
+      CCDEF9DDC4DEEAC39DFFE6BF96FFE4BB92FFE4BB92FFD1A06CF5D09E6DF6CC96
+      5FDAC479427EB2673C09FFFFFF00CB8654DBFFF7F2DEFEE7D5DEFEE7D5DEFDE5
+      D1DEFAE0CADEE5BE96FFFFFFFEFFFDF3E9FFFDF3EAFFFCF2E8FFFAEFE3FFFAF2
+      E7FFEABB88FFCF8555B3B4693D0CCB8553DBFFF7F0DEFFE7D5DEFDE7D6DEFDE6
+      D4DEFCE4D0DEE4BB93FFFEF5EDFFFCDEC5FFFBE0C7FFF9DCC2FFF5D3B4FFFEF9
+      F3FFFAE2C4FFECC193FFC37D4893CA8452DBFFF7F1DEFFE9D9DEFFEADBDEFFE9
+      D9DEFFE7D7DEE4BB92FFFEF6F0FFFCE2CDFFFCE3CDFFFADFC8FFF7D9BCFFF5E9
+      DDFFFAF3EBFFFBF8F3FFCA8353FECC8352DBFBF5EEDEFFE9D9DEFFEADBDEFFE9
+      D9DEFFE7D7DEE4BB92FFFEF7F1FFFCE5D2FFFCE4D1FFFBE2CCFFF9DDC4FFF6D7
+      BBFFF3D1AFFFFAEFE4FFCC8758FECF8253DEEFF1E7DEFFE9D9DEFFEADBDEFFE9
+      D9DEFFE7D7DEE4BB91FFFFF7F2FFFEE7D5FFFEE7D5FFFDE5D1FFFAE0CAFFF9DE
+      C4FFF7D9BCFFFDF2E7FFCC8757FEC87C4ED3FCF3ECDEFAF1E8DEFAF0E7DEFBF1
+      E9DEFBF2EADEE4BA91FFFFF7F0FFFFE7D5FFFDE7D6FFFDE6D4FFFCE4D0FFFBE3
+      CBFFFADCC2FFFEF3E8FFCC8656FEC7794AB9C8794BCEC87545DDC77545D4C875
+      45D4C77545D4CA8452FFFFF7F1FFFFE9D9FFFFEADBFFFFE9D9FFFFE7D7FFFFE5
+      D2FFFFE2CBFFFFF7F1FFCB8555FEFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00CC8352FBFBF5EEFFFFE9D9FFFFEADBFFFFE9D9FFFFE7D7FFFFE5
+      D2FFFFE2CBFFFBF6EFFFCC8355FEFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00CF8253FFEFF1E7FFFFE9D9FFFFEADBFFFFE9D9FFFFE7D7FFFFE5
+      D2FFFFE2CBFFEFF2E8FFCE8156FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00C77949EDFCF3ECFFFAF1E8FFFAF0E7FFFBF1E9FFFBF2EAFFFBF2
+      EAFFFBF2EBFFFDF4EEFFCA8054F9FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00C57342C1C67545E6C87545FEC77545F3C87545F3C77545F3C775
+      45F3C87546F4C57444E8CA7F53F1FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF009A6B2731AA7E43A192601805FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00A87D4269CCB08BE0915D1409FFFFFF00FFFFFF00FFFF
+      FF0092601706FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00AA81476FD6BD9FF793611910FFFFFF00FFFFFF009666
+      202CA9804BCBFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00AC834B75DEC9AFFF95641D1FFFFFFF0092601726C3A4
+      7CEBB59063CBFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00AF87507CE7D5C1FF95651F2B8F5C121BC5A783E7D5BC
+      9DE1B5936462FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00B1895384EEDFCEFF97662065C2A37CDAE9D8C5FDA982
+      4E7BFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00B38C5789F1E2D4FFCEB28EF4F5EBE0FFA67F4A9DFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00000B8802FFFFFF00B48E5A90F6EADDFFE1CDB4FFB18D5DBFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00030D8C1F1B26
+      A7992A34BACC111C9D89BB9869CCF0E0D0FFB7915FC58F5D140BFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00030D8C1F2C35B9D73C46
+      CFFF333ECAF23F4CD7FFD8BC9AFFF6EAE1FFBB925ABF9462183B91611A01FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF001D28A99C3B46CCFF0812
+      903A071190533B48D4FFDBBD9CFFEECCA6FF404CDEFF3A43D1FF0F199869FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00323CC3EC232EADAFFFFF
+      FF001A25A8994250D2FFCBA375FE414FD6FF1621A39D2F39C0D42E38BEDF020D
+      8B0AFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF002F3ABDDE353FC9E52530
+      B3C23F4ADDFF1F2AACC22430B2CB323CC6F2000A8603111B9D773741C8FF0812
+      8E20FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF000F199763323DC7F83741
+      CFFF1F29ABB0000A8618232DB4AF3540CCFD000985181C27A895343EC5F8040E
+      8C14FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00050F8D1F0610
+      8E26010B8A03FFFFFF00121C9B70404BD9FF2C35BFDD3D47D1FF1D27A9A4FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00020D8C0A1C27A69F353FC9F7222DAFB9030D8C1CFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00806D5EFF7C614CFF8062
+      49FF816249FF816249FF826449FF816348FF836248FF836248FF84624AFF7E61
+      4CFF806D5EFFFFFFFF00FFFFFF00FFFFFF00FFFFFF007C614CFFEED4BCFFEDD2
+      B8FFEFD2B7FFEDCFB4FFEFCFB2FFEECEB1FFF1CFB2FFF0CEB1FFEFCCB2FFEBCC
+      B3FF7E614CFFFFFFFF00FFFFFF00FFFFFF00FFFFFF007C614CFFE6CCB4FFD1B6
+      9CFFD2B59AFFD1B398FFD2B295FFCBAB8EFFCBA98CFFC8A689FFC6A389FFDCBD
+      A4FF7E614CFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00806D5EFF7C614CFF8062
+      49FF816249FF816249FF816249FF816249FF836248FF816348FF816249FF7C61
+      4CFF806D5EFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF002FBAE4094FAADBEA5093
+      CAFD4E90C8FF2F9DD2DF35A4DE19FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0050A8D9FF6AA5D8FFC9E1
+      F7FFCBE3F8FF4295CAFF3182C2AEFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF002FBAE4FFA7D4F4FFC5E1F8FFCCE3
+      F9FFCCE3F9FFBDDBF7FF4F90C9FDFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF002FBAE4FFC3EDF8FFA8E2F8FF6CAEDDFFA5CF
+      F4FFA5CFF4FFBDDBF7FF5393CBF7FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF002FBAE4FFC3EDF8FFB3F4FCFF68D9F5FF6FCFF3FF599D
+      D0FF73ABDDFF4F91C9FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF002FBAE4FFC3EDF8FFB3F4FCFF60DCF5FF44D6F4FF8EEEFAFF5DB4
+      E6FF3B8FD9FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF002FBAE4FFC3EDF8FFB3F4FCFF60DCF5FF44D6F4FF8EEEFAFF5DB4E6FF3B8F
+      D9FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF002790
+      BFFFC3EDF8FFB3F4FCFF60DCF5FF44D6F4FF8EEEFAFF5DB4E6FF3B8FD9FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF002689B9FFBEE6
+      F2FFB3F4FCFF60DCF5FF44D6F4FF8EEEFAFF5DB4E6FF3B8FD9FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00206398202689B9FFB0CBE1FF67A9
+      C8FF60DCF5FF44D6F4FF8EEEFAFF5DB4E6FF3B8FD9FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF001E6D93FFC8E1F2FFD1E7FAFF347D
+      B5FF3199C3FF6DC4DCFF4A9CCFFF3483C7FFFFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF001E6D93FFCBE3F9FF61AAECFF4098
+      E8FF1567C2FF1660AAFF2C76B4FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00124259FF5D9CD4FFA6CFF5FFA9CF
+      ECFF488BC1FF2C76B4FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00134058FF15425EFF25699CFF2C76
+      B4FF3B8BBAADFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00EAC39DFFE6BF96FFE4BB92FFE4BB92FFD1A06CF5D09E6DF6CC96
+      5FDAC479427EB2673C09FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00E5BE96FFFFFFFEFFFDF3E9FFFDF3EAFFFCF2E8FFFAEFE3FFFAF2
+      E7FFEABB88FFCF8555B3B4693D0CFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00E4BB93FFFEF5EDFFFCDEC5FFFBE0C7FFF9DCC2FFF5D3B4FFFEF9
+      F3FFFAE2C4FFECC193FFC37D4893FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00E4BB92FFFEF6F0FFFCE2CDFFFCE3CDFFFADFC8FFF7D9BCFFF5E9
+      DDFFFAF3EBFFFBF8F3FFCA8353FEFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00E4BB92FFFEF7F1FFFCE5D2FFFCE4D1FFFBE2CCFFF9DDC4FFF6D7
+      BBFFF3D1AFFFFAEFE4FFCC8758FE34B4D9D05EC2E1FA60C3E2FA60C3E2FA60C3
+      E2FA5FC3E2FAE4BB91FFFFF7F2FFFEE7D5FFFEE7D5FFFDE5D1FFFAE0CAFFF9DE
+      C4FFF7D9BCFFFDF2E7FFCC8757FE36B3DAF8FDFEFEFFFEFFFFFFFEFEFFFFFDFE
+      FFFFFEFFFFFFE4BA91FFFFF7F0FFFFE7D5FFFDE7D6FFFDE6D4FFFCE4D0FFFBE3
+      CBFFFADCC2FFFEF3E8FFCC8656FE35AFDAF0F7FCFEFF8EE4F8FF91DEF5FF9FE0
+      F5FFACE1F6FFCA8452FFFFF7F1FFFFE9D9FFFFEADBFFFFE9D9FFFFE7D7FFFFE5
+      D2FFFFE2CBFFFFF7F1FFCB8555FE36AADAF2F1FAFDFF94DEF5FF93DCF4FF64BC
+      E9FF3594DAFF3594DAFF3594DAFF3594DAFF3594DAFF3594DAFF3594DAFF3594
+      DAFF3594DAFFFBF6EFFFCC8355FE35ABDAFAE8F6FBFF70BCE7FF55AAE2FF4DA5
+      E0FF91C9EBFFFAF3EFFFFDFEFDFFFFFDFCFFFFFDFCFFFEFDFCFFFEFCFBFFFEFE
+      FDFF3594DAFFEFF2E8FFCE8156FF37A6DAFAFEFFFFFFF8FDFFFFF6FDFFFFF5FC
+      FFFFF3FCFEFF9AE4F4FF9AE6F7FF9BE6F6FF9DE5F5FF9EE5F5FF9FE5F4FFDAF3
+      F8FF3594DAFFFDF4EEFFCA8054F936A1DAF9F6FCFEFF94E5F8FF93E5F8FF93E5
+      F8FF91E5F8FF93DBE9FF93D7E3FF93D2DCFF90CED7FF8CC8CFFF86C1C6FFC9D8
+      D6FF3594DAFFC57444E8CA7F53F1369ADAF8F2FAFDFF94E6F8FF92E5F8FF90E5
+      F8FF8BE3F8FF86E2F7FF7FE1F7FF77DEF6FF6CDCF6FF5ED9F4FF4FD5F3FFCCF2
+      FBFF3594DAFFFFFFFF00FFFFFF003594DAF7EFFAFEFF93E5F8FF8FE4F8FF89E3
+      F8FF82E1F7FF7ADFF7FF71DEF6FF67DBF5FF5BD8F4FF4DD4F3FF40D1F2FFCAF2
+      FBFF3594DAFFFFFFFF00FFFFFF00338ED9FBDCF0FAFF98E1F6FF95E0F6FF92DF
+      F6FF8EDEF5FF89DCF5FF85DAF4FF80D9F4FF7AD7F3FF74D5F3FF70D3F2FFC2EA
+      F8FF3594DAFFFFFFFF00FFFFFF002C86D8D12D88D8F72D87D8F72D88D8F72D88
+      D8F72D88D8F72D88D8F72D88D8F72D88D8F72D88D8F72D88D8F72D87D8F72D88
+      D8F72C86D8D1FFFFFF00FFFFFF00FFFFFF00FFFFFF002063982A206398FF2063
+      98FF206398FF206398FF206398FF206398F0FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF0020639832206398B2206398FF3775A4FFB6EF
+      FEFF80DBF3FF80DBF3FFB6EFFEFF2E6EA1FF206398FF206398A520639853FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00206398E071B3DBFE7EBFE4FF4E9DDFFFB5EE
+      FDFF75D4F0FF75D4F0FFB5EEFDFF4B9BDEFF6EB4E0FF6DB3DFF9206398F3FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00206398FF7FBFE4FF69B2DEFF4A9BDAFF4497
+      DCFF4396DCFF4296DCFF4295DCFF4195DBFF519ED6FF6CB2DEFF206398FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00206398FF7CBDE4FF65AEDDFF62ABDCFF5EA8
+      DAFF5CA7D9FF5CA7D9FF5CA7D9FF5CA7D9FF529FD7FF62A3D8FF206398FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00206398FF7ABBE3FF61AADBFF5AA5D9FF53A0
+      D7FF529FD7FF529FD7FF529FD7FF529FD7FF529FD7FF62A3D8FF206398FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00206398FF76B9E2FF5CA7D9FF58A4D8FF53A0
+      D7FF539ED5FF618BA9FF6488A1FF6487A1FF6386A0FF69879FFF4A6881FF6A6A
+      6A8A6868688A6565658A62626263206398FF73B7E1FF57A3D7FF53A0D7FF509D
+      D5FF5299CFFF7594ACFFF8F8F8FFF2F2F2FFF2F2F2FFF2F2F2FFF2F2F2FFF2F2
+      F2FFF1F1F1FFF4F4F4FA5E5E5E84206398FF70B5E0FF529FD7FF509CD6FF4E98
+      D4FF4F95CDFF7391AAFFF1F1F1FFB7B7B7FFB6B6B6FFB6B6B6FFB6B6B6FFB5B5
+      B5FFB5B5B5FFEEEEEEFA5A5A5A84206398FF6DB3DFFF509CD5FF4E98D3FF4B94
+      D1FF4C91CBFF708EA7FFF1F1F1FFE9E9E9FFE9E9E9FFE8E8E8FFE8E8E8FFE8E8
+      E8FFE7E7E7FFEDEDEDFA56565684206398FF6BB1DEFF4D97D3FF4B93D2FF488F
+      D0FF4A8CC9FF6F8BA5FFF1F1F1FFB6B6B6FFB5B5B5FFB5B5B5FFB4B4B4FFB4B4
+      B4FFB4B4B4FFEDEDEDFA53535384206398FF69AEDCFF4A93D1FF488FD0FF468B
+      CEFF4788C7FF6C88A3FFF0F0F0FFE8E8E8FFE8E8E8FFE7E7E7FFE7E7E7FFE7E7
+      E7FFE7E7E7FFEDEDEDFA4F4F4F84206398FF68ABDCFF488ECFFF468BCEFF4387
+      CDFF4484C6FF6885A1FFF0F0F0FFB4B4B4FFB4B4B4FFB4B4B4FFB4B4B4FFB4B4
+      B4FFB3B3B3FFEDEDEDFA4C4C4C84206398C262A5D7FF65A8DAFF64A6D9FF62A4
+      D8FF629FD1FF758EA4FFEFEFEFFFE7E7E7FFE7E7E7FFE7E7E7FFE7E7E7FFE6E6
+      E6FFE6E6E6FFECECECFA494949842063984A206398CF206398FF206398FF2063
+      98FF246395FF587388FFF7F7F7FFF0F0F0FFF0F0F0FFF0F0F0FFF0F0F0FFF0F0
+      F0FFF0F0F0FFF3F3F3FA46464684FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF005E5E5E025B5B5B775858588A5555558A5252528A4F4F4F8A4C4C4C8A4A4A
+      4A8A4848488A4646468A44444466FFFFFF00FFFFFF00FFFFFF00A465341DA769
+      3A9FA76A3ADEA56736F6A76939E5A76A3ABCA4653453A4653405FFFFFF00FFFF
+      FF00FFFFFF00A4653479A4653410FFFFFF00FFFFFF00A4653550A66838F6C090
+      68FAD3B08FFFDFC2A8FFDEC1A8FFD4B193FFB9875FF4A56737F0A4653458FFFF
+      FF00A4663566A46534FFA465340FFFFFFF00A4653429A66939F5D3AD8CFFDCBD
+      9DFFDDBEA1FFE5CBB4FFE9D3BFFFEEDDCCFFF0E2D5FFE7D2BFFFAF774BF5A567
+      36C0AB7143F7A46635FCA465340EFFFFFF00A769399BC09069FDC59872FFA86B
+      3CFFA46635FFA76A3AFCB7855DF3D9BBA1FEF1E4D8FFF2E6DBFFF3E8DDFFCEA7
+      88FDEAD8C8FFA76A3AF9A465340DFFFFFF00A66838F3AB7041FFA96C3CFEA76A
+      3AF5A4653475A4653419A4653445A66938CDB98861F5EBDBCDFFF5EBE2FFF6EE
+      E6FFF6EEE6FFA76A3AFAA465340BFFFFFF00A46535FEA76A3AFBC791689DA567
+      37E6A4653423FFFFFF00FFFFFF00FFFFFF00A4653460A46635FFE9D7C7FFEBD8
+      C6FFF5ECE3FFA66A3AFAA465340AFFFFFF00A46534FCB3794C7ECF9D762BBB83
+      5713A4653402FFFFFF00FFFFFF00A4653404A66838C4D0AC8FFAF6EEE7FFF2E6
+      DBFFF6EEE6FFA66A3AFBA4653409FFFFFF00A465340DFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00A46534A0A46534FFAD7447F8AF774CF7AF77
+      4CF7AF784CF7A46534FFA4653408FFFFFF00A46534F9A46534FEA46534FEA465
+      34FDA46534FCA46534FBA46534B9A465341DA4653418A4653418A4653418A465
+      3418A4653418A465341CFFFFFF00FFFFFF00A46534FCF5EDE5FFF6EDE5FFF5EC
+      E4FFD7B79CFDA66837E0A4653410FFFFFF00FFFFFF00FFFFFF00FFFFFF00D5A4
+      7E1ACD997239A46534FCA465340CFFFFFF00A46635FCF6EEE6FFEBD7C4FFEAD9
+      C9FFA46534FEA465346AFFFFFF00FFFFFF00FFFFFF00A465340BA56635E9C995
+      6C8DB77F53C2A46534FFA4653405FFFFFF00A56737FDF6EEE6FFF5ECE3FFF5ED
+      E4FFE6D2C1FFB0794DF5A66938CAA4653436FFFFFF00A465346AA96B3CEDB67C
+      4FFFA76A3AFEA56837FAFFFFFF00FFFFFF00A66838FDF1E4D8FFD4B295FEF4E9
+      E0FFF3E8DDFFEDDCCCFFD2AD8FFEB0784CF5A56635FBA66939FFA66939FEA96D
+      3DFFB0784CFFA76A3AA8FFFFFF00FFFFFF00A56737FEB7845BF7A56736D4B17A
+      4EF4E3CAB4FFECDAC9FFE7D1BCFFE3C9B0FFDEBEA0FFD2AB88FFCEA582FFD3AE
+      8EFFA66838F5A465342AFFFFFF00FFFFFF00A46534FFA5673693FFFFFF00A465
+      3454A66737EEB58055F3CEA684FFD8B697FFDBB999FFD3AC8AFFC2946DFCA668
+      38F6A466355BFFFFFF00FFFFFF00FFFFFF00A46534A2A4653401FFFFFF00FFFF
+      FF00A4653405A4653453A76A3ABEA66938E9A46635FAA76A3AE4A76B3BAAA465
+      3424FFFFFF00FFFFFF00FFFFFF00BC6B3671BC6B3690BC6B36CCBC6B36EEBC6B
+      36FABB6B36FEBB6B36FFBB6A36FFBB6A36FFBC6C39FFBD6E3BFFBB6D3AFFBB6B
+      38EFBB703ECBB6693554FFFFFF00BC6B369BF6E0D1FFF7E0D1FFFEFBF8FFFEFB
+      F7FFFDF9F6FFFCF5F0FFFAF0EAFFFBF2EDFFFDF9F6FFFDFAF7FFFBF1EBFFF8E9
+      DFFEECD0BDFBC9895EECB5693563BC6B36D8F6DFD1FFE9AA80FFFEFAF6FFFDFA
+      F6FFC88C64FFFBF3EEFFFBF1EAFFFCF6F2FFFEFBF8FFFCF6F1FFF9ECE2FFF8E7
+      DBFFEED0BAFFECD0BDFFBB703EF8BC6B36F0F6DFD0FFE8A87EFFFCF6F1FFFCF6
+      F1FFC88C64FFFAF1E9FFFBF4EEFFFDFAF7FFFDF9F6FFFAF0E8FFF8E8DDFFF7E6
+      DBFFE1A37AFFEFD5C3FFB76935FEBC6B36FAF5DDCCFFE7A87EFFFAF0E8FFFAF0
+      E8FFC98D66FFFAF0E9FFFDF8F3FFFEFAF8FFFCF4EFFFF9E9DFFFF7E7DBFFF7E5
+      D9FFE0A278FFE7C2A9FFB66835FFBB6B36FEF4DCC9FFE7A77DFFF9ECE1FFF9EC
+      E1FFF9EDE3FFFCF4EEFFFDFAF7FFFDF7F3FFFAEDE5FFF7E7DBFFF7E5D9FFF6E5
+      D8FFDEA077FFE4BEA4FFB46734FFBB6B36FFF4D9C7FFE6A67DFFC88C64FFC98D
+      65FFC98E67FFCB926CFFCB926DFFCA9069FFC88C65FFC88C64FFC88C64FFC88C
+      64FFDA9C74FFE1BA9FFFB36634FFBB6A36FFF2D8C5FFE3A47BFFE3A37AFFE3A4
+      7AFFE2A47BFFE2A37BFFE1A37BFFE1A279FFDFA077FFDE9F76FFDD9E74FFDB9C
+      72FFDC9D74FFDDB59AFFB16534FFBB6A36FFF2D5C2FFE3A37AFFE3A37AFFE2A3
+      7BFFE2A37BFFE2A47BFFE1A279FFE0A178FFDEA077FFDE9E75FFDC9D74FFDA9B
+      73FFD99B73FFDAB095FFAF6433FFBB6A36FFF0D2BEFFE2A37AFFE2A37AFFE1A3
+      7AFFE2A37BFFE1A37BFFE0A178FFDE9F77FFDD9F76FFDC9D74FFD99B72FFD899
+      71FFD69970FFD5AB8EFFAD6333FFBA6A36FFEFD0BBFFE2A27AFFFEFBF8FFFEFB
+      F8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFB
+      F8FFD3966DFFD2A78AFFAB6232FFBB6B38FFEFCEB8FFE1A279FFFEFAF7FF62C0
+      88FF62C088FF62C088FF62C088FF62C088FF62C088FF62C088FF62C088FFFDF9
+      F6FFCF936AFFCEA384FFAA6132FFBB6C38FFEECCB6FFE1A27AFFFEFAF7FFBFDC
+      C2FFBFDCC2FFBFDCC2FFBFDCC2FFBFDCC2FFBFDCC2FFBFDCC2FFBFDCC2FFFDF9
+      F6FFCD9068FFCC9E81FFA86132FFBA6B37FEEDCAB3FFE0A27AFFFEFAF7FF62C0
+      88FF62C088FF62C088FF62C088FF62C088FF62C088FF62C088FF62C088FFFDF9
+      F6FFCA8D65FFC99B7CFFA76031FEBA6A35DEEBC6ADFFEAC5ADFFFEFBF8FFFEFB
+      F8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFBF8FFFEFB
+      F8FFC89A7CFFC79879FFA76031EDBA6A368FB96935B5B86935EEB76835FFB568
+      35FFB46734FFB26634FFB06533FFAE6433FFAC6332FFAA6232FFA96132FFA860
+      31FFA76031FEA66031F1A86131C4FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0031C5F5092FC5F566FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0033C5F51E33C5F56CFFFFFF002DC5F54B2BC3F5CFFFFFFF0021C1
+      F5211DC1F366FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF002FC5F5D22BC3F5B727C1F5B450CEF7FF1FC1F57519BF
+      F3F015BDF35AFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF0029C3F57E5AD0F7FF6DD7F8FF7DDCF8FF4BCDF6FF11BD
+      F3F60DBBF30CFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF002DC5
+      F5182BC3F5BD25C1F5FF4ECEF7FF83DDF8FF4EA4C2FF5BB1CFFF68BFDCFF41CA
+      F6FF08BCF1FF00B9F197FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF001FC1F57E51CFF6FF4FA5C2FFF8F8F8FFFEFEFEFF5AB0CDFF6AD6
+      F7FF00B7F1D500B7F11FFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF001BC1F31517BFF3B74C4C4CFFCACACAFFF7F7F7FFD3D3D3FF4BA1BFFF74D9
+      F8FF00B5F1F300B5F138FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0019BF
+      F31E13BDF3B14F4F4FFF676767FF8C8C8CFFA9A9A9FF4197B4FF77D9F8FF00B5
+      F1FC00B5F1CC00B3F17FFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF004E4E4EFF676767FF383838FF424242FF4D4D4DFF4BCCF5FF19BDF2FF0DB7
+      F2FF00B1F11EFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF004E4E
+      4EFF676767FF373737FF404040FF161616FF00B5F19300B3F1FC00B3F13900B1
+      F1CF00AFF169FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00585858FF8484
+      84FF373737FF3F3F3FFF151515FFFFFFFF0000B3F13C00B1F1B7FFFFFF0000AF
+      EF0600AFEF48FFFFFF00FFFFFF00FFFFFF00FFFFFF00474747FF838383FF3737
+      37FF3F3F3FFF151515FFFFFFFF00FFFFFF00FFFFFF0000AFEF45FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00434343FF818181FF353535FF3E3E
+      3EFF151515FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00696969FFDEDEDEFF313131FF454545FF1515
+      15FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00696969FFC9C9C9FF959595FF161616FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF004646466F3E3E3EFF171717FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE64550BFE64550
+      BFE64550BFE64550BFE64550BFE64550BFE64550BFE64550BFE64550BFE64550
+      BFE64550BFE6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6D1D4F1FFCCD0
+      F2FFC6CBF2FFBFC5F2FFB7BEF3FFAEB8F3FFA5AFF4FF9BA8F4FF919FF5FF8795
+      F6FF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6CCD0F1FFC6CB
+      F1FFBFC5F2FFB7BFF3FFAFB7F4FFA6AFF5FF9BA8F5FF919FF6FF8796F6FF7D8D
+      F7FF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6C7CAF1FFBFC5
+      F3FFB7BEF3FFAEB7F4FFA6AFF4FF9BA7F5FF929FF6FF8796F6FF7C8DF7FF7284
+      F7FF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6BFC5F2FFB7BE
+      F3FFAFB7F4FFA5AFF4FF9CA7F5FF929FF6FF8795F6FF7D8DF7FF7284F8FF687C
+      F8FF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6B7BEF3FFAFB7
+      F4FFA6B0F4FF9BA8F5FF929FF6FF8796F6FF7C8DF7FF7284F8FF677BF8FF5D73
+      F9FF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6AEB7F3FFA5AF
+      F5FF9CA7F5FF919FF5FF8796F7FF7C8DF7FF7284F8FF687BF9FF5D73F9FF536B
+      FAFF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6A6AFF4FF9CA7
+      F5FF919FF5FF8796F6FF7D8DF7FF7184F7FF687CF8FF5D73F9FF546AFAFF4A63
+      FBFF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE69BA7F5FF929F
+      F5FF8796F7FF7C8DF7FF7284F8FF677CF8FF5E73F9FF546BFAFF4A63FBFF415C
+      FBFF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6929EF5FF8796
+      F6FF7C8DF7FF7285F8FF687CF9FF5E73F9FF546BFAFF4B63FBFF425CFBFF3955
+      FCFF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE68796F6FF7C8D
+      F7FF7284F8FF687CF8FF5E73FAFF536AFAFF4A63FAFF425CFBFF3A55FCFF334F
+      FCFF393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF004550BFE6393986E63939
+      86E6393986E6393986E6393986E6393986E6393986E6393986E6393986E63939
+      86E6393986E6FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00000000000000000004733AFF2D8859FF859C
+      90FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000004733AFFA4D9BEFF3D93
+      66FF5F8873FF0000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000004733AFFA9DCC1FF9BD5
+      B7FF4C9F73FF3D7D5CFF00000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000004733AFFA5DABFFF57BB
+      87FF90D2B0FF5BAB82FF23774CFFD4D5D4FF0000000000000000000000000000
+      0000000000000000000000000000000000000000000004733AFFA9DCC1FF45B4
+      7BFF47B47CFF82CCA6FF67B68CFF177745FFC1C5C3FF00000000000000000000
+      0000000000000000000000000000000000000000000004733AFFA9DCC1FF3EB1
+      76FF3AAF73FF36AE70FF6FC598FF71BF97FF187B49FFA6B0ABFF000000000000
+      0000000000000000000000000000000000000000000004733AFFA9DCC1FF36AD
+      70FF32AC6DFF2DAA6AFF28A866FF58BC89FF78C59DFF1F804EFF839A8EFF0000
+      0000000000000000000000000000000000000000000004733AFFA9DCC1FF2EAD
+      6BFF2BAD6AFF27AB68FF22A964FF1CA55FFF41B278FF78C69FFF298858FF678C
+      79FF000000000000000000000000000000000000000004733AFFA9DCC1FF0CAA
+      58FF12AE5EFF15AF60FF16AD61FF13AA5DFF3AB677FF75C79DFF288957FF4E83
+      67FF000000000000000000000000000000000000000004733AFFA9DCC1FF0DB3
+      5EFF0EB660FF0EB660FF0DB45FFF47C484FF70CA9CFF1D824DFF678C79FF0000
+      0000000000000000000000000000000000000000000004733AFFA9DCC1FF10BD
+      65FF11C167FF13C269FF59D395FF67C998FF167C47FF889C92FF000000000000
+      0000000000000000000000000000000000000000000004733AFF83DCAFFF11C3
+      69FF1ACC73FF69DFA3FF5AC28DFF137643FF9EA7A3FF00000000000000000000
+      0000000000000000000000000000000000000000000009773FFF83DBAEFF1FC6
+      71FF72DEA7FF4BB27FFF177445FFA8ADAAFF0000000000000000000000000000
+      0000000000000000000000000000000000000000000004733AFF82D8ACFF76D6
+      A6FF3C9D6AFF27744CFFACAEADFF000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000004733AFF7ACFA4FF2C8C
+      5AFF3D7659FFAEAEAEFF00000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000004733AFF21824FFF6382
+      72FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000EEEEEE00EEEEEE00EEEEEE00996E4CFFAB71
+      43FFAC7244FF996E4CFFFBE3BC00FBE3BC00996E4CFFAB7143FFAC7244FF996E
+      4CFF000000000000000000000000996E4C00996E4C00996E4C00A26637FFDCBF
+      A4FFDFC6AFFFA26637FF996E4C00996E4C00A26637FFDCBFA4FFDFC6AFFFA266
+      37FF000000000000000000000000A4653400A4653400A4653400A46534FFDDBC
+      9DFFE7D1BCFFA46534FFA4653400A4653400A46534FFDDBC9DFFE7D1BCFFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFDBB6
+      94FFE7D1BBFFA46534FFA4653400A4653400A46534FFDBB694FFE7D1BBFFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFDAB5
+      93FFE6CFB9FFA46534FFA4653400A4653400A46534FFDAB593FFE6CFB9FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFDAB3
+      91FFE6CEB7FFA46534FFA4653400A4653400A46534FFDAB391FFE6CEB7FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFD9B2
+      8FFFE6CEB7FFA46534FFA4653400A4653400A46534FFD9B28FFFE6CEB7FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFD9B0
+      8DFFE6CEB7FFA46534FFA4653400A4653400A46534FFD9B08DFFE6CEB7FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFD9AE
+      89FFE6CEB7FFA46534FFA4653400A4653400A46534FFD9AE89FFE6CEB7FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFD8AB
+      84FFE6CEB7FFA46534FFA4653400A4653400A46534FFD8AB84FFE6CEB7FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFD7A9
+      81FFE6CDB6FFA46534FFA4653400A4653400A46534FFD7A981FFE6CDB6FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFD7A7
+      7FFFE6CCB5FFA46534FFA4653400A4653400A46534FFD7A77FFFE6CCB5FFA465
+      34FF000000000000000000000000A4653400A4653400A4653400A46534FFD8A9
+      81FFE6CCB5FFA46534FFA4653400A4653400A46534FFD8A981FFE6CCB5FFA465
+      34FF000000000000000000000000A2663800A2663800A2663800A36535FFD7AC
+      88FFE1C5ADFFA36535FFA2663800A2663800A36535FFD7AC88FFE1C5ADFFA365
+      35FF0000000000000000000000009870500098705000987050009F683EFFC99C
+      76FFCDA585FF9F683EFF98705000987050009F683EFFC99C76FFCDA585FF9F68
+      3EFF000000000000000000000000EEEEEE00EEEEEE00EEEEEE00987050FFA465
+      34FFA46534FF987050FFFBE3BC00FBE3BC00987050FFA46534FFA46534FF9870
+      50FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000034B4D9FF5EC2E1FF60C3E2FF60C3
+      E2FF60C3E2FF5FC3E2FF3CB6DBFF000000000000000000000000000000000000
+      00000000000000000000000000000000000036B3DAFFFDFEFEFFFEFFFFFFFEFE
+      FFFFFDFEFFFFFEFFFFFFEAF7FBFF6BC7E4FF6BC7E3FF6BC7E3FF6BC7E3FF79CD
+      E6FF74CAE5FF00000000000000000000000035AFDAFFF7FCFEFF8EE4F8FF91DE
+      F5FF9FE0F5FFACE1F6FFEFFBFEFFF4FDFEFFF3FCFEFFF1FCFEFFEFFBFEFFEEFB
+      FEFFFAFDFFFF36AFDAFF000000000000000036AADAFFF1FAFDFF94DEF5FF93DC
+      F4FF81D5F2FF6ACAEDFF6CCBEAFF85D3EFFF80D2EFFF7AD0EFFF76CFEEFF72CF
+      EEFFE9F7FBFF34AEDAFF000000000000000035ABDAFFE8F6FBFF94D4EFFF88CE
+      EEFF73C1E9FFC9E9F6FFF2FCFEFFF3FCFEFFF2FCFEFFF0FCFEFFEFFBFEFFEEFB
+      FEFFFEFFFFFF36ABDAFF000000000000000037A6DAFFFEFFFFFFF8FDFFFFF6FD
+      FFFFF5FCFFFFF3FCFEFFD8F6FCFF94E6F8FF85E3F7FF76DFF6FF68DBF5FF5CD8
+      F4FFD7F4FCFF35A4DAFF000000000000000036A1DAFFF6FCFEFFC8F2FCFFB9EF
+      FBFFACECFAFF9CE8F9FF8BE3F7FF7CE0F6FF6CDCF6FF5DD9F5FF4FD6F4FF44D3
+      F3FFD0F3FCFF359FDAFF0000000000000000369ADAFFF2FAFDFFB3EDFAFFA4E9
+      F9FF95E6F8FF85E2F7FF76DEF6FF65DBF5FF57D7F4FF49D4F3FF3BD1F2FF30CE
+      F1FFCCF2FBFF3598DAFF00000000000000003594DAFFEFFAFEFFA1E9F9FF91E5
+      F8FF81E1F7FF72DEF6FF63DAF5FF54D7F4FF47D3F3FF39D0F2FF2ECDF1FF26CB
+      F0FFCAF2FBFF3594DAFF0000000000000000338ED9FFDCF0FAFFA7DDF4FF9EDB
+      F4FF96DAF3FF8ED8F3FF86D7F3FF7FD4F2FF79D3F2FF72D2F1FF6CD0F1FF69CF
+      F1FFC2EAF8FF338ED9FF0000000000000000000000002D88D8FF2D87D8FF2D88
+      D8FF2D88D8FF2D88D8FF2D88D8FF2D88D8FF2D88D8FF2D88D8FF2D88D8FF2D87
+      D8FF2D88D8FF2C86D8FF00000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00D898
+      5223D4964D7DD2924CDBCD8C45F3CB8B41F3C98B40DBC78B407DC5873D23FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00D6974F53D191
+      49E6D0A06AFFE0BFA0FFE3C5AEFFE3C5AEFFDFBC9FFFC89762FFBD7D35E6BC7E
+      3553FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00D4964D53CF8D47F4D9B2
+      8CFFE6CDB8FFE0BA9DFFD7AB85FFD6A982FFD9B391FFE1C2ABFFD4AE86FFB16B
+      35F4B16F3553FFFFFF00FFFFFF00FFFFFF00D2934C22CE8E47E5D9B28CFFE6CA
+      B3FFD6A97DFFD1A579FFE2C4A8FFE1C3A8FFD0A276FFD1A477FFDDBDA2FFD0AC
+      85FFAB6635E5A9653522FFFFFF00FFFFFF00CE91477ECD9C68FFE7CBB4FFD4A5
+      7AFFD0A077FFCF9E74FFFBF8F5FFFBF8F5FFCB9E71FFCB9D71FFCDA177FFDFC0
+      A5FFB98A5BFFA45C347EFFFFFF00FFFFFF00CB8E41DBE0BC9FFFDBB393FFCFA0
+      75FFCD9E72FFCB9C71FFDDBFA3FFDDBFA2FFC5996BFFC5996BFFC4986BFFD1AB
+      85FFD8BA97FF9E5635DBFFFFFF00FFFFFF00C5853BF6E4C9B0FFD0A37AFFCC9D
+      71FFC79A6CFFC5986BFFFFFFFFFFFFFFFEFFC39669FFC19468FFC29468FFC398
+      6DFFDFC5ABFF955334F6FFFFFF00FFFFFF00BF7E35F6E3C7AFFFD0A276FFC599
+      6BFFC4976AFFC49669FFEEE0D4FFFBF7F4FFBF9066FFBE8F65FFBE8F64FFBE92
+      69FFDFC6AAFF925034F6FFFFFF00FFFFFF00BC7E35DBDBBC9CFFD5AD89FFC798
+      6CFFC39569FFC19367FFEDDFD3FFFAF7F4FFBB8B63FFB98A63FFB88A62FFC59D
+      78FFD2B893FF905135DBFFFFFF00FFFFFF00B878357EBF915EFFE0C2A8FFC596
+      6CFFC29169FFE1CBB8FFFEFDFCFFFFFFFEFFEADCD0FFB4855EFFB3855EFFD4B5
+      99FFAE7B56FF8F51357EFFFFFF00FFFFFF00AF703522AB6935E5CFAA81FFDABC
+      A2FFBE9166FFBA8C62FFB7895FFFB3845EFFB1835DFFB0835CFFCDAA8DFFC6A5
+      79FF895034E589503522FFFFFF00FFFFFF00FFFFFF00A76234539F5533F4CBA7
+      7DFFD8BB9FFFC39C77FFB68A62FFB48660FFBE9672FFD1B397FFC5A377FF844F
+      35F489503553FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF009F5634539955
+      34E6B28057FFD5B793FFDBC3A6FFDAC3A6FFD2B490FFAB7A52FF864F34E68850
+      3553FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF009754
+      35239453347D925234DB8A5034F3884F34F3895035DB8950357D84503623FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00
+    }
+  end
+  object SynPasSyn1: TSynPasSyn
+    Enabled = False
+    AsmAttri.FrameEdges = sfeAround
+    CommentAttri.FrameEdges = sfeAround
+    IDEDirectiveAttri.FrameEdges = sfeAround
+    IdentifierAttri.FrameEdges = sfeAround
+    KeyAttri.FrameEdges = sfeAround
+    NumberAttri.FrameEdges = sfeAround
+    SpaceAttri.FrameEdges = sfeAround
+    StringAttri.FrameEdges = sfeAround
+    SymbolAttri.FrameEdges = sfeAround
+    CaseLabelAttri.FrameEdges = sfeAround
+    DirectiveAttri.FrameEdges = sfeAround
+    CompilerMode = pcmDelphi
+    NestedComments = False
+    left = 131
+    top = 559
+  end
+  object alScriptActions: TActionList
+    left = 395
+    top = 153
+  end
+  object ScreenUpdater: TTimer
+    Enabled = False
+    Interval = 50
+    OnTimer = ScreenUpdaterTimer
+    left = 320
+    top = 64
+  end
+end

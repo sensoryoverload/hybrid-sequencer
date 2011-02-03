@@ -1,0 +1,29 @@
+object fmMappingMonitor: TfmMappingMonitor
+  Left = 670
+  Height = 343
+  Top = 377
+  Width = 590
+  ActiveControl = StringGrid1
+  Caption = 'Mapping Monitor'
+  ClientHeight = 343
+  ClientWidth = 590
+  LCLVersion = '0.9.29'
+  object StringGrid1: TStringGrid
+    Left = 5
+    Height = 577
+    Top = 9
+    Width = 889
+    ColCount = 3
+    Columns = <    
+      item
+        Title.Caption = 'ObjectID'
+      end    
+      item
+        Title.Caption = 'Model'
+      end>
+    Flat = True
+    ScrollBars = ssBoth
+    TabOrder = 0
+    TitleStyle = tsNative
+  end
+end
