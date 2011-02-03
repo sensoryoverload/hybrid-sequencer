@@ -1,0 +1,1549 @@
+{
+  Copyright (C) 2009 Robbert Latumahina
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation; either version 2.1 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+  midigui.pas
+}
+
+unit midigui;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, Controls, Forms, LCLType, Graphics, Menus, globalconst,
+  jacktypes, ContNrs, waveform, global_command, midi, global, unix, BaseUNIX,
+  lclintf, ActnList;
+
+
+type
+  TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
+  TKey = (keyBlack, keyWhite);
+
+  TZoomCallback = procedure(AZoomTimeLeft, AZoomTimeRight: Integer) of object;
+
+  TMidiGridGUI = class;
+
+  { TMidiNoteGUI }
+
+  TMidiNoteGUI = class(THybridPersistentView)
+  private
+    { GUI }
+    FOriginalNoteLength: Integer;
+    FOriginalNoteLocation: Integer;
+    FOriginalNote: Integer;
+
+    FMidiGrid: TMidiGridGUI;
+
+    { Audio }
+    FNoteLocation: Integer; // Which time format ? in samples ??
+    FNote: Integer; // 0..127
+    FNoteVelocity: Integer; // 0..127
+    FNoteLength: Integer;
+    FSelected: Boolean;
+    function QuantizeLocation(ALocation: Integer): Integer;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    property Note: Integer read FNote write FNote;
+    property NoteLocation: Integer read FNoteLocation write FNoteLocation;
+    property OriginalNoteLocation: Integer read FOriginalNoteLocation write FOriginalNoteLocation;
+    property OriginalNote: Integer read FOriginalNote write FOriginalNote;
+    property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
+    property NoteLength: Integer read FNoteLength write FNoteLength;
+    property OriginalNoteLength: Integer read FOriginalNoteLength write FOriginalNoteLength;
+    property MidiGridGUI: TMidiGridGUI read FMidiGrid write FMidiGrid;
+  published
+    property Selected: Boolean read FSelected write FSelected;
+  end;
+
+  { TMidiGridGUI }
+
+  TMidiGridGUI = class(TFrame, IObserver)
+    acDeleteNote: TAction;
+    acDuplicate: TAction;
+    acLoop: TAction;
+    alNoteActions: TActionList;
+    MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
+    miDelete: TMenuItem;
+    pmNoteMenu: TPopupMenu;
+    procedure acDeleteNoteExecute(Sender: TObject);
+    procedure acDuplicateExecute(Sender: TObject);
+    procedure acLoopExecute(Sender: TObject);
+    procedure FrameDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure FrameDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure FrameResize(Sender: TObject);
+  private
+    FObjectID: string;
+    FObjectOwnerID: string;
+
+    { GUI }
+    FLocationOffset: Integer;
+    FOldLocationOffset: Integer;
+
+    FNoteOffset: Integer;
+    FOldNoteOffset: Integer;
+    FNoteInfoWidth: Integer;
+
+    // Zoom vars
+    FZoomFactorX: Single;
+    FZoomFactorY: Single;
+    FZoomFactorToScreenX: Single;
+    FZoomFactorToDataX: Single;
+    FZoomFactorToScreenY: Single;
+    FZoomFactorToDataY: Single;
+    FOldZoomFactorX: Single;
+    FOldZoomFactorY: Single;
+    FZoomNoteHeight: Integer;
+
+    // Coordinate vars
+    FOldX: Integer;
+    FOldY: Integer;
+    FMouseX: Integer;
+    FMouseY: Integer;
+    FOrgNoteX: Integer;
+    FOrgNoteY: Integer;
+    FMouseNoteX: Integer;
+    FMouseNoteY: Integer;
+
+    FOldQuantizedNote: Integer;
+    FOldQuantizedLocation: Integer;
+
+    FZoomingMode: Boolean;
+    FModel: TMidiGrid;
+    FBitmap: TBitmap;
+    FBitmapIsDirty: Boolean;
+
+    FRubberBandSelect: TRect;
+    FRubberBandMode: Boolean;
+    FOptionsView: TMidiGridOptions;
+
+    FDragging: Boolean;
+    FDraggedNote: TMidiNoteGUI;
+    FDragMode: Short;
+    FMouseButton: TMouseButton;
+
+    FNoteHighlightLocation: Integer;
+    FNoteHighlightNote: Integer;
+
+    { Audio }
+    FRealCursorPosition: Integer;
+    FCursorAdder: Single;
+    FLoopStart: Longint;
+    FLoopEnd: Longint;
+    FNoteListGUI: TObjectList;
+    FQuantizeSetting: Integer;
+    FQuantizeValue: Single;
+
+    FOldCursorPosition: Integer;
+
+    procedure HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
+      Y: Integer);
+    procedure HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
+    procedure HandleNoteMouseUp(Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    function QuantizeLocation(ALocation: Integer): Integer;
+    function NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
+    function ConvertTimeToScreen(ATime: Integer): Integer;
+    function ConvertScreenToTime(AX: Integer): Integer;
+    function ConvertNoteToScreen(ANote: Integer): Integer;
+    function ConvertScreenToNote(AY: Integer): Integer;
+    procedure SetZoomFactorX(const AValue: Single);
+    procedure SetZoomFactorY(const AValue: Single);
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure EraseBackground(DC: HDC); override;
+    procedure Paint; override;
+    function GetObjectID: string;
+    procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string;
+    procedure SetObjectOwnerID(AObjectOwnerID: string);
+    procedure HandleZoom(AZoomTimeLeft, AZoomTimeRight: Integer);
+
+    property ObjectID: string read GetObjectID write SetObjectID;
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
+    property LocationOffset: Integer read FLocationOffset write FLocationOffset;
+    property NoteOffset: Integer read FNoteOffset write FNoteOffset;
+    property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
+    property Model: TMidiGrid read FModel write FModel;
+    property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
+    property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
+    property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
+    property CursorAdder: Single read FCursorAdder write FCursorAdder;
+    property LoopStart: Longint read FLoopStart write FLoopStart;
+    property LoopEnd: Longint read FLoopEnd write FLoopEnd;
+    property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
+    property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 100;
+  protected
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+    procedure DblClick; override;
+    function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
+    function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
+    procedure CreateNoteGUI(AObjectID: string);
+    procedure DeleteNoteGUI(AObjectID: string);
+    function NoteByObjectID(AObjectID: string): TMidiNoteGUI;
+    procedure NoteListByRect(AObjectIDList: TStringList; ARect: TRect);
+  end;
+
+  TMidigridOverview = class;
+
+  { TMidiNoteOverview }
+
+  TMidiNoteOverview = class(THybridPersistentView)
+  private
+    FMidiGridOverview: TMidigridOverview;
+
+    { Audio }
+    FNoteLocation: Integer; // Which time format ? in samples ??
+    FNote: Integer; // 0..127
+    FNoteVelocity: Integer; // 0..127
+    FNoteLength: Integer;
+    FSelected: Boolean;
+  public
+    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    property Note: Integer read FNote write FNote;
+    property NoteLocation: Integer read FNoteLocation write FNoteLocation;
+    property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
+    property NoteLength: Integer read FNoteLength write FNoteLength;
+    property MidiGridOverview: TMidigridOverview read FMidiGridOverview write FMidiGridOverview;
+  published
+    property Selected: Boolean read FSelected write FSelected;
+  end;
+
+  { TMidigridOverview }
+
+  TMidigridOverview = class(TPersistentCustomControl)
+  private
+    FNoteListGUI: TObjectList;
+    FTotalWidth: Integer;
+    FZoomBoxWidth: Integer;
+    FZoomTimeLeft: Integer;
+    FZoomTimeRight: Integer;
+    FOldX: Integer;
+    FOldY: Integer;
+    FMouseX: Integer;
+
+    FZooming: Boolean;
+    FZoomingLeft: Boolean;
+    FZoomingRight: Boolean;
+
+    FZoomCallback: TZoomCallback;
+
+    function CalculateTotalWidth: Integer;
+    function ConvertNoteToScreen(ANote: Integer): Integer;
+    function ConvertScreenToTime(AX: Integer): Integer;
+    function ConvertTimeToScreen(ATime: Integer): Integer;
+    procedure CreateNoteGUI(AObjectID: string);
+    procedure DeleteNoteGUI(AObjectID: string);
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    procedure EraseBackground(DC: HDC); override;
+    property ZoomCallback: TZoomCallback write FZoomCallback;
+  protected
+    procedure Paint; override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+  end;
+
+
+implementation
+
+uses
+  utils, appcolors;
+
+{ TMidiNoteGUI }
+
+constructor TMidiNoteGUI.Create;
+begin
+  FOriginalNoteLength:= 0;
+  FSelected:= False;
+end;
+
+destructor TMidiNoteGUI.Destroy;
+begin
+  inherited Destroy;
+end;
+
+procedure TMidiNoteGUI.Update(Subject: THybridPersistentModel);
+var
+  lNote: TMidiNote;
+begin
+  DBLog('start TMidiNoteGUI.Update');
+
+  lNote := TMidiNote(Subject);
+
+  if Assigned(lNote) then
+  begin
+    Selected := lNote.Selected;
+    NoteLocation := lNote.NoteLocation;
+    Note := lNote.Note;
+    NoteVelocity := lNote.NoteVelocity;
+    NoteLength := lNote.NoteLength;
+  end;
+
+  DBLog('end TMidiNoteGUI.Update');
+end;
+
+procedure TMidiGridGUI.acDeleteNoteExecute(Sender: TObject);
+var
+  lDeleteNoteCommand: TDeleteNotesCommand;
+begin
+  lDeleteNoteCommand := TDeleteNotesCommand.Create(Self.ObjectID);
+  try
+    lDeleteNoteCommand.ObjectID := FDraggedNote.ObjectID;
+
+    GCommandQueue.PushCommand(lDeleteNoteCommand);
+  except
+    lDeleteNoteCommand.Free;
+  end;
+end;
+
+procedure TMidiGridGUI.acDuplicateExecute(Sender: TObject);
+begin
+  // Duplicate after current selection end point
+end;
+
+procedure TMidiGridGUI.acLoopExecute(Sender: TObject);
+begin
+  // Set loop to current selection
+end;
+
+procedure TMidiGridGUI.FrameDragDrop(Sender, Source: TObject; X, Y: Integer);
+begin
+  // TODO implement
+  {
+    Drop samples to midigrid instantely creates a sample in the current samplebank
+    for this midigrid.
+  }
+  writeln('TODO Drop samples to midigrid instantely creates a sample in the current samplebank for this midigrid ');
+end;
+
+procedure TMidiGridGUI.FrameDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+begin
+  // TODO test if source object is a valid sample
+  Accept := True;
+end;
+
+procedure TMidiGridGUI.FrameResize(Sender: TObject);
+begin
+  // Hmmm..self initialize..
+  ZoomFactorY := FZoomFactorY;
+
+  FBitmapIsDirty := True;
+end;
+
+procedure TMidiGridGUI.HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+var
+  lSelectNoteCommand: TSelectNoteCommand;
+  lMoveNotesCommand: TMoveNotesCommand;
+  lStretchNotesCommand: TStretchNotesCommand;
+  lMousePos: TPoint;
+begin
+  FMouseButton := Button;
+  FDragging:= True;
+  FOrgNoteX := X;
+  FOrgNoteY := Y;
+  FMouseNoteX := X;
+  FMouseNoteY := Y;
+
+  // Set original values before move
+  FDraggedNote.OriginalNoteLength := FDraggedNote.NoteLength;
+  FDraggedNote.OriginalNoteLocation := FDraggedNote.NoteLocation;
+  FDraggedNote.OriginalNote := FDraggedNote.Note;
+
+  if Width - X < 10 then
+  begin
+    FDragMode := ndLength;
+  end
+  else
+  begin
+    FDragMode := ndMove;
+  end;
+  case Button of
+    mbLeft:
+    begin
+      if (ssShift in GSettings.Modifier) then
+      begin
+        FDraggedNote.Selected := True;
+      end;
+
+      // First select note
+      lSelectNoteCommand := TSelectNoteCommand.Create(Self.ObjectID);
+      try
+        lSelectNoteCommand.AddMode := (ssShift in GSettings.Modifier);
+        lSelectNoteCommand.ObjectID := FDraggedNote.ObjectID;
+
+        GCommandQueue.PushCommand(lSelectNoteCommand);
+      except
+        lSelectNoteCommand.Free;
+      end;
+
+      case FDragMode of
+        ndMove:
+        begin
+          lMoveNotesCommand := TMoveNotesCommand.Create(Self.ObjectID);
+          try
+            lMoveNotesCommand.Persist := True;
+            lMoveNotesCommand.ObjectID := FDraggedNote.ObjectID;
+            lMoveNotesCommand.NoteDiff := 0;
+            lMoveNotesCommand.NoteLocationDiff := 0;
+
+            GCommandQueue.PushCommand(lMoveNotesCommand);
+          except
+            lMoveNotesCommand.Free;
+          end;
+        end;
+        ndLength:
+        begin
+          lStretchNotesCommand := TStretchNotesCommand.Create(Self.ObjectID);
+          try
+            lStretchNotesCommand.Persist := True;
+            lStretchNotesCommand.NoteLengthDiff := 0;
+
+            GCommandQueue.PushCommand(lStretchNotesCommand);
+          except
+            lStretchNotesCommand.Free;
+          end;
+        end;
+      end;
+    end;
+    mbRight:
+    begin
+      GetCursorPos(lMousePos);
+      pmNoteMenu.PopUp(lMousePos.X, lMousePos.Y);
+    end;
+  end;
+end;
+
+procedure TMidiGridGUI.HandleNoteMouseUp(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  FDragging:= False;
+  FDraggedNote := nil;
+end;
+
+procedure TMidiGridGUI.HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
+var
+  lMoveNotesCommand: TMoveNotesCommand;
+  lStretchNotesCommand: TStretchNotesCommand;
+  lNoteLocation: Integer;
+  lNoteLength: Integer;
+  lNote: Integer;
+begin
+  FMouseNoteX := X;
+  FMouseNoteY := Y;
+
+  if (FMouseButton = mbLeft) and FDragging then
+  begin
+    lNoteLocation := QuantizeLocation(ConvertScreenToTime(X - FLocationOffset));
+    lNoteLength := QuantizeLocation(ConvertScreenToTime(X - FOrgNoteX));
+    lNote := ConvertScreenToNote(Y - FNoteOffset);
+
+    if (FOldQuantizedNote <> lNote) or (FOldQuantizedLocation <> lNoteLocation) then
+    begin
+      case FDragMode of
+        ndLength: // Change length of note
+        begin
+          FDraggedNote.NoteLength := FDraggedNote.OriginalNoteLength + lNoteLength;
+
+          lStretchNotesCommand := TStretchNotesCommand.Create(Self.ObjectID);
+          try
+            lStretchNotesCommand.Persist := False;
+            lStretchNotesCommand.NoteLengthDiff := lNoteLength - FDraggedNote.OriginalNoteLength;
+
+            GCommandQueue.PushCommand(lStretchNotesCommand);
+          except
+            lStretchNotesCommand.Free;
+          end;
+        end;
+        ndMove: // Move note
+        begin
+          lMoveNotesCommand := TMoveNotesCommand.Create(Self.ObjectID);
+          try
+            lMoveNotesCommand.ObjectID := FDraggedNote.ObjectID;
+            lMoveNotesCommand.Persist := False;
+            lMoveNotesCommand.NoteDiff := lNote - FDraggedNote.OriginalNote;
+            lMoveNotesCommand.NoteLocationDiff := lNoteLocation - FDraggedNote.OriginalNoteLocation;
+
+            GCommandQueue.PushCommand(lMoveNotesCommand);
+          except
+            lMoveNotesCommand.Free;
+          end;
+        end;
+      end;
+      FOldQuantizedLocation := lNoteLocation;
+      FOldQuantizedNote := lNote;
+    end;
+  end;
+end;
+
+function TMidiNoteGUI.QuantizeLocation(ALocation: Integer): Integer;
+begin
+  if MidiGridGUI.QuantizeSetting = 0 then
+  begin
+    Result := ALocation;
+  end
+  else
+  begin
+    Result := Round(Trunc(ALocation / MidiGridGUI.QuantizeValue) * MidiGridGUI.QuantizeValue);
+  end;
+end;
+
+procedure TMidiGridGUI.SetZoomFactorX(const AValue: Single);
+begin
+  FZoomFactorX := AValue;
+  if FZoomFactorX <= 0 then FZoomFactorX := 1;
+  FZoomFactorToScreenX := (ZoomFactorX / 1000);
+  FZoomFactorToDataX := (1000 / ZoomFactorX);
+end;
+
+procedure TMidiGridGUI.SetZoomFactorY(const AValue: Single);
+begin
+  FZoomFactorY := AValue;
+  if FZoomFactorY <= 0 then FZoomFactorY := 1;
+  if FZoomFactorY > 2000 then FZoomFactorY := 2000;
+  FZoomFactorToScreenY := (ZoomFactorY / 1000);
+  FZoomFactorToDataY := (1000 / ZoomFactorY);
+  FZoomNoteHeight := Round((Height / 32) * FZoomFactorToScreenY);
+end;
+
+procedure TMidiGridGUI.HandleZoom(AZoomTimeLeft, AZoomTimeRight: Integer);
+begin
+  ZoomFactorX := 1000000 / (AZoomTimeRight - AZoomTimeLeft);
+  FLocationOffset := 0 - ConvertTimeToScreen(AZoomTimeLeft);
+
+  FBitmapIsDirty := True;
+  Invalidate;
+end;
+
+
+constructor TMidiGridGUI.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  FOptionsView := [PianoKeyboard];
+
+// TODO Toggle button -----------
+  if PianoKeyboard in FOptionsView then
+  begin
+    FNoteInfoWidth := 30;
+  end
+  else
+  begin
+    FNoteInfoWidth := 0;
+  end;
+// ------------------------------
+
+  FBitmap := TBitmap.Create;
+  DoubleBuffered := True;
+
+  FLoopStart:= 0;
+  FLoopEnd:= 44100; // TODO Round(GSettings.MainSampleRate * 4);
+  FRealCursorPosition:= FLoopStart;
+  FRubberBandMode := False;
+
+  FNoteListGUI := TObjectList.Create(True);
+  ZoomFactorX := 1000;
+  ZoomFactorY := 1000;
+
+  FDragging := False;
+
+  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+end;
+
+destructor TMidiGridGUI.Destroy;
+begin
+  if Assigned(FNoteListGUI) then
+    FNoteListGUI.Free;
+
+  FBitmap.Free;
+
+  inherited Destroy;
+end;
+
+procedure TMidiGridGUI.EraseBackground(DC: HDC);
+begin
+  inherited EraseBackground(DC);
+end;
+
+procedure TMidiGridGUI.Paint;
+var
+  x: Integer;
+  lTime: Integer;
+  lTimeSpacing: Integer;
+  lHighlightLocation: Integer;
+  lHighlightNote: Integer;
+  lHighlightWidth: Integer;
+  lIndex: Integer;
+  lNote: TMidiNoteGUI;
+  lNoteIndex: Integer;
+  lMidiNoteModula: Integer;
+  lMidiNoteKey: TKey;
+
+begin
+  if FBitmapIsDirty then
+  begin
+    FBitmap.Canvas.Clear;
+    FBitmap.Height := Height;
+    FBitmap.Width := Width;
+
+    // Draw default background
+    FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
+    FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
+//    FBitmap.Canvas.Clipping := True;
+    FBitmap.Canvas.Rectangle(0, 0, FBitmap.Width, FBitmap.Height);
+
+    // Draw note indictor lines
+    FBitmap.Canvas.Pen.Color := clMidigridBackgroundBlack;
+    FBitmap.Canvas.Brush.Color := clMidigridBackgroundBlack;
+    for lNoteIndex := 0 to 127 do
+    begin
+      lMidiNoteModula := lNoteIndex mod 12;
+      case lMidiNoteModula of
+       0: lMidiNoteKey := keyWhite;
+       1: lMidiNoteKey := keyBlack;
+       2: lMidiNoteKey := keyWhite;
+       3: lMidiNoteKey := keyBlack;
+       4: lMidiNoteKey := keyWhite;
+       5: lMidiNoteKey := keyWhite;
+       6: lMidiNoteKey := keyBlack;
+       7: lMidiNoteKey := keyWhite;
+       8: lMidiNoteKey := keyBlack;
+       9: lMidiNoteKey := keyWhite;
+      10: lMidiNoteKey := keyBlack;
+      11: lMidiNoteKey := keyWhite;
+      end;
+
+      if lMidiNoteKey = keyBlack then
+      begin
+        FBitmap.Canvas.Rectangle(
+          30,
+          ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
+          FBitmap.Width,
+          ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
+      end;
+    end;
+
+    // Draw vertica time indicators
+    FBitmap.Canvas.Pen.Color := clGlobalOutline;
+
+    lTimeSpacing := Round(QuantizeValue);
+    if lTimeSpacing < 1 then
+      lTimeSpacing := 100;
+
+    if FZoomFactorX < 500 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 250 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 125 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 62.5 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 31.25 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 15.625 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 7.8125 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 3.90625 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    lTime := lTimeSpacing;
+    repeat
+      x := ConvertTimeToScreen(lTime) + FLocationOffset;
+      FBitmap.Canvas.Pen.Color := clGray;
+      FBitmap.Canvas.Line(x, 0, x, FBitmap.Height);
+      FBitmap.Canvas.TextOut(x + 2, 1, Format('%d', [lTime div 100 + 1]));
+      Inc(lTime, lTimeSpacing);
+    until x > FBitmap.Width;
+
+    // Draw note cursor box
+    FBitmap.Canvas.Pen.Color := clCream;
+    FBitmap.Canvas.Brush.Color := clCream;
+    lHighlightLocation := ConvertTimeToScreen(FNoteHighlightLocation) + FLocationOffset;
+    lHighlightNote := ConvertNoteToScreen(FNoteHighlightNote) + FNoteOffset;
+    lHighlightWidth := Round(FQuantizeValue * FZoomFactorToScreenX);
+    FBitmap.Canvas.Rectangle(lHighlightLocation, lHighlightNote,
+      lHighlightLocation + lHighlightWidth, lHighlightNote + FZoomNoteHeight);
+
+    // Draw rubberband selector with dashed outline
+    if FRubberBandMode then
+    begin
+      FBitmap.Canvas.Brush.Style := bsClear;
+      FBitmap.Canvas.Pen.Color := clBlack;
+      FBitmap.Canvas.Pen.Style := psDash;
+      FBitmap.Canvas.Rectangle(FRubberBandSelect);
+      FBitmap.Canvas.Brush.Style := bsSolid;
+      FBitmap.Canvas.Pen.Style := psSolid;
+    end;
+
+    // Draw midi notes
+    FBitmap.Canvas.Pen.Color := clBlack;
+    FBitmap.Canvas.Brush.Color := clGreen;
+
+    for lIndex := 0 to Pred(NoteListGUI.Count) do
+    begin
+      lNote := TMidiNoteGUI(NoteListGUI[lIndex]);
+
+      if lNote.Selected then
+      begin
+        FBitmap.Canvas.Brush.Color := clGreen;
+      end
+      else
+      begin
+        FBitmap.Canvas.Brush.Color := clLime;
+      end;
+
+      FBitmap.Canvas.Rectangle(
+        ConvertTimeToScreen(lNote.NoteLocation) + FLocationOffset,
+        ConvertNoteToScreen(lNote.Note) + FNoteOffset,
+        ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FLocationOffset,
+        ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset
+        );
+
+      if FZoomNoteHeight > 8 then
+      begin
+        FBitmap.Canvas.TextOut(
+          ConvertTimeToScreen(lNote.NoteLocation) + FLocationOffset,
+          ConvertNoteToScreen(lNote.Note) + FNoteOffset,
+          Format('%d, %d', [lNote.Note, lNote.NoteLocation]));
+      end;
+    end;
+
+    // Draw keyboard
+    if PianoKeyboard in FOptionsView then
+    begin
+      FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
+      FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
+      FBitmap.Canvas.Clipping := True;
+      FBitmap.Canvas.Rectangle(0, 0, 30, FBitmap.Height);
+      for lNoteIndex := 0 to 127 do
+      begin
+        lMidiNoteModula := lNoteIndex mod 12;
+        case lMidiNoteModula of
+         0: lMidiNoteKey := keyWhite;
+         1: lMidiNoteKey := keyBlack;
+         2: lMidiNoteKey := keyWhite;
+         3: lMidiNoteKey := keyBlack;
+         4: lMidiNoteKey := keyWhite;
+         5: lMidiNoteKey := keyWhite;
+         6: lMidiNoteKey := keyBlack;
+         7: lMidiNoteKey := keyWhite;
+         8: lMidiNoteKey := keyBlack;
+         9: lMidiNoteKey := keyWhite;
+        10: lMidiNoteKey := keyBlack;
+        11: lMidiNoteKey := keyWhite;
+        end;
+
+        if lMidiNoteKey = keyBlack then
+        begin
+          FBitmap.Canvas.Pen.Color := clBlack;
+          FBitmap.Canvas.Brush.Color := clBlack;
+          FBitmap.Canvas.Rectangle(
+            0,
+            ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
+            30,
+            ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
+        end;
+
+        if lMidiNoteModula in [4, 11] then
+        begin
+        FBitmap.Canvas.Pen.Color := clBlack;
+        FBitmap.Canvas.Brush.Color := clBlack;
+        FBitmap.Canvas.Line(
+          0,
+          ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
+          30,
+          ConvertNoteToScreen(lNoteIndex) + FNoteOffset);
+        end;
+      end;
+      FBitmap.Canvas.Line(30, 0, 30, FBitmap.Height);
+    end;
+    FBitmapIsDirty := False;
+  end;
+
+  Canvas.Draw(0, 0, FBitmap);
+
+  // Draw cursor
+  x := Round((Model.RealCursorPosition * FZoomFactorToScreenX) / 220 + FLocationOffset + FNoteInfoWidth);
+  if FOldCursorPosition <> x then
+  begin
+    if x >= FNoteInfoWidth then
+    begin
+      Canvas.Pen.Color := clBlack;
+      Canvas.Line(x, 0, x, Height);
+    //  Canvas.TextOut(0, 0, Format('RealCursorPosition %d, lTimeSpacing %d, FZoomFactorX %f',[x, lTimeSpacing, FZoomFactorX]));
+    //  Canvas.TextOut(0, 20, Format('FNoteHighlightLocation %d, FNoteHighlightNote %d, FZoomFactorToScreenX %s',[FNoteHighlightLocation, FNoteHighlightNote, floattostr(FZoomFactorToScreenX)]));
+    end;
+
+    FOldCursorPosition := x;
+  end;
+
+  inherited Paint;
+end;
+
+function TMidiGridGUI.GetObjectID: string;
+begin
+  Result := FObjectID;
+end;
+
+procedure TMidiGridGUI.SetObjectID(AObjectID: string);
+begin
+  FObjectID := AObjectID;
+end;
+
+function TMidiGridGUI.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TMidiGridGUI.SetObjectOwnerID(AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
+end;
+
+procedure TMidiGridGUI.Update(Subject: THybridPersistentModel);
+begin
+  DBLog('start TMidiGridGUI.Update');
+
+  DiffLists(
+    TMidiGrid(Subject).NoteList,
+    FNoteListGUI,
+    @CreateNoteGUI,
+    @DeleteNoteGUI);
+
+  FBitmapIsDirty := True;
+  Invalidate;
+
+  DBLog('end TMidiGridGUI.Update');
+end;
+
+procedure TMidiGridGUI.CreateNoteGUI(AObjectID: string);
+var
+  lMidiNote: TMidiNote;
+  lMidiNoteGUI: TMidiNoteGUI;
+begin
+  DBLog('start TMidiGridGUI.CreateNoteGUI');
+
+  lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
+  lMidiNoteGUI := TMidiNoteGUI.Create;
+  lMidiNoteGUI.ObjectID := AObjectID;
+  lMidiNoteGUI.ObjectOwnerID := Self.ObjectID;
+  lMidiNoteGUI.ModelObject := lMidiNote;
+  lMidiNoteGUI.Note := lMidiNote.Note;
+  lMidiNoteGUI.NoteLocation := lMidiNote.NoteLocation;
+  lMidiNoteGUI.NoteLength := lMidiNote.NoteLength;
+  lMidiNoteGUI.MidiGridGUI := Self;
+
+  FNoteListGUI.Add(lMidiNoteGUI);
+  lMidiNote.Attach(lMidiNoteGUI);
+
+  DBLog('end TMidiGridGUI.CreateNoteGUI');
+end;
+
+procedure TMidiGridGUI.DeleteNoteGUI(AObjectID: string);
+var
+  lMidiNoteGUI: TMidiNoteGUI;
+  lIndex: Integer;
+begin
+  DBLog('start TMidiGridGUI.DeleteNoteGUI');
+
+  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
+  begin
+    lMidiNoteGUI := TMidiNoteGUI(FNoteListGUI[lIndex]);
+
+    if lMidiNoteGUI.ObjectID = AObjectID then
+    begin
+      FNoteListGUI.Remove(lMidiNoteGUI);
+      break;
+    end;
+  end;
+
+  DBLog('end TMidiGridGUI.DeleteNoteGUI');
+end;
+
+function TMidiGridGUI.NoteByObjectID(AObjectID: string): TMidiNoteGUI;
+var
+  lIndex: Integer;
+begin
+  Result := nil;
+
+  for lIndex := 0 to Pred(NoteListGUI.Count) do
+  begin
+    if TMidiNoteGUI(NoteListGUI[lIndex]).ObjectID = AObjectID then
+    begin
+      Result := TMidiNoteGUI(NoteListGUI[lIndex]);
+    end;
+  end;
+end;
+
+procedure TMidiGridGUI.NoteListByRect(AObjectIDList: TStringList; ARect: TRect);
+var
+  lIndex: Integer;
+  lMidiNoteGUI: TMidiNoteGUI;
+  lLeft: Integer;
+  lRight: Integer;
+  lTop: Integer;
+  lBottom: Integer;
+begin
+  if FRubberBandSelect.Left > FRubberBandSelect.Right then
+  begin
+    lLeft := FRubberBandSelect.Right;
+    lRight := FRubberBandSelect.Left;
+  end
+  else
+  begin
+    lLeft := FRubberBandSelect.Left;
+    lRight := FRubberBandSelect.Right;
+  end;
+  if FRubberBandSelect.Top > FRubberBandSelect.Bottom then
+  begin
+    lTop := FRubberBandSelect.Bottom;
+    lBottom := FRubberBandSelect.Top;
+  end
+  else
+  begin
+    lTop := FRubberBandSelect.Top;
+    lBottom := FRubberBandSelect.Bottom;
+  end;
+
+  for lIndex := 0 to Pred(NoteListGUI.Count) do
+  begin
+    lMidiNoteGUI := TMidiNoteGUI(NoteListGUI[lIndex]);
+
+    if Assigned(lMidiNoteGUI) then
+    begin
+      if (lLeft < (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation) + FLocationOffset)) and
+         (lRight > (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation + lMidiNoteGUI.NoteLength) + FLocationOffset)) and
+         (lTop < ConvertNoteToScreen(lMidiNoteGUI.Note) + FNoteOffset) and
+         (lBottom > ConvertNoteToScreen(lMidiNoteGUI.Note) + FZoomNoteHeight + FNoteOffset) then
+      begin
+        AObjectIDList.Add(lMidiNoteGUI.ObjectID);
+      end;
+    end;
+  end;
+end;
+
+{
+  Convert a screen cursor position to a location in time
+}
+function TMidiGridGUI.ConvertScreenToTime(AX: Integer): Integer;
+begin
+  Result := Round((AX - FNoteInfoWidth) * FZoomFactorToDataX);
+end;
+
+{
+  Convert location in time to a screen cursor position
+}
+function TMidiGridGUI.ConvertTimeToScreen(ATime: Integer): Integer;
+begin
+  Result := Round(ATime * FZoomFactorToScreenX) + FNoteInfoWidth;
+end;
+
+{
+  Convert a note to a screen note position
+}
+function TMidiGridGUI.ConvertNoteToScreen(ANote: Integer): Integer;
+var
+  lScale: single;
+begin
+  lScale := (32 / Height) * FZoomFactorToDataY;
+
+  Result := Round(Height - Round(ANote / lScale));
+end;
+
+{
+  Convert a screen note position to a note
+}
+function TMidiGridGUI.ConvertScreenToNote(AY: Integer): Integer;
+var
+  lScale: single;
+begin
+  lScale := (32 / Height) * FZoomFactorToDataY;
+
+  Result := Round((Height - AY) * lScale);
+end;
+
+function TMidiGridGUI.NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
+var
+  lIndex: Integer;
+  lNote: TMidiNoteGUI;
+  lLeft: Integer;
+  lTop: Integer;
+  lRight: Integer;
+  lBottom: Integer;
+begin
+  Result := nil;
+  for lIndex := 0 to Pred(FNoteListGUI.Count) do
+  begin
+    lNote := TMidiNoteGUI(FNoteListGUI[lIndex]);
+
+    lLeft := ConvertTimeToScreen(lNote.NoteLocation) + FLocationOffset;
+    lTop :=  ConvertNoteToScreen(lNote.Note) + FNoteOffset;
+    lRight := ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FLocationOffset;
+    lBottom := ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset;
+
+    if (lLeft <= AX) and (lTop <= AY) and (lRight >= AX) and (lBottom >= AY) then
+    begin
+      Result := lNote;
+      break;
+    end;
+  end;
+end;
+
+procedure TMidiGridGUI.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  // First handle already present notes under mouseposition
+  inherited MouseDown(Button, Shift, X, Y);
+
+  FMouseX := X;
+  FMouseY := Y;
+
+  FDraggedNote := NoteUnderCursor(X, Y);
+
+  if Assigned(FDraggedNote) then
+  begin
+    HandleNoteMouseDown(Button, Shift, X, Y);
+  end
+  else
+  begin
+    case Button of
+      mbLeft:
+      begin
+        FRubberBandMode := True;
+        FRubberBandSelect.TopLeft.X := X;
+        FRubberBandSelect.TopLeft.Y := Y;
+        FRubberBandSelect.BottomRight.X := X;
+        FRubberBandSelect.BottomRight.Y := Y;
+      end;
+
+      mbRight:
+      begin
+        FZoomingMode := True;
+        FOldZoomFactorX := FZoomFactorX;
+        FOldZoomFactorY := FZoomFactorY;
+        FOldLocationOffset := FLocationOffset;
+        FOldNoteOffset := FNoteOffset;
+        FOldX := X;
+        FOldY := Y;
+      end;
+    end;
+  end;
+end;
+
+procedure TMidiGridGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  inherited MouseUp(Button, Shift, X, Y);
+
+  if Assigned(FDraggedNote) then
+  begin
+    HandleNoteMouseUp(Button, Shift, X, Y);
+  end
+  else
+  begin
+    if FZoomingMode then
+      FZoomingMode:= False;
+
+    if FRubberBandMode then
+      FRubberBandMode := False;
+
+    Repaint;
+  end;
+end;
+
+function TMidiGridGUI.QuantizeLocation(ALocation: Integer): Integer;
+begin
+  if FQuantizeSetting = 0 then
+  begin
+    Result := Round(Trunc(ALocation / 100) * 100);
+  end
+  else
+  begin
+    Result := Round(Trunc(ALocation / FQuantizeValue) * FQuantizeValue);
+  end;
+end;
+
+procedure TMidiGridGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
+var
+  lSelectObjectListCommand: TSelectObjectListCommand;
+begin
+  inherited MouseMove(Shift, X, Y);
+
+  FMouseX := X;
+  FMouseY := Y;
+
+  if Assigned(FDraggedNote) then
+  begin
+    HandleNoteMouseMove(Shift, X, Y);
+  end
+  else
+  begin
+    if FRubberBandMode then
+    begin
+      if (FRubberBandSelect.BottomRight.X <> X) or
+        (FRubberBandSelect.BottomRight.Y <> Y) then
+      begin
+        FRubberBandSelect.BottomRight.X := X;
+        FRubberBandSelect.BottomRight.Y := Y;
+
+        lSelectObjectListCommand := TSelectObjectListCommand.Create(Self.ObjectID);
+        try
+          lSelectObjectListCommand.AddMode := (ssShift in GSettings.Modifier);
+          lSelectObjectListCommand.Persist := False;
+          NoteListByRect(lSelectObjectListCommand.ObjectIdList, FRubberBandSelect);
+
+          GCommandQueue.PushCommand(lSelectObjectListCommand);
+        except
+          lSelectObjectListCommand.Free;
+        end;
+      end;
+    end;
+
+    if FZoomingMode then
+    begin
+      FLocationOffset:= FOldLocationOffset + (X - FOldX);
+
+      if FLocationOffset > 0 then
+      begin
+        FLocationOffset := 0;
+      end;
+
+      FNoteOffset := FOldNoteOffset + (Y - FOldY);
+    end;
+
+    FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FLocationOffset));
+    FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
+  end;
+
+  // Invalidate here as this one of the few situations that screen updates are
+  // requested by the observer and not the subject ie mousemove changes are not always
+  // persistent towards the subject.
+  FBitmapIsDirty := True;
+  Invalidate;
+end;
+
+procedure TMidiGridGUI.DblClick;
+var
+  lCreateNoteCommand: TCreateNotesCommand;
+  lDeleteNoteCommand: TDeleteNotesCommand;
+begin
+  if Assigned(FDraggedNote) then
+  begin
+    lDeleteNoteCommand := TDeleteNotesCommand.Create(Self.ObjectID);
+    try
+      lDeleteNoteCommand.ObjectID := FDraggedNote.ObjectID;
+
+      GCommandQueue.PushCommand(lDeleteNoteCommand);
+    except
+      lDeleteNoteCommand.Free;
+    end;
+  end
+  else
+  begin
+    lCreateNoteCommand := TCreateNotesCommand.Create(Self.ObjectID);
+    try
+      if FQuantizeValue = 0 then
+        lCreateNoteCommand.NoteLength := 100
+      else
+        lCreateNoteCommand.NoteLength := Round(FQuantizeValue);
+
+      lCreateNoteCommand.Note := ConvertScreenToNote(FMouseY - FNoteOffset);
+      lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(FMouseX - FLocationOffset));
+
+      GCommandQueue.PushCommand(lCreateNoteCommand);
+    except
+      lCreateNoteCommand.Free;
+    end;
+  end;
+  inherited DblClick;
+end;
+
+function TMidiGridGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
+  ): Boolean;
+begin
+  ZoomFactorY := ZoomFactorY + 100;
+  //FNoteOffset := ConvertScreenToNote(MousePos.Y);
+
+
+  FBitmapIsDirty := True;
+  Invalidate;
+
+  Result := inherited DoMouseWheelDown(Shift, MousePos);
+end;
+
+function TMidiGridGUI.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
+  ): Boolean;
+begin
+  ZoomFactorY := ZoomFactorY - 100;
+  //FNoteOffset := ConvertScreenToNote(MousePos.Y);
+
+  FBitmapIsDirty := True;
+  Invalidate;
+
+  Result := inherited DoMouseWheelUp(Shift, MousePos);
+end;
+
+
+{$R *.lfm}
+
+{ TMidigridOverview }
+
+constructor TMidigridOverview.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  FNoteListGUI := TObjectList.Create(True);
+end;
+
+destructor TMidigridOverview.Destroy;
+begin
+  if Assigned(FNoteListGUI) then
+    FNoteListGUI.Free;
+
+  inherited Destroy;
+end;
+
+procedure TMidigridOverview.Update(Subject: THybridPersistentModel);
+begin
+  DBLog('start TMidigridOverview.Update');
+
+  DiffLists(
+    TMidiGrid(Subject).NoteList,
+    FNoteListGUI,
+    @CreateNoteGUI,
+    @DeleteNoteGUI);
+
+  // Determine total width of a notes
+  FTotalWidth := CalculateTotalWidth;
+
+  Invalidate;
+
+  DBLog('end TMidigridOverview.Update');
+end;
+
+procedure TMidigridOverview.EraseBackground(DC: HDC);
+begin
+  inherited EraseBackground(DC);
+end;
+
+procedure TMidigridOverview.Paint;
+var
+  lIndex: Integer;
+  lNote: TMidiNoteOverview;
+begin
+
+  // Draw midi notes
+  Canvas.Pen.Color := clBlack;
+  Canvas.Pen.Width := 1;
+  for lIndex := 0 to Pred(FNoteListGUI.Count) do
+  begin
+    lNote := TMidiNoteOverview(FNoteListGUI[lIndex]);
+
+    Canvas.Line(
+      ConvertTimeToScreen(lNote.NoteLocation),
+      ConvertNoteToScreen(lNote.Note),
+      ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength),
+      ConvertNoteToScreen(lNote.Note)
+      );
+  end;
+
+  Canvas.Pen.Width := 1;
+  Canvas.Rectangle(0, 0, Width, Height);
+
+  Canvas.Pen.Width := 2;
+  Canvas.Brush.Style := bsClear;
+  Canvas.Rectangle(
+    ConvertTimeToScreen(FZoomTimeLeft), 1,
+    ConvertTimeToScreen(FZoomTimeRight), Height - 1);
+
+  inherited Paint;
+end;
+
+procedure TMidigridOverview.MouseDown(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
+begin
+  FOldX := X;
+  FOldY := Y;
+
+  if FNoteListGUI.Count > 0 then
+  begin
+    if (X >= ConvertTimeToScreen(FZoomTimeLeft) - 2) and (X <= ConvertTimeToScreen(FZoomTimeLeft) + 2) then
+    begin
+      FZoomingLeft := True;
+    end
+    else if (X >= ConvertTimeToScreen(FZoomTimeRight) - 2) and (X <= ConvertTimeToScreen(FZoomTimeRight) + 2) then
+    begin
+      FZoomingRight := True;
+    end
+    else
+    begin
+      FZooming := True;
+    end;
+  end;
+
+  inherited MouseDown(Button, Shift, X, Y);
+end;
+
+procedure TMidigridOverview.MouseUp(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
+begin
+  FZooming := False;
+  FZoomingLeft := False;
+  FZoomingRight := False;
+
+  inherited MouseUp(Button, Shift, X, Y);
+end;
+
+procedure TMidigridOverview.MouseMove(Shift: TShiftState; X, Y: Integer);
+var
+  lConstraintZoom: Integer;
+begin
+  FMouseX := X;
+
+  if FZooming then
+  begin
+    if Y <= FOldY then
+    begin
+      lConstraintZoom := 100 - (FOldY - Y);
+      if lConstraintZoom > 100 then
+        lConstraintZoom := 100;
+      if lConstraintZoom < 5 then
+        lConstraintZoom := 5;
+    end
+    else
+      lConstraintZoom := 100;
+
+    FZoomBoxWidth := Round((Width / 100) * lConstraintZoom);
+    if FZoomBoxWidth < 20 then FZoomBoxWidth := 20;
+
+    FZoomTimeLeft := ConvertScreenToTime(FMouseX - (FZoomBoxWidth div 2));
+    if FZoomTimeLeft < 1 then FZoomTimeLeft := 1;
+
+    FZoomTimeRight := ConvertScreenToTime(FMouseX + (FZoomBoxWidth div 2));
+    if FZoomTimeRight < 20 then
+      FZoomTimeRight := 20;
+
+    if FZoomTimeRight > ConvertScreenToTime(Width) then
+      FZoomTimeRight := ConvertScreenToTime(Width);
+
+    if FZoomTimeRight > FZoomTimeLeft then
+    begin
+      if Assigned(FZoomCallback) then
+      begin
+        FZoomCallback(FZoomTimeLeft, FZoomTimeRight);
+      end;
+    end;
+
+    Invalidate;
+  end
+  else if FZoomingLeft then
+  begin
+    FZoomTimeLeft := ConvertScreenToTime(X);
+
+    if FZoomTimeLeft >= (FZoomTimeRight - 20) then
+      FZoomTimeLeft := FZoomTimeRight - 20;
+
+    if FZoomTimeLeft < 1 then
+      FZoomTimeLeft := 1;
+
+    if FZoomTimeRight > ConvertScreenToTime(Width) then
+      FZoomTimeRight := ConvertScreenToTime(Width);
+
+    if FZoomTimeRight > FZoomTimeLeft then
+    begin
+      if Assigned(FZoomCallback) then
+      begin
+        FZoomCallback(FZoomTimeLeft, FZoomTimeRight);
+      end;
+    end;
+
+    Invalidate;
+  end
+  else if FZoomingRight then
+  begin
+    FZoomTimeRight := ConvertScreenToTime(X);
+
+    if FZoomTimeRight <= (FZoomTimeLeft + 20) then
+      FZoomTimeRight := FZoomTimeLeft + 20;
+
+    if FZoomTimeRight > ConvertScreenToTime(Width) then
+      FZoomTimeRight := ConvertScreenToTime(Width);
+
+    if FZoomTimeRight > FZoomTimeLeft then
+    begin
+      if Assigned(FZoomCallback) then
+      begin
+        FZoomCallback(FZoomTimeLeft, FZoomTimeRight);
+      end;
+    end;
+
+    Invalidate;
+  end;
+
+  inherited MouseMove(Shift, X, Y);
+end;
+
+procedure TMidigridOverview.CreateNoteGUI(AObjectID: string);
+var
+  lMidiNote: TMidiNote;
+  lMidiNoteOverview: TMidiNoteOverview;
+begin
+  DBLog('start TMidigridOverview.CreateNoteGUI');
+
+  lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
+  lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
+  lMidiNoteOverview.ObjectID := AObjectID;
+  lMidiNoteOverview.ObjectOwnerID := Self.ObjectID;
+  lMidiNoteOverview.ModelObject := lMidiNote;
+  lMidiNoteOverview.Note := lMidiNote.Note;
+  lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
+  lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;
+
+  FNoteListGUI.Add(lMidiNoteOverview);
+  lMidiNote.Attach(lMidiNoteOverview);
+
+  DBLog('end TMidigridOverview.CreateNoteGUI');
+end;
+
+procedure TMidigridOverview.DeleteNoteGUI(AObjectID: string);
+var
+  lMidiNoteOverview: TMidiNoteOverview;
+  lIndex: Integer;
+begin
+  DBLog('start TMidigridOverview.DeleteNoteGUI');
+
+  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
+  begin
+    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
+
+    if lMidiNoteOverview.ObjectID = AObjectID then
+    begin
+      FNoteListGUI.Remove(lMidiNoteOverview);
+      break;
+    end;
+  end;
+
+  DBLog('end TMidigridOverview.DeleteNoteGUI');
+end;
+
+{
+  Convert location in time to a screen cursor position
+}
+function TMidigridOverview.ConvertTimeToScreen(ATime: Integer): Integer;
+begin
+  Result := Round(ATime * (Width / FTotalWidth));
+end;
+
+{
+  Convert location in time to a screen cursor position
+}
+function TMidigridOverview.ConvertScreenToTime(AX: Integer): Integer;
+begin
+  Result := Round(AX * (FTotalWidth / Width));
+end;
+
+function TMidigridOverview.CalculateTotalWidth: Integer;
+var
+  lNoteIndex: Integer;
+  lMinimalLocation: Integer;
+  lMaximalLocation: Integer;
+  lNote: TMidiNoteOverview;
+begin
+  Result := 0;
+  for lNoteIndex := 0 to Pred(FNoteListGUI.Count) do
+  begin
+    lNote := TMidiNoteOverview(FNoteListGUI[lNoteIndex]);
+    if lNoteIndex = 0 then
+    begin
+      lMinimalLocation := lNote.NoteLocation;
+      lMaximalLocation := lNote.NoteLocation + lNote.NoteLength;
+    end
+    else
+    begin
+      if lNote.NoteLocation < lMinimalLocation then
+      begin
+        lMinimalLocation := lNote.NoteLocation;
+      end;
+      if (lNote.NoteLocation + lNote.NoteLength) > lMaximalLocation then
+      begin
+        lMaximalLocation := lNote.NoteLocation + lNote.NoteLength;
+      end;
+    end;
+  end;
+  Result := lMaximalLocation - lMinimalLocation;
+end;
+
+{
+  Convert a note to a screen note position
+}
+function TMidigridOverview.ConvertNoteToScreen(ANote: Integer): Integer;
+var
+  lScale: single;
+begin
+  lScale := (128 / Height);
+
+  Result := Round(Height - Round(ANote / lScale));
+end;
+
+{ TMidiNoteOverview }
+
+procedure TMidiNoteOverview.Update(Subject: THybridPersistentModel);
+var
+  lNote: TMidiNote;
+begin
+  DBLog('start TMidiNoteOverview.Update');
+
+  lNote := TMidiNote(Subject);
+
+  if Assigned(lNote) then
+  begin
+    Selected := lNote.Selected;
+    NoteLocation := lNote.NoteLocation;
+    Note := lNote.Note;
+    NoteVelocity := lNote.NoteVelocity;
+    NoteLength := lNote.NoteLength;
+  end;
+
+  DBLog('end TMidiNoteOverview.Update');
+end;
+
+initialization
+  RegisterClass(TMidiGridGUI);
+  RegisterClass(TMidiNoteGUI);
+end.
+

@@ -1,0 +1,21 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TSampleView','FORMDATA',[
+  'TPF0'#11'TSampleView'#10'SampleView'#4'Left'#2#0#6'Height'#3'#'#1#3'Top'#2#0
+  +#5'Width'#3'>'#3#5'Align'#7#8'alClient'#12'ClientHeight'#3'#'#1#11'ClientWid'
+  +'th'#3'>'#3#8'TabOrder'#2#0#10'DesignLeft'#3'L'#1#9'DesignTop'#3'j'#1#0#12'T'
+  +'PageControl'#9'pcSampler'#4'Left'#2#0#6'Height'#3#175#0#3'Top'#2#0#5'Width'
+  +#3'>'#3#10'ActivePage'#7#8'tsGlobal'#5'Align'#7#5'alTop'#8'TabIndex'#2#3#8'T'
+  +'abOrder'#2#0#0#9'TTabSheet'#8'tsSample'#7'Caption'#6#6'Sample'#0#0#9'TTabSh'
+  +'eet'#8'tsTuning'#7'Caption'#6#6'Tuning'#12'ClientHeight'#3#146#0#11'ClientW'
+  +'idth'#3'8'#3#0#12'TDialControl'#8'dcCutoff'#4'Left'#2'K'#6'Height'#2'<'#3'T'
+  +'op'#2#2#5'Width'#2'('#5'Value'#5#0#0#0#0#0#0#0#200#5'@'#7'Caption'#6#6'Cuto'
+  +'ff'#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#200#5'@'#8'O'
+  +'nChange'#7#14'dcCutoffChange'#13'OnStartChange'#7#19'dcCutoffStartChange'#7
+  +'Enabled'#9#0#0#12'TDialControl'#11'dcResonance'#4'Left'#2'}'#6'Height'#2'<'
+  +#3'Top'#2#1#5'Width'#2'('#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#3'Res'
+  +#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#200#5'@'#8'OnCha'
+  +'nge'#7#17'dcResonanceChange'#13'OnStartChange'#7#22'dcResonanceStartChange'
+  +#7'Enabled'#9#0#0#0#9'TTabSheet'#12'tsModulators'#7'Caption'#6#10'Modulators'
+  +#0#0#9'TTabSheet'#8'tsGlobal'#7'Caption'#6#6'Global'#0#0#0#0
+]);

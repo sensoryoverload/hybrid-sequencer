@@ -1,0 +1,46 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TTrack','FORMDATA',[
+  'TPF0'#6'TTrack'#5'Track'#4'Left'#2#0#6'Height'#3#155#2#3'Top'#2#0#5'Width'#2
+  +'f'#5'Align'#7#8'alCustom'#7'Anchors'#11#5'akTop'#0#12'ClientHeight'#3#155#2
+  +#11'ClientWidth'#2'f'#9'PopupMenu'#7#7'pmTrack'#8'TabOrder'#2#0#10'DesignLef'
+  +'t'#3#0#3#9'DesignTop'#2'!'#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2#0#6'H'
+  +'eight'#3#245#0#3'Top'#3#166#1#5'Width'#2'f'#5'Align'#7#8'alBottom'#10'Bevel'
+  +'Inner'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3#245#0#11
+  +'ClientWidth'#2'f'#21'Constraints.MaxHeight'#3#245#0#21'Constraints.MinHeigh'
+  +'t'#3#245#0#8'TabOrder'#2#0#11'OnMouseDown'#7#22'TrackControlsMouseDown'#11
+  +'OnMouseMove'#7#22'TrackControlsMouseMove'#9'OnMouseUp'#7#20'TrackControlsMo'
+  +'useUp'#0#14'TToggleControl'#4'tcOn'#4'Left'#2'6'#6'Height'#2#14#3'Top'#3#147
+  +#0#5'Width'#2#30#10'SwitchedOn'#8#8'OnChange'#7#10'tcOnChange'#0#0#11'TStati'
+  +'cText'#8'lblInput'#4'Left'#2#31#6'Height'#2#15#3'Top'#2#2#5'Width'#2'#'#7'C'
+  +'aption'#6#5'Input'#11'Font.Height'#2#7#10'Font.Style'#11#6'fsBold'#0#10'Par'
+  +'entFont'#8#8'TabOrder'#2#1#0#0#9'TComboBox'#9'ComboBox1'#4'Left'#2#1#6'Heig'
+  +'ht'#2#22#3'Top'#2#17#5'Width'#2'`'#8'AutoSize'#8#11'Font.Height'#2#7#10'Ite'
+  +'mHeight'#2#0#9'ItemIndex'#2#0#13'Items.Strings'#1#6#4'None'#0#10'ParentFont'
+  +#8#5'Style'#7#14'csDropDownList'#8'TabOrder'#2#2#4'Text'#6#4'None'#0#0#11'TS'
+  +'taticText'#9'lblOutput'#4'Left'#2#26#6'Height'#2#17#3'Top'#2''''#5'Width'#2
+  +'2'#7'Caption'#6#6'Output'#11'Font.Height'#2#7#10'Font.Style'#11#6'fsBold'#0
+  +#10'ParentFont'#8#8'TabOrder'#2#3#0#0#9'TComboBox'#8'cbOutput'#4'Left'#2#1#6
+  +'Height'#2#22#3'Top'#2'6'#5'Width'#2'`'#8'AutoSize'#8#11'Font.Height'#2#7#10
+  +'ItemHeight'#2#0#9'ItemIndex'#2#0#13'Items.Strings'#1#6#6'Master'#0#10'Paren'
+  +'tFont'#8#5'Style'#7#14'csDropDownList'#8'TabOrder'#2#4#4'Text'#6#6'Master'#0
+  +#0#14'TVolumeControl'#7'vcLevel'#4'Left'#2#6#6'Height'#3#160#0#3'Top'#2'T'#5
+  +'Width'#2')'#8'OnChange'#7#13'vcLevelChange'#13'OnStartChange'#7#18'vcLevelS'
+  +'tartChange'#0#0#12'TDialControl'#12'DialControl1'#4'Left'#2'1'#6'Height'#2
+  +'?'#3'Top'#2'T'#5'Width'#2'('#5'Value'#5#0#0#0#0#0#0#0#0#0#0#6'Lowest'#5#0#0
+  +#0#0#0#0#0#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#200#5'@'#7'Enabled'#9#0#0#0#6'TP'
+  +'anel'#8'pnlSends'#4'Left'#2#0#6'Height'#2'F'#3'Top'#3'`'#1#5'Width'#2'f'#5
+  +'Align'#7#8'alBottom'#10'BevelOuter'#7#9'bvLowered'#21'Constraints.MaxHeight'
+  +#2'F'#21'Constraints.MinHeight'#2'F'#8'TabOrder'#2#1#0#0#9'TSplitter'#9'Spli'
+  +'tter2'#6'Cursor'#7#8'crVSplit'#4'Left'#2#0#6'Height'#2#7#3'Top'#3'Y'#1#5'Wi'
+  +'dth'#2'f'#5'Align'#7#8'alBottom'#8'AutoSnap'#8#7'OnMoved'#7#14'Splitter2Mov'
+  +'ed'#12'ResizeAnchor'#7#8'akBottom'#0#0#6'TPanel'#11'pnlPatterns'#4'Left'#2#0
+  +#6'Height'#3'Y'#1#4'Hint'#6#18'Drop patterns here'#3'Top'#2#0#5'Width'#2'f'#5
+  +'Align'#7#8'alClient'#10'BevelInner'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNon'
+  +'e'#14'ParentShowHint'#8#8'ShowHint'#9#8'TabOrder'#2#3#10'OnDragDrop'#7#19'p'
+  +'nlPatternsDragDrop'#10'OnDragOver'#7#19'pnlPatternsDragOver'#0#0#10'TPopupM'
+  +'enu'#7'pmTrack'#4'left'#2'!'#3'top'#3#246#0#0#9'TMenuItem'#13'miDeleteTrack'
+  +#7'Caption'#6#12'Delete track'#0#0#0#11'TActionList'#11'ActionList1'#4'left'
+  +#2'"'#3'top'#3#201#0#0#7'TAction'#13'acDeleteTrack'#7'Caption'#6#12'Delete t'
+  +'rack'#9'OnExecute'#7#20'acDeleteTrackExecute'#0#0#0#0
+]);

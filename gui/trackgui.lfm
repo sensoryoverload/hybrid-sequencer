@@ -1,0 +1,165 @@
+object Track: TTrack
+  Left = 0
+  Height = 667
+  Top = 0
+  Width = 102
+  Align = alCustom
+  Anchors = [akTop]
+  ClientHeight = 667
+  ClientWidth = 102
+  PopupMenu = pmTrack
+  TabOrder = 0
+  DesignLeft = 768
+  DesignTop = 33
+  object pnlTrackControls: TPanel
+    Left = 0
+    Height = 245
+    Top = 422
+    Width = 102
+    Align = alBottom
+    BevelInner = bvLowered
+    BevelOuter = bvNone
+    ClientHeight = 245
+    ClientWidth = 102
+    Constraints.MaxHeight = 245
+    Constraints.MinHeight = 245
+    TabOrder = 0
+    OnMouseDown = TrackControlsMouseDown
+    OnMouseMove = TrackControlsMouseMove
+    OnMouseUp = TrackControlsMouseUp
+    object tcOn: TToggleControl
+      Left = 54
+      Height = 14
+      Top = 147
+      Width = 30
+      SwitchedOn = False
+      OnChange = tcOnChange
+    end
+    object lblInput: TStaticText
+      Left = 31
+      Height = 15
+      Top = 2
+      Width = 35
+      Caption = 'Input'
+      Font.Height = 7
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 1
+    end
+    object ComboBox1: TComboBox
+      Left = 1
+      Height = 22
+      Top = 17
+      Width = 96
+      AutoSize = False
+      Font.Height = 7
+      ItemHeight = 0
+      ItemIndex = 0
+      Items.Strings = (
+        'None'
+      )
+      ParentFont = False
+      Style = csDropDownList
+      TabOrder = 2
+      Text = 'None'
+    end
+    object lblOutput: TStaticText
+      Left = 26
+      Height = 17
+      Top = 39
+      Width = 50
+      Caption = 'Output'
+      Font.Height = 7
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 3
+    end
+    object cbOutput: TComboBox
+      Left = 1
+      Height = 22
+      Top = 54
+      Width = 96
+      AutoSize = False
+      Font.Height = 7
+      ItemHeight = 0
+      ItemIndex = 0
+      Items.Strings = (
+        'Master'
+      )
+      ParentFont = False
+      Style = csDropDownList
+      TabOrder = 4
+      Text = 'Master'
+    end
+    object vcLevel: TVolumeControl
+      Left = 6
+      Height = 160
+      Top = 84
+      Width = 41
+      OnChange = vcLevelChange
+      OnStartChange = vcLevelStartChange
+    end
+    object DialControl1: TDialControl
+      Left = 49
+      Height = 63
+      Top = 84
+      Width = 40
+      Value = 0
+      Lowest = 0
+      Highest = 100
+      Enabled = True
+    end
+  end
+  object pnlSends: TPanel
+    Left = 0
+    Height = 70
+    Top = 352
+    Width = 102
+    Align = alBottom
+    BevelOuter = bvLowered
+    Constraints.MaxHeight = 70
+    Constraints.MinHeight = 70
+    TabOrder = 1
+  end
+  object Splitter2: TSplitter
+    Cursor = crVSplit
+    Left = 0
+    Height = 7
+    Top = 345
+    Width = 102
+    Align = alBottom
+    AutoSnap = False
+    OnMoved = Splitter2Moved
+    ResizeAnchor = akBottom
+  end
+  object pnlPatterns: TPanel
+    Left = 0
+    Height = 345
+    Hint = 'Drop patterns here'
+    Top = 0
+    Width = 102
+    Align = alClient
+    BevelInner = bvLowered
+    BevelOuter = bvNone
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 3
+    OnDragDrop = pnlPatternsDragDrop
+    OnDragOver = pnlPatternsDragOver
+  end
+  object pmTrack: TPopupMenu
+    left = 33
+    top = 246
+    object miDeleteTrack: TMenuItem
+      Caption = 'Delete track'
+    end
+  end
+  object ActionList1: TActionList
+    left = 34
+    top = 201
+    object acDeleteTrack: TAction
+      Caption = 'Delete track'
+      OnExecute = acDeleteTrackExecute
+    end
+  end
+end

@@ -1,0 +1,74 @@
+object SamplerGUI: TSamplerGUI
+  Left = 0
+  Height = 225
+  Top = 0
+  Width = 1162
+  Align = alClient
+  ClientHeight = 225
+  ClientWidth = 1162
+  TabOrder = 0
+  DesignLeft = 58
+  DesignTop = 478
+  object gbStructure: TGroupBox
+    Left = 0
+    Height = 225
+    Top = 0
+    Width = 198
+    Align = alLeft
+    Caption = 'Samplebanks'
+    ClientHeight = 212
+    ClientWidth = 194
+    TabOrder = 0
+    object pnlStructure: TPanel
+      Left = 0
+      Height = 38
+      Top = 0
+      Width = 194
+      Align = alTop
+      BevelOuter = bvNone
+      TabOrder = 0
+    end
+    object Splitter1: TSplitter
+      Cursor = crVSplit
+      Left = 0
+      Height = 2
+      Top = 38
+      Width = 194
+      Align = alTop
+      ResizeAnchor = akTop
+    end
+    object tvTreeStructure: TTreeView
+      Left = 0
+      Height = 172
+      Top = 40
+      Width = 194
+      Align = alClient
+      BorderStyle = bsNone
+      DefaultItemHeight = 13
+      DragCursor = crHandPoint
+      ExpandSignType = tvestPlusMinus
+      PopupMenu = pmStructure
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 2
+      OnClick = tvTreeStructureClick
+      OnDragDrop = tvTreeStructureDragDrop
+      OnDragOver = tvTreeStructureDragOver
+      Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips]
+    end
+  end
+  object Splitter2: TSplitter
+    Left = 198
+    Height = 225
+    Top = 0
+    Width = 4
+  end
+  object pmStructure: TPopupMenu
+    left = 99
+    top = 76
+    object miDeleteBank: TMenuItem
+      Caption = 'Delete'
+      OnClick = miDeleteBankClick
+    end
+  end
+end

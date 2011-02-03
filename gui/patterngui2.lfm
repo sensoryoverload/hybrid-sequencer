@@ -1,0 +1,450 @@
+object PatternControls: TPatternControls
+  Left = 0
+  Height = 245
+  Top = 0
+  Width = 979
+  ClientHeight = 245
+  ClientWidth = 979
+  TabOrder = 0
+  DesignLeft = 281
+  DesignTop = 317
+  object pcPatternTabs: TPageControl
+    Left = 0
+    Height = 245
+    Top = 0
+    Width = 979
+    ActivePage = tsMIDI
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 0
+    object tsMIDI: TTabSheet
+      Caption = 'MIDI'
+      ClientHeight = 216
+      ClientWidth = 973
+      object gbMidiTrackSettings: TGroupBox
+        Left = 0
+        Height = 216
+        Top = 0
+        Width = 239
+        Align = alLeft
+        Caption = 'Settings'
+        ClientHeight = 203
+        ClientWidth = 235
+        TabOrder = 0
+        object cbQuantize: TComboBox
+          Left = 0
+          Height = 22
+          Top = 11
+          Width = 67
+          AutoSize = False
+          ItemHeight = 0
+          OnChange = cbQuantizeChange
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object lblQuantize: TLabel
+          Left = 1
+          Height = 12
+          Top = -1
+          Width = 38
+          Caption = 'Quantize'
+          ParentColor = False
+        end
+        object cbSampleBankSelecter: TComboBox
+          Left = 1
+          Height = 22
+          Top = 45
+          Width = 130
+          AutoSize = False
+          ItemHeight = 0
+          OnChange = cbSampleBankSelecterChange
+          Style = csDropDownList
+          TabOrder = 1
+        end
+        object lblSampleBank: TLabel
+          Left = 1
+          Height = 12
+          Top = 34
+          Width = 54
+          Caption = 'Samplebank'
+          ParentColor = False
+        end
+        object lblMidiChannel: TLabel
+          Left = 69
+          Height = 12
+          Top = -1
+          Width = 53
+          Caption = 'MidiChannel'
+          ParentColor = False
+        end
+        object cbMidiChannel: TComboBox
+          Left = 69
+          Height = 22
+          Top = 11
+          Width = 65
+          AutoSize = False
+          ItemHeight = 0
+          OnChange = cbMidiChannelChange
+          Style = csDropDownList
+          TabOrder = 2
+        end
+      end
+      object splitMidiTab: TSplitter
+        Left = 239
+        Height = 216
+        Top = 0
+        Width = 2
+      end
+      object pnlMidiGrid: TPanel
+        Left = 241
+        Height = 216
+        Top = 0
+        Width = 732
+        Align = alClient
+        BevelOuter = bvNone
+        ClientHeight = 216
+        ClientWidth = 732
+        TabOrder = 2
+        object pnlMidigridOverview: TPanel
+          Left = 0
+          Height = 57
+          Top = 159
+          Width = 732
+          Align = alBottom
+          BevelWidth = 2
+          TabOrder = 0
+        end
+        object splitMidiGrid: TSplitter
+          Cursor = crVSplit
+          Left = 0
+          Height = 5
+          Top = 154
+          Width = 732
+          Align = alBottom
+          ResizeAnchor = akBottom
+        end
+      end
+    end
+    object tsAudio: TTabSheet
+      Caption = 'Audio'
+      ClientHeight = 216
+      ClientWidth = 973
+      object gbAudioTrackSettings: TGroupBox
+        Left = 0
+        Height = 215
+        Top = 0
+        Width = 379
+        Align = alLeft
+        Caption = 'Settings'
+        ClientHeight = 202
+        ClientWidth = 375
+        TabOrder = 0
+        object lblRootNote: TLabel
+          Left = 7
+          Height = 13
+          Top = 121
+          Width = 48
+          Caption = 'Root note'
+          ParentColor = False
+        end
+        object Label1: TLabel
+          Left = 7
+          Height = 13
+          Top = 141
+          Width = 47
+          Caption = 'Orig. BPM'
+          ParentColor = False
+        end
+        object lblLoopEnd: TLabel
+          Left = 176
+          Height = 13
+          Top = 26
+          Width = 45
+          Caption = 'Loop end'
+          ParentColor = False
+        end
+        object lblLoopStart: TLabel
+          Left = 176
+          Height = 13
+          Top = 1
+          Width = 50
+          Caption = 'Loop start'
+          ParentColor = False
+        end
+        object lblLoopLength: TLabel
+          Left = 176
+          Height = 13
+          Top = 50
+          Width = 58
+          Caption = 'Loop length'
+          ParentColor = False
+        end
+        object cbPitched: TCheckBox
+          Left = 6
+          Height = 22
+          Top = 95
+          Width = 48
+          Caption = 'Warp'
+          OnChange = cbPitchedChange
+          TabOrder = 0
+        end
+        object spnRootNote: TSpinEdit
+          Left = 66
+          Height = 22
+          Top = 116
+          Width = 64
+          TabOrder = 1
+          Value = 1
+        end
+        object spnBeatsPerMinute: TFloatSpinEdit
+          Left = 65
+          Height = 22
+          Top = 138
+          Width = 56
+          AutoSize = False
+          Increment = 1
+          MaxValue = 300
+          MinValue = 10
+          OnChange = spnBeatsPerMinuteChange
+          TabOrder = 2
+          Value = 120
+        end
+        object edtFilename: TLabeledEdit
+          Left = 66
+          Height = 22
+          Top = 65
+          Width = 80
+          EditLabel.AnchorSideLeft.Control = edtFilename
+          EditLabel.AnchorSideTop.Control = edtFilename
+          EditLabel.AnchorSideTop.Side = asrCenter
+          EditLabel.AnchorSideRight.Control = edtFilename
+          EditLabel.AnchorSideBottom.Control = edtFilename
+          EditLabel.Left = 19
+          EditLabel.Height = 13
+          EditLabel.Top = 70
+          EditLabel.Width = 44
+          EditLabel.Caption = 'Filename'
+          EditLabel.ParentColor = False
+          LabelPosition = lpLeft
+          TabOrder = 3
+          Text = 'Filename'
+        end
+        object vcLoopEndBar: TValueControl
+          Left = 244
+          Height = 22
+          Hint = 'Bar'
+          Top = 21
+          Width = 50
+          OnChange = LoopMetricChange
+          TabOrder = 4
+          Value = 1
+        end
+        object vcLoopEndBeat: TValueControl
+          Left = 294
+          Height = 22
+          Hint = 'Beat'
+          Top = 21
+          Width = 30
+          MaxValue = 4
+          MinValue = 1
+          OnChange = LoopMetricChange
+          TabOrder = 5
+          Value = 1
+        end
+        object vcLoopEndFrac: TValueControl
+          Left = 325
+          Height = 22
+          Hint = 'Fraction'
+          Top = 21
+          Width = 48
+          MaxValue = 128
+          OnChange = LoopMetricChange
+          TabOrder = 6
+          Value = 1
+        end
+        object vcLoopStartBar: TValueControl
+          Left = 244
+          Height = 22
+          Hint = 'Bar'
+          Top = -4
+          Width = 50
+          OnChange = LoopMetricChange
+          TabOrder = 7
+          Value = 1
+        end
+        object vcLoopStartBeat: TValueControl
+          Left = 294
+          Height = 22
+          Hint = 'Beat'
+          Top = -4
+          Width = 30
+          MaxValue = 4
+          MinValue = 1
+          OnChange = LoopMetricChange
+          TabOrder = 8
+          Value = 1
+        end
+        object vcLoopStartFrac: TValueControl
+          Left = 325
+          Height = 22
+          Hint = 'Fraction'
+          Top = -4
+          Width = 48
+          MaxValue = 128
+          OnChange = LoopMetricChange
+          TabOrder = 9
+          Value = 1
+        end
+        object vcLoopLengthBar: TValueControl
+          Left = 244
+          Height = 22
+          Hint = 'Bar'
+          Top = 45
+          Width = 50
+          OnChange = LoopMetricChange
+          TabOrder = 10
+          Value = 1
+        end
+        object vcLoopLengthBeat: TValueControl
+          Left = 294
+          Height = 22
+          Hint = 'Beat'
+          Top = 45
+          Width = 30
+          MaxValue = 4
+          MinValue = 1
+          OnChange = LoopMetricChange
+          TabOrder = 11
+          Value = 1
+        end
+        object vcLoopLengthFrac: TValueControl
+          Left = 325
+          Height = 22
+          Hint = 'Fraction'
+          Top = 45
+          Width = 48
+          MaxValue = 128
+          OnChange = LoopMetricChange
+          TabOrder = 12
+          Value = 1
+        end
+        object ToggleControl1: TToggleControl
+          Left = 323
+          Height = 14
+          Top = 72
+          Width = 46
+          SwitchedOn = False
+          CaptionOn = 'Loop'
+          CaptionOff = 'Loop'
+        end
+        object tbThreshold: TTrackBar
+          Left = 270
+          Height = 40
+          Top = 85
+          Width = 100
+          Max = 100
+          Min = 1
+          OnChange = tbThresholdChange
+          Position = 1
+          ScalePos = trRight
+          TabOrder = 14
+        end
+        object lblThreshold: TStaticText
+          Left = 156
+          Height = 15
+          Top = 95
+          Width = 111
+          Caption = 'Transient threshold'
+          TabOrder = 15
+        end
+        object TrackBar1: TTrackBar
+          Left = 136
+          Height = 40
+          Top = 113
+          Width = 226
+          Max = 1000
+          Min = 2
+          OnChange = TrackBar1Change
+          Position = 10
+          ScalePos = trLeft
+          TabOrder = 16
+        end
+        object spnPitchValue: TFloatSpinEditControl
+          Left = 62
+          Height = 22
+          Top = 92
+          Width = 50
+          Increment = 0.1
+          MaxValue = 4
+          MinValue = 0.125
+          OnChange = spnPitchChange
+          TabOrder = 17
+          Value = 1
+        end
+        object ValueControl1: TValueControl
+          Left = 88
+          Height = 22
+          Top = 36
+          Width = 60
+          MaxValue = 200
+          MinValue = 20
+          OnChange = ValueControl1Change
+          TabOrder = 18
+          Value = 40
+        end
+        object lblSequenceWidth: TLabel
+          Left = 14
+          Height = 13
+          Top = 41
+          Width = 73
+          Caption = 'Sequence (ms)'
+          ParentColor = False
+        end
+        object cbQuickSeek: TCheckBox
+          Left = 7
+          Height = 22
+          Top = 17
+          Width = 73
+          Caption = 'QuickSeek'
+          Checked = True
+          OnChange = cbQuickSeekChange
+          State = cbChecked
+          TabOrder = 19
+        end
+        object cbAntiAliasFilter: TCheckBox
+          Left = 7
+          Height = 22
+          Top = -4
+          Width = 90
+          Caption = 'AntiAliasFilter'
+          OnChange = cbAntiAliasFilterChange
+          TabOrder = 20
+        end
+        object ValueControl2: TValueControl
+          Left = 100
+          Height = 22
+          Top = 7
+          Width = 50
+          MinValue = 4
+          OnChange = ValueControl2Change
+          TabOrder = 21
+          Value = 15
+        end
+      end
+    end
+    object tsPlugins: TTabSheet
+      Caption = 'Plugin Graph'
+      ClientHeight = 216
+      ClientWidth = 973
+      object gbPluginSettings: TGroupBox
+        Left = 0
+        Height = 215
+        Top = 0
+        Width = 1
+        Align = alLeft
+        Caption = 'Settings'
+        TabOrder = 0
+      end
+    end
+  end
+end

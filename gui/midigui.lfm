@@ -1,0 +1,46 @@
+object MidiGridGUI: TMidiGridGUI
+  Left = 0
+  Height = 289
+  Top = 0
+  Width = 712
+  HorzScrollBar.Page = 319
+  VertScrollBar.Page = 239
+  OnDragDrop = FrameDragDrop
+  OnDragOver = FrameDragOver
+  OnResize = FrameResize
+  TabOrder = 0
+  DesignLeft = 337
+  DesignTop = 161
+  object pmNoteMenu: TPopupMenu
+    left = 93
+    top = 123
+    object miDelete: TMenuItem
+      Action = acDeleteNote
+      OnClick = acDeleteNoteExecute
+    end
+    object MenuItem1: TMenuItem
+      Action = acDuplicate
+      OnClick = acDuplicateExecute
+    end
+    object MenuItem2: TMenuItem
+      Action = acLoop
+      OnClick = acLoopExecute
+    end
+  end
+  object alNoteActions: TActionList
+    left = 191
+    top = 123
+    object acDeleteNote: TAction
+      Caption = 'Delete selected note(s)'
+      OnExecute = acDeleteNoteExecute
+    end
+    object acDuplicate: TAction
+      Caption = 'Duplicate note(s)'
+      OnExecute = acDuplicateExecute
+    end
+    object acLoop: TAction
+      Caption = 'Loop selection'
+      OnExecute = acLoopExecute
+    end
+  end
+end

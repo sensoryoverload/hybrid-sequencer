@@ -1,0 +1,32 @@
+object PluginProcessorGUI: TPluginProcessorGUI
+  Left = 0
+  Height = 304
+  Top = 0
+  Width = 687
+  ClientHeight = 304
+  ClientWidth = 687
+  TabOrder = 0
+  DesignLeft = 430
+  DesignTop = 416
+  object gbPlugin: TGroupBox
+    Left = 0
+    Height = 304
+    Top = 0
+    Width = 207
+    Align = alLeft
+    Caption = 'Plugin'
+    TabOrder = 0
+  end
+  object sbPluginGraph: TScrollBox
+    Left = 207
+    Height = 304
+    Top = 0
+    Width = 480
+    Align = alClient
+    Color = clGradientActiveCaption
+    ParentColor = False
+    TabOrder = 1
+    OnDragDrop = sbPluginGraphDragDrop
+    OnDragOver = sbPluginGraphDragOver
+  end
+end

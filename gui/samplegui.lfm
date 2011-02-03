@@ -1,0 +1,62 @@
+object SampleView: TSampleView
+  Left = 0
+  Height = 291
+  Top = 0
+  Width = 830
+  Align = alClient
+  ClientHeight = 291
+  ClientWidth = 830
+  TabOrder = 0
+  DesignLeft = 332
+  DesignTop = 362
+  object pcSampler: TPageControl
+    Left = 0
+    Height = 175
+    Top = 0
+    Width = 830
+    ActivePage = tsGlobal
+    Align = alTop
+    TabIndex = 3
+    TabOrder = 0
+    object tsSample: TTabSheet
+      Caption = 'Sample'
+    end
+    object tsTuning: TTabSheet
+      Caption = 'Tuning'
+      ClientHeight = 146
+      ClientWidth = 824
+      object dcCutoff: TDialControl
+        Left = 75
+        Height = 60
+        Top = 2
+        Width = 40
+        Value = 100
+        Caption = 'Cutoff'
+        Lowest = 0
+        Highest = 100
+        OnChange = dcCutoffChange
+        OnStartChange = dcCutoffStartChange
+        Enabled = True
+      end
+      object dcResonance: TDialControl
+        Left = 125
+        Height = 60
+        Top = 1
+        Width = 40
+        Value = 0
+        Caption = 'Res'
+        Lowest = 0
+        Highest = 100
+        OnChange = dcResonanceChange
+        OnStartChange = dcResonanceStartChange
+        Enabled = True
+      end
+    end
+    object tsModulators: TTabSheet
+      Caption = 'Modulators'
+    end
+    object tsGlobal: TTabSheet
+      Caption = 'Global'
+    end
+  end
+end

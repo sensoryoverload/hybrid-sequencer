@@ -1,0 +1,14 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TBankView','FORMDATA',[
+  'TPF0'#9'TBankView'#8'BankView'#4'Left'#2#0#6'Height'#3#237#0#3'Top'#2#0#5'Wi'
+  +'dth'#3#176#3#5'Align'#7#8'alClient'#12'ClientHeight'#3#237#0#11'ClientWidth'
+  +#3#176#3#8'TabOrder'#2#0#10'DesignLeft'#3'<'#1#9'DesignTop'#3#225#1#0#9'TGro'
+  +'upBox'#14'gbSampleSelect'#4'Left'#2#0#6'Height'#3#237#0#3'Top'#2#0#5'Width'
+  +#3#181#0#5'Align'#7#6'alLeft'#7'Caption'#6#7'Samples'#12'ClientHeight'#3#224
+  +#0#11'ClientWidth'#3#177#0#8'TabOrder'#2#0#0#8'TListBox'#16'lbSampleSelector'
+  +#4'Left'#2#0#6'Height'#3#175#0#3'Top'#2'1'#5'Width'#3#177#0#5'Align'#7#8'alB'
+  +'ottom'#10'ItemHeight'#2#0#7'OnClick'#7#21'lbSampleSelectorClick'#10'OnDragD'
+  +'rop'#7#24'lbSampleSelectorDragDrop'#10'OnDragOver'#7#24'lbSampleSelectorDra'
+  +'gOver'#8'TabOrder'#2#0#8'TopIndex'#2#255#0#0#0#0
+]);

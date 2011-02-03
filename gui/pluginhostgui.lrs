@@ -1,0 +1,13 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TPluginProcessorGUI','FORMDATA',[
+  'TPF0'#19'TPluginProcessorGUI'#18'PluginProcessorGUI'#4'Left'#2#0#6'Height'#3
+  +'0'#1#3'Top'#2#0#5'Width'#3#175#2#12'ClientHeight'#3'0'#1#11'ClientWidth'#3
+  +#175#2#8'TabOrder'#2#0#10'DesignLeft'#3#174#1#9'DesignTop'#3#160#1#0#9'TGrou'
+  +'pBox'#8'gbPlugin'#4'Left'#2#0#6'Height'#3'0'#1#3'Top'#2#0#5'Width'#3#207#0#5
+  +'Align'#7#6'alLeft'#7'Caption'#6#6'Plugin'#8'TabOrder'#2#0#0#0#10'TScrollBox'
+  +#13'sbPluginGraph'#4'Left'#3#207#0#6'Height'#3'0'#1#3'Top'#2#0#5'Width'#3#224
+  +#1#5'Align'#7#8'alClient'#5'Color'#7#23'clGradientActiveCaption'#11'ParentCo'
+  +'lor'#8#8'TabOrder'#2#1#10'OnDragDrop'#7#21'sbPluginGraphDragDrop'#10'OnDrag'
+  +'Over'#7#21'sbPluginGraphDragOver'#0#0#0
+]);
