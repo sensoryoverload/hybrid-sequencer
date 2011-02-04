@@ -23,7 +23,7 @@ interface
 
 uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
- jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils, peakmetercontrol,
+ jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils,
  globalconst, rubberband, SoundTouchObject, contnrs, global_command,
  ShellCtrls, global, multiband_wsola, flqueue, math, ringbuffer;
 

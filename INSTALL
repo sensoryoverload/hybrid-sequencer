@@ -1,0 +1,9 @@
+(*) TODO Document is not finished
+
+Requirements for installing / compiling:
+
+Lazarus 0.9.30 
+FreePascal 2.4.0 
+libsndfile
+soundtouch 1.5.0
+
