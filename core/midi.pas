@@ -203,8 +203,8 @@ type
     FRealCursorPosition: Integer;
     FCursorAdder: Single;
     FMidiDataCursor: TMidiData;
-    FFrameFirst: TMidiData; // deprecate ?!
-    FFrameLast: TMidiData; // deprecate ?!
+    FMidiDataLoopStart: TMidiData; // deprecate ?!
+    FMidiDataLoopEnd: TMidiData; // deprecate ?!
     FBPMScale: Single;
 
     function GetEnabled: Boolean;

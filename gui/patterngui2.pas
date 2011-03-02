@@ -37,15 +37,12 @@ type
   TPatternControls = class(TFrame, IObserver)
     cbPitched: TCheckBox;
     cbQuantize: TComboBox;
-    cbQuickSeek: TCheckBox;
-    cbAntiAliasFilter: TCheckBox;
     cbSampleBankSelecter: TComboBox;
     cbMidiChannel: TComboBox;
     edtFilename: TLabeledEdit;
     gbPluginSettings: TGroupBox;
     lblMidiChannel: TLabel;
     lblSampleBank: TLabel;
-    lblSequenceWidth: TLabel;
     pnlMidiGrid: TPanel;
     pnlMidigridOverview: TPanel;
     splitMidiTab: TSplitter;
@@ -69,8 +66,6 @@ type
     TrackBar1: TTrackBar;
     tsAudio: TTabSheet;
     tsMIDI: TTabSheet;
-    ValueControl1: TValueControl;
-    ValueControl2: TValueControl;
     vcLoopEndBar: TValueControl;
     vcLoopEndBeat: TValueControl;
     vcLoopEndFrac: TValueControl;
@@ -80,10 +75,8 @@ type
     vcLoopStartBar: TValueControl;
     vcLoopStartBeat: TValueControl;
     vcLoopStartFrac: TValueControl;
-    procedure cbAntiAliasFilterChange(Sender: TObject);
     procedure cbPitchedChange(Sender: TObject);
     procedure cbQuantizeChange(Sender: TObject);
-    procedure cbQuickSeekChange(Sender: TObject);
     procedure cbSampleBankSelecterChange(Sender: TObject);
     procedure cbMidiChannelChange(Sender: TObject);
     procedure lbToolBoxSelectionChange(Sender: TObject; User: boolean);
@@ -92,8 +85,6 @@ type
     procedure tbThresholdChange(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure LoopMetricChange(Sender: TObject);
-    procedure ValueControl1Change(Sender: TObject);
-    procedure ValueControl2Change(Sender: TObject);
   private
     FObjectOwnerID: string;
     FObjectID: string;
@@ -200,14 +191,6 @@ begin
   end;
 end;
 
-procedure TPatternControls.cbQuickSeekChange(Sender: TObject);
-begin
-  if Assigned(FWaveFormGUI) then
-  begin
-    FWaveForm.WSOLA.QuickSeek := cbQuickSeek.Checked;
-  end;
-end;
-
 procedure TPatternControls.cbSampleBankSelecterChange(Sender: TObject);
 begin
   // TODO change used bank
@@ -258,14 +241,6 @@ begin
     GCommandQueue.PushCommand(lTogglePitchCommand);
   except
     lTogglePitchCommand.Free;
-  end;
-end;
-
-procedure TPatternControls.cbAntiAliasFilterChange(Sender: TObject);
-begin
-  if Assigned(FWaveFormGUI) then
-  begin
-    FWaveForm.WSOLA.AntiAliasFilter := cbAntiAliasFilter.Checked;
   end;
 end;
 
@@ -493,20 +468,6 @@ procedure TPatternControls.LoopMetricChange(Sender: TObject);
 begin
   //
 end;
-
-procedure TPatternControls.ValueControl1Change(Sender: TObject);
-begin
-  {if Assigned(FWaveFormGUI) then
-  begin}
-    FWaveForm.WSOLA.SequenceMS := ValueControl1.Value;
-  {end;}
-end;
-
-procedure TPatternControls.ValueControl2Change(Sender: TObject);
-begin
-  FWaveForm.WSOLA.SeekWindowMS := ValueControl2.Value;
-end;
-
 
 initialization
   {$I patterngui2.lrs}

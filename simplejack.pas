@@ -30,12 +30,12 @@ uses
   Menus, ActnList, dialcontrol, bpm, samplergui, SoundTouchObject,
   Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg, SynEdit, SynHighlighterPas,
   SynGutterBase, SynGutterMarks, SynGutterLineNumber, SynGutterChanges,
-  SynGutter, SynGutterCodeFolding, uPSComponent, rubberband,
-  uPSComponent_Default, TypInfo, FileUtil, global_command, LCLType, LCLIntf,
+  SynGutter, SynGutterCodeFolding, rubberband,
+  TypInfo, FileUtil, global_command, LCLType, LCLIntf,
   ShellCtrls, Grids, TrackGUI, waveformgui, global, track, pattern,
   audiostructure, midigui, patterngui, mapmonitor, syncobjs, eventlog,
-  Sqlite3DS, midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
-  ringbuffer, lua;
+  midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
+  ringbuffer, lua, optionsgui;
 
 type
   TTestFunction = function (Param1: Double;
@@ -204,9 +204,6 @@ type
     FLowPriorityInterval: Integer;
     FMediumPriorityInterval: Integer;
     FHighPriorityInterval: Integer;
-    FPSImport_Classes1: TPSImport_Classes;
-    FPascalScript: TPSScript;
-
 
 {    procedure CEVerifyProc(Sender: TPSScript; Proc: TPSInternalProcedure;
       const Decl: String; var Error: Boolean);}
@@ -582,7 +579,12 @@ begin
             begin
               lPlayingPattern.SyncQuantize := False;
               lPlayingPattern.MidiGrid.CursorAdder := lPlayingPattern.MidiGrid.LoopStart;
-              lPlayingPattern.MidiGrid.MidiDataList.First;
+
+              if lPlayingPattern.MidiGrid.MidiDataList.Count > 0 then
+              begin
+                lPlayingPattern.MidiGrid.MidiDataList.First;
+                lPlayingPattern.midiGrid.MidiDataCursor := TMidiData( lPlayingPattern.MidiGrid.MidiDataList.Items[0] );
+              end;
             end;
 
             // Fetch frame data packet containing warp factor and virtual location in wave data
@@ -670,10 +672,10 @@ begin
 lPlayingPattern.WaveForm.BufferData2[i] := 0;
 
             // Advance cursors for midi and tsPattern
-            lPlayingPattern.WaveForm.RealCursorPosition:= Round(lPlayingPattern.WaveForm.CursorReal);
+            lPlayingPattern.WaveForm.RealCursorPosition := Round(lPlayingPattern.WaveForm.CursorReal);
             lPlayingPattern.WaveForm.CursorReal := lPlayingPattern.WaveForm.CursorReal + BPMscale;
 
-            lPlayingPattern.MidiGrid.RealCursorPosition:= Round(lPlayingPattern.MidiGrid.CursorAdder);
+            lPlayingPattern.MidiGrid.RealCursorPosition := Round(lPlayingPattern.MidiGrid.CursorAdder);
             lPlayingPattern.MidiGrid.CursorAdder := lPlayingPattern.MidiGrid.CursorAdder + GlobalBPMscale;
           end;
         end;
@@ -847,7 +849,7 @@ begin
   DBLog('start Compile');
 
   // Link editor to the scriptengine
-  FPascalScript.Script := ScriptEditor.Lines;
+{  FPascalScript.Script := ScriptEditor.Lines;
 
   if FPascalScript.Compile then
   begin
@@ -861,7 +863,7 @@ begin
     lMessage := 'Compile failed!';
   end;
 
-  ScriptMessages.Lines.Text := lMessage;
+  ScriptMessages.Lines.Text := lMessage;}
 
   DBLog('end Compile');
 end;
@@ -903,7 +905,7 @@ var
 begin
   DBLog('start btnExecuteClick');
 
-  try
+(*  try
     Meth := TTestFunction(FPascalScript.GetProcMethod('TESTFUNCTION'));
     if @Meth = nil then
       raise Exception.Create('Unable to call TestFunction');
@@ -921,7 +923,7 @@ begin
       WriteLn(Format('Hybrid error: %s', [e.Message]));
     end;
   end;
-
+*)
   DBLog('end btnExecuteClick');
 end;
 
@@ -1122,8 +1124,22 @@ begin
 end;
 
 procedure TMainApp.OptionMenuClick(Sender: TObject);
+var
+  lFmOptions: TfmOptions;
 begin
-  //
+
+  lFmOptions := TfmOptions.Create(nil);
+  try
+    lFmOptions.Settings := GSettings;
+
+    if lFmOptions.ShowModal = mrOK then
+    begin
+
+    end;
+  finally
+    lFmOptions.Free;
+  end;
+
 end;
 
 procedure TMainApp.rgEditModeClick(Sender: TObject);
@@ -1241,8 +1257,6 @@ begin
 
     Application.ProcessMessages;
 
-    GLogger.ProcessQueue;
-
   except
     on e:exception do
     begin
@@ -1304,11 +1318,11 @@ begin
   if Assigned(GAudioStruct) then
     GAudioStruct.Free;
 
-  if Assigned(FPascalScript) then
+{  if Assigned(FPascalScript) then
     FPascalScript.Free;
 
   if Assigned(FPSImport_Classes1) then
-    FPSImport_Classes1.Free;
+    FPSImport_Classes1.Free;}
 
   FreeMem(CB_TimeBuffer);
 End;
@@ -1330,9 +1344,9 @@ begin
 
   LoadTreeDirectory;
 
-  FPascalScript := TPSScript.Create(nil);
+{  FPascalScript := TPSScript.Create(nil);
   FPSImport_Classes1 := TPSImport_Classes.Create(nil);
-  TPSPluginItem(FPascalScript.Plugins.Add).Plugin := FPSImport_Classes1;
+  TPSPluginItem(FPascalScript.Plugins.Add).Plugin := FPSImport_Classes1;}
 
   client := jack_client_open('loopbox', JackNullOption, nil);
 	if not assigned(client) then

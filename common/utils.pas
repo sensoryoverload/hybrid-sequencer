@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, Sysutils, jacktypes, Graphics, Process, FileUtil, dbugintf, ringbuffer,
-  contnrs;
+  contnrs, flqueue;
 
 Type
   TTreeFolderData = class
@@ -67,37 +67,6 @@ Type
     property Value: Boolean read GetValue;
   end;
 
-  { TRingBuffer }
-
-  TRingBuffer = class(TObject)
-  private
-    FBuffer: Pjack_default_audio_sample_t;
-    FStart: Integer;
-    FEnd: Integer;
-
-
-  public
-  end;
-
-  { TLogMessageThread }
-
-  TLogMessageThread = class(TThread)
-  private
-    FBufferOffset: Integer;
-    FRingBuffer: pjack_ringbuffer_t;
-    FBuffer: pchar;
-    FBufferSize: Integer;
-
-    procedure Updater;
-  protected
-    procedure Execute; override;
-  public
-    constructor Create(CreateSuspended : boolean);
-    destructor Destroy; override;
-
-    procedure RingbufferWrite(ABuffer: shortstring; ASize: Integer);
-  end;
-
   THybridLoggerMessage = class(TObject)
   private
     FText: string;
@@ -114,6 +83,22 @@ Type
     function PopMessage: string;
     function PeekMessage: string;
     procedure ProcessQueue;
+  end;
+
+  { TLogMessageThread }
+
+  TLogMessageThread = class(TThread)
+  private
+    FMessageQueue: TObjectQueue;
+
+    procedure Updater;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(CreateSuspended : boolean);
+    destructor Destroy; override;
+    function PopMessage: string;
+    procedure PushMessage(AMessage: string);
   end;
 
 
@@ -147,7 +132,7 @@ function hermite4(frac_pos, xm1, x0, x1, x2: single): single; inline;
 
 var
   FLogging: Boolean;
-  GLogger: THybridLogger;
+  GLogger: TLogMessageThread;
 
 implementation
 
@@ -478,62 +463,67 @@ end;
 
 procedure TLogMessageThread.Updater;
 begin
-  //writeln(Format('IO Data written %d', [FBufferOffset]));
+  while FMessageQueue.Count > 0 do
+  begin
+    writeln(PopMessage);
+  end;
 end;
 
 procedure TLogMessageThread.Execute;
-var
-  lSize: Integer;
 begin
   while (not Terminated) do
   begin
-    // Write to disk
-    lSize := jack_ringbuffer_read_space(FRingBuffer);
-    if lSize > 0 then
-    begin
-      Inc(FBufferOffset, lSize);
-      //jack_ringbuffer_read(FRingBuffer, @FBuffer[0], lSize);
-
-    end;
-
-    // Update gui
     Synchronize(@Updater);
 
-    // Only update at 1000 ms
-    Sleep(1000);
+    // Only update at 100 ms
+    Sleep(100);
   end;
 end;
 
 constructor TLogMessageThread.Create(CreateSuspended: boolean);
-var
-  lGUID: TGuid;
 begin
   inherited Create(CreateSuspended);
 
-  FBufferSize := 88200;
-
-  FRingBuffer := jack_ringbuffer_create(FBufferSize);
-  FBuffer := getmem(FBufferSize);
-  FBufferOffset := 0;
+  FMessageQueue := TObjectQueue.Create;
 end;
 
 destructor TLogMessageThread.Destroy;
 begin
-
-  jack_ringbuffer_free(FRingBuffer);
-
-  freemem(FBuffer);
+  FMessageQueue.Free;
 
   inherited Destroy;
 end;
 
-procedure TLogMessageThread.RingbufferWrite(ABuffer: shortstring; ASize: Integer);
+procedure TLogMessageThread.PushMessage(AMessage: string);
+var
+  lMessage: THybridLoggerMessage;
 begin
-  jack_ringbuffer_write(FRingBuffer, @ABuffer, 256);
+  lMessage := THybridLoggerMessage.Create;
+  try
+    lMessage.Text := AMessage;
+
+    FMessageQueue.Push(lMessage);
+  except
+    lMessage.Free;
+  end;
+end;
+
+function TLogMessageThread.PopMessage: string;
+var
+  lMessage: THybridLoggerMessage;
+begin
+  lMessage := THybridLoggerMessage( FMessageQueue.Pop );
+
+  if Assigned(lMessage) then
+  begin
+    Result := lMessage.Text;
+
+    lMessage.Free;
+  end;
 end;
 
 initialization
-  GLogger := THybridLogger.Create;
+  GLogger := TLogMessageThread.Create(False);
 
 finalization
   GLogger.Free;

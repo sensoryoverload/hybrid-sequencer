@@ -85,6 +85,7 @@ type
     FIDCounter: Integer;
     FEscapeAction: Boolean;
     FSampleRate: single;
+    FSampleMap: string;
     procedure SetFrames(const AValue: Integer);
     procedure SetModifier(const AValue: TShiftState);
     procedure SetSelectedPatternGUI(const AValue: TObject);
@@ -105,6 +106,7 @@ type
     property OnShuffleRefresh: TShuffleRefreshEvent read FOnShuffleRefresh write FOnShuffleRefresh;
     property EscapeAction: Boolean read FEscapeAction write FEscapeAction default false;
     property SampleRate: single read FSampleRate write FSampleRate;
+    property SampleMap: string read FSampleMap write FSampleMap;
   end;
 
   { TChannel }

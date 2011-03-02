@@ -25,8 +25,7 @@ unit plugin;
 interface
 
 uses
-  Classes, SysUtils, ContNrs, globalconst, utils, global_command, global, midi,
-  uPSComponent, uPSComponent_Default;
+  Classes, SysUtils, ContNrs, globalconst, utils, global_command, global, midi;
 
 type
   TPluginNodeType = (pntSource, pntSink, pntPlugin);
@@ -87,8 +86,6 @@ type
 
   TScriptPlugin = class(TPluginNode)
   private
-    FPSImport_Classes1: TPSImport_Classes;
-    FPascalScript: TPSScript;
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
   end;
@@ -414,15 +411,10 @@ constructor TScriptPlugin.Create(AObjectOwnerID: string; AMapped: Boolean);
 begin
   inherited Create(AObjectOwnerID, AMapped);
 
-  FPascalScript := TPSScript.Create(nil);
-  FPSImport_Classes1 := TPSImport_Classes.Create(nil);
-  TPSPluginItem(FPascalScript.Plugins.Add).Plugin := FPSImport_Classes1;
 end;
 
 destructor TScriptPlugin.Destroy;
 begin
-  FPascalScript.Free;
-  FPSImport_Classes1.Free;
 
   inherited Destroy;
 end;

@@ -21,8 +21,10 @@ object Track: TTrack
     BevelOuter = bvNone
     ClientHeight = 245
     ClientWidth = 102
+    Color = clWindowFrame
     Constraints.MaxHeight = 245
     Constraints.MinHeight = 245
+    ParentColor = False
     TabOrder = 0
     OnMouseDown = TrackControlsMouseDown
     OnMouseMove = TrackControlsMouseMove

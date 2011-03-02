@@ -657,7 +657,7 @@ var
   lMidiData: TMidiData;
   lSampleIndex: Integer;
 begin
-
+  (*
   // Only process when not in state change
   if AMidiGrid.Enabled and (AMidiGrid.MidiDataList.Count > 0) then
   begin
@@ -717,13 +717,13 @@ begin
 
       AMidiGrid.MidiDataList.Next;
     end;
-  end;
+  end;       *)
 
 
-  {for lSampleIndex := 0 to Pred(FSampleList.Count) do
+  for lSampleIndex := 0 to Pred(FSampleList.Count) do
   begin
     TSampleEngine(FSampleList[lSampleIndex]).Process(AMidiGrid, ABuffer, AFrames);
-  end; }
+  end;
 
 
 end;
@@ -1256,6 +1256,8 @@ var
   lMidiBufferIndex: Integer;
   lRelativeLocation: Integer;
 begin
+  GLogger.PushMessage(Format('Midi cursor pos: %f', [AMidiGrid.CursorAdder]));
+
   //  Loop through aframes
   // increase the local cursor
   lLocalCursorAdder := AMidiGrid.CursorAdder;

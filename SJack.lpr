@@ -27,8 +27,8 @@ uses
   cmem,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, pascalscript
-  { add your units here },
+  Forms,
+  { add your units here }
   SimpleJack;
 
 {$IFDEF WINDOWS}{$R SJack.rc}{$ENDIF}

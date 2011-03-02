@@ -131,58 +131,58 @@ object PatternControls: TPatternControls
       ClientWidth = 973
       object gbAudioTrackSettings: TGroupBox
         Left = 0
-        Height = 215
+        Height = 216
         Top = 0
         Width = 379
         Align = alLeft
         Caption = 'Settings'
-        ClientHeight = 202
+        ClientHeight = 203
         ClientWidth = 375
         TabOrder = 0
         object lblRootNote: TLabel
           Left = 7
-          Height = 13
-          Top = 121
-          Width = 48
+          Height = 12
+          Top = 53
+          Width = 45
           Caption = 'Root note'
           ParentColor = False
         end
         object Label1: TLabel
           Left = 7
-          Height = 13
-          Top = 141
-          Width = 47
+          Height = 12
+          Top = 73
+          Width = 43
           Caption = 'Orig. BPM'
           ParentColor = False
         end
         object lblLoopEnd: TLabel
           Left = 176
-          Height = 13
+          Height = 12
           Top = 26
-          Width = 45
+          Width = 42
           Caption = 'Loop end'
           ParentColor = False
         end
         object lblLoopStart: TLabel
           Left = 176
-          Height = 13
+          Height = 12
           Top = 1
-          Width = 50
+          Width = 47
           Caption = 'Loop start'
           ParentColor = False
         end
         object lblLoopLength: TLabel
           Left = 176
-          Height = 13
+          Height = 12
           Top = 50
-          Width = 58
+          Width = 53
           Caption = 'Loop length'
           ParentColor = False
         end
         object cbPitched: TCheckBox
           Left = 6
           Height = 22
-          Top = 95
+          Top = 27
           Width = 48
           Caption = 'Warp'
           OnChange = cbPitchedChange
@@ -190,8 +190,8 @@ object PatternControls: TPatternControls
         end
         object spnRootNote: TSpinEdit
           Left = 66
-          Height = 22
-          Top = 116
+          Height = 21
+          Top = 48
           Width = 64
           TabOrder = 1
           Value = 1
@@ -199,7 +199,7 @@ object PatternControls: TPatternControls
         object spnBeatsPerMinute: TFloatSpinEdit
           Left = 65
           Height = 22
-          Top = 138
+          Top = 70
           Width = 56
           AutoSize = False
           Increment = 1
@@ -211,18 +211,18 @@ object PatternControls: TPatternControls
         end
         object edtFilename: TLabeledEdit
           Left = 66
-          Height = 22
-          Top = 65
+          Height = 21
+          Top = -3
           Width = 80
           EditLabel.AnchorSideLeft.Control = edtFilename
           EditLabel.AnchorSideTop.Control = edtFilename
           EditLabel.AnchorSideTop.Side = asrCenter
           EditLabel.AnchorSideRight.Control = edtFilename
           EditLabel.AnchorSideBottom.Control = edtFilename
-          EditLabel.Left = 19
-          EditLabel.Height = 13
-          EditLabel.Top = 70
-          EditLabel.Width = 44
+          EditLabel.Left = 24
+          EditLabel.Height = 12
+          EditLabel.Top = 1
+          EditLabel.Width = 39
           EditLabel.Caption = 'Filename'
           EditLabel.ParentColor = False
           LabelPosition = lpLeft
@@ -231,7 +231,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopEndBar: TValueControl
           Left = 244
-          Height = 22
+          Height = 21
           Hint = 'Bar'
           Top = 21
           Width = 50
@@ -241,7 +241,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopEndBeat: TValueControl
           Left = 294
-          Height = 22
+          Height = 21
           Hint = 'Beat'
           Top = 21
           Width = 30
@@ -253,7 +253,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopEndFrac: TValueControl
           Left = 325
-          Height = 22
+          Height = 21
           Hint = 'Fraction'
           Top = 21
           Width = 48
@@ -264,7 +264,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopStartBar: TValueControl
           Left = 244
-          Height = 22
+          Height = 21
           Hint = 'Bar'
           Top = -4
           Width = 50
@@ -274,7 +274,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopStartBeat: TValueControl
           Left = 294
-          Height = 22
+          Height = 21
           Hint = 'Beat'
           Top = -4
           Width = 30
@@ -286,7 +286,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopStartFrac: TValueControl
           Left = 325
-          Height = 22
+          Height = 21
           Hint = 'Fraction'
           Top = -4
           Width = 48
@@ -297,7 +297,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopLengthBar: TValueControl
           Left = 244
-          Height = 22
+          Height = 21
           Hint = 'Bar'
           Top = 45
           Width = 50
@@ -307,7 +307,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopLengthBeat: TValueControl
           Left = 294
-          Height = 22
+          Height = 21
           Hint = 'Beat'
           Top = 45
           Width = 30
@@ -319,7 +319,7 @@ object PatternControls: TPatternControls
         end
         object vcLoopLengthFrac: TValueControl
           Left = 325
-          Height = 22
+          Height = 21
           Hint = 'Fraction'
           Top = 45
           Width = 48
@@ -371,8 +371,8 @@ object PatternControls: TPatternControls
         end
         object spnPitchValue: TFloatSpinEditControl
           Left = 62
-          Height = 22
-          Top = 92
+          Height = 21
+          Top = 24
           Width = 50
           Increment = 0.1
           MaxValue = 4
@@ -380,55 +380,6 @@ object PatternControls: TPatternControls
           OnChange = spnPitchChange
           TabOrder = 17
           Value = 1
-        end
-        object ValueControl1: TValueControl
-          Left = 88
-          Height = 22
-          Top = 36
-          Width = 60
-          MaxValue = 200
-          MinValue = 20
-          OnChange = ValueControl1Change
-          TabOrder = 18
-          Value = 40
-        end
-        object lblSequenceWidth: TLabel
-          Left = 14
-          Height = 13
-          Top = 41
-          Width = 73
-          Caption = 'Sequence (ms)'
-          ParentColor = False
-        end
-        object cbQuickSeek: TCheckBox
-          Left = 7
-          Height = 22
-          Top = 17
-          Width = 73
-          Caption = 'QuickSeek'
-          Checked = True
-          OnChange = cbQuickSeekChange
-          State = cbChecked
-          TabOrder = 19
-        end
-        object cbAntiAliasFilter: TCheckBox
-          Left = 7
-          Height = 22
-          Top = -4
-          Width = 90
-          Caption = 'AntiAliasFilter'
-          OnChange = cbAntiAliasFilterChange
-          TabOrder = 20
-        end
-        object ValueControl2: TValueControl
-          Left = 100
-          Height = 22
-          Top = 7
-          Width = 50
-          MinValue = 4
-          OnChange = ValueControl2Change
-          TabOrder = 21
-          Value = 15
         end
       end
     end
@@ -438,7 +389,7 @@ object PatternControls: TPatternControls
       ClientWidth = 973
       object gbPluginSettings: TGroupBox
         Left = 0
-        Height = 215
+        Height = 216
         Top = 0
         Width = 1
         Align = alLeft
