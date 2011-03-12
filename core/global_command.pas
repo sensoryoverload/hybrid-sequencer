@@ -97,6 +97,41 @@ type
   protected
   end;
 
+  TMidiEvent = record
+    RelativeOffset: Integer;
+    DataType: Integer;   // Note, CC, NRPN
+    DataValue1: byte;
+    DataValue2: byte;
+    MidiChannel: byte;
+  end;
+
+  PMidiBuffer = ^TMidiEvent;
+
+const
+  DEFAULT_MIDIBUFFER_SIZE = 1000;
+
+type
+  { TMidiBuffer }
+
+  TMidiBuffer = class
+  private
+    FLength: Integer;
+    FReadIndex: Integer;
+    FBuffer: array of TMidiEvent;
+
+    function GetCount: Integer;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    procedure Reset;
+    procedure WriteEvent(AMidiData: TMidiData; AOffsetInBuffer: Integer);
+    function ReadEvent: TMidiEvent;
+    function Eof: Boolean;
+    procedure Seek(APosition: Integer);
+    property Count: Integer read GetCount;
+  end;
+
 var
   GCommandQueue: TCommandQueue;
   GHistoryQueue: TObjectList;
@@ -106,6 +141,75 @@ implementation
 
 uses
   patterngui, trackgui, pattern;
+
+{ TMidiBuffer }
+
+function TMidiBuffer.GetCount: Integer;
+begin
+  Result := FLength;
+end;
+
+constructor TMidiBuffer.Create;
+begin
+  inherited Create;
+
+  SetLength(FBuffer, DEFAULT_MIDIBUFFER_SIZE);
+
+  FReadIndex := 0;
+  FLength := 0;
+end;
+
+destructor TMidiBuffer.Destroy;
+begin
+
+  inherited Destroy;
+end;
+
+{
+  Resets buffer indexes but does not clear it as it get overwritten anyway
+}
+procedure TMidiBuffer.Reset;
+begin
+  FLength := 0;
+  FReadIndex := 0;
+end;
+
+procedure TMidiBuffer.WriteEvent(AMidiData: TMidiData; AOffsetInBuffer: Integer);
+begin
+
+  if FLength < Pred(DEFAULT_MIDIBUFFER_SIZE) then
+  begin
+    FBuffer[FLength].RelativeOffset := AOffsetInBuffer;
+
+    FBuffer[FLength].DataValue1 := AMidiData.DataValue1;
+    FBuffer[FLength].DataValue2 := AMidiData.DataValue2;
+    FBuffer[FLength].DataType := AMidiData.DataType;
+    FBuffer[FLength].MidiChannel := AMidiData.MidiChannel;
+
+    Inc(FLength);
+  end;
+
+end;
+
+function TMidiBuffer.ReadEvent: TMidiEvent;
+begin
+  if FReadIndex < FLength then
+  begin
+    Result := FBuffer[FReadIndex];
+
+    Inc(FReadIndex);
+  end;
+end;
+
+function TMidiBuffer.Eof: Boolean;
+begin
+  Result := (FReadIndex >= FLength);
+end;
+
+procedure TMidiBuffer.Seek(APosition: Integer);
+begin
+  FReadIndex := APosition;
+end;
 
 { TCommand }
 

@@ -207,6 +207,8 @@ type
     FMidiDataLoopEnd: TMidiData; // deprecate ?!
     FBPMScale: Single;
 
+    FMidiBuffer: TMidiBuffer;
+
     function GetEnabled: Boolean;
     function NoteByObjectID(AObjectID: string): TMidiNote;
     procedure SetLoopEnd(const AValue: Longint);
@@ -227,6 +229,11 @@ type
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
     property CursorAdder: Single read FCursorAdder write FCursorAdder;
     property MidiDataCursor: TMidiData read FMidiDataCursor write FMidiDataCursor;
+
+    {
+      Engine
+    }
+    property MidiBuffer: TMidiBuffer read FMidiBuffer write FMidiBuffer;
   published
     property NoteList: TObjectList read FNoteList write FNoteList;
     property LoopStart: Longint read FLoopStart write SetLoopStart;
@@ -289,6 +296,8 @@ begin
   FNoteList := TObjectList.Create;
   FMidiDataList := TMidiDataList.Create;
 
+  FMidiBuffer := TMidiBuffer.Create;
+
   FQuantizeSetting := 3;
   FQuantizeValue := 100;
 
@@ -302,6 +311,9 @@ begin
 
   if Assigned(FMidiDataList) then
     FMidiDataList.Free;
+
+  if Assigned(FMidiBuffer) then
+    FMidiBuffer.Free;
 
   inherited Destroy;
 end;

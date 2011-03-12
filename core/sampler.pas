@@ -1244,118 +1244,22 @@ end;
 
 procedure TSampleEngine.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
 var
-  lLocalCursorRatio: Single;
-  lLocalCursorAdder: Single;
-  lLocalMidiDataCursor: TMidiData;
-
   lVoiceIndex: Integer;
   lVoice: TSampleVoiceEngine;
 
-  lMidiEvent: TMidiData;
-  lFrame: Integer;
+  lMidiBuffer: TMidiBuffer;
+  lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
-  lRelativeLocation: Integer;
 begin
-  GLogger.PushMessage(Format('Midi cursor pos: %f', [AMidiGrid.CursorAdder]));
+  lMidiBuffer := AMidiGrid.MidiBuffer;
+  lMidiBuffer.Seek(0);
 
-  //  Loop through aframes
-  // increase the local cursor
-  lLocalCursorAdder := AMidiGrid.CursorAdder;
-  lLocalCursorRatio := AMidiGrid.BPMScale;
-  lLocalMidiDataCursor := AMidiGrid.MidiDataCursor;
-
-  if Assigned(lLocalMidiDataCursor) then
+  if lMidiBuffer.Count > 0 then
   begin
-    for lFrame := 0 to Pred(AFrames) do
+    for lMidiBufferIndex := 0 to Pred(lMidiBuffer.Count) do
     begin
-      // Parse all mididata where cursor is past mididata.location
-      while lLocalCursorAdder >= lLocalMidiDataCursor.Location do
-      begin
-        // Parse midi event (start/stop note)
-
-        // Is this note already playing? Yes...now locate the voice
-        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-        begin
-          lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-          if lVoice.Running then
-          begin
-            if (lLocalMidiDataCursor.DataValue1 = lVoice.Note) then
-            begin
-              // Start or restart note at location 'lFrame'
-              lVoice.NoteOn(lLocalMidiDataCursor.DataValue1, lFrame);
-            end;
-          end
-          else
-          begin
-            lVoice.NoteOn(lLocalMidiDataCursor.DataValue1, lFrame);
-          end;
-        end;
-
-        // Advance to next midi event if available
-        if Assigned(lLocalMidiDataCursor.Next) then
-        begin
-          lLocalMidiDataCursor := lLocalMidiDataCursor.Next;
-        end;
-      end;
-
-      lLocalCursorAdder += lLocalCursorRatio;
-    end;
-  end;
-
-  // Play all assigned voices
-  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-  begin
-    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-    if lVoice.Running then
-    begin
-      lVoice.Process(AMidiGrid, ABuffer, AFrames);
-    end;
-  end;
-
-
-//------------------------------------------------------------------------------
-
-(*
-  // First clear buffer as it has uninitialized junk inside.
-  for lFrame := 0 to Pred(AFrames) do
-  begin
-    ABuffer[lFrame] := 0;
-  end;
-
-  FFrameOffsetLow := ((AMidiGrid.RealCursorPosition div AFrames) * AFrames);
-  FFrameOffsetHigh := ((AMidiGrid.RealCursorPosition div AFrames) * AFrames) + AFrames;
-
-  FMidiStartIndex := AMidiGrid.MidiDataList.FrameFirstIndex(FFrameOffsetLow);
-  FMidiEndIndex := AMidiGrid.MidiDataList.FrameLastIndex(FFrameOffsetHigh);
-
-  // Missed last note, re process it
-  if Succ(FLastMidiDataIndex) < FMidiStartIndex then
-  begin;
-    FInternalMidiIndex := FMidiStartIndex;
-  end
-  else
-  begin
-    // did we wrap around to the beginning of buffer
-    if AMidiGrid.RealCursorPosition < FOldRealCursorPosition then
-    begin
-      FInternalMidiIndex := FMidiStartIndex;
-    end
-    else
-    begin
-      FInternalMidiIndex := FLastMidiDataIndex;
-    end;
-  end;
-
-  // First assign new mididata to running notes
-  // Let's if there's notes in the buffer
-  for lMidiBufferIndex := FInternalMidiIndex to FMidiEndIndex do
-  begin
-    lMidiEvent := GetMidiEvent;
-    if Assigned(lMidiEvent) then
-    begin
-      lRelativeLocation := lMidiEvent.Location mod AFrames;
+      // Shortcut for current event in buffer
+      lMidiEvent := lMidiBuffer.ReadEvent;
 
       // Is this note already playing? Yes...now locate the voice
       for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
@@ -1366,12 +1270,19 @@ begin
         begin
           if (lMidiEvent.DataValue1 = lVoice.Note) then
           begin
-            lVoice.NoteOn(lMidiEvent.DataValue1, lRelativeLocation);
+            GLogger.PushMessage(Format('lVoice.NoteOn %d, Location %d',
+            [lMidiEvent.DataValue1, lMidiEvent.RelativeOffset]));
+
+            // Restart note at location 'RelativeOffset'
+            lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset);
+            break;
           end;
         end
         else
         begin
-          lVoice.NoteOn(lMidiEvent.DataValue1, lRelativeLocation);
+          // Start note at location 'RelativeOffset'
+          lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset);
+          break;
         end;
       end;
     end;
@@ -1387,11 +1298,6 @@ begin
       lVoice.Process(AMidiGrid, ABuffer, AFrames);
     end;
   end;
-
-  FLastMidiDataIndex := FInternalMidiIndex;
-
-  FOldRealCursorPosition := AMidiGrid.RealCursorPosition;
-*)
 end;
 
 { TSampleVoice - Initializes the voice with the newly assigned TSample }
@@ -1420,13 +1326,16 @@ var
 begin
   if Assigned(FSample.Wave.ChannelList) then
   begin
+    GLogger.PushMessage('Assigned(FSample.Wave.ChannelList)');
+    GLogger.PushMessage(FSample.SampleName);
     if FSample.Wave.ChannelCount > 0 then
     begin
+      GLogger.PushMessage('FSample.Wave.ChannelCount > 0');
       lChannel := TChannel(FSample.Wave.ChannelList[0]);
 
       if Assigned(lChannel) then
       begin
-
+        GLogger.PushMessage('Assigned(lChannel)');
         for i := FNoteOnOffset to Pred(AFrames) do
         begin
           // Calculate synth voice here

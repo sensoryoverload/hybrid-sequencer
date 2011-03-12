@@ -41,7 +41,7 @@ type
   // It is generated at loadtime from objects defined in XML
   // These objects contain more information about the mididata and should be the
   // source of the abstracted mididata.
-  TMidiData = class(TObject)
+  TMidiData = class
   public
     Location: Integer; // Location in samples
     DataType: Integer;   // Note, CC, NRPN

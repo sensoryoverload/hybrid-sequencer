@@ -247,9 +247,9 @@ object MainApp: TMainApp
     Height = 200
     Top = 464
     Width = 1095
-    ActivePage = tsPattern
+    ActivePage = tsScripter
     Align = alBottom
-    TabIndex = 0
+    TabIndex = 3
     TabOrder = 5
     object tsPattern: TTabSheet
       Caption = 'Pattern'
@@ -1783,15 +1783,15 @@ object MainApp: TMainApp
     left = 131
     top = 559
   end
-  object alScriptActions: TActionList
-    left = 395
-    top = 153
-  end
   object ScreenUpdater: TTimer
     Enabled = False
     Interval = 50
     OnTimer = ScreenUpdaterTimer
     left = 320
     top = 64
+  end
+  object alScriptActions: TActionList
+    left = 437
+    top = 157
   end
 end

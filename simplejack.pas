@@ -17,7 +17,7 @@
 
   simplejack.pas
 }
-unit SimpleJack;
+unit simplejack;
 
 {$mode Objfpc}{$H+}{$INLINE+}
 
@@ -205,8 +205,6 @@ type
     FMediumPriorityInterval: Integer;
     FHighPriorityInterval: Integer;
 
-{    procedure CEVerifyProc(Sender: TPSScript; Proc: TPSInternalProcedure;
-      const Decl: String; var Error: Boolean);}
     function TrackExists(AObjectID: string): Boolean;
     function IndexOfTrack(AObjectId: string): Integer;
     procedure DoTracksRefreshEvent(TrackObject: TObject);
@@ -522,6 +520,9 @@ begin
 
     if Assigned(lTrack.PlayingPattern) then
     begin
+      // Reset buffer at beginning of callback
+      lTrack.PlayingPattern.MidiGrid.MidiBuffer.Reset;
+
       lTrack.PlayingPattern.MidiGrid.BPMScale := GlobalBPMscale;
 
       if lTrack.Playing then
@@ -530,6 +531,8 @@ begin
         process_midi_buffer(lTrack.PlayingPattern, midi_out_buf, nframes, lTrack);
       end;
     end;
+
+
 
     for i := 0 to Pred(nframes) do
     begin
@@ -548,6 +551,14 @@ begin
             end;
             lTrack.PlayingPattern := lTrack.ScheduledPattern;
             lTrack.PlayingPattern.WaveForm.TimeStretch.Flush;
+
+            if lTrack.PlayingPattern.MidiGrid.MidiDataList.Count > 0 then
+            begin
+              lTrack.PlayingPattern.MidiGrid.MidiDataList.First;
+              lTrack.PlayingPattern.MidiGrid.MidiDataCursor :=
+                TMidiData( lTrack.PlayingPattern.MidiGrid.MidiDataList.Items[0] );
+            end;
+
             lTrack.PlayingPattern.Playing := True;
             lTrack.PlayingPattern.Scheduled := False;
             lTrack.PlayingPattern.SyncQuantize := True;
@@ -583,7 +594,7 @@ begin
               if lPlayingPattern.MidiGrid.MidiDataList.Count > 0 then
               begin
                 lPlayingPattern.MidiGrid.MidiDataList.First;
-                lPlayingPattern.midiGrid.MidiDataCursor := TMidiData( lPlayingPattern.MidiGrid.MidiDataList.Items[0] );
+                lPlayingPattern.MidiGrid.MidiDataCursor := TMidiData( lPlayingPattern.MidiGrid.MidiDataList.Items[0] );
               end;
             end;
 
@@ -670,6 +681,23 @@ begin
 
 // debug; clear waveform buffer to listen to midi plugin
 lPlayingPattern.WaveForm.BufferData2[i] := 0;
+
+            // Fill MidiBuffer with midi data if found
+            while (lPlayingPattern.MidiGrid.CursorAdder >= lPlayingPattern.MidiGrid.MidiDataCursor.Location) do
+            begin
+              // Put event in buffer
+              lPlayingPattern.MidiGrid.MidiBuffer.WriteEvent(lPlayingPattern.MidiGrid.MidiDataCursor, i);
+
+              if Assigned(lPlayingPattern.MidiGrid.MidiDataCursor.Next) then
+              begin
+                lPlayingPattern.MidiGrid.MidiDataCursor :=
+                  lPlayingPattern.MidiGrid.MidiDataCursor.Next
+              end
+              else
+              begin
+                break;
+              end;
+            end;
 
             // Advance cursors for midi and tsPattern
             lPlayingPattern.WaveForm.RealCursorPosition := Round(lPlayingPattern.WaveForm.CursorReal);
@@ -881,23 +909,6 @@ begin
   end;
 End;
 
-{procedure TMainApp.CEVerifyProc(Sender: TPSScript; Proc: TPSInternalProcedure;
-  const Decl: String; var Error: Boolean);
-begin
-  if Proc.Name = 'TESTFUNCTION' then begin
-    if not ExportCheck(Sender.Comp, Proc,
-               [btS32, btDouble, btString], [pmIn, pmIn]) then begin
-      Sender.Comp.MakeError('', ecCustomError, 'Function header for
-      TestFunction does not match.');
-      Error := True;
-    end
-    else begin
-      Error := False;
-    end;
-  end
-  else
-    Error := False;
-end;}
 
 procedure TMainApp.btnExecuteClick(Sender: TObject);
 var
@@ -905,25 +916,7 @@ var
 begin
   DBLog('start btnExecuteClick');
 
-(*  try
-    Meth := TTestFunction(FPascalScript.GetProcMethod('TESTFUNCTION'));
-    if @Meth = nil then
-      raise Exception.Create('Unable to call TestFunction');
 
-    // Exectues is approx. 13 seconds = 79000 call/sec. (pretty quick for a script)
-    {for cnt := 0 to 1000000 do
-    begin
-      //ShowMessage('Result: '+IntToStr(Meth(pi, DateTimeToStr(Now))));
-      str := 'Result: '+IntToStr(Meth(pi, DateTimeToStr(Now)));
-    end;}
-    ShowMessage('Result: '+IntToStr(Meth(pi, DateTimeToStr(Now))));
-  except
-    on e: Exception do
-    begin
-      WriteLn(Format('Hybrid error: %s', [e.Message]));
-    end;
-  end;
-*)
   DBLog('end btnExecuteClick');
 end;
 
@@ -1318,12 +1311,6 @@ begin
   if Assigned(GAudioStruct) then
     GAudioStruct.Free;
 
-{  if Assigned(FPascalScript) then
-    FPascalScript.Free;
-
-  if Assigned(FPSImport_Classes1) then
-    FPSImport_Classes1.Free;}
-
   FreeMem(CB_TimeBuffer);
 End;
 
@@ -1338,15 +1325,10 @@ begin
 
   MainApp.DoubleBuffered := True;
   Sbtracks.DoubleBuffered := True;
-  //TrackDetail.PageIndex := pgPattern;
 
   Tracks:= TObjectList.create(True);
 
   LoadTreeDirectory;
-
-{  FPascalScript := TPSScript.Create(nil);
-  FPSImport_Classes1 := TPSImport_Classes.Create(nil);
-  TPSPluginItem(FPascalScript.Plugins.Add).Plugin := FPSImport_Classes1;}
 
   client := jack_client_open('loopbox', JackNullOption, nil);
 	if not assigned(client) then
