@@ -113,6 +113,11 @@ type
     property LFO:TLFOType read fType Write SetType;
   end;
 
+  function f_Abs(f:Single):Single; assembler;
+  function Tanh2_pas1(x:Single):Single;
+  function Tanh2_pas2(x:Single):Single;
+  function Tanh2(x:Single):Single;  assembler;
+
   
 implementation
 

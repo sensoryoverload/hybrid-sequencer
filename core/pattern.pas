@@ -265,7 +265,6 @@ begin
 
   FLocalSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
   FLocalSampleBankEngine := TSampleBankEngine.Create;
-  FLocalSampleBankEngine.MidiDataList := FMidiGrid.MidiDataList;
 
   FSample := TSample.Create(AObjectOwner, AMapped);
   FSample.LoadSample('kick.wav');

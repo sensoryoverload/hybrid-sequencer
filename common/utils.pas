@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, Sysutils, jacktypes, Graphics, Process, FileUtil, dbugintf, ringbuffer,
-  contnrs, flqueue;
+  contnrs, flqueue, math;
 
 Type
   TTreeFolderData = class
@@ -134,6 +134,7 @@ function hermite4(frac_pos, xm1, x0, x1, x2: single): single; inline;
 var
   FLogging: Boolean;
   GLogger: TLogMessageThread;
+  GNoteToFreq: Array[0..127] of single;
 
 implementation
 
@@ -532,8 +533,22 @@ begin
   end;
 end;
 
+procedure CalculateNoteToFreqTable;
+const
+  a = 440; // Base frequency 440Hz at midi note 60
+var
+  x: Integer;
+begin
+  for x := Low(GNoteToFreq) to High(GNoteToFreq) do
+  begin
+    GNoteToFreq[x] := (a / 32) * Power(2, (x / 12));
+  end
+end;
+
 initialization
   GLogger := TLogMessageThread.Create(False);
+
+  CalculateNoteToFreqTable;
 
 finalization
   GLogger.Free;

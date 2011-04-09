@@ -29,41 +29,305 @@ uses
   sndfile, jack, plugin, midiport, samplestreamprovider;
 
 type
+  TModSource = (
+    msLFO1,
+    msLFO2,
+    msLFO3,
+    msEnvelope1,
+    msEnvelope2,
+    msEnvelopeFollower,
+    msOscillator1,
+    msOscillator2,
+    msOscillatorMix,
+    msFilterOutput,
+    msAmpOutput,
+    msVelocity,
+    msNote);
+
+  { TBaseEngine - A really simple base class }
+
+  TBaseEngine = class
+  private
+    FSampleRate: single;
+  public
+    constructor Create; virtual;
+    procedure Initialize; virtual;
+  end;
 
   { TEnvelope }
 
   TEnvelope = class(THybridPersistentModel)
   private
-    FAttack: Integer;
-    FDecay: Integer;
-    FSustain: Integer;
-    FRelease: Integer;
+    // Time in seconds to reach value 1 from 0 after NOTE ON
+    FAttack: single;
+    // Time in seconds to reach sustain level from 1
+    FDecay: single;
+    // Sustain level between 0 and 1
+    FSustain: single;
+    // Time in seconds for the level to drop to 0 after NOTE OFF
+    FRelease: single;
+    // Loop envelope active state (ie LFO'ish)
+    FLoopActive: Boolean;
   public
     procedure Initialize; override;
   published
-    property Attack: Integer read FAttack write FAttack;
-    property Decay: Integer read FDecay write FDecay;
-    property Sustain: Integer read FSustain write FSustain;
-    property Release: Integer read FRelease write FRelease;
+    property Attack: single read FAttack write FAttack;
+    property Decay: single read FDecay write FDecay;
+    property Sustain: single read FSustain write FSustain;
+    property Release: single read FRelease write FRelease;
+    property LoopActive: Boolean read FLoopActive write FLoopActive;
   end;
+
+  TEnvelopeState = (esStart, esAttack, esDecay, esSustain, esRelease, esEnd);
+  TEnvelopeNoteEvent = (nsNone, nsNoteOn, nsNoteOff);
+
+  { TEnvelopeEngine }
+
+  TEnvelopeEngine = class(TBaseEngine)
+  private
+    FState: TEnvelopeState;
+    FAdder: single;
+    FLevel: single;
+    FEnvelope: TEnvelope;
+    procedure SetEnvelope(const AValue: TEnvelope);
+  public
+    procedure Initialize; override;
+    procedure Process;
+    procedure NoteOn;
+    procedure NoteOff;
+    property Envelope: TEnvelope read FEnvelope write SetEnvelope;
+    property Level: single read FLevel;
+    property State: TEnvelopeState read FState write FState;
+  end;
+
+  TLFOWaveform = (lwSin, lwSaw, lwTri, lwSqr);
 
   { TLFO }
 
   TLFO = class(THybridPersistentModel)
   private
+    // Width of the phase before bringing down the level to 0, defaults to 50 (halfcycle)
+    FPhaseWidth: Integer;
+    // Each cycle in Hz ie 0.5Hz / 500Hz
     FRate: Single;
-    FWaveform: Integer;
+    // waveform types
+    FWaveform: TLFOWaveform;
+    // Time in seconds to reach full strength at level 1
     FAttack: Integer;
+    // Starting point 0..99
+    FPhase: Integer;
+
     FKeyDepth: Single;
-    FIsON: Boolean;
+    FActive: Boolean;
+
+    FModSource: TModSource;
+    FModAmount: single;
   public
     procedure Initialize; override;
   published
     property Rate: Single read FRate write FRate;
-    property Waveform: Integer read FWaveform write FWaveform;
+    property Waveform: TLFOWaveform read FWaveform write FWaveform;
     property Attack: Integer read FAttack write FAttack;
+    property Phase: Integer read FPhase write FPhase;
+    property PhaseWidth: Integer read FPhaseWidth write FPhaseWidth;
     property KeyDepth: Single read FKeyDepth write FKeyDepth;
-    property IsON: Boolean read FIsON write FIsON;
+    property Active: Boolean read FActive write FActive;
+
+    property ModSource: TModSource read FModSource write FModSource;
+    property ModAmount: single read FModAmount write FModAmount;
+  end;
+
+  TLFOState = (lsIdle, lsRunning);
+  TLFODirection = (ldUp, ldDown);
+
+  { TLFOEngine }
+
+  TLFOEngine = class(TBaseEngine)
+  private
+    FState: TLFOState;
+    FAdder: single;
+    FLevel: single;
+    FLFO: TLFO;
+    FOldWaveForm: TLFOWaveform;
+    FPosition: single;
+    FPositionAdder: single;
+    procedure SetLFO(const AValue: TLFO);
+  public
+    constructor Create; override;
+    procedure Initialize; override;
+    procedure Process;
+    procedure Sync;
+    property LFO: TLFO read FLFO write SetLFO;
+    property Level: single read FLevel;
+    property State: TLFOState read FState write FState;
+  end;
+
+  { TFilter }
+
+  TFilter = class(THybridPersistentModel)
+  private
+    FFrequency: single;
+    FModAmount: single;
+    FModSource: TModSource;
+    FSampleRate: single;
+    FResonance: single;
+    procedure SetFrequency(AValue: single);
+    procedure SetSampleRate(AValue: single);
+    procedure SetResonance(AValue: single);
+  public
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    procedure Initialize; override;
+  published
+    property Frequency: single read FFrequency write SetFrequency;
+    property SampleRate: single read FSampleRate write SetSampleRate;
+    property Resonance: single read FResonance write SetResonance;
+
+    property ModSource: TModSource read FModSource write FModSource;
+    property ModAmount: single read FModAmount write FModAmount;
+  end;
+
+
+  { TFilterEngine }
+
+const
+  i2      : Double = 40000;
+  i2v     : Double = 1/20000;
+  noise   : Double = 1E-10;
+  noi     : Double = 1E-10*((1.0/$10000) / $10000);  // 2^-32
+  mTwo    : Single = -2;
+  c3      : Single =  3;
+  c6      : Single =  6;
+  c12     : Single = 12;
+  c24     : Single = 24;
+
+type
+  TFilterEngine = class(TBaseEngine)
+  private
+    FA   : array[1..5] of single;
+    FFilter: TFilter;
+    FOld : single;
+    F2vg : single;
+    FAcr : single;
+    FIpi : Double;
+    procedure FreqCalc;
+    procedure SetFilter(const AValue: TFilter);
+  public
+    constructor Create;
+    function Process(const I : Single):Single;
+    procedure Initialize; override;
+    property Filter: TFilter read FFilter write SetFilter;
+  end;
+
+  { TEnvelopeFollower }
+
+  TEnvelopeFollower = class(THybridPersistentModel)
+  private
+    FAttack: single;
+    FModAmount: single;
+    FModSource: TModSource;
+    FRelease: single;
+  public
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    procedure Initialize; override;
+  published
+    property Attack: single read FAttack write FAttack;
+    property Release: single read FRelease write FRelease;
+
+    property ModSource: TModSource read FModSource write FModSource;
+    property ModAmount: single read FModAmount write FModAmount;
+  end;
+
+  { TEnvelopeFollowerEngine }
+
+  TEnvelopeFollowerEngine = class(TBaseEngine)
+  private
+    FRel: single;
+    FAtt: single;
+    FEnvIn: single;
+    FEnvOut: single;
+
+    FEnvelopeFollower: TEnvelopeFollower;
+    procedure SetEnvelopeFollower(const AValue: TEnvelopeFollower);
+  public
+    function Process(const I : Single):Single;
+    procedure Initialize; override;
+    property EnvelopeFollower: TEnvelopeFollower read FEnvelopeFollower write SetEnvelopeFollower;
+  end;
+
+  { TAmplifier }
+
+  TAmplifier = class(THybridPersistentModel)
+  private
+    // Adjust level -24dB .. +24dB
+    FAmplify: single;
+
+    FModAmount: single;
+    FModSource: TModSource;
+  public
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    procedure Initialize; override;
+  published
+    property Amplify: single read FAmplify write FAmplify;
+    property ModSource: TModSource read FModSource write FModSource;
+    property ModAmount: single read FModAmount write FModAmount;
+  end;
+
+  { TAmplifierEngine }
+
+  TAmplifierEngine = class(TBaseEngine)
+  private
+    FAmplifier: TAmplifier;
+    procedure SetAmplifier(const AValue: TAmplifier);
+  public
+    function Process(const I : Single):Single;
+    procedure Initialize; override;
+    property Amplifier: TAmplifier read FAmplifier write SetAmplifier;
+  end;
+
+const
+  k1Div24lowerBits = 1 / (1 shl 24);
+
+  WFStrings: array[0..4] of string = ('triangle','sinus', 'sawtooth', 'square', 'exponent');
+
+type
+  TOscWaveform = (triangle, sinus, sawtooth, square, exponent);
+
+  { TOscillator }
+
+  TOscillator = class(THybridPersistentModel)
+  private
+    FStartPhase: dword;
+    FWaveForm: TOscWaveform;
+    procedure SetStartPhase(const AValue: dword);
+    procedure SetWaveForm(const Value: TOscWaveform);
+  public
+    function WaveformName:String;
+    property WaveForm: TOscWaveform read FWaveForm write SetWaveForm;
+    property StartPhase: dword read FStartPhase write SetStartPhase;
+
+  end;
+
+  { TOscillatorEngine }
+
+  TOscillatorEngine = class(TBaseEngine)
+  private
+    FRate: single;
+    FTable: array[0..256] of Single; // 1 more for linear interpolation
+    FPhase,
+    FInc: dword;
+    FOscillator: TOscillator;
+
+    procedure SetOscillator(const AValue: TOscillator);
+    procedure CalculateWaveform(AWaveform: TOscWaveform);
+    procedure SetRate(const AValue: single);
+  public
+    // increments the phase and outputs the new LFO value.
+    // return the new LFO value between [-1;+1]
+    function Process:Single;
+    procedure Initialize; override;
+    procedure Sync;
+    property Rate: single read FRate write SetRate;
+    property Oscillator: TOscillator read FOscillator write SetOscillator;
   end;
 
   { TSample }
@@ -78,6 +342,10 @@ type
     FSampleChannels: Integer;
     FSampleLevel: Single;
     FSamplePan: Single;
+
+    FOsc1: TOscillator;
+    FOsc2: TOscillator;
+    FOsc3: TOscillator;
 
     FPitchEnvelope: TEnvelope;
     FPitchEnvelopeDepth: Single;
@@ -95,6 +363,7 @@ type
     FSaturateDrive: Single;
     FSaturateOn: Boolean;
 
+    FFilter: TFilter;
     FFilterEnvelope: TEnvelope;
     FFilterEnvelopeDepth: Single;
     FFilterLFODepth: Single;
@@ -103,7 +372,9 @@ type
     FFilterCutoff: Single;
     FFilterResonance: Single;
 
-    FLFO: TLFO;
+    FLFO1: TLFO;
+    FLFO2: TLFO;
+    FLFO3: TLFO;
 
     FKey: Integer;
     FVoiceCount: Integer; // The number of voice instances there should be
@@ -143,6 +414,9 @@ type
     property SampleLevel: Single read FSampleLevel write FSampleLevel;
     property SamplePan: Single read FSamplePan write FSamplePan;
 
+    property Osc1: TOscillator read FOsc1 write FOsc1;
+    property Osc2: TOscillator read FOsc2 write FOsc2;
+    property Osc3: TOscillator read FOsc3 write FOsc3;
     property PitchEnvelope: TEnvelope read FPitchEnvelope write FPitchEnvelope;
     property PitchEnvelopeDepth: Single read FPitchEnvelopeDepth write FPitchEnvelopeDepth;
     property PitchLFODepth: Single read FPitchLFODepth write FPitchLFODepth;
@@ -167,7 +441,9 @@ type
     property FilterCutoff: Single read FFilterCutoff write FFilterCutoff;
     property FilterResonance: Single read FFilterResonance write FFilterResonance;
 
-    property LFO: TLFO read FLFO write FLFO;
+    property LFO1: TLFO read FLFO1 write FLFO1;
+    property LFO2: TLFO read FLFO2 write FLFO2;
+    property LFO3: TLFO read FLFO3 write FLFO3;
 
     property Key: Integer read FKey write FKey;
     property VoiceCount: Integer read FVoiceCount write FVoiceCount;
@@ -348,28 +624,44 @@ type
     from TPersistent as they are never stored, just instantiated on the heap.
   }
 
-  { TBaseEngine - A really simple base class }
-
-  TBaseEngine = class
-  end;
-
   { TSampleVoice - Internal playing voice for a TSample structure }
+
+  { TSampleVoiceEngine }
 
   TSampleVoiceEngine = class(TBaseEngine)
   private
     FSample: TSample;
     FSamplePosition: single;
-    FFilterEnvelopePosition: single;
-    FAmpEnvelopePosition: single;
-    FPitchEnvelopePosition: single;
+    FFilterEnvelope: TEnvelopeEngine;
+    FFilterEnvelopeLevel: single;
+
+    FAmpEnvelope: TEnvelopeEngine;
+    FAmpEnvelopeLevel: single;
+
+    FPitchEnvelope: TEnvelopeEngine;
+    FPitchEnvelopeLevel: single;
+
+    FOsc1: TOscillatorEngine;
+    FOsc2: TOscillatorEngine;
+    FOsc3: TOscillatorEngine;
+
+    FLFO1: TLFOEngine;
+    FLFO2: TLFOEngine;
+    FLFO3: TLFOEngine;
+
     FLFOPhase: single;
     FNote: Integer;
     FRunning: Boolean;
     FNoteOnOffset: Integer;
 
+    // Start the NOTE OFF phase of a note; handle note release ADSR etc
+    FStopVoice: Boolean;
+
     procedure SetSample(const AValue: TSample);
   public
     constructor Create;
+    destructor Destroy; override;
+    procedure Initialize; override;
     procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
     procedure NoteOn(ANote: Integer; ARelativeLocation: Integer);
     procedure NoteOff;
@@ -403,9 +695,9 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    procedure Initialize; override;
     procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
 
-    property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
     property Sample: TSample read FSample write SetSample;
   end;
 
@@ -421,9 +713,9 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    procedure Initialize; override;
     procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
 
-    property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
     property SampleBank: TSampleBank read FSampleBank write SetSampleBank;
   end;
 
@@ -438,6 +730,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    procedure Initialize; override;
     procedure Process(ATrackList: TObjectList; ABuffer: PSingle; AFrames: Integer);
 
     property Sampler: TSampler read FSampler write SetSampler;
@@ -446,7 +739,400 @@ type
 implementation
 
 uses
-  audiostructure, utils;
+  audiostructure, utils, fx;
+
+{ TBaseEngine }
+
+constructor TBaseEngine.Create;
+begin
+  writeln(Format('Creating class: %s', [Self.ClassName]));
+
+{  // Descendants initalize samplerate at constructor call
+  Initialize;}
+end;
+
+{
+  Retrieve samplerate setting
+}
+procedure TBaseEngine.Initialize;
+begin
+  writeln(Format('Initializing class: %s', [Self.ClassName]));
+
+  FSamplerate := GSettings.SampleRate;
+end;
+
+{ TOscillatorEngine }
+
+procedure TOscillatorEngine.SetOscillator(const AValue: TOscillator);
+begin
+  if FOscillator = AValue then exit;
+  FOscillator := AValue;
+
+  Initialize;
+end;
+
+function TOscillatorEngine.Process: Single;
+var
+  i: integer;
+  frac: Single;
+begin
+  // the 8 MSB are the index in the table in the range 0-255
+  i := Fphase shr 24;
+  // and the 24 LSB are the fractionnal part
+  frac := (Fphase and $00FFFFFF) * k1Div24lowerBits;
+  // increment the phase for the next tick
+  Fphase := FPhase + Finc; // the phase overflows itself
+  Result := Ftable[i] * (1-frac) + Ftable[i+1] * frac; // linear interpolation
+end;
+
+
+procedure TOscillatorEngine.Initialize;
+begin
+  inherited Initialize;
+
+  FPhase := 0;
+  CalculateWaveform(sawtooth);
+  Rate := 1000;
+end;
+
+procedure TOscillatorEngine.CalculateWaveform(AWaveform: TOscWaveform);
+var
+  i: Integer;
+begin
+  case AWaveform of
+    sinus:
+    begin
+      for i:=0 to 256 do
+      begin
+        FTable[i] := sin(2*pi*(i/256));
+      end;
+    end;
+    triangle:
+    begin
+      for i:=0 to 63 do
+      begin
+        FTable[i] := i / 64;
+        FTable[i+64] :=(64-i) / 64;
+        FTable[i+128] := - i / 64;
+        FTable[i+192] := - (64-i) / 64;
+      end;
+      FTable[256] := 0;
+    end;
+    sawtooth:
+    begin
+      for i:=0 to 255 do
+      begin
+        FTable[i] := 2*(i/255) - 1;
+      end;
+      FTable[256] := -1;
+    end;
+    square:
+    begin
+      for i := 0 to 127 do
+      begin
+        FTable[i]     :=  1;
+        FTable[i+128] := -1;
+      end;
+      FTable[256] := 1;
+    end;
+    exponent:
+    begin
+      // symetric exponent similar to triangle
+      for i:=0 to 127 do
+      begin
+        FTable[i] := 2 * ((exp(i/128) - 1) / (exp(1) - 1)) - 1  ;
+        FTable[i+128] := 2 * ((exp((128-i)/128) - 1) / (exp(1) - 1)) - 1  ;
+      end;
+      FTable[256] := -1;
+    end;
+  end;
+end;
+
+procedure TOscillatorEngine.SetRate(const AValue: single);
+begin
+  GLogger.PushMessage(Format('Note value: %f', [AValue]));
+
+  if FRate = AValue then exit;
+  FRate := AValue;
+  // the rate in Hz is converted to a phase increment with the following formula
+  // f[ inc = (256*rate/samplerate) * 2^24]
+  Finc := round((256 * Frate / Fsamplerate) * (1 shl 24));
+end;
+
+procedure TOscillatorEngine.Sync;
+begin
+  FPhase := 0;
+end;
+
+{ TOscillator }
+
+procedure TOscillator.SetStartPhase(const AValue: dword);
+begin
+  if FStartPhase = AValue then exit;
+  FStartPhase := AValue;
+end;
+
+procedure TOscillator.SetWaveForm(const Value: TOscWaveForm);
+var
+  i: integer;
+begin
+  FWaveForm := Value;
+end;
+
+function TOscillator.WaveformName: String;
+begin
+  result := WFStrings[Ord(Fwaveform)];
+end;
+
+{ TAmplifierEngine }
+
+procedure TAmplifierEngine.SetAmplifier(const AValue: TAmplifier);
+begin
+  if FAmplifier = AValue then exit;
+  FAmplifier := AValue;
+
+  Initialize;
+end;
+
+function TAmplifierEngine.Process(const I: Single): Single;
+begin
+  Result := I;
+end;
+
+procedure TAmplifierEngine.Initialize;
+begin
+  inherited Initialize;
+end;
+
+{ TAmplifier }
+
+constructor TAmplifier.Create(AObjectOwner: string; AMapped: Boolean);
+begin
+  inherited Create(AObjectOwner, AMapped);
+
+end;
+
+procedure TAmplifier.Initialize;
+begin
+  Notify;
+end;
+
+{ TEnvelopeFollowerEngine }
+
+procedure TEnvelopeFollowerEngine.SetEnvelopeFollower(
+  const AValue: TEnvelopeFollower);
+begin
+  if FEnvelopeFollower = AValue then exit;
+  FEnvelopeFollower := AValue;
+
+  Initialize;
+end;
+
+function TEnvelopeFollowerEngine.Process(const I: Single): Single;
+begin
+  // get your data into 'input'
+  FEnvIn := abs(I);
+
+  if FEnvOut < FEnvIn then
+  begin
+    FEnvOut := FEnvIn + FAtt * (FEnvOut - FEnvIn);
+  end
+  else
+  begin
+    FEnvOut := FEnvIn + FRel * (FEnvOut - FEnvIn);
+  end;
+
+  // envOut now contains the envelope
+  Result := FEnvOut;
+end;
+
+procedure TEnvelopeFollowerEngine.Initialize;
+begin
+  inherited Initialize;
+
+  // Attack and Release is in seconds
+  FAtt := exp(-1.0 / (FSampleRate * FEnvelopeFollower.Attack));
+  FRel := exp(-1.0 / (FSampleRate * FEnvelopeFollower.Release));
+
+  FEnvOut := 0.0;
+end;
+
+{ TEnvelopeFollower }
+
+constructor TEnvelopeFollower.Create(AObjectOwner: string; AMapped: Boolean);
+begin
+  inherited Create(AObjectOwner, AMapped);
+
+  //
+end;
+
+procedure TEnvelopeFollower.Initialize;
+begin
+  FAttack := 0;
+  FRelease := 1;
+end;
+
+{ TLFOEngine }
+
+procedure TLFOEngine.SetLFO(const AValue: TLFO);
+begin
+  if FLFO = AValue then exit;
+  FLFO := AValue;
+
+  Initialize;
+end;
+
+constructor TLFOEngine.Create;
+begin
+  inherited Create;
+
+end;
+
+procedure TLFOEngine.Initialize;
+begin
+  inherited Initialize;
+
+  case FLFO.Waveform of
+  lwSaw:
+    begin
+      FLevel := 1;
+      FAdder := FLFO.Rate / FSampleRate;
+    end;
+  lwSin: // TODO this is a tri not a sin!
+    begin
+      FLevel := 1;
+      FAdder := (FLFO.Rate / FSampleRate) * 2;
+    end;
+  lwSqr:
+    begin
+      FPositionAdder := (FLFO.Rate / FSampleRate);
+    end;
+  lwTri:
+    begin
+      FPositionAdder := (FLFO.Rate / FSampleRate);
+    end;
+  end;
+end;
+
+procedure TLFOEngine.Process;
+begin
+  case FLFO.Waveform of
+  lwSaw:
+    begin
+      FLevel := FLevel - FAdder;
+      if FLevel < 0 then
+      begin
+        FLevel := 1;
+      end;
+    end;
+  lwSin:
+    begin
+
+    end;
+  lwSqr:
+    begin
+      //if FPosition > ;
+    end;
+  lwTri:
+    begin
+
+    end;
+  end;
+end;
+
+{
+  Resynchronize to starting point
+}
+procedure TLFOEngine.Sync;
+begin
+  //
+end;
+
+{ TEnvelopeEngine }
+
+procedure TEnvelopeEngine.SetEnvelope(const AValue: TEnvelope);
+begin
+  if FEnvelope = AValue then exit;
+  FEnvelope := AValue;
+
+  Initialize;
+end;
+
+procedure TEnvelopeEngine.Initialize;
+begin
+  inherited Initialize;
+
+  FLevel := 0;
+  FState := esStart;
+end;
+
+procedure TEnvelopeEngine.Process;
+begin
+
+  case FState of
+  esStart:
+    begin
+      FAdder := 1 / (FSampleRate * FEnvelope.Attack);
+      FState := esAttack;
+    end;
+  esAttack:
+    begin
+      FLevel := FLevel + FAdder;
+      if FLevel >= 1 then
+      begin
+        FAdder := 1 / (FSampleRate * FEnvelope.Decay);
+        FState := esDecay;
+      end;
+    end;
+  esDecay:
+    begin
+      FLevel := FLevel - FAdder;
+      if FLevel <= FEnvelope.Sustain then
+      begin
+        FAdder := 0;
+        FState := esSustain;
+      end;
+    end;
+  esSustain:
+    begin
+      // Do nothing, level is stable here
+    end;
+  esRelease:
+    begin
+      FLevel := FLevel - FAdder;
+      if FLevel <= 0 then
+      begin
+        if FEnvelope.LoopActive then
+        begin
+          // Start again
+          FState := esAttack;
+        end
+        else
+        begin
+          FState := esEnd;
+        end;
+      end;
+      FAdder := 1 / (FSampleRate * FEnvelope.Decay);
+    end;
+  esEnd:
+    begin
+      // Stay here at the end, this should be a signal to put the voice engine
+      // back in the voice pool
+    end;
+  end;
+end;
+
+procedure TEnvelopeEngine.NoteOn;
+begin
+  FAdder := 1 / (FSampleRate * FEnvelope.Attack);
+  FState := esAttack;
+end;
+
+procedure TEnvelopeEngine.NoteOff;
+begin
+  FAdder := 1 / (FSampleRate * FEnvelope.Release);
+  FState := esRelease;
+end;
 
 { TSampler }
 
@@ -476,56 +1162,12 @@ end;
 
 function TSampler.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer): Integer;
 var
-  i, j: Integer;
   lBankIndex: Integer;
 begin
   for lBankIndex := 0 to Pred(FBankList.Count) do
   begin
     TSampleBank(FBankList[lBankIndex]).Process(AMidiGrid, ABuffer, AFrames);
   end;
-  (*
-  j := 0;
-  for i := 0 to Pred(AMidiGrid.MidiDataList.Count) do
-  begin
-    if (TMidiData(AMidiGrid.MidiDataList[i]).Location >= AMidiGrid.RealCursorPosition) and
-      (TMidiData(AMidiGrid.MidiDataList[i]).Location < AMidiGrid.RealCursorPosition + AFrames) then
-    begin
-      // Found start of midistream
-      j := i;
-      break;
-    end;
-  end;
-
-  for i := 0 to AFrames - 1 do
-  begin
-    ABuffer[i]:= ABuffer[i] * FTestSignal;
-    if AMidiGrid.MidiDataList.Count > 0 then
-    begin
-
-      while (j < AMidiGrid.MidiDataList.Count) and (TMidiData(AMidiGrid.MidiDataList[j]).Location = i + 0{AMidiGrid.RealCursorPosition}) do
-      begin
-        //FTestSignal := 1;
-        // Create/Destroy not threads
-        case TMidiData(AMidiGrid.MidiDataList[j]).DataType of
-          mtNoteOn:
-          begin
-            FTestSignal := 1;
-          end;
-          mtNoteOff:
-          begin
-            FTestSignal := 0;
-          end;
-          mtBankSelect:
-          begin
-
-          end;
-        end;
-        Inc(j);
-      end;
-    end;
-  end;
-  *)
-  Result := round(FTestSignal);
 end;
 
 { TSample }
@@ -553,13 +1195,20 @@ constructor TSample.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   inherited Create(AObjectOwner, AMapped);
 
+  // Init oscillators
+  FOsc1 := TOscillator.Create(ObjectID);
+  FOsc2 := TOscillator.Create(ObjectID);
+  FOsc3 := TOscillator.Create(ObjectID);
+
   // Init envelopes
   FAmpEnvelope := TEnvelope.Create(ObjectID);
   FFilterEnvelope := TEnvelope.Create(ObjectID);
   FPitchEnvelope := TEnvelope.Create(ObjectID);
 
   // Init LFO
-  FLFO := TLFO.Create(ObjectID);
+  FLFO1 := TLFO.Create(ObjectID);
+  FLFO2 := TLFO.Create(ObjectID);
+  FLFO3 := TLFO.Create(ObjectID);
 
   FPitchSemiTone := 1;
   FPitchDetune := 0;
@@ -572,10 +1221,15 @@ end;
 
 destructor TSample.Destroy;
 begin
+  FOsc1.Free;
+  FOsc2.Free;
+  FOsc3.Free;
   FAmpEnvelope.Free;
   FFilterEnvelope.Free;
   FPitchEnvelope.Free;
-  FLFO.Free;
+  FLFO1.Free;
+  FLFO2.Free;
+  FLFO3.Free;
 
   inherited Destroy;
 end;
@@ -597,6 +1251,7 @@ var
   SamplesRead: Integer;
   lValue: single;
 begin
+  writeln('start TSample.LoadSample');
   DBLog('start TSample.LoadSample');
 
   FWave := GSampleStreamProvider.LoadSample(AFileName);
@@ -657,74 +1312,11 @@ var
   lMidiData: TMidiData;
   lSampleIndex: Integer;
 begin
-  (*
-  // Only process when not in state change
-  if AMidiGrid.Enabled and (AMidiGrid.MidiDataList.Count > 0) then
-  begin
-    lFrameOffsetLow := ((AMidiGrid.RealCursorPosition div AFrames) * AFrames);
-    lFrameOffsetHigh := ((AMidiGrid.RealCursorPosition div AFrames) * AFrames) + AFrames;
-
-    while (not AMidiGrid.MidiDataList.Eof) and
-      (AMidiGrid.MidiDataList.CurrentMidiData.Location < lFrameOffsetHigh) do
-    begin
-      lMidiData := AMidiGrid.MidiDataList.CurrentMidiData;
-
-      if AMidiGrid.RealCursorPosition > lMidiData.Location then
-      begin
-        lRelativeLocation := 0
-      end
-      else
-      begin
-        lRelativeLocation := lMidiData.Location mod AFrames;
-      end;
-      {
-        push note to engine which in turn looks if this note is already playing
-        if so then reset the sample engine to start = 0
-        if note is a note off then end the note and deregister as playing
-
-        if not playing then start engine from start = 0
-      }
-
-{
-      buffer := jack_midi_event_reserve(AMidiOutBuf, lRelativeLocation, 3);
-      if Assigned(buffer) then
-      begin
-        case lMidiData.DataType of
-          mtNoteOn:
-          begin
-  			    buffer[0] := $90 + APattern.MidiChannel;	{ note on }
-  			    buffer[1] := lMidiData.DataValue1;
-            buffer[2] := lMidiData.DataValue2;		{ velocity }
-          end;
-          mtNoteOff:
-          begin
-    				buffer[0] := $80 + APattern.MidiChannel;;	{ note off }
-    				buffer[1] := lMidiData.DataValue1;
-    				buffer[2] := 0;		{ velocity }
-          end;
-          mtBankSelect:
-          begin
-
-          end;
-        end;
-      end
-      else
-      begin
-        ATrack.DevValue := 'jackmidi buffer allocation failed';
-      end;
-}
-//      ATrack.DevValue := Format('Play midi at location %d', [lMidiData.Location]);
-
-      AMidiGrid.MidiDataList.Next;
-    end;
-  end;       *)
-
 
   for lSampleIndex := 0 to Pred(FSampleList.Count) do
   begin
     TSampleEngine(FSampleList[lSampleIndex]).Process(AMidiGrid, ABuffer, AFrames);
   end;
-
 
 end;
 
@@ -1064,6 +1656,11 @@ end;
 
 procedure TEnvelope.Initialize;
 begin
+  Attack := 0.1;
+  Decay := 1;
+  Sustain := 1;
+  Release := 1;
+
   Notify;
 end;
 
@@ -1214,8 +1811,11 @@ begin
 
   for lVoiceIndex := 0 to Pred(FSample.VoiceCount) do
   begin
+    writeln(Format('voice %d', [lVoiceIndex]));
     lSampleVoice := TSampleVoiceEngine.Create;
     lSampleVoice.Sample := FSample;
+
+    lSampleVoice.Initialize;
 
     FSampleVoiceEngineList.Add(lSampleVoice);
 
@@ -1242,6 +1842,12 @@ begin
   inherited Destroy;
 end;
 
+procedure TSampleEngine.Initialize;
+begin
+  inherited Initialize;
+
+end;
+
 procedure TSampleEngine.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
 var
   lVoiceIndex: Integer;
@@ -1261,29 +1867,56 @@ begin
       // Shortcut for current event in buffer
       lMidiEvent := lMidiBuffer.ReadEvent;
 
-      // Is this note already playing? Yes...now locate the voice
-      for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+      if lMidiEvent.DataType = mtNoteOff then
       begin
-        lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-        if lVoice.Running then
+        {
+          Are there any running voices which are to receive a NOTE OFF?
+        }
+        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
         begin
-          if (lMidiEvent.DataValue1 = lVoice.Note) then
-          begin
-            GLogger.PushMessage(Format('lVoice.NoteOn %d, Location %d',
-            [lMidiEvent.DataValue1, lMidiEvent.RelativeOffset]));
+          lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-            // Restart note at location 'RelativeOffset'
+          if lVoice.Running then
+          begin
+            if lMidiEvent.DataType = mtNoteOff then
+            begin
+              if lMidiEvent.DataValue1 = lVoice.Note then
+              begin
+                GLogger.PushMessage(Format('Note off: %d, Offset %d', [lMidiEvent.DataValue1, lMidiEvent.RelativeOffset]));
+
+                lVoice.NoteOff;
+                break;
+              end;
+            end;
+          end;
+        end;
+      end
+      else if lMidiEvent.DataType = mtNoteOn then
+      begin
+        {
+          Are there any empty voice slots to receive NOTE ON's?
+        }
+        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+        begin
+          lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+
+          if not lVoice.Running then
+          begin
+            GLogger.PushMessage(Format('Start Note: %d, Offset %d', [lMidiEvent.DataValue1, lMidiEvent.RelativeOffset]));
+
+            // Start note at location 'RelativeOffset'
             lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset);
             break;
           end;
-        end
-        else
-        begin
-          // Start note at location 'RelativeOffset'
-          lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset);
-          break;
         end;
+      end
+      else if lMidiEvent.DataType = mtCC then
+      begin
+        // TODO
+      end
+      else if lMidiEvent.DataType = mtVelocity then
+      begin
+        // TODO
       end;
     end;
   end;
@@ -1309,33 +1942,79 @@ end;
 
 constructor TSampleVoiceEngine.Create;
 begin
-  FAmpEnvelopePosition := 0;
-  FFilterEnvelopePosition := 0;
-  FPitchEnvelopePosition := 0;
+  FOsc1 := TOscillatorEngine.Create;
+  FOsc2 := TOscillatorEngine.Create;
+  FOsc3 := TOscillatorEngine.Create;
+  FFilterEnvelope := TEnvelopeEngine.Create;
+  FAmpEnvelope := TEnvelopeEngine.Create;
+  FPitchEnvelope := TEnvelopeEngine.Create;
+  FLFO1 := TLFOEngine.Create;
+  FLFO2 := TLFOEngine.Create;
+  FLFO3 := TLFOEngine.Create;
+
   FLFOPhase := 0;
   FRunning := False;
   FSamplePosition := 0;
   FNote := -1;
   FNoteOnOffset := 0;
+  FStopVoice := False;
+end;
+
+destructor TSampleVoiceEngine.Destroy;
+begin
+  FOsc1.Free;
+  FOsc2.Free;
+  FOsc3.Free;
+  FFilterEnvelope.Free;
+  FAmpEnvelope.Free;
+  FPitchEnvelope.Free;
+  FLFO1.Free;
+  FLFO2.Free;
+  FLFO3.Free;
+
+  inherited Destroy;
+end;
+
+procedure TSampleVoiceEngine.Initialize;
+begin
+  inherited Initialize;
+
+  if Assigned(FSample) then
+  begin
+    FOsc1.Oscillator := FSample.Osc1;
+    FOsc2.Oscillator := FSample.Osc2;
+    FOsc3.Oscillator := FSample.Osc3;
+    FFilterEnvelope.Envelope := FSample.FilterEnvelope;
+    FAmpEnvelope.Envelope := FSample.AmpEnvelope;
+    FPitchEnvelope.Envelope := FSample.PitchEnvelope;
+    FLFO1.LFO := FSample.LFO1;
+    FLFO2.LFO := FSample.LFO2;
+    FLFO3.LFO := FSample.LFO3;
+  end;
+  FLFOPhase := 0;
+  FRunning := False;
+  FSamplePosition := 0;
+  FNote := -1;
+  FNoteOnOffset := 0;
+  FStopVoice := False;
+
 end;
 
 procedure TSampleVoiceEngine.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
+  lSample: single;
   lChannel: TChannel;
 begin
   if Assigned(FSample.Wave.ChannelList) then
   begin
-    GLogger.PushMessage('Assigned(FSample.Wave.ChannelList)');
-    GLogger.PushMessage(FSample.SampleName);
     if FSample.Wave.ChannelCount > 0 then
     begin
-      GLogger.PushMessage('FSample.Wave.ChannelCount > 0');
+      // Hmm still in MONO (TODO)
       lChannel := TChannel(FSample.Wave.ChannelList[0]);
 
       if Assigned(lChannel) then
       begin
-        GLogger.PushMessage('Assigned(lChannel)');
         for i := FNoteOnOffset to Pred(AFrames) do
         begin
           // Calculate synth voice here
@@ -1350,8 +2029,45 @@ begin
             FRunning := False;
           end;
 
+          lSample := ABuffer[i];
+          // External audio in Envelope follower
+
+          // Oscillatorbank
+          lSample := FOsc1.Process;
+          lSample := lSample + FOsc2.Process;
+          lSample := lSample + FOsc3.Process;
+{
+          // LFO's
+          FLFO1.Process;
+          FLFO2.Process;
+          FLFO3.Process;
+
+          // ADSR Pitch
+          FPitchEnvelope.Process;
+          FPitchEnvelopeLevel := FPitchEnvelope.Level;
+
+          // Pitch
+
+
+          // ADSR Filter
+          FFilterEnvelope.Process;
+          FFilterEnvelopeLevel := FFilterEnvelope.Level;
+
+          // Filter
+
+          // ADSR Amplifier
+          FAmpEnvelope.Process;
+          FAmpEnvelopeLevel := FAmpEnvelope.Level;
+
+          // Amplifier
+
+          // FX
+
+}
+          ABuffer[i] := lSample;
+
           {TODO PitchSemiTone should be replaced with a pitchscale factor}
-          if FSamplePosition < FSample.Wave.Frames then
+          if (FSamplePosition + FSample.PitchScaleFactor) < FSample.Wave.Frames then
           begin
             FSamplePosition := FSamplePosition + FSample.PitchScaleFactor;
           end
@@ -1362,8 +2078,11 @@ begin
             FRunning := False;
 
             // Loop
-            //FSamplePosition := 0;;
+            //FSamplePosition := 0;
           end;
+
+
+
         end;
 
         // Next iteration, start from the beginning
@@ -1373,18 +2092,35 @@ begin
   end;
 end;
 
+{
+  Reinitialize start state
+}
 procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer);
 begin
+  GLogger.PushMessage(Format('Notevalue: %d', [ANote]));
   FRunning := True;
   FSamplePosition := 0;
+
+  FPitchEnvelope.NoteOn;
+  FFilterEnvelope.NoteOn;
+  FAmpEnvelope.NoteOn;
+
   FNoteOnOffset := ARelativeLocation;
 
   FNote := ANote;
+
+  FOsc1.Rate := GNoteToFreq[ANote];
+  FOsc2.Rate := GNoteToFreq[ANote] - 1;
+  FOsc3.Rate := GNoteToFreq[ANote] + 1;
 end;
 
 procedure TSampleVoiceEngine.NoteOff;
 begin
-  FRunning := False;
+  FStopVoice := True;
+
+  FPitchEnvelope.NoteOff;
+  FFilterEnvelope.NoteOff;
+  FAmpEnvelope.NoteOff;
 end;
 
 function TSampleVoiceEngine.RunningNote: Integer;
@@ -1411,7 +2147,6 @@ begin
   for lSampleEngineIndex := 0 to Pred(FSampleBank.SampleList.Count) do
   begin
     lSampleEngine := TSampleEngine.Create;
-    lSampleEngine.MidiDataList := FMidiDataList;
     lSampleEngine.Sample := TSample(FSampleBank.SampleList[lSampleEngineIndex]);
 
     FSampleEngineList.Add(lSampleEngine);
@@ -1432,6 +2167,12 @@ begin
   FSampleEngineList.Free;
 
   inherited Destroy;
+end;
+
+procedure TSampleBankEngine.Initialize;
+begin
+  inherited Initialize;
+
 end;
 
 procedure TSampleBankEngine.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle;
@@ -1477,6 +2218,12 @@ begin
   inherited Destroy;
 end;
 
+procedure TSamplerEngine.Initialize;
+begin
+  inherited Initialize;
+
+end;
+
 { This method iterates through all tracks and renders all available midi to just one
   output buffer : ABuffer }
 procedure TSamplerEngine.Process(ATrackList: TObjectList; ABuffer: PSingle;
@@ -1488,6 +2235,115 @@ begin
   begin
 
   end;
+end;
+
+constructor TFilterEngine.Create;
+begin
+  inherited Create;
+
+  FA[1] := 0;
+  FA[2] := 0;
+  FA[3] := 0;
+  FA[4] := 0;
+  FA[5] := 0;
+  FOld := 0;
+end;
+
+procedure TFilterEngine.FreqCalc;
+var
+  lFc  : Double;
+  lFcr : Double;
+begin
+  lFc :=  FFilter.Frequency / FFilter.SampleRate;
+  // frequency & amplitude correction
+  lFcr := 1.8730 * (lFc * lFc * lFc) + 0.4955 * (lFc * lFc) - 0.6490 * lFc + 0.9988;
+  FAcr := -3.9364 * (lFc * lFc) + 1.8409 * lFc + 0.9968;
+  F2vg := i2 * (1 - exp(-FIpi * lFcr * lFc)); // Filter Tuning
+end;
+
+procedure TFilterEngine.SetFilter(const AValue: TFilter);
+begin
+  if FFilter = AValue then exit;
+  FFilter := AValue;
+
+  Initialize;
+end;
+
+constructor TFilter.Create(AObjectOwner: string; AMapped: Boolean = True);
+begin
+  inherited Create(AObjectOwner, AMapped);
+
+  FResonance := 1;
+  FFrequency := 1000;
+  FSampleRate := 44100;
+end;
+
+procedure TFilter.Initialize;
+begin
+  Notify;
+end;
+
+procedure TFilter.SetFrequency(AValue: single);
+begin
+  if FSampleRate <= 0 then raise exception.create('Sample Rate Error!');
+  if AValue <> FFrequency then
+  begin
+    FFrequency := AValue;
+  end;
+end;
+
+procedure TFilter.SetSampleRate(AValue: single);
+begin
+  if FSampleRate <= 0 then raise exception.create('Sample Rate Error!');
+  if AValue <> FSampleRate then
+  begin
+    FSampleRate := AValue;
+  end;
+end;
+
+procedure TFilter.SetResonance(AValue: single);
+begin
+  if AValue <> FResonance then
+  begin
+    if AValue > 1 then
+      FResonance := 1
+    else if AValue < 0 then
+      FResonance := 0
+    else
+      FResonance := AValue;
+  end;
+end;
+
+function TFilterEngine.Process(const I : Single):Single;
+begin
+ // cascade of 4 1st order sections
+ FA[1]:=FA[1]+F2vg*(Tanh2_pas2((I+(noise*Random)-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2_pas2(FA[1]*i2v));
+// FA[1]:=FA[1]+(F2vg*(Tanh2((I+(noise*Random)-2*fQ*FOld*FAcr)*i2v)-Tanh2(FA[1]*i2v)));
+ FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
+ FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
+ FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
+
+ // 1/2-sample delay for phase compensation
+ FOld:=FA[4]+FA[5];
+ FA[5]:=FA[4];
+
+ // oversampling
+ FA[1]:=FA[1]+F2vg*(Tanh2_pas2((-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2(FA[1]*i2v));
+ FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
+ FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
+ FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
+
+ FOld:=FA[4]+FA[5];
+ FA[5]:=FA[4];
+
+ Result:=FOld;
+end;
+
+procedure TFilterEngine.Initialize;
+begin
+  inherited Initialize;
+
+  FreqCalc;
 end;
 
 end.
