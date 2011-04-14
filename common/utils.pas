@@ -89,7 +89,6 @@ Type
 
   TLogMessageThread = class(TThread)
   private
-    FMessageQueue: TObjectQueue;
     FRingBuffer: pjack_ringbuffer_t;
 
     procedure Updater;
@@ -465,7 +464,6 @@ end;
 
 procedure TLogMessageThread.Updater;
 begin
-//  while FMessageQueue.Count > 0 do
   while jack_ringbuffer_read_space(FRingBuffer) > 0 do
   begin
     writeln(PopMessage);
@@ -487,15 +485,11 @@ constructor TLogMessageThread.Create(CreateSuspended: boolean);
 begin
   inherited Create(CreateSuspended);
 
-  FMessageQueue := TObjectQueue.Create;
-
-  FRingBuffer := jack_ringbuffer_create(100);
+  FRingBuffer := jack_ringbuffer_create(40000);
 end;
 
 destructor TLogMessageThread.Destroy;
 begin
-  FMessageQueue.Free;
-
   jack_ringbuffer_free(FRingBuffer);
 
   inherited Destroy;
@@ -505,16 +499,16 @@ procedure TLogMessageThread.PushMessage(AMessage: string);
 var
   lMessage: THybridLoggerMessage;
 begin
+  if jack_ringbuffer_write_space(FRingBuffer) > SizeOf(lMessage) then
+  begin
+    lMessage := THybridLoggerMessage.Create;
+    try
+      lMessage.Text := AMessage;
 
-  lMessage := THybridLoggerMessage.Create;
-  try
-    lMessage.Text := AMessage;
-
-//    FMessageQueue.Push(lMessage);
-
-    jack_ringbuffer_write(FRingBuffer, @lMessage, SizeOf(lMessage));
-  except
-    lMessage.Free;
+      jack_ringbuffer_write(FRingBuffer, @lMessage, SizeOf(lMessage));
+    except
+      lMessage.Free;
+    end;
   end;
 end;
 
@@ -522,7 +516,6 @@ function TLogMessageThread.PopMessage: string;
 var
   lMessage: THybridLoggerMessage;
 begin
-//  lMessage := THybridLoggerMessage( FMessageQueue.Pop );
   jack_ringbuffer_read(FRingBuffer, @lMessage, SizeOf(lMessage));
 
   if Assigned(lMessage) then

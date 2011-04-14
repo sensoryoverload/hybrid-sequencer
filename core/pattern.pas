@@ -264,10 +264,12 @@ begin
   FWaveForm := TWaveForm.Create(AObjectOwner, AMapped);
 
   FLocalSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
-  FLocalSampleBankEngine := TSampleBankEngine.Create;
+  FLocalSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
 
   FSample := TSample.Create(AObjectOwner, AMapped);
   FSample.LoadSample('kick.wav');
+  FSample.Initialize;
+
   FLocalSampleBank.SampleList.Add(FSample);
 
   FLocalSampleBankEngine.SampleBank := FLocalSampleBank;

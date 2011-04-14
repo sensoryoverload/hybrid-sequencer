@@ -48,6 +48,8 @@ type
     DataValue1: byte;
     DataValue2: byte;
     MidiChannel: byte;
+    RelativeOffset: Integer;
+    Length: Integer; // Notelength
 
     Next: TMidiData; // Point to next in list
   end;

@@ -247,40 +247,6 @@ implementation
 
 uses Fx;
 
-function SortOnLocation(Item1 : Pointer; Item2 : Pointer) : Integer;
-var
-  location1, location2 : TMidiData;
-begin
-  // We start by viewing the object pointers as TSlice objects
-  location1 := TMidiData(Item1);
-  location2 := TMidiData(Item2);
-
-  // Now compare by location
-  if location1.Location > location2.Location then
-    Result := 1
-  else if location1.Location = location2.Location then
-    Result := 0
-  else
-    Result := -1;
-end;
-
-function compareByLocation(Item1 : Pointer; Item2 : Pointer) : Integer;
-var
-  location1, location2 : TMarker;
-begin
-  // We start by viewing the object pointers as TSlice objects
-  location1 := TMarker(Item1);
-  location2 := TMarker(Item2);
-
-  // Now compare by location
-  if location1.Location > location2.Location then
-    Result := 1
-  else if location1.Location = location2.Location then
-    Result := 0
-  else
-    Result := -1;
-end;
-
 constructor TMidiGrid.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   DBLog('start TMidiGrid.Create');
@@ -415,10 +381,10 @@ procedure TMidiNote.SetNote(const AValue: Integer);
 begin
   FNote := AValue;
   FMidiNoteStart.DataType := mtNoteOn;
-  FMidiNoteStart.DataValue1:= FNote;
+  FMidiNoteStart.DataValue1 := FNote;
   FMidiNoteStart.DataValue2 := 127;
-  FMidiNoteEnd.DataType:= mtNoteOff;
-  FMidiNoteEnd.DataValue1:= FNote;
+  FMidiNoteEnd.DataType := mtNoteOff;
+  FMidiNoteEnd.DataValue1 := FNote;
   FMidiNoteEnd.DataValue2 := 0;
 end;
 
@@ -431,13 +397,16 @@ procedure TMidiNote.SetNoteLength(const AValue: Integer);
 begin
   FNoteLength:= AValue;
   FMidiNoteEnd.Location := (FNoteLocation * 220) + (FNoteLength * 220);
+  FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
 end;
 
 procedure TMidiNote.SetNoteLocation(const AValue: Integer);
 begin
   FNoteLocation:= AValue;
-  FMidiNoteStart.Location := FNoteLocation * 220;
   FMidiNoteEnd.Location := (FNoteLocation * 220) + (FNoteLength * 220);
+
+  FMidiNoteStart.Location := FNoteLocation * 220;
+  FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
 end;
 
 procedure TMidiNote.SetNoteVelocity(const AValue: Integer);
