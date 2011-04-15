@@ -172,6 +172,7 @@ type
     destructor Destroy; override;
     procedure BeginUpdate;
     procedure EndUpdate;
+    function Updating: Boolean;
     procedure Attach(AObserver: IObserver);
     procedure Detach(AObserver: IObserver);
     procedure Notify;
@@ -666,6 +667,11 @@ procedure THybridPersistentModel.EndUpdate;
 begin
   Dec(FUpdateCount);
   if FUpdateCount = 0 then Notify;
+end;
+
+function THybridPersistentModel.Updating: Boolean;
+begin
+  Result := FUpdateCount > 0;
 end;
 
 procedure THybridPersistentModel.Detach(AObserver: IObserver);

@@ -124,6 +124,7 @@ type
     FMainSyncModula: Integer;
     FMainQuantizeLength: Integer;
     FBPM: Single;
+    FBPMAdder: Single;
     FMainSampleRate: Single;
     FPlayState: Integer;
     FSelectedBank: TSampleBank;
@@ -149,6 +150,7 @@ type
     property MainSyncCounter: Integer read FMainSyncCounter write FMainSyncCounter;
     property MainSyncModula: Integer read FMainSyncModula write FMainSyncModula;
     property BPM: Single read FBPM write SetBPM;
+    property BPMAdder: Single read FBPMAdder;
     property PlayState: Integer read FPlayState write FPlayState;
     property MainSampleRate: Single read FMainSampleRate write FMainSampleRate;
     property MainQuantizeLength: Integer read FMainQuantizeLength write FMainQuantizeLength;
@@ -216,6 +218,8 @@ procedure TAudioStructure.SetBPM(const AValue: Single);
 begin
   FBPM := AValue;
   if FBPM < 1 then FBPM := 1;
+
+  FBPMAdder := FBPM / 120;
 
   RecalculateSynchronize;
 end;

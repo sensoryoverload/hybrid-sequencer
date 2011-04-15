@@ -677,6 +677,7 @@ type
     FNote: Integer;
     FRunning: Boolean;
     FNoteOnOffset: Integer;
+    FLength: single;
 
     // Start the NOTE OFF phase of a note; handle note release ADSR etc
     FStopVoice: Boolean;
@@ -689,7 +690,7 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Process(AMidiGrid: TMidiGrid; AInputBuffer: PSingle; AFrames: Integer);
-    procedure NoteOn(ANote: Integer; ARelativeLocation: Integer);
+    procedure NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single);
     procedure NoteOff;
 
     function RunningNote: Integer;
@@ -1915,9 +1916,8 @@ var
   lSampleAdd: Single;
   lSampleMul: Single;
 
-
   lMidiBuffer: TMidiBuffer;
-  lMidiEvent: TMidiData;
+  lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
 begin
   lMidiBuffer := AMidiGrid.MidiBuffer;
@@ -1935,7 +1935,7 @@ begin
         {
           Are there any running voices which are to receive a NOTE OFF?
         }
-        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+{        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
         begin
           lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
@@ -1943,14 +1943,11 @@ begin
           begin
             if lMidiEvent.DataValue1 = lVoice.Note then
             begin
-              {GLogger.PushMessage(Format('Stop Note: %d, Offset %d, Voice: %d',
-                [lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lVoiceIndex]));   }
-
               lVoice.NoteOff;
               break;
             end;
           end;
-        end;
+        end;    }
       end
       else if lMidiEvent.DataType = mtNoteOn then
       begin
@@ -1961,13 +1958,17 @@ begin
         begin
           lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
+          {if lVoice.Running and (lMidiEvent.DataValue1 = lVoice.Note) then
+          begin
+            // Retrigger note when te same note value
+            lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length);
+            break;
+          end
+          else}
           if not lVoice.Running then
           begin
-            {GLogger.PushMessage(Format('Start Note: %d, Offset %d, Voice: %d',
-              [lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lVoiceIndex]));   }
-
             // Start note at location 'RelativeOffset'
-            lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset);
+            lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length);
             break;
           end;
         end;
@@ -1987,10 +1988,6 @@ begin
   for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
   begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-    {for lBufferIndex := 0 to Pred(FFrames) do
-    begin
-      ABuffer[lBufferIndex] := 0;
-    end;  }
 
     if lVoice.Running then
     begin
@@ -2110,6 +2107,11 @@ begin
 
         for i := FNoteOnOffset to Pred(AFrames) do
         begin
+          if FLength <= 0 then
+          begin
+            NoteOff;
+          end;
+
           // Calculate synth voice here
           if (Round(FSamplePosition) >= 0) and (Round(FSamplePosition) < FSample.Wave.Frames) then
           begin
@@ -2179,6 +2181,9 @@ begin
             // Loop
             //FSamplePosition := 0;
           end;
+
+          // Virtual note of when FLength <= 0
+          FLength := FLength - GAudioStruct.BPMAdder;
         end;
 
         // Next iteration, start from the beginning
@@ -2191,7 +2196,7 @@ end;
 {
   Reinitialize start state
 }
-procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer);
+procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single);
 begin
   FRunning := True;
   FSamplePosition := 0;
@@ -2203,6 +2208,11 @@ begin
   FNoteOnOffset := ARelativeLocation;
 
   FNote := ANote;
+
+  // Initialize with note length and decrease each iteration of a frame. This is
+  // like a pre allocated note off. When using loops this will play the note past
+  // the end loop marker.
+  FLength := ALength;
 
   FOsc1.Rate := GNoteToFreq[ANote];
   FOsc2.Rate := GNoteToFreq[ANote] - 1;

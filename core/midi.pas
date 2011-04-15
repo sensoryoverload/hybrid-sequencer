@@ -221,6 +221,7 @@ type
     procedure Initialize; override;
     procedure Assign(Source: TPersistent); override;
     function QuantizeLocation(ALocation: Integer): Integer;
+    function StartVirtualLocation(ALocation: Integer): TMidiData;
     procedure Process(ABuffer: PSingle; AFrames: Integer);
 
     property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
@@ -240,6 +241,11 @@ type
     property LoopEnd: Longint read FLoopEnd write SetLoopEnd;
     property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 1;
+  end;
+
+  TMidiGridEngine = class
+  private
+  public
   end;
 
 
@@ -303,6 +309,20 @@ begin
     Result := Round(Trunc(ALocation / FQuantizeValue) * FQuantizeValue);
 
     DBLog(Format('Floor(ALocation / FQuantizeValue) %d', [Trunc(ALocation / FQuantizeValue)]));
+  end;
+end;
+
+function TMidiGrid.StartVirtualLocation(ALocation: Integer): TMidiData;
+var
+  lIndex: Integer;
+begin
+  Result := nil;
+  for lIndex := Pred(FMidiDataList.Count) downto 0 do
+  begin
+    if TMidiData(FMidiDataList.Items[lIndex]).Location <= ALocation then
+    begin
+      Result := TMidiData(FMidiDataList.Items[lIndex]);
+    end;
   end;
 end;
 
@@ -473,11 +493,23 @@ begin
       lMementoNote.ObjectOwnerID := lMidiNote.ObjectOwnerID;
       Memento.Add(lMementoNote);
 
+      // Set the midicursor to another not if possible to prevent AV's in the callback
+      if (FMidiGrid.MidiDataCursor = lMidinote.MidiNoteStart) or
+        (FMidiGrid.MidiDataCursor = lMidinote.MidiNoteEnd) then
+      begin
+        if FMidiGrid.MidiDataList.Count > 0 then
+        begin
+          // TODO Make engine for iterating the list
+          FMidiGrid.MidiDataCursor := TMidiData(FMidiGrid.MidiDataList[0]);
+        end;
+      end;
       FMidiGrid.MidiDataList.Remove(lMidinote.MidiNoteStart);
       FMidiGrid.MidiDataList.Remove(lMidinote.MidiNoteEnd);
       FMidiGrid.NoteList.Remove(lMidinote);
+
     end;
   end;
+  FMidiGrid.MidiDataList.IndexList;
 
   FMidiGrid.EndUpdate;
   FMidiGrid.Enabled := True;
@@ -543,6 +575,7 @@ begin
   FOldObjectID := lMidiNote.ObjectID;
 
   FMidiGrid.MidiDataList.IndexList;
+
   FMidiGrid.EndUpdate;
 
   DBLog('end TCreateNotesCommand.DoExecute');

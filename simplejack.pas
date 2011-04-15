@@ -28,18 +28,14 @@ uses
   StdCtrls, jack, midiport, jacktypes, ExtCtrls, Math, sndfile, waveform, Spin,
   ContNrs, transport, FileCtrl, PairSplitter, Utils, ComCtrls, GlobalConst,
   Menus, ActnList, dialcontrol, bpm, samplergui, SoundTouchObject,
-  Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg, SynEdit, SynHighlighterPas,
-  SynGutterBase, SynGutterMarks, SynGutterLineNumber, SynGutterChanges,
-  SynGutter, SynGutterCodeFolding, rubberband,
+  Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg, rubberband,
   TypInfo, FileUtil, global_command, LCLType, LCLIntf,
   ShellCtrls, Grids, TrackGUI, waveformgui, global, track, pattern,
   audiostructure, midigui, patterngui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
-  ringbuffer, lua, optionsgui;
+  ringbuffer, optionsgui;
 
 type
-  TTestFunction = function (Param1: Double;
-                            Data: String): Longint of object;
 
   TMidiEvent = record
     // No function yet as midi-events are processed as fast as possible
@@ -74,19 +70,9 @@ type
     acNewScriptAction: TAction;
     acDeleteScriptAction: TAction;
     acSaveScriptActionAs: TAction;
-    alScriptActions: TActionList;
     acUndo: TAction;
     alGlobalActions: TActionList;
     btnDeleteTrack: TButton;
-    btnCompile: TButton;
-    btnExecute: TButton;
-    btnNewScriptAction: TButton;
-    btnDeleteScriptAction: TButton;
-    btnSaveScriptActionAs: TButton;
-    cbScriptActions: TComboBox;
-    edtScriptActionName: TEdit;
-    gbScriptControl: TGroupBox;
-    gbScriptEditor: TGroupBox;
     LeftSplitter: TCollapseSplitter;
     BottomSplitter: TCollapseSplitter;
     DialControl1: TDialControl;
@@ -97,7 +83,6 @@ type
     HelpMenu: TMenuItem;
     MenuItem4: TMenuItem;
     pcPattern: TPageControl;
-    ScriptMessages: TMemo;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     LoadMenu: TMenuItem;
@@ -114,20 +99,16 @@ type
     SaveTrack: TMenuItem;
     sbFXBitRate: TScrollBar;
     sbFXSampleRate: TScrollBar;
-    Splitter1: TSplitter;
     Splitter5: TSplitter;
     gbTrackDetail: Tgroupbox;
     Panel1: Tpanel;
     Sbtracks: Tscrollbox;
     stBitrate: TStaticText;
     stSampleRate: TStaticText;
-    ScriptEditor: TSynEdit;
-    SynPasSyn1: TSynPasSyn;
     ScreenUpdater: TTimer;
     tsSampler: TTabSheet;
     tsFX: TTabSheet;
     tsMonitor: TTabSheet;
-    tsScripter: TTabSheet;
     tsPattern: TTabSheet;
     ToolBar1: TToolBar;
     tbPlay: TToolButton;
@@ -137,20 +118,16 @@ type
     tbRedo: TToolButton;
     TreeView1: TTreeView;
     procedure acAboutExecute(Sender: TObject);
-    procedure acDeleteScriptActionExecute(Sender: TObject);
-    procedure acNewScriptActionExecute(Sender: TObject);
     procedure acPauseExecute(Sender: TObject);
     procedure acPlayExecute(Sender: TObject);
     procedure acRedoExecute(Sender: TObject);
     procedure acRedoUpdate(Sender: TObject);
-    procedure acSaveScriptActionAsExecute(Sender: TObject);
     procedure acStopExecute(Sender: TObject);
     procedure acUndoExecute(Sender: TObject);
     procedure acUndoUpdate(Sender: TObject);
     procedure BottomSplitterDblClick(Sender: TObject);
     procedure btnCompileClick(Sender: TObject);
     procedure btnCreateTrackClick(Sender: TObject);
-    procedure btnExecuteClick(Sender: TObject);
     procedure cbPitchedChange(Sender: TObject);
     procedure DialControl1StartChange(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -683,19 +660,25 @@ begin
 lPlayingPattern.WaveForm.BufferData2[i] := 0;
 
             // Fill MidiBuffer with midi data if found
-            while (lPlayingPattern.MidiGrid.CursorAdder >= lPlayingPattern.MidiGrid.MidiDataCursor.Location) do
+            if not lPlayingPattern.MidiGrid.Updating then
             begin
-              // Put event in buffer
-              lPlayingPattern.MidiGrid.MidiBuffer.WriteEvent(lPlayingPattern.MidiGrid.MidiDataCursor, i);
+              if lPlayingPattern.MidiGrid.MidiDataList.Count > 0 then
+              begin
+                while (lPlayingPattern.MidiGrid.CursorAdder >= lPlayingPattern.MidiGrid.MidiDataCursor.Location) do
+                begin
+                  // Put event in buffer
+                  lPlayingPattern.MidiGrid.MidiBuffer.WriteEvent(lPlayingPattern.MidiGrid.MidiDataCursor, i);
 
-              if Assigned(lPlayingPattern.MidiGrid.MidiDataCursor.Next) then
-              begin
-                lPlayingPattern.MidiGrid.MidiDataCursor :=
-                  lPlayingPattern.MidiGrid.MidiDataCursor.Next
-              end
-              else
-              begin
-                break;
+                  if Assigned(lPlayingPattern.MidiGrid.MidiDataCursor.Next) then
+                  begin
+                    lPlayingPattern.MidiGrid.MidiDataCursor :=
+                      lPlayingPattern.MidiGrid.MidiDataCursor.Next
+                  end
+                  else
+                  begin
+                    break;
+                  end;
+                end;
               end;
             end;
 
@@ -909,17 +892,6 @@ begin
   end;
 End;
 
-
-procedure TMainApp.btnExecuteClick(Sender: TObject);
-var
-  Meth: TTestFunction;
-begin
-  DBLog('start btnExecuteClick');
-
-
-  DBLog('end btnExecuteClick');
-end;
-
 procedure TMainApp.acPlayExecute(Sender: TObject);
 var
   i: Integer;
@@ -957,18 +929,6 @@ begin
   tbRedo.Enabled := False;//((GHistoryIndex > -1) and (GHistoryIndex <= GHistoryQueue.Count));
 end;
 
-procedure TMainApp.acSaveScriptActionAsExecute(Sender: TObject);
-var
-  lAction: THybridAction;
-begin
-  lAction := THybridAction.Create(nil);
-  lAction.Script.Text := ScriptEditor.Lines.Text;
-  lAction.ActionList := alScriptActions;
-
-  // Add to ComboBox selector
-  cbScriptActions.AddItem(lAction.Caption, lAction);
-end;
-
 procedure TMainApp.acPauseExecute(Sender: TObject);
 begin
   // Pause
@@ -978,16 +938,6 @@ end;
 procedure TMainApp.acAboutExecute(Sender: TObject);
 begin
   //
-end;
-
-procedure TMainApp.acDeleteScriptActionExecute(Sender: TObject);
-begin
-  //
-end;
-
-procedure TMainApp.acNewScriptActionExecute(Sender: TObject);
-begin
-  //alScriptActions.Actions[]
 end;
 
 procedure TMainApp.cbPitchedChange(Sender: TObject);

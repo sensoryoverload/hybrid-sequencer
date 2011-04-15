@@ -107,7 +107,7 @@ type
   private
     FLength: Integer;
     FReadIndex: Integer;
-    FBuffer: array of TMidiData;
+    FBuffer: array of TMidiEvent;
 
     function GetCount: Integer;
   public
@@ -116,7 +116,7 @@ type
 
     procedure Reset;
     procedure WriteEvent(AMidiData: TMidiData; AOffsetInBuffer: Integer);
-    function ReadEvent: TMidiData;
+    function ReadEvent: TMidiEvent;
     function Eof: Boolean;
     procedure Seek(APosition: Integer);
     property Count: Integer read GetCount;
@@ -169,20 +169,20 @@ begin
 
   if FLength < Pred(DEFAULT_MIDIBUFFER_SIZE) then
   begin
-    {FBuffer[FLength].RelativeOffset := AOffsetInBuffer;
+    FBuffer[FLength].RelativeOffset := AOffsetInBuffer;
 
     FBuffer[FLength].DataValue1 := AMidiData.DataValue1;
     FBuffer[FLength].DataValue2 := AMidiData.DataValue2;
     FBuffer[FLength].DataType := AMidiData.DataType;
-    FBuffer[FLength].MidiChannel := AMidiData.MidiChannel;}
-    FBuffer[FLength] := AMidiData;
+    FBuffer[FLength].MidiChannel := AMidiData.MidiChannel;
+    FBuffer[FLength].Length := AMidiData.Length;
 
     Inc(FLength);
   end;
 
 end;
 
-function TMidiBuffer.ReadEvent: TMidiData;
+function TMidiBuffer.ReadEvent: TMidiEvent;
 begin
   if FReadIndex < FLength then
   begin

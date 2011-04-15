@@ -54,6 +54,16 @@ type
     Next: TMidiData; // Point to next in list
   end;
 
+  TMidiEvent = record
+    Location: Integer; // Location in samples
+    DataType: Integer;   // Note, CC, NRPN
+    DataValue1: byte;
+    DataValue2: byte;
+    MidiChannel: byte;
+    RelativeOffset: Integer;
+    Length: Integer; // Notelength
+  end;
+
   { TObjectMapper }
 
   TObjectMapper = class(THybridPersistent)
