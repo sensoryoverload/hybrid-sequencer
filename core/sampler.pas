@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, globalconst, jacktypes, ContNrs, global_command, global, midi,
-  sndfile, jack, plugin, midiport, samplestreamprovider;
+  sndfile, jack, plugin, midiport, samplestreamprovider, filters, baseengine;
 
 type
   TModSource = (
@@ -44,17 +44,6 @@ type
     msAmpOutput,
     msVelocity,
     msNote);
-
-  { TBaseEngine - A really simple base class }
-
-  TBaseEngine = class
-  private
-    FSampleRate: single;
-    FFrames: Integer;
-  public
-    constructor Create(AFrames: Integer); virtual;
-    procedure Initialize; virtual;
-  end;
 
   { TEnvelope }
 
@@ -769,29 +758,6 @@ implementation
 uses
   audiostructure, utils, fx;
 
-{ TBaseEngine }
-
-constructor TBaseEngine.Create(AFrames: Integer);
-begin
-  writeln(Format('Creating class: %s', [Self.ClassName]));
-
-  FFrames := AFrames;
-
-{  // Descendants initalize samplerate at constructor call
-  Initialize;}
-end;
-
-{
-  Retrieve samplerate setting
-}
-procedure TBaseEngine.Initialize;
-begin
-  writeln(Format('Initializing class: %s', [Self.ClassName]));
-
-  FSamplerate := GSettings.SampleRate;
-  FFrames := GSettings.Frames;
-end;
-
 { TOscillatorEngine }
 
 procedure TOscillatorEngine.SetOscillator(const AValue: TOscillator);
@@ -889,7 +855,7 @@ begin
   FRate := AValue;
   // the rate in Hz is converted to a phase increment with the following formula
   // f[ inc = (256*rate/samplerate) * 2^24]
-  Finc := round((256 * Frate / Fsamplerate) * (1 shl 24));
+  Finc := round((256 * Frate / Samplerate) * (1 shl 24));
 end;
 
 procedure TOscillatorEngine.Sync;
@@ -989,8 +955,8 @@ begin
   inherited Initialize;
 
   // Attack and Release is in seconds
-  FAtt := exp(-1.0 / (FSampleRate * FEnvelopeFollower.Attack));
-  FRel := exp(-1.0 / (FSampleRate * FEnvelopeFollower.Release));
+  FAtt := exp(-1.0 / (Samplerate * FEnvelopeFollower.Attack));
+  FRel := exp(-1.0 / (Samplerate * FEnvelopeFollower.Release));
 
   FEnvOut := 0.0;
 end;
@@ -1034,20 +1000,20 @@ begin
   lwSaw:
     begin
       FLevel := 1;
-      FAdder := FLFO.Rate / FSampleRate;
+      FAdder := FLFO.Rate / Samplerate;
     end;
   lwSin: // TODO this is a tri not a sin!
     begin
       FLevel := 1;
-      FAdder := (FLFO.Rate / FSampleRate) * 2;
+      FAdder := (FLFO.Rate / Samplerate) * 2;
     end;
   lwSqr:
     begin
-      FPositionAdder := (FLFO.Rate / FSampleRate);
+      FPositionAdder := (FLFO.Rate / Samplerate);
     end;
   lwTri:
     begin
-      FPositionAdder := (FLFO.Rate / FSampleRate);
+      FPositionAdder := (FLFO.Rate / Samplerate);
     end;
   end;
 end;
@@ -1100,13 +1066,9 @@ procedure TEnvelopeEngine.Initialize;
 begin
   inherited Initialize;
 
-  FAttackAdder := 1 / (FSampleRate * FEnvelope.Attack);
-  FDecayAdder := 1 / (FSampleRate * FEnvelope.Decay);
-  FReleaseAdder := 1 / (FSampleRate * FEnvelope.Release);
-
-  {GLogger.PushMessage(Format('Amp level: %f, Amp state: %s, A %f, D %f, R %f',
-  [FLevel, EnvelopeStateDescr[Ord(FState)], FAttackAdder, FDecayAdder, FReleaseAdder
-    ]));       }
+  FAttackAdder := 1 / (Samplerate * FEnvelope.Attack);
+  FDecayAdder := 1 / (Samplerate * FEnvelope.Decay);
+  FReleaseAdder := 1 / (Samplerate * FEnvelope.Release);
 
   FLevel := 0;
   FState := esStart;
@@ -1160,15 +1122,15 @@ end;
 
 procedure TEnvelopeEngine.NoteOn;
 begin
-  FAttackAdder := 1 / (FSampleRate * FEnvelope.Attack);
-  FDecayAdder := 1 / (FSampleRate * FEnvelope.Decay);
+  FAttackAdder := 1 / (Samplerate * FEnvelope.Attack);
+  FDecayAdder := 1 / (Samplerate * FEnvelope.Decay);
   FLevel := 0;
   FState := esAttack;
 end;
 
 procedure TEnvelopeEngine.NoteOff;
 begin
-  FReleaseAdder := 1 / (FSampleRate * FEnvelope.Release);
+  FReleaseAdder := 1 / (Samplerate * FEnvelope.Release);
   FState := esRelease;
 end;
 
@@ -1872,7 +1834,7 @@ begin
   for lVoiceIndex := 0 to Pred(FSample.VoiceCount) do
   begin
     writeln(Format('voice %d', [lVoiceIndex]));
-    lSampleVoice := TSampleVoiceEngine.Create(FFrames);
+    lSampleVoice := TSampleVoiceEngine.Create(Frames);
     lSampleVoice.Sample := FSample;
 
     lSampleVoice.Initialize;
@@ -2002,7 +1964,7 @@ begin
 
     if lVoice.Running then
     begin
-      for lBufferIndex := 0 to Pred(FFrames) do
+      for lBufferIndex := 0 to Pred(Frames) do
       begin
         lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
         lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
@@ -2023,18 +1985,18 @@ constructor TSampleVoiceEngine.Create(AFrames: Integer);
 begin
   inherited Create(AFrames);
 
-  FInternalBuffer := GetMem(FFrames * SizeOf(Single));
+  FInternalBuffer := GetMem(Frames * SizeOf(Single));
 
-  FOsc1 := TOscillatorEngine.Create(FFrames);
-  FOsc2 := TOscillatorEngine.Create(FFrames);
-  FOsc3 := TOscillatorEngine.Create(FFrames);
-  FFilterEnvelope := TEnvelopeEngine.Create(FFrames);
-  FAmpEnvelope := TEnvelopeEngine.Create(FFrames);
-  FPitchEnvelope := TEnvelopeEngine.Create(FFrames);
-  FLFO1 := TLFOEngine.Create(FFrames);
-  FLFO2 := TLFOEngine.Create(FFrames);
-  FLFO3 := TLFOEngine.Create(FFrames);
-  FFilterEngine := TFilterEngine.Create(FFrames);
+  FOsc1 := TOscillatorEngine.Create(Frames);
+  FOsc2 := TOscillatorEngine.Create(Frames);
+  FOsc3 := TOscillatorEngine.Create(Frames);
+  FFilterEnvelope := TEnvelopeEngine.Create(Frames);
+  FAmpEnvelope := TEnvelopeEngine.Create(Frames);
+  FPitchEnvelope := TEnvelopeEngine.Create(Frames);
+  FLFO1 := TLFOEngine.Create(Frames);
+  FLFO2 := TLFOEngine.Create(Frames);
+  FLFO3 := TLFOEngine.Create(Frames);
+  FFilterEngine := TFilterEngine.Create(Frames);
 
   FLFOPhase := 0;
   FRunning := False;
@@ -2150,8 +2112,8 @@ begin
           FFilterEnvelope.Process;
 
           // Filter
-//          FFilterEngine.modamount;
-          //lSample := FFilterEngine.Process(lSample);
+          FFilterEngine.Filter.Frequency := FFilterEnvelope.Level * 20000;
+          lSample := FFilterEngine.Process(lSample);
 
           // ADSR Amplifier
           FAmpEnvelope.Process;
@@ -2251,7 +2213,7 @@ begin
   // Now recreate the sample-engines
   for lSampleEngineIndex := 0 to Pred(FSampleBank.SampleList.Count) do
   begin
-    lSampleEngine := TSampleEngine.Create(FFrames);
+    lSampleEngine := TSampleEngine.Create(Frames);
     lSampleEngine.Sample := TSample(FSampleBank.SampleList[lSampleEngineIndex]);
 
     FSampleEngineList.Add(lSampleEngine);
@@ -2304,7 +2266,7 @@ begin
 
   for i := 0 to Pred(FSampler.BankList.Count) do
   begin
-    lSampleBankEngine := TSampleBankEngine.Create(FFrames);
+    lSampleBankEngine := TSampleBankEngine.Create(Frames);
     lSampleBankEngine.SampleBank := TSampleBank(FSampler.BankList[i]);
 
     FSampleBankEngineList.Add(lSampleBankEngine);
@@ -2354,6 +2316,8 @@ begin
   FA[4] := 0;
   FA[5] := 0;
   FOld := 0;
+
+  Fipi:=4*arctan(1);
 end;
 
 procedure TFilterEngine.FreqCalc;
@@ -2380,9 +2344,9 @@ constructor TFilter.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   inherited Create(AObjectOwner, AMapped);
 
-  FResonance := 1;
-  FFrequency := 1000;
   FSampleRate := 44100;
+  FResonance := 0.5;
+  FFrequency := 1000;
 end;
 
 procedure TFilter.Initialize;
@@ -2485,34 +2449,27 @@ end;
 
 function TFilterEngine.Process(const I : Single):Single;
 begin
-  if Assigned(FFilter) then
-  begin
-    // cascade of 4 1st order sections
-    FA[1]:=FA[1]+F2vg*(Tanh2_pas2((I+(noise*Random)-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2_pas2(FA[1]*i2v));
-    // FA[1]:=FA[1]+(F2vg*(Tanh2((I+(noise*Random)-2*fQ*FOld*FAcr)*i2v)-Tanh2(FA[1]*i2v)));
-    FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
-    FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
-    FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
+  // cascade of 4 1st order sections
+  FA[1]:=FA[1]+F2vg*(Tanh2_pas2((I+(noise*Random)-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2_pas2(FA[1]*i2v));
+  // FA[1]:=FA[1]+(F2vg*(Tanh2((I+(noise*Random)-2*fQ*FOld*FAcr)*i2v)-Tanh2(FA[1]*i2v)));
+  FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
+  FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
+  FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
 
-    // 1/2-sample delay for phase compensation
-    FOld:=FA[4]+FA[5];
-    FA[5]:=FA[4];
+  // 1/2-sample delay for phase compensation
+  FOld:=FA[4]+FA[5];
+  FA[5]:=FA[4];
 
-    // oversampling
-    FA[1]:=FA[1]+F2vg*(Tanh2_pas2((-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2(FA[1]*i2v));
-    FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
-    FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
-    FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
+  // oversampling
+  FA[1]:=FA[1]+F2vg*(Tanh2_pas2((-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2(FA[1]*i2v));
+  FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
+  FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
+  FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
 
-    FOld:=FA[4]+FA[5];
-    FA[5]:=FA[4];
+  FOld:=FA[4]+FA[5];
+  FA[5]:=FA[4];
 
-    Result:=FOld;
-  end
-  else
-  begin
-    Result := I;
-  end;
+  Result:=FOld;
 
   FLevel := Result;
 end;
@@ -2520,6 +2477,7 @@ end;
 procedure TFilterEngine.Initialize;
 begin
   inherited Initialize;
+
 
 {  FFreqAmount := 1;
   FResoAmount := 1;    }

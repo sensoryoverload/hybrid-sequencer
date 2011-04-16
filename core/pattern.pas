@@ -300,8 +300,8 @@ end;
 destructor TPattern.Destroy;
 begin
   FPluginProcessor.Free;
-  FFilter.Free;
-  FFilter2.Free;
+  //FFilter.Free;
+  //FFilter2.Free;
 
   FWaveForm.Free;
   FMidiGrid.Free;

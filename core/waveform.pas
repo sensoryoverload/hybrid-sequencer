@@ -193,6 +193,11 @@ type
     property PitchAlgorithm: TPitchAlgorithm read FPitchAlgorithm write FPitchAlgorithm;
   end;
 
+  TWaveFormEngine = class
+  private
+  public
+  end;
+
   { TWaveFormCommand }
 
   TWaveFormCommand = class(TCommand)
