@@ -14,9 +14,9 @@ object SampleView: TSampleView
     Height = 175
     Top = 0
     Width = 830
-    ActivePage = tsGlobal
+    ActivePage = tsTuning
     Align = alTop
-    TabIndex = 3
+    TabIndex = 1
     TabOrder = 0
     object tsSample: TTabSheet
       Caption = 'Sample'
@@ -26,17 +26,18 @@ object SampleView: TSampleView
       ClientHeight = 146
       ClientWidth = 824
       object dcCutoff: TDialControl
-        Left = 75
+        Left = 80
         Height = 60
         Top = 2
         Width = 40
         Value = 100
         Caption = 'Cutoff'
-        Lowest = 0
+        Lowest = 20
         Highest = 100
         OnChange = dcCutoffChange
         OnStartChange = dcCutoffStartChange
         Enabled = True
+        Color = clBackground
       end
       object dcResonance: TDialControl
         Left = 125
@@ -50,6 +51,20 @@ object SampleView: TSampleView
         OnChange = dcResonanceChange
         OnStartChange = dcResonanceStartChange
         Enabled = True
+        Color = clBackground
+      end
+      object TrackBar1: TTrackBar
+        Left = 96
+        Height = 25
+        Hint = 'Cutoff'
+        Top = 79
+        Width = 100
+        Max = 10000
+        Min = 10
+        OnChange = TrackBar1Change
+        Position = 10000
+        OnMouseDown = TrackBar1MouseDown
+        TabOrder = 2
       end
     end
     object tsModulators: TTabSheet

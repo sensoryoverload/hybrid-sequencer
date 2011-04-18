@@ -29,21 +29,6 @@ uses
   sndfile, jack, plugin, midiport, samplestreamprovider, filters, baseengine;
 
 type
-  TModSource = (
-    msLFO1,
-    msLFO2,
-    msLFO3,
-    msEnvelope1,
-    msEnvelope2,
-    msEnvelopeFollower,
-    msOscillator1,
-    msOscillator2,
-    msOscillator3,
-    msOscillatorMix,
-    msFilterOutput,
-    msAmpOutput,
-    msVelocity,
-    msNote);
 
   { TEnvelope }
 
@@ -59,13 +44,16 @@ type
     FRelease: single;
     // Loop envelope active state (ie LFO'ish)
     FLoopActive: Boolean;
+    procedure SetAttack(const AValue: single);
+    procedure SetDecay(const AValue: single);
+    procedure SetRelease(const AValue: single);
   public
     procedure Initialize; override;
   published
-    property Attack: single read FAttack write FAttack;
-    property Decay: single read FDecay write FDecay;
+    property Attack: single read FAttack write SetAttack;
+    property Decay: single read FDecay write SetDecay;
     property Sustain: single read FSustain write FSustain;
-    property Release: single read FRelease write FRelease;
+    property Release: single read FRelease write SetRelease;
     property LoopActive: Boolean read FLoopActive write FLoopActive;
   end;
 
@@ -76,7 +64,8 @@ type
   TEnvelopeState = (esStart, esAttack, esDecay, esSustain, esRelease, esEnd);
   TEnvelopeNoteEvent = (nsNone, nsNoteOn, nsNoteOff);
 
-  { TEnvelopeEngine }
+  {
+  }
 
   TEnvelopeEngine = class(TBaseEngine)
   private
@@ -159,69 +148,7 @@ type
     property State: TLFOState read FState write FState;
   end;
 
-  { TFilter }
 
-  TFilter = class(THybridPersistentModel)
-  private
-    FFrequency: single;
-    FFreqModAmount: single;
-    FFreqModSource: TModSource;
-    FResoModAmount: single;
-    FResoModSource: TModSource;
-    FSampleRate: single;
-    FResonance: single;
-    procedure SetFrequency(AValue: single);
-    procedure SetSampleRate(AValue: single);
-    procedure SetResonance(AValue: single);
-  protected
-  public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
-    procedure Initialize; override;
-  published
-    property Frequency: single read FFrequency write SetFrequency;
-    property SampleRate: single read FSampleRate write SetSampleRate;
-    property Resonance: single read FResonance write SetResonance;
-    property FreqModSource: TModSource read FFreqModSource write FFreqModSource;
-    property FreqModAmount: single read FFreqModAmount write FFreqModAmount;
-    property ResoModSource: TModSource read FResoModSource write FResoModSource;
-    property ResoFreqModAmount: single read FResoModAmount write FResoModAmount;
-  end;
-
-
-  { TFilterEngine }
-
-const
-  i2      : Double = 40000;
-  i2v     : Double = 1/20000;
-  noise   : Double = 1E-10;
-  noi     : Double = 1E-10*((1.0/$10000) / $10000);  // 2^-32
-  mTwo    : Single = -2;
-  c3      : Single =  3;
-  c6      : Single =  6;
-  c12     : Single = 12;
-  c24     : Single = 24;
-
-type
-  TFilterEngine = class(TBaseEngine)
-  private
-    FA   : array[1..5] of single;
-    FFilter: TFilter;
-    FOld : single;
-    F2vg : single;
-    FAcr : single;
-    FIpi : Double;
-    FLevel: single;
-    FFreqAmount: PSingle;
-    FResoAmount: PSingle;
-    procedure FreqCalc;
-    procedure SetFilter(const AValue: TFilter);
-  public
-    constructor Create(AFrames: Integer);
-    function Process(const I : Single):Single;
-    procedure Initialize; override;
-    property Filter: TFilter read FFilter write SetFilter;
-    property Level: single read FLevel;
-  end;
 
   { TEnvelopeFollower }
 
@@ -377,8 +304,6 @@ type
     FFilterLFODepth: Single;
     FFilterKeyDepth: Single;
     FFilterOn: Boolean;
-    FFilterCutoff: Single;
-    FFilterResonance: Single;
 
     FLFO1: TLFO;
     FLFO2: TLFO;
@@ -446,8 +371,6 @@ type
     property FilterLFODepth: Single read FFilterLFODepth write FFilterLFODepth;
     property FilterKeyDepth: Single read FFilterKeyDepth write FFilterKeyDepth;
     property FilterOn: Boolean read FFilterOn write FFilterOn;
-    property FilterCutoff: Single read FFilterCutoff write FFilterCutoff;
-    property FilterResonance: Single read FFilterResonance write FFilterResonance;
     property Filter: TFilter read FFilter write FFilter;
 
     property LFO1: TLFO read FLFO1 write FLFO1;
@@ -656,7 +579,7 @@ type
     FOsc2: TOscillatorEngine;
     FOsc3: TOscillatorEngine;
 
-    FFilterEngine: TFilterEngine;
+    FFilter: TMoog2FilterEngine;
 
     FLFO1: TLFOEngine;
     FLFO2: TLFOEngine;
@@ -1252,6 +1175,8 @@ begin
   FPitchEnvelope.Initialize;
 
   // Init Filter
+
+  FFilter.FilterType := ft24DB;
   FFilter.Initialize;
 
   // Init LFO
@@ -1676,12 +1601,48 @@ end;
 
 { TEnvelope }
 
+procedure TEnvelope.SetAttack(const AValue: single);
+begin
+  if FAttack = AValue then exit;
+  FAttack := AValue;
+
+  // Please no div by zero
+  if FAttack = 0 then
+  begin
+    FAttack := 0.01;
+  end;
+end;
+
+procedure TEnvelope.SetDecay(const AValue: single);
+begin
+  if FDecay = AValue then exit;
+  FDecay := AValue;
+
+  // Please no div by zero
+  if FDecay = 0 then
+  begin
+    FDecay := 0.01;
+  end;
+end;
+
+procedure TEnvelope.SetRelease(const AValue: single);
+begin
+  if FRelease = AValue then exit;
+  FRelease := AValue;
+
+  // Please no div by zero
+  if FRelease = 0 then
+  begin
+    FRelease := 0.01;
+  end;
+end;
+
 procedure TEnvelope.Initialize;
 begin
   Attack := 0.05;
   Decay := 0.3;
-  Sustain := 0.3;
-  Release := 0.5;
+  Sustain := 0.1;
+  Release := 1.5;
 
   Notify;
 end;
@@ -1735,8 +1696,10 @@ begin
 
   FSample.BeginUpdate;
 
-  FOldCutoffValue := FSample.FilterCutoff;
-  FSample.FilterCutoff := FCutoffValue;
+  FOldCutoffValue := FSample.Filter.Frequency;
+  FSample.Filter.Frequency := FCutoffValue;
+  {FOldCutoffValue := FSample.Filter.Frequency;//FSample.FilterCutoff;
+  FSample.FilterCutoff := FCutoffValue;}
 
   FSample.EndUpdate;
 
@@ -1749,7 +1712,8 @@ begin
 
   FSample.BeginUpdate;
 
-  FSample.FilterCutoff := FOldCutoffValue;
+  {FSample.FilterCutoff := FOldCutoffValue;}
+  FSample.Filter.Frequency := FOldCutoffValue;
 
   FSample.EndUpdate;
 
@@ -1996,7 +1960,7 @@ begin
   FLFO1 := TLFOEngine.Create(Frames);
   FLFO2 := TLFOEngine.Create(Frames);
   FLFO3 := TLFOEngine.Create(Frames);
-  FFilterEngine := TFilterEngine.Create(Frames);
+  FFilter := TMoog2FilterEngine.Create(Frames);
 
   FLFOPhase := 0;
   FRunning := False;
@@ -2017,7 +1981,7 @@ begin
   FLFO1.Free;
   FLFO2.Free;
   FLFO3.Free;
-  FFilterEngine.Free;
+  FFilter.Free;
 
   FreeMem(FInternalBuffer);
 
@@ -2041,7 +2005,8 @@ begin
     FLFO1.LFO := FSample.LFO1;
     FLFO2.LFO := FSample.LFO2;
     FLFO3.LFO := FSample.LFO3;
-    FFilterEngine.Filter := FSample.Filter;
+    FFilter.Filter := FSample.Filter;
+    FFilter.Filter.FilterType := FSample.Filter.FilterType;
   end;
   FLFOPhase := 0;
   FRunning := False;
@@ -2112,8 +2077,8 @@ begin
           FFilterEnvelope.Process;
 
           // Filter
-          FFilterEngine.Filter.Frequency := FFilterEnvelope.Level * 20000;
-          lSample := FFilterEngine.Process(lSample);
+          FFilter.Frequency := FFilter.Filter.Frequency * FFilterEnvelope.Level;
+          lSample := FFilter.Process(lSample);
 
           // ADSR Amplifier
           FAmpEnvelope.Process;
@@ -2147,6 +2112,10 @@ begin
           // Virtual note of when FLength <= 0
           FLength := FLength - GAudioStruct.BPMAdder;
         end;
+
+        GLogger.PushMessage(Format(
+          'Filter.Frequency %f, Filter.Filter.Frequency %f, FFilterEnvelope.Level %f, Samplerate %f',
+          [FFilter.Frequency, FFilter.Filter.Frequency, FFilterEnvelope.Level, FFilter.SampleRate]));
 
         // Next iteration, start from the beginning
         FNoteOnOffset := 0;
@@ -2306,85 +2275,6 @@ begin
   end;
 end;
 
-constructor TFilterEngine.Create(AFrames: Integer);
-begin
-  inherited Create(AFrames);
-
-  FA[1] := 0;
-  FA[2] := 0;
-  FA[3] := 0;
-  FA[4] := 0;
-  FA[5] := 0;
-  FOld := 0;
-
-  Fipi:=4*arctan(1);
-end;
-
-procedure TFilterEngine.FreqCalc;
-var
-  lFc  : Double;
-  lFcr : Double;
-begin
-  lFc :=  FFilter.Frequency / FFilter.SampleRate;
-  // frequency & amplitude correction
-  lFcr := 1.8730 * (lFc * lFc * lFc) + 0.4955 * (lFc * lFc) - 0.6490 * lFc + 0.9988;
-  FAcr := -3.9364 * (lFc * lFc) + 1.8409 * lFc + 0.9968;
-  F2vg := i2 * (1 - exp(-FIpi * lFcr * lFc)); // Filter Tuning
-end;
-
-procedure TFilterEngine.SetFilter(const AValue: TFilter);
-begin
-  if FFilter = AValue then exit;
-  FFilter := AValue;
-
-  Initialize;
-end;
-
-constructor TFilter.Create(AObjectOwner: string; AMapped: Boolean = True);
-begin
-  inherited Create(AObjectOwner, AMapped);
-
-  FSampleRate := 44100;
-  FResonance := 0.5;
-  FFrequency := 1000;
-end;
-
-procedure TFilter.Initialize;
-begin
-  Notify;
-end;
-
-procedure TFilter.SetFrequency(AValue: single);
-begin
-  if FSampleRate <= 0 then raise exception.create('Sample Rate Error!');
-  if AValue <> FFrequency then
-  begin
-    FFrequency := AValue;
-  end;
-end;
-
-procedure TFilter.SetSampleRate(AValue: single);
-begin
-  if FSampleRate <= 0 then raise exception.create('Sample Rate Error!');
-  if AValue <> FSampleRate then
-  begin
-    FSampleRate := AValue;
-  end;
-end;
-
-procedure TFilter.SetResonance(AValue: single);
-begin
-  if AValue <> FResonance then
-  begin
-    if AValue > 1 then
-      FResonance := 1
-    else if AValue < 0 then
-      FResonance := 0
-    else
-      FResonance := AValue;
-  end;
-end;
-
 function TSampleVoiceEngine.GetSourceAmountPtr(AModSource: TModSource): PSingle;
 begin
   case AModSource of
@@ -2430,7 +2320,7 @@ begin
     end;
     msFilterOutput:
     begin
-      Result := @FFilterEngine.Level;
+      Result := @FFilter.Level;
     end;
     msAmpOutput:
     begin
@@ -2445,43 +2335,6 @@ begin
       ;
     end;
   end;
-end;
-
-function TFilterEngine.Process(const I : Single):Single;
-begin
-  // cascade of 4 1st order sections
-  FA[1]:=FA[1]+F2vg*(Tanh2_pas2((I+(noise*Random)-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2_pas2(FA[1]*i2v));
-  // FA[1]:=FA[1]+(F2vg*(Tanh2((I+(noise*Random)-2*fQ*FOld*FAcr)*i2v)-Tanh2(FA[1]*i2v)));
-  FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
-  FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
-  FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
-
-  // 1/2-sample delay for phase compensation
-  FOld:=FA[4]+FA[5];
-  FA[5]:=FA[4];
-
-  // oversampling
-  FA[1]:=FA[1]+F2vg*(Tanh2_pas2((-2*FFilter.Resonance*FAcr*FOld)*i2v)-Tanh2(FA[1]*i2v));
-  FA[2]:=FA[2]+F2vg*(Tanh2_pas2(FA[1]*i2v)-Tanh2_pas2(FA[2]*i2v));
-  FA[3]:=FA[3]+F2vg*(Tanh2_pas2(FA[2]*i2v)-Tanh2_pas2(FA[3]*i2v));
-  FA[4]:=FA[4]+F2vg*(Tanh2_pas2(FA[3]*i2v)-Tanh2_pas2(FA[4]*i2v));
-
-  FOld:=FA[4]+FA[5];
-  FA[5]:=FA[4];
-
-  Result:=FOld;
-
-  FLevel := Result;
-end;
-
-procedure TFilterEngine.Initialize;
-begin
-  inherited Initialize;
-
-
-{  FFreqAmount := 1;
-  FResoAmount := 1;    }
-  FreqCalc;
 end;
 
 end.

@@ -60,6 +60,7 @@ type
     { public declarations }
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure Connect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
     function GetObjectOwnerID: string;
     procedure SetObjectOwnerID(const AValue: string);
@@ -143,6 +144,12 @@ begin
 
   DBLog('end TBankView.Update');
 end;
+
+procedure TBankView.Connect;
+begin
+  Bank := TSampleBank(GObjectMapper.GetModelObject(ObjectID));
+end;
+
 
 function TBankView.GetObjectID: string;
 begin

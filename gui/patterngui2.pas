@@ -28,7 +28,7 @@ uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, waveform,
   waveformgui, midi, midigui, graphics, track, LCLType, globalconst,
   global_command, global, pattern, dialcontrol, ComCtrls, StdCtrls, Spin,
-  ExtCtrls, plugin, pluginhost, pluginhostgui, contnrs;
+  ExtCtrls, plugin, pluginhost, pluginhostgui, contnrs, bankgui, sampler;
 
 type
 
@@ -60,6 +60,7 @@ type
     pcPatternTabs: TPageControl;
     spnBeatsPerMinute: TFloatSpinEdit;
     spnRootNote: TSpinEdit;
+    tsSampeBank: TTabSheet;
     tsPlugins: TTabSheet;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
@@ -96,12 +97,14 @@ type
     // State reference to server
     FWaveForm: TWaveForm;
     FMidiGrid: TMidiGrid;
+    FSampleBank: TSampleBank;
     FPluginProcessor: TPluginProcessor;
 
     FWaveFormGUI: TWaveFormGUI;
     FMidiGridGUI: TMidiGridGUI;
     FPluginProcessorGUI: TPluginProcessorGUI;
     FMidigridOverview: TMidigridOverview;
+    FSampleBankGUI: TBankView;
 
     FPitched: Boolean;
     FSyncQuantize: Boolean;
@@ -154,7 +157,7 @@ type
 implementation
 
 uses
-  utils, patterngui, audiostructure, sampler;
+  utils, patterngui, audiostructure;
 
 procedure TPatternControls.cbQuantizeChange(Sender: TObject);
 var
@@ -298,6 +301,7 @@ begin
   Align := alClient;
   FMidiGridGUI := TMidiGridGUI.Create(Self);
   FWaveFormGUI := TWaveFormGUI.Create(Self);
+  FSampleBankGUI := TBankView.Create(Self);
   FPluginProcessorGUI := TPluginProcessorGUI.Create(Self);
   FMidigridOverview := TMidigridOverview.Create(Self);
   FMidigridOverview.ZoomCallback := @FMidiGridGUI.HandleZoom;
@@ -348,6 +352,7 @@ destructor TPatternControls.Destroy;
 begin
   FMidiGridGUI.Free;
   FWaveFormGUI.Free;
+  FSampleBankGUI.Free;
   FPluginProcessorGUI.Free;
   FMidigridOverview.Free;
 
@@ -415,6 +420,16 @@ begin
   FWaveFormGUI.Parent := nil;
   FWaveFormGUI.Parent := tsAudio;
 
+  FSampleBank := Model.SampleBank;
+  FSampleBank.Attach(FSampleBankGUI);
+  FSampleBankGUI.Bank := FSampleBank;
+  FSampleBankGUI.ObjectID := FSampleBank.ObjectID;
+  FSampleBankGUI.ObjectOwnerID := FSampleBank.ObjectOwnerID;
+  FSampleBankGUI.Connect;
+  FSampleBankGUI.Align := alClient;
+  FSampleBankGUI.Parent := nil;
+  FSampleBankGUI.Parent := tsSampeBank;
+
   FPluginProcessor := Model.PluginProcessor;
   FPluginProcessor.Attach(FPluginProcessorGUI);
   FPluginProcessorGUI.Model := FPluginProcessor;
@@ -444,6 +459,10 @@ begin
   FWaveForm.Detach(FWaveFormGUI);
   FWaveFormGUI.Parent := nil;
   DBLog(Format('Disconnected waveform (%s)', [FWaveFormGUI.ObjectID]));
+
+  FSampleBank.Detach(FSampleBankGUI);
+  FSampleBankGUI.Parent := nil;
+  DBLog(Format('Disconnected samplebank (%s)', [FSampleBankGUI.ObjectID]));
 
   FPluginProcessor.Detach(FPluginProcessorGUI);
   FPluginProcessorGUI.Parent := nil;

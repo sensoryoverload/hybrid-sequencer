@@ -713,9 +713,7 @@ lPlayingPattern.WaveForm.BufferData2[i] := 0;
           begin
             lPlayingPattern.WaveForm.DiskWriterThread.RingbufferWrite(input[0], nframes);
 
-            {lPlayingPattern.LocalSampleBank.Process(lPlayingPattern.MidiGrid,
-              lTrack.OutputBuffer, nframes); }
-            lPlayingPattern.LocalSampleBankEngine.Process(lPlayingPattern.MidiGrid,
+            lPlayingPattern.SampleBankEngine.Process(lPlayingPattern.MidiGrid,
               lTrack.OutputBuffer, nframes);
 
             // 1. Execute per pattern plugins
@@ -966,6 +964,8 @@ begin
 end;
 
 procedure TMainApp.FormShow(Sender: TObject);
+var
+  i: Integer;
 begin
   if not Assigned(MIDIThread) then
   begin
@@ -1111,6 +1111,8 @@ begin
     lTreeView := TTreeView(Source);
     CreateTrack(TTreeFolderData(lTreeView.Selected.Data).Path, 0);
   end;
+
+  Invalidate;
 
   DBLog('end TMainApp.sbTracksDragDrop');
 end;

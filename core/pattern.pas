@@ -54,8 +54,8 @@ type
     FFilter2: TMoogFilter;
 
     // Private sampler, not a plugin so it's more thightly integrated
-    FLocalSampleBank: TSampleBank;
-    FLocalSampleBankEngine: TSampleBankEngine;
+    FSampleBank: TSampleBank;
+    FSampleBankEngine: TSampleBankEngine;
 
     FSample: TSample;
 
@@ -73,13 +73,13 @@ type
     procedure RecalculateSynchronize;
     procedure Initialize; override;
 
-    property LocalSampleBankEngine: TSampleBankEngine read FLocalSampleBankEngine write FLocalSampleBankEngine;
+    property SampleBankEngine: TSampleBankEngine read FSampleBankEngine write FSampleBankEngine;
     property PatternColor: TColor read FPatternColor write SetPatternColor;
 
   published
     property WaveForm: TWaveForm read FWaveForm write FWaveForm;
     property MidiGrid: TMidiGrid read FMidiGrid write FMidiGrid;
-    property LocalSampleBank: TSampleBank read FLocalSampleBank write FLocalSampleBank;
+    property SampleBank: TSampleBank read FSampleBank write FSampleBank;
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property Position: Integer read FPosition write SetPosition;
@@ -263,16 +263,16 @@ begin
   FMidiGrid := TMidiGrid.Create(AObjectOwner, AMapped);
   FWaveForm := TWaveForm.Create(AObjectOwner, AMapped);
 
-  FLocalSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
-  FLocalSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
+  FSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
+  FSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
 
   FSample := TSample.Create(AObjectOwner, AMapped);
   FSample.LoadSample('kick.wav');
   FSample.Initialize;
 
-  FLocalSampleBank.SampleList.Add(FSample);
+  FSampleBank.SampleList.Add(FSample);
 
-  FLocalSampleBankEngine.SampleBank := FLocalSampleBank;
+  FSampleBankEngine.SampleBank := FSampleBank;
 
   DBLog('KICK.WAV loading');
 
@@ -306,11 +306,11 @@ begin
   FWaveForm.Free;
   FMidiGrid.Free;
 
-  FLocalSampleBankEngine.Free;
+  FSampleBankEngine.Free;
 
   FSample.UnloadSample; // TODO Should be done by TSample class itself
   FSample.Free;
-  FLocalSampleBank.Free;
+  FSampleBank.Free;
 
   inherited Destroy;
 end;

@@ -10,5 +10,5 @@ LazarusResources.Add('TBankView','FORMDATA',[
   +#4'Left'#2#0#6'Height'#3#175#0#3'Top'#2'1'#5'Width'#3#177#0#5'Align'#7#8'alB'
   +'ottom'#10'ItemHeight'#2#0#7'OnClick'#7#21'lbSampleSelectorClick'#10'OnDragD'
   +'rop'#7#24'lbSampleSelectorDragDrop'#10'OnDragOver'#7#24'lbSampleSelectorDra'
-  +'gOver'#8'TabOrder'#2#0#8'TopIndex'#2#255#0#0#0#0
+  +'gOver'#11'ScrollWidth'#3#175#0#8'TabOrder'#2#0#8'TopIndex'#2#255#0#0#0#0
 ]);

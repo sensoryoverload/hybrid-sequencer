@@ -43,6 +43,7 @@ type
     dcCutoff: TDialControl;
     dcResonance: TDialControl;
     pcSampler: TPageControl;
+    TrackBar1: TTrackBar;
     tsGlobal: TTabSheet;
     tsModulators: TTabSheet;
     tsSample: TTabSheet;
@@ -51,6 +52,9 @@ type
     procedure dcCutoffStartChange(Sender: TObject);
     procedure dcResonanceChange(Sender: TObject);
     procedure dcResonanceStartChange(Sender: TObject);
+    procedure TrackBar1Change(Sender: TObject);
+    procedure TrackBar1MouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     { private declarations }
     FObjectOwnerID: string;
@@ -203,6 +207,44 @@ begin
   end;
 end;
 
+procedure TSampleView.TrackBar1Change(Sender: TObject);
+var
+  lFilterCutoffCommand: TFilterCutoffCommand;
+begin
+  DBLog('dcCutoffChange %f', dcCutoff.Value);
+
+  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
+  try
+    lFilterCutoffCommand.ObjectID := Self.ObjectID;
+    lFilterCutoffCommand.CutoffValue := TrackBar1.Position;
+    lFilterCutoffCommand.Persist := False;
+
+    GCommandQueue.PushCommand(lFilterCutoffCommand);
+  except
+    lFilterCutoffCommand.Free;
+  end;
+end;
+
+procedure TSampleView.TrackBar1MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  lFilterCutoffCommand: TFilterCutoffCommand;
+begin
+  DBLog('dcCutoffChange %f', dcCutoff.Value);
+
+  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
+  try
+    lFilterCutoffCommand.ObjectID := Self.ObjectID;
+    lFilterCutoffCommand.CutoffValue := TrackBar1.Position;
+    lFilterCutoffCommand.Persist := True;
+
+    GCommandQueue.PushCommand(lFilterCutoffCommand);
+  except
+    lFilterCutoffCommand.Free;
+  end;
+end;
+
+
 constructor TSampleView.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -228,8 +270,9 @@ procedure TSampleView.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TSampleView.Update');
 
-  dcCutoff.Value := TSample(Subject).FilterCutoff;
-  dcResonance.Value := TSample(Subject).FilterResonance;
+  //dcCutoff.Value := TSample(Subject).Filter.Frequency;
+  dcResonance.Value := TSample(Subject).Filter.Resonance;
+  //TrackBar1.Position := Round(TSample(Subject).Filter.Frequency);
 
   DBLog('end TSampleView.Update');
 end;
@@ -280,8 +323,8 @@ begin
 
   if Assigned(FSampleView) then
   begin
-    FSampleView.dcCutoff.Value := TSample(Subject).FilterCutoff;
-    FSampleView.dcResonance.Value := TSample(Subject).FilterResonance;
+    FSampleView.dcCutoff.Value := TSample(Subject).Filter.Frequency;
+    FSampleView.dcResonance.Value := TSample(Subject).Filter.Resonance;
   end;
 
   writeln('end TSampleSelectControl.Update');

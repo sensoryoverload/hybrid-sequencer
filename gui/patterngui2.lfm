@@ -13,9 +13,9 @@ object PatternControls: TPatternControls
     Height = 245
     Top = 0
     Width = 979
-    ActivePage = tsMIDI
+    ActivePage = tsSampeBank
     Align = alClient
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 0
     object tsMIDI: TTabSheet
       Caption = 'MIDI'
@@ -124,6 +124,9 @@ object PatternControls: TPatternControls
           ResizeAnchor = akBottom
         end
       end
+    end
+    object tsSampeBank: TTabSheet
+      Caption = 'Sampe Bank'
     end
     object tsAudio: TTabSheet
       Caption = 'Audio'
