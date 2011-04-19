@@ -30,10 +30,10 @@ object SampleView: TSampleView
         Height = 60
         Top = 2
         Width = 40
-        Value = 100
+        Value = 20000
         Caption = 'Cutoff'
         Lowest = 20
-        Highest = 100
+        Highest = 20000
         OnChange = dcCutoffChange
         OnStartChange = dcCutoffStartChange
         Enabled = True

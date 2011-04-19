@@ -6,14 +6,15 @@
     <CompilerOptions>
       <Version Value="8"/>
       <SearchPaths>
-        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)/"/>
+        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Other>
         <CompilerPath Value="$(CompPath)"/>
       </Other>
     </CompilerOptions>
-    <Description Value="Dial"/>
+    <Description Value="Custom controls"/>
     <License Value="GPL"/>
+    <Version Minor="1"/>
     <Files Count="1">
       <Item1>
         <Filename Value="dialcontrol.pas"/>

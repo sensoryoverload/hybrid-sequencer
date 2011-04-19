@@ -1915,10 +1915,7 @@ begin
   begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-    if lVoice.Running then
-    begin
-      lVoice.Process(AMidiGrid, ABuffer, AFrames);
-    end;
+    lVoice.Process(AMidiGrid, ABuffer, AFrames);
   end;
 
   // Mix all voices into buffer
@@ -1926,14 +1923,11 @@ begin
   begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-    if lVoice.Running then
+    for lBufferIndex := 0 to Pred(Frames) do
     begin
-      for lBufferIndex := 0 to Pred(Frames) do
-      begin
-        lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
-        lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
-        ABuffer[lBufferIndex] := lSampleAdd - lSampleMul;
-      end;
+      lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
+      lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
+      ABuffer[lBufferIndex] := lSampleAdd - lSampleMul;
     end;
   end;
 end;

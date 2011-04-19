@@ -9,17 +9,17 @@ LazarusResources.Add('TSampleView','FORMDATA',[
   +'abOrder'#2#0#0#9'TTabSheet'#8'tsSample'#7'Caption'#6#6'Sample'#0#0#9'TTabSh'
   +'eet'#8'tsTuning'#7'Caption'#6#6'Tuning'#12'ClientHeight'#3#146#0#11'ClientW'
   +'idth'#3'8'#3#0#12'TDialControl'#8'dcCutoff'#4'Left'#2'P'#6'Height'#2'<'#3'T'
-  +'op'#2#2#5'Width'#2'('#5'Value'#5#0#0#0#0#0#0#0#200#5'@'#7'Caption'#6#6'Cuto'
-  +'ff'#6'Lowest'#5#0#0#0#0#0#0#0#160#3'@'#7'Highest'#5#0#0#0#0#0#0#0#200#5'@'#8
-  +'OnChange'#7#14'dcCutoffChange'#13'OnStartChange'#7#19'dcCutoffStartChange'#7
-  +'Enabled'#9#5'Color'#7#12'clBackground'#0#0#12'TDialControl'#11'dcResonance'
-  +#4'Left'#2'}'#6'Height'#2'<'#3'Top'#2#1#5'Width'#2'('#5'Value'#5#0#0#0#0#0#0
-  +#0#0#0#0#7'Caption'#6#3'Res'#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0
-  +#0#0#0#0#0#200#5'@'#8'OnChange'#7#17'dcResonanceChange'#13'OnStartChange'#7
-  +#22'dcResonanceStartChange'#7'Enabled'#9#5'Color'#7#12'clBackground'#0#0#9'T'
-  +'TrackBar'#9'TrackBar1'#4'Left'#2'`'#6'Height'#2#25#4'Hint'#6#6'Cutoff'#3'To'
-  +'p'#2'O'#5'Width'#2'd'#3'Max'#3#16''''#3'Min'#2#10#8'OnChange'#7#15'TrackBar'
-  +'1Change'#8'Position'#3#16''''#11'OnMouseDown'#7#18'TrackBar1MouseDown'#8'Ta'
-  +'bOrder'#2#2#0#0#0#9'TTabSheet'#12'tsModulators'#7'Caption'#6#10'Modulators'
-  +#0#0#9'TTabSheet'#8'tsGlobal'#7'Caption'#6#6'Global'#0#0#0#0
+  +'op'#2#2#5'Width'#2'('#5'Value'#5#0#0#0#0#0#0'@'#156#13'@'#7'Caption'#6#6'Cu'
+  +'toff'#6'Lowest'#5#0#0#0#0#0#0#0#160#3'@'#7'Highest'#5#0#0#0#0#0#0'@'#156#13
+  +'@'#8'OnChange'#7#14'dcCutoffChange'#13'OnStartChange'#7#19'dcCutoffStartCha'
+  +'nge'#7'Enabled'#9#5'Color'#7#12'clBackground'#0#0#12'TDialControl'#11'dcRes'
+  +'onance'#4'Left'#2'}'#6'Height'#2'<'#3'Top'#2#1#5'Width'#2'('#5'Value'#5#0#0
+  +#0#0#0#0#0#0#0#0#7'Caption'#6#3'Res'#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highe'
+  +'st'#5#0#0#0#0#0#0#0#200#5'@'#8'OnChange'#7#17'dcResonanceChange'#13'OnStart'
+  +'Change'#7#22'dcResonanceStartChange'#7'Enabled'#9#5'Color'#7#12'clBackgroun'
+  +'d'#0#0#9'TTrackBar'#9'TrackBar1'#4'Left'#2'`'#6'Height'#2#25#4'Hint'#6#6'Cu'
+  +'toff'#3'Top'#2'O'#5'Width'#2'd'#3'Max'#3#16''''#3'Min'#2#10#8'OnChange'#7#15
+  +'TrackBar1Change'#8'Position'#3#16''''#11'OnMouseDown'#7#18'TrackBar1MouseDo'
+  +'wn'#8'TabOrder'#2#2#0#0#0#9'TTabSheet'#12'tsModulators'#7'Caption'#6#10'Mod'
+  +'ulators'#0#0#9'TTabSheet'#8'tsGlobal'#7'Caption'#6#6'Global'#0#0#0#0
 ]);

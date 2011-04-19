@@ -270,7 +270,7 @@ procedure TSampleView.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TSampleView.Update');
 
-  //dcCutoff.Value := TSample(Subject).Filter.Frequency;
+  dcCutoff.Value := TSample(Subject).Filter.Frequency;
   dcResonance.Value := TSample(Subject).Filter.Resonance;
   //TrackBar1.Position := Round(TSample(Subject).Filter.Frequency);
 
