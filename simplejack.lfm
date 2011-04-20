@@ -65,7 +65,7 @@ object MainApp: TMainApp
         Hint = 'BPM Rate'
         Top = -4
         Width = 40
-        Value = 120
+        Value = 0
         Caption = 'BPM'
         Lowest = 20
         Highest = 300

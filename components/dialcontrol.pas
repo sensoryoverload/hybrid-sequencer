@@ -44,29 +44,34 @@ Type
   TDialControl = class(TCustomControl, IFeedBack)
   private
     FDialMoving: Boolean;
-    FOldValue: Single;
-    FValue: Single;
-    FLastValue: Single;
-    FCaption: string;
-    FOldAngle: Single;
+
+    FStartingInternalValue: Single;
+    FOldInternalValue: Single;
+    FInternalValue: Single;
+
     FAngle: Single;
+    FOldAngle: Single;
+
     FRange: Single;
     FLowest: Single;
     FHighest: Single;
     FOldY: Integer;
     FY: Integer;
-    FOffset: Integer;
-    FScaleAngleToValue: Single;
-    FScaleValueToAngle: Single;
+
+    FCaption: string;
+
+    FScaleInternalValueToExternalValue: Single;
+    FScaleExternalValueToInternalValue: Single;
+
     FOnChange: TNotifyEvent;
     FOnEndChange: TNotifyEvent;
     FOnStartChange: TNotifyEvent;
-    FImageMode: Integer;
     FEnabled: Boolean;
 
     procedure CalcInternals(X, Y: Longint);
     procedure SetHighest(const AValue: Single);
     procedure SetLowest(const AValue: Single);
+    function GetValue: Single;
     procedure SetValue(const AValue: Single);
   protected
     procedure Initialize;
@@ -77,7 +82,7 @@ Type
     procedure Paint; override;
     procedure UpdateControl;
   published
-    property Value: Single read FValue write SetValue;
+    property Value: Single read GetValue write SetValue;
     property Caption: string read FCaption write FCaption;
     property Lowest: Single read FLowest write SetLowest;
     property Highest: Single read FHighest write SetHighest;
@@ -478,64 +483,18 @@ begin
   if FRange = 0 then
     FRange := 0.001;
 
-  FOffset := (FOldY - FY);
+  FInternalValue := FStartingInternalValue + (FOldY - FY);
+  if FInternalValue < 0 then FInternalValue := 0;
+  if FInternalValue > 300 then FInternalValue := 300;
 
-//  FAngle := 330 - (FOldValue + (FOldY - FY));
-  FAngle := 330 - (FOldAngle + (FOldY - FY));
-
-  if FAngle > 330 then FAngle := 330;
-  if FAngle < 30 then FAngle := 30;
-
-  FValue := (330 - FAngle) * FScaleAngleToValue;
-
-  if FLastValue <> FValue then
+  if FInternalValue <> FOldInternalValue then
   begin
     if Assigned(FOnChange) then
     begin
       FOnChange(Self);
     end;
+    FOldInternalValue := FInternalValue;
   end;
-  FLastValue := FValue;
-
-  writeln(format(
-  'FOldAngle %f, FAngle %f, FOldValue %f, FValue %f, FScaleAngleToValue %f, FScaleValueToAngle %f ',
-  [FOldAngle, FAngle, FOldValue, FValue, FScaleAngleToValue, FScaleValueToAngle]));
-
-(*
-lOffset := FOldValue + (FOldY - FY) / 1.5;
-//  FAngle := 330 - ((300 / (FRange)) * lOffset);
-FAngle := 330 -  lOffset;
-//  FAngle := lOffset);
-
-if FAngle > 330 then FAngle := 330;
-if FAngle < 30 then FAngle := 30;
-
-// Normalize to 0..100
-FValue := ((360 - FAngle) - 30);
-
-// Scale to Lowest..Highest
-FValue := FValue * (FRange / 300);
-
-if FLastValue <> FValue then
-begin
-  if Assigned(FOnChange) then
-  begin
-    FOnChange(Self);
-  end;
-end;
-FLastValue := FValue;
-*)
-end;
-
-procedure TDialControl.SetHighest(const AValue: Single);
-begin
-  FHighest := AValue;
-  FRange := FHighest - FLowest;
-
-  if FRange = 0 then
-    FRange := 0.001;
-
-  Initialize;
 end;
 
 procedure TDialControl.SetLowest(const AValue: Single);
@@ -549,23 +508,36 @@ begin
   Initialize;
 end;
 
+procedure TDialControl.SetHighest(const AValue: Single);
+begin
+  FHighest := AValue;
+  FRange := FHighest - FLowest;
+
+  if FRange = 0 then
+    FRange := 0.001;
+
+  Initialize;
+end;
+
+function TDialControl.GetValue: Single;
+begin
+  Result := FInternalValue * FScaleInternalValueToExternalValue;
+end;
+
 procedure TDialControl.SetValue(const AValue: Single);
 begin
   if FRange = 0 then
     FRange := 0.001;
 
-  FValue := AValue;
-  FOldValue := FValue;
-  FAngle := 330 - (FScaleValueToAngle * FValue);
-  FOldAngle := FAngle;
+  FInternalValue := AValue * FScaleExternalValueToInternalValue;
 
   Repaint;
 end;
 
 procedure TDialControl.Initialize;
 begin
-  FScaleAngleToValue := FRange / 300;
-  FScaleValueToAngle := 300 / FRange;
+  FScaleInternalValueToExternalValue := FRange / 300;
+  FScaleExternalValueToInternalValue := 300 / FRange;
 end;
 
 constructor TDialControl.Create(AOwner: TComponent);
@@ -578,6 +550,10 @@ begin
 
   ParentColor := True;
 
+  Constraints.MinHeight := 60;
+  Constraints.MaxHeight := 60;
+  Constraints.MinWidth := 40;
+  Constraints.MaxWidth := 40;
   Width := 40;
   Height := 60;
   Left := 0;
@@ -587,11 +563,8 @@ begin
   FHighest := 1;
   Enabled := True;
 
-  // Use canvas and draw myself
-  FImageMode := 0;
-
   DoubleBuffered:= False;
-  FValue:= 0;
+
   FDialMoving:= False;
 end;
 
@@ -635,7 +608,9 @@ begin
 
     Bitmap.Canvas.Pen.Width := 3;
 
-    lPoint := LineFromAngle(Width div 2, Height div 2, 270 - FAngle, 12);
+    FAngle := FInternalValue;
+
+    lPoint := LineFromAngle(Width div 2, Height div 2, FAngle - 60, 12);
     Bitmap.Canvas.Line(Width div 2, Height div 2, lPoint.X, lPoint.Y);
 
     Bitmap.Canvas.Arc(7, 17, 33, 43, -880, 4640);
@@ -644,7 +619,7 @@ begin
     lPos := 20 - (Bitmap.Canvas.TextWidth(FCaption) div 2);
     Bitmap.Canvas.TextOut(lPos, 2, FCaption);
 
-    lStr := IntToStr(Round(FValue));
+    lStr := IntToStr(Round(Value));
     lPos := 20 - (Bitmap.Canvas.TextWidth(lStr) div 2);
     Bitmap.Canvas.TextOut(lPos, 45, lStr);
 
@@ -668,9 +643,9 @@ begin
       FOnStartChange(Self);
 
     FY := Y + Top;
-    FOldAngle := FAngle;
-    FOldY := Y + Top;
-    FOldValue := FValue;
+    FOldY := FY;
+
+    FStartingInternalValue := FInternalValue;
 
     CalcInternals(X, FY);
 
@@ -685,8 +660,7 @@ procedure TDialControl.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
-  FOldAngle := FAngle;
-  FOldValue := FValue;
+  FStartingInternalValue := FInternalValue;
 
   if Assigned(FOnEndChange) then
     FOnEndChange(Self);

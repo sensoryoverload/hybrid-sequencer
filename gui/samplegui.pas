@@ -173,7 +173,7 @@ end;
 
 procedure TSampleView.dcResonanceChange(Sender: TObject);
 var
-  lFilterCutoffCommand: TFilterCutoffCommand;
+  lFilterResonanceCommand: TFilterCutoffCommand;
 begin
   DBLog('dcCutoffChange %f', dcCutoff.Value);
 
@@ -211,7 +211,7 @@ procedure TSampleView.TrackBar1Change(Sender: TObject);
 var
   lFilterCutoffCommand: TFilterCutoffCommand;
 begin
-  DBLog('dcCutoffChange %f', dcCutoff.Value);
+  {DBLog('dcCutoffChange %f', dcCutoff.Value);
 
   lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
   try
@@ -222,7 +222,7 @@ begin
     GCommandQueue.PushCommand(lFilterCutoffCommand);
   except
     lFilterCutoffCommand.Free;
-  end;
+  end;   }
 end;
 
 procedure TSampleView.TrackBar1MouseDown(Sender: TObject; Button: TMouseButton;
@@ -230,7 +230,7 @@ procedure TSampleView.TrackBar1MouseDown(Sender: TObject; Button: TMouseButton;
 var
   lFilterCutoffCommand: TFilterCutoffCommand;
 begin
-  DBLog('dcCutoffChange %f', dcCutoff.Value);
+  {DBLog('dcCutoffChange %f', dcCutoff.Value);
 
   lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
   try
@@ -241,7 +241,7 @@ begin
     GCommandQueue.PushCommand(lFilterCutoffCommand);
   except
     lFilterCutoffCommand.Free;
-  end;
+  end;     }
 end;
 
 

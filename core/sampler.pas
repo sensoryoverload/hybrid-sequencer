@@ -447,11 +447,23 @@ type
   private
     FSample: TSample;
     FSampleBank: TSampleBank;
+//    FParameter: TSampeParameter;
   protected
     procedure Initialize; override;
   end;
 
   { TFilterCutoffCommand }
+
+  TFilterCutoffCommand = class(TSampleCommand)
+  private
+    FOldCutoffValue: Single;
+    FCutoffValue: Single;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property CutoffValue: Single read FCutoffValue write FCutoffValue;
+  end;
 
   TFilterCutoffCommand = class(TSampleCommand)
   private
@@ -1698,8 +1710,6 @@ begin
 
   FOldCutoffValue := FSample.Filter.Frequency;
   FSample.Filter.Frequency := FCutoffValue;
-  {FOldCutoffValue := FSample.Filter.Frequency;//FSample.FilterCutoff;
-  FSample.FilterCutoff := FCutoffValue;}
 
   FSample.EndUpdate;
 
@@ -1712,7 +1722,6 @@ begin
 
   FSample.BeginUpdate;
 
-  {FSample.FilterCutoff := FOldCutoffValue;}
   FSample.Filter.Frequency := FOldCutoffValue;
 
   FSample.EndUpdate;

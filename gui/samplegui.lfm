@@ -30,7 +30,7 @@ object SampleView: TSampleView
         Height = 60
         Top = 2
         Width = 40
-        Value = 20000
+        Value = 0
         Caption = 'Cutoff'
         Lowest = 20
         Highest = 20000
