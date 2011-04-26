@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, globalconst, jacktypes, ContNrs, global_command, global, midi,
-  sndfile, jack, plugin, midiport, samplestreamprovider, filters, baseengine;
+  sndfile, jack, plugin, midiport, samplestreamprovider, filters, baseengine,
+  variants;
 
 type
 
@@ -66,6 +67,8 @@ type
 
   {
   }
+
+  { TEnvelopeEngine }
 
   TEnvelopeEngine = class(TBaseEngine)
   private
@@ -230,6 +233,10 @@ type
   private
     FStartPhase: dword;
     FWaveForm: TOscWaveform;
+    FPitch: Single;
+    FModAmount: Single;
+    procedure SetModAmount(const AValue: Single);
+    procedure SetPitch(const AValue: Single);
     procedure SetStartPhase(const AValue: dword);
     procedure SetWaveForm(const Value: TOscWaveform);
   public
@@ -237,6 +244,8 @@ type
     procedure Initialize; override;
     property WaveForm: TOscWaveform read FWaveForm write SetWaveForm;
     property StartPhase: dword read FStartPhase write SetStartPhase;
+    property Pitch: Single read FPitch write SetPitch;
+    property ModAmount: Single read FModAmount write SetModAmount;
 
   end;
 
@@ -284,16 +293,9 @@ type
 
     FPitchEnvelope: TEnvelope;
     FPitchEnvelopeDepth: Single;
-    FPitchLFODepth: Single;
-    FPitchKeyDepth: Single;
-    FPitchSemiTone: Single;
-    FPitchDetune: Single;
 
     FAmpEnvelope: TEnvelope;
     FAmpEnvelopeDepth: Single;
-    FAmpLFODepth: Single;
-    FAmpKeyDepth: Single;
-    FAmpOn: Boolean;
 
     FSaturateDrive: Single;
     FSaturateOn: Boolean;
@@ -301,9 +303,6 @@ type
     FFilter: TFilter;
     FFilterEnvelope: TEnvelope;
     FFilterEnvelopeDepth: Single;
-    FFilterLFODepth: Single;
-    FFilterKeyDepth: Single;
-    FFilterOn: Boolean;
 
     FLFO1: TLFO;
     FLFO2: TLFO;
@@ -325,8 +324,6 @@ type
     FSampleName: string;
 
     FPitchScaleFactor: Single;
-    procedure SetPitchDetune(const AValue: Single);
-    procedure SetPitchSemiTone(const AValue: Single);
   protected
     procedure RecalculatePitchFactor;
   public
@@ -352,25 +349,15 @@ type
     property Osc3: TOscillator read FOsc3 write FOsc3;
     property PitchEnvelope: TEnvelope read FPitchEnvelope write FPitchEnvelope;
     property PitchEnvelopeDepth: Single read FPitchEnvelopeDepth write FPitchEnvelopeDepth;
-    property PitchLFODepth: Single read FPitchLFODepth write FPitchLFODepth;
-    property PitchKeyDepth: Single read FPitchKeyDepth write FPitchKeyDepth;
-    property PitchSemiTone: Single read FPitchSemiTone write SetPitchSemiTone;
-    property PitchDetune: Single read FPitchDetune write SetPitchDetune;
 
     property AmpEnvelope: TEnvelope read FAmpEnvelope write FAmpEnvelope;
     property AmpEnvelopeDepth: Single read FAmpEnvelopeDepth write FAmpEnvelopeDepth;
-    property AmpLFODepth: Single read FAmpLFODepth write FAmpLFODepth;
-    property AmpKeyDepth: Single read FAmpKeyDepth write FAmpKeyDepth;
-    property AmpOn: Boolean read FAmpOn write FAmpOn;
 
     property SaturateDrive: Single read FSaturateDrive write FSaturateDrive;
     property SaturateOn: Boolean read FSaturateOn write FSaturateOn;
 
     property FilterEnvelope: TEnvelope read FFilterEnvelope write FFilterEnvelope;
     property FilterEnvelopeDepth: Single read FFilterEnvelopeDepth write FFilterEnvelopeDepth;
-    property FilterLFODepth: Single read FFilterLFODepth write FFilterLFODepth;
-    property FilterKeyDepth: Single read FFilterKeyDepth write FFilterKeyDepth;
-    property FilterOn: Boolean read FFilterOn write FFilterOn;
     property Filter: TFilter read FFilter write FFilter;
 
     property LFO1: TLFO read FLFO1 write FLFO1;
@@ -452,28 +439,30 @@ type
     procedure Initialize; override;
   end;
 
-  { TFilterCutoffCommand }
+  TSampleParameter = (
+    spOSC1_Pitch,
+    spOSC1_ModAmount,
+    spOSC2_Pitch,
+    spOSC2_ModAmount,
+    spOSC3_Pitch,
+    spOSC3_ModAmount,
+    spFilter_Cutoff,
+    spFilter_Resonance
+  );
 
-  TFilterCutoffCommand = class(TSampleCommand)
+  { TSampleParameterCommand }
+
+  TSampleParameterCommand = class(TSampleCommand)
   private
-    FOldCutoffValue: Single;
-    FCutoffValue: Single;
+    FOldValue: Variant;
+    FValue: Variant;
+    FParameter: TSampleParameter;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   published
-    property CutoffValue: Single read FCutoffValue write FCutoffValue;
-  end;
-
-  TFilterCutoffCommand = class(TSampleCommand)
-  private
-    FOldCutoffValue: Single;
-    FCutoffValue: Single;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  published
-    property CutoffValue: Single read FCutoffValue write FCutoffValue;
+    property Value: Variant read FValue write FValue;
+    property Parameter: TSampleParameter read FParameter write FParameter;
   end;
 
   { TSampleBankCommand }
@@ -578,24 +567,24 @@ type
 
     FSample: TSample;
     FSamplePosition: single;
-    FFilterEnvelope: TEnvelopeEngine;
+    FFilterEnvelopeEngine: TEnvelopeEngine;
     FFilterEnvelopeLevel: single;
 
-    FAmpEnvelope: TEnvelopeEngine;
+    FAmpEnvelopeEngine: TEnvelopeEngine;
     FAmpEnvelopeLevel: single;
 
-    FPitchEnvelope: TEnvelopeEngine;
+    FPitchEnvelopeEngine: TEnvelopeEngine;
     FPitchEnvelopeLevel: single;
 
-    FOsc1: TOscillatorEngine;
-    FOsc2: TOscillatorEngine;
-    FOsc3: TOscillatorEngine;
+    FOsc1Engine: TOscillatorEngine;
+    FOsc2Engine: TOscillatorEngine;
+    FOsc3Engine: TOscillatorEngine;
 
-    FFilter: TMoog2FilterEngine;
+    FFilterEngine: TMoog2FilterEngine;
 
-    FLFO1: TLFOEngine;
-    FLFO2: TLFOEngine;
-    FLFO3: TLFOEngine;
+    FLFO1Engine: TLFOEngine;
+    FLFO2Engine: TLFOEngine;
+    FLFO3Engine: TLFOEngine;
 
     FLFOPhase: single;
     FNote: Integer;
@@ -692,6 +681,108 @@ implementation
 
 uses
   audiostructure, utils, fx;
+
+{ TSampleParameterCommand }
+
+procedure TSampleParameterCommand.DoExecute;
+begin
+  DBLog('start TSampleParameterCommand.DoExecute');
+
+  FSample.BeginUpdate;
+
+  case FParameter of
+    spOSC1_Pitch:
+    begin
+      FOldValue := FSample.Osc1.Pitch;
+      FSample.Osc1.Pitch := FValue;
+    end;
+    spOSC1_ModAmount:
+    begin
+      FOldValue := FSample.Osc1.ModAmount;
+      FSample.Osc1.ModAmount := FValue;
+    end;
+    spOSC2_Pitch:
+    begin
+      FOldValue := FSample.Osc2.Pitch;
+      FSample.Osc2.Pitch := FValue;
+    end;
+    spOSC2_ModAmount:
+    begin
+      FOldValue := FSample.Osc2.ModAmount;
+      FSample.Osc2.ModAmount := FValue;
+    end;
+    spOSC3_Pitch:
+    begin
+      FOldValue := FSample.Osc3.Pitch;
+      FSample.Osc3.Pitch := FValue;
+    end;
+    spOSC3_ModAmount:
+    begin
+      FOldValue := FSample.Osc3.ModAmount;
+      FSample.Osc3.ModAmount := FValue;
+    end;
+    spFilter_Cutoff:
+    begin
+      FOldValue := FSample.Filter.Frequency;
+      FSample.Filter.Frequency := FValue;
+    end;
+    spFilter_Resonance:
+    begin
+      FOldValue := FSample.Filter.Resonance;
+      FSample.Filter.Resonance := FValue;
+    end;
+  end;
+
+  FSample.EndUpdate;
+
+  DBLog('end TSampleParameterCommand.DoExecute');
+end;
+
+procedure TSampleParameterCommand.DoRollback;
+begin
+  DBLog('start TSampleParameterCommand.DoRollback');
+
+  FSample.BeginUpdate;
+
+  case FParameter of
+    spOSC1_Pitch:
+    begin
+      FSample.Osc1.Pitch := FOldValue;
+    end;
+    spOSC1_ModAmount:
+    begin
+      FSample.Osc1.ModAmount := FOldValue;
+    end;
+    spOSC2_Pitch:
+    begin
+      FSample.Osc2.Pitch := FOldValue;
+    end;
+    spOSC2_ModAmount:
+    begin
+      FSample.Osc2.ModAmount := FOldValue;
+    end;
+    spOSC3_Pitch:
+    begin
+      FSample.Osc3.Pitch := FOldValue;
+    end;
+    spOSC3_ModAmount:
+    begin
+      FSample.Osc3.ModAmount := FOldValue;
+    end;
+    spFilter_Cutoff:
+    begin
+      FSample.Filter.Frequency := FOldValue;
+    end;
+    spFilter_Resonance:
+    begin
+      FSample.Filter.Resonance := FOldValue;
+    end;
+  end;
+
+  FSample.EndUpdate;
+
+  DBLog('end TSampleParameterCommand.DoRollback');
+end;
 
 { TOscillatorEngine }
 
@@ -806,6 +897,18 @@ begin
   FStartPhase := AValue;
 end;
 
+procedure TOscillator.SetPitch(const AValue: Single);
+begin
+  if FPitch = AValue then exit;
+  FPitch := AValue;
+end;
+
+procedure TOscillator.SetModAmount(const AValue: Single);
+begin
+  if FModAmount = AValue then exit;
+  FModAmount := AValue;
+end;
+
 procedure TOscillator.SetWaveForm(const Value: TOscWaveForm);
 var
   i: integer;
@@ -820,7 +923,10 @@ end;
 
 procedure TOscillator.Initialize;
 begin
-  //
+  {FPitch := 0;
+  FModAmount := 0;
+
+  Notify;}
 end;
 
 { TAmplifierEngine }
@@ -1053,6 +1159,9 @@ begin
   else
     FLevel := 0;
   end;
+
+  if FLevel < 0 then FLevel := 0;
+  if FLevel > 2 then FLevel := 2;
 end;
 
 procedure TEnvelopeEngine.NoteOn;
@@ -1107,23 +1216,9 @@ end;
 
 { TSample }
 
-procedure TSample.SetPitchSemiTone(const AValue: Single);
-begin
-  FPitchSemiTone := AValue;
-
-  RecalculatePitchFactor;
-end;
-
 procedure TSample.RecalculatePitchFactor;
 begin
   FPitchScaleFactor := 1;
-end;
-
-procedure TSample.SetPitchDetune(const AValue: Single);
-begin
-  FPitchDetune := AValue;
-
-  RecalculatePitchFactor;
 end;
 
 constructor TSample.Create(AObjectOwner: string; AMapped: Boolean = True);
@@ -1147,9 +1242,6 @@ begin
   FLFO1 := TLFO.Create(ObjectID);
   FLFO2 := TLFO.Create(ObjectID);
   FLFO3 := TLFO.Create(ObjectID);
-
-  FPitchSemiTone := 1;
-  FPitchDetune := 0;
 
   FPitchScaleFactor := 1;
 
@@ -1700,35 +1792,6 @@ begin
   FSample := TSample(GObjectMapper.GetModelObject(ObjectID));
 end;
 
-{ TFilterCutoffCommand }
-
-procedure TFilterCutoffCommand.DoExecute;
-begin
-  DBLog('start TFilterCutoffCommand.DoExecute');
-
-  FSample.BeginUpdate;
-
-  FOldCutoffValue := FSample.Filter.Frequency;
-  FSample.Filter.Frequency := FCutoffValue;
-
-  FSample.EndUpdate;
-
-  DBLog('end TFilterCutoffCommand.DoExecute');
-end;
-
-procedure TFilterCutoffCommand.DoRollback;
-begin
-  DBLog('start TFilterCutoffCommand.DoRollback');
-
-  FSample.BeginUpdate;
-
-  FSample.Filter.Frequency := FOldCutoffValue;
-
-  FSample.EndUpdate;
-
-  DBLog('end TFilterCutoffCommand.DoRollback');
-end;
-
 { TSelectSampleCommand }
 
 procedure TSelectSampleCommand.DoExecute;
@@ -1954,16 +2017,18 @@ begin
 
   FInternalBuffer := GetMem(Frames * SizeOf(Single));
 
-  FOsc1 := TOscillatorEngine.Create(Frames);
-  FOsc2 := TOscillatorEngine.Create(Frames);
-  FOsc3 := TOscillatorEngine.Create(Frames);
-  FFilterEnvelope := TEnvelopeEngine.Create(Frames);
-  FAmpEnvelope := TEnvelopeEngine.Create(Frames);
-  FPitchEnvelope := TEnvelopeEngine.Create(Frames);
-  FLFO1 := TLFOEngine.Create(Frames);
-  FLFO2 := TLFOEngine.Create(Frames);
-  FLFO3 := TLFOEngine.Create(Frames);
-  FFilter := TMoog2FilterEngine.Create(Frames);
+  GLogger.PushMessage(Format('FInternalBuffer %d', [Frames * SizeOf(Single)]));
+
+  FOsc1Engine := TOscillatorEngine.Create(Frames);
+  FOsc2Engine := TOscillatorEngine.Create(Frames);
+  FOsc3Engine := TOscillatorEngine.Create(Frames);
+  FFilterEnvelopeEngine := TEnvelopeEngine.Create(Frames);
+  FAmpEnvelopeEngine := TEnvelopeEngine.Create(Frames);
+  FPitchEnvelopeEngine := TEnvelopeEngine.Create(Frames);
+  FLFO1Engine := TLFOEngine.Create(Frames);
+  FLFO2Engine := TLFOEngine.Create(Frames);
+  FLFO3Engine := TLFOEngine.Create(Frames);
+  FFilterEngine := TMoog2FilterEngine.Create(Frames);
 
   FLFOPhase := 0;
   FRunning := False;
@@ -1975,16 +2040,16 @@ end;
 
 destructor TSampleVoiceEngine.Destroy;
 begin
-  FOsc1.Free;
-  FOsc2.Free;
-  FOsc3.Free;
-  FFilterEnvelope.Free;
-  FAmpEnvelope.Free;
-  FPitchEnvelope.Free;
-  FLFO1.Free;
-  FLFO2.Free;
-  FLFO3.Free;
-  FFilter.Free;
+  FOsc1Engine.Free;
+  FOsc2Engine.Free;
+  FOsc3Engine.Free;
+  FFilterEnvelopeEngine.Free;
+  FAmpEnvelopeEngine.Free;
+  FPitchEnvelopeEngine.Free;
+  FLFO1Engine.Free;
+  FLFO2Engine.Free;
+  FLFO3Engine.Free;
+  FFilterEngine.Free;
 
   FreeMem(FInternalBuffer);
 
@@ -1999,17 +2064,17 @@ begin
 
   if Assigned(FSample) then
   begin
-    FOsc1.Oscillator := FSample.Osc1;
-    FOsc2.Oscillator := FSample.Osc2;
-    FOsc3.Oscillator := FSample.Osc3;
-    FFilterEnvelope.Envelope := FSample.FilterEnvelope;
-    FAmpEnvelope.Envelope := FSample.AmpEnvelope;
-    FPitchEnvelope.Envelope := FSample.PitchEnvelope;
-    FLFO1.LFO := FSample.LFO1;
-    FLFO2.LFO := FSample.LFO2;
-    FLFO3.LFO := FSample.LFO3;
-    FFilter.Filter := FSample.Filter;
-    FFilter.Filter.FilterType := FSample.Filter.FilterType;
+    FOsc1Engine.Oscillator := FSample.Osc1;
+    FOsc2Engine.Oscillator := FSample.Osc2;
+    FOsc3Engine.Oscillator := FSample.Osc3;
+    FFilterEnvelopeEngine.Envelope := FSample.FilterEnvelope;
+    FAmpEnvelopeEngine.Envelope := FSample.AmpEnvelope;
+    FPitchEnvelopeEngine.Envelope := FSample.PitchEnvelope;
+    FLFO1Engine.LFO := FSample.LFO1;
+    FLFO2Engine.LFO := FSample.LFO2;
+    FLFO3Engine.LFO := FSample.LFO3;
+    FFilterEngine.Filter := FSample.Filter;
+    FFilterEngine.Filter.FilterType := FSample.Filter.FilterType;
   end;
   FLFOPhase := 0;
   FRunning := False;
@@ -2058,38 +2123,39 @@ begin
 //          FEnvelopeFollower.Process(AInputBuffer[i]);
 
           // Oscillatorbank
-          lSampleA := FOsc1.Process;
-          lSampleB := FOsc2.Process;
-          lSampleC := FOsc3.Process;
+          lSampleA := FOsc1Engine.Process;
+          lSampleB := FOsc2Engine.Process;
+          lSampleC := FOsc3Engine.Process;
           lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
           lSample := lSample +  lSampleC - (lSample * lSampleC);
 
           // LFO's
-          {FLFO1.Process;
-          FLFO2.Process;
-          FLFO3.Process;}
+          {FLFO1Engine.Process;
+          FLFO2Engine.Process;
+          FLFO3Engine.Process;}
 
           // ADSR Pitch
-          {FPitchEnvelope.Process;
-          FPitchEnvelopeLevel := FPitchEnvelope.Level;}
+          {FPitchEnvelopeEngine.Process;
+          FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;}
 
           // Pitch
 
 
           // ADSR Filter
-          FFilterEnvelope.Process;
+          FFilterEnvelopeEngine.Process;
 
           // Filter
-          FFilter.Frequency := FFilter.Filter.Frequency * FFilterEnvelope.Level;
-          lSample := FFilter.Process(lSample);
+          FFilterEngine.Frequency := FFilterEngine.Filter.Frequency * FFilterEnvelopeEngine.Level;
+          FFilterEngine.Resonance := FFilterEngine.Filter.Resonance * 0.01;
+          lSample := FFilterEngine.Process(lSample);
 
           // ADSR Amplifier
-          FAmpEnvelope.Process;
+          FAmpEnvelopeEngine.Process;
 
           // Amplifier
-          lSample := lSample * FAmpEnvelope.Level;
+          lSample := lSample * FAmpEnvelopeEngine.Level;
 
-          if FAmpEnvelope.State = esEnd then
+          if FAmpEnvelopeEngine.State = esEnd then
           begin
             FRunning := False;
           end;
@@ -2116,9 +2182,8 @@ begin
           FLength := FLength - GAudioStruct.BPMAdder;
         end;
 
-        GLogger.PushMessage(Format(
-          'Filter.Frequency %f, Filter.Filter.Frequency %f, FFilterEnvelope.Level %f, Samplerate %f',
-          [FFilter.Frequency, FFilter.Filter.Frequency, FFilterEnvelope.Level, FFilter.SampleRate]));
+        {GLogger.PushMessage(Format('FFilter %f, FFilter.Filter.Frequency %f, FFilterEnvelope %f',
+        [FFilterEngine.Frequency, FFilterEngine.Filter.Frequency, FFilterEnvelopeEngine.Level]));}
 
         // Next iteration, start from the beginning
         FNoteOnOffset := 0;
@@ -2131,13 +2196,22 @@ end;
   Reinitialize start state
 }
 procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single);
+
+  function ClampNote(ANote: Integer): Integer;
+  begin
+    if ANote > 127 then
+      Result := 127
+    else if ANote < 0 then
+      Result := 0;
+  end;
+
 begin
   FRunning := True;
   FSamplePosition := 0;
 
-  FPitchEnvelope.NoteOn;
-  FFilterEnvelope.NoteOn;
-  FAmpEnvelope.NoteOn;
+  FPitchEnvelopeEngine.NoteOn;
+  FFilterEnvelopeEngine.NoteOn;
+  FAmpEnvelopeEngine.NoteOn;
 
   FNoteOnOffset := ARelativeLocation;
 
@@ -2148,18 +2222,21 @@ begin
   // the end loop marker.
   FLength := ALength;
 
-  FOsc1.Rate := GNoteToFreq[ANote];
-  FOsc2.Rate := GNoteToFreq[ANote] - 1;
-  FOsc3.Rate := GNoteToFreq[ANote] + 1;
+  FOsc1Engine.Rate := GNoteToFreq[ClampNote(ANote + Round(FSample.Osc1.Pitch))];
+  FOsc2Engine.Rate := GNoteToFreq[ClampNote(ANote + Round(FSample.Osc2.Pitch))] - 1;
+  FOsc3Engine.Rate := GNoteToFreq[ClampNote(ANote + Round(FSample.Osc3.Pitch))] + 1;
+{  FOsc1Engine.Rate := GNoteToFreq[ANote{ + Round(FSample.Osc1.Pitch)}];
+  FOsc2Engine.Rate := GNoteToFreq[ANote{ + Round(FSample.Osc2.Pitch)}] - 1;
+  FOsc3Engine.Rate := GNoteToFreq[ANote{ + Round(FSample.Osc3.Pitch)}] + 1;}
 end;
 
 procedure TSampleVoiceEngine.NoteOff;
 begin
   FStopVoice := True;
 
-  FPitchEnvelope.NoteOff;
-  FFilterEnvelope.NoteOff;
-  FAmpEnvelope.NoteOff;
+  FPitchEnvelopeEngine.NoteOff;
+  FFilterEnvelopeEngine.NoteOff;
+  FAmpEnvelopeEngine.NoteOff;
 end;
 
 function TSampleVoiceEngine.RunningNote: Integer;
@@ -2283,23 +2360,27 @@ begin
   case AModSource of
     msLFO1:
     begin
-      Result := @FLFO1.Level;
+      Result := @FLFO1Engine.Level;
     end;
     msLFO2:
     begin
-      Result := @FLFO2.Level;
+      Result := @FLFO2Engine.Level;
     end;
     msLFO3:
     begin
-      Result := @FLFO3.Level;
+      Result := @FLFO3Engine.Level;
     end;
-    msEnvelope1:
+    msAmpEnvelope:
     begin
-      Result := @FAmpEnvelope.Level;
+      Result := @FAmpEnvelopeEngine.Level;
     end;
-    msEnvelope2:
+    msFilterEnvelope:
     begin
-      Result := @FFilterEnvelope.Level;
+      Result := @FFilterEnvelopeEngine.Level;
+    end;
+    msPitchEnvelope:
+    begin
+      Result := @FPitchEnvelopeEngine.Level;
     end;
     msEnvelopeFollower:
     begin
@@ -2307,15 +2388,15 @@ begin
     end;
     msOscillator1:
     begin
-      Result := @FOsc1.Level;
+      Result := @FOsc1Engine.Level;
     end;
     msOscillator2:
     begin
-      Result := @FOsc2.Level;
+      Result := @FOsc2Engine.Level;
     end;
     msOscillator3:
     begin
-      Result := @FOsc3.Level;
+      Result := @FOsc3Engine.Level;
     end;
     msOscillatorMix:
     begin
@@ -2323,7 +2404,7 @@ begin
     end;
     msFilterOutput:
     begin
-      Result := @FFilter.Level;
+      Result := @FFilterEngine.Level;
     end;
     msAmpOutput:
     begin

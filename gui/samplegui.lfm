@@ -11,7 +11,7 @@ object SampleView: TSampleView
   DesignTop = 362
   object pcSampler: TPageControl
     Left = 0
-    Height = 175
+    Height = 256
     Top = 0
     Width = 830
     ActivePage = tsTuning
@@ -20,58 +20,502 @@ object SampleView: TSampleView
     TabOrder = 0
     object tsSample: TTabSheet
       Caption = 'Sample'
+      ClientHeight = 227
+      ClientWidth = 824
+      object Label1: TLabel
+        Left = 129
+        Height = 47
+        Top = 67
+        Width = 550
+        Caption = 'Put simple sample editor here'
+        Font.Height = -40
+        ParentColor = False
+        ParentFont = False
+      end
     end
     object tsTuning: TTabSheet
-      Caption = 'Tuning'
-      ClientHeight = 146
+      Caption = 'Synth Engine'
+      ClientHeight = 227
       ClientWidth = 824
-      object dcCutoff: TDialControl
-        Left = 80
-        Height = 60
-        Top = 2
-        Width = 40
-        Value = 0
-        Caption = 'Cutoff'
-        Lowest = 20
-        Highest = 20000
-        OnChange = dcCutoffChange
-        OnStartChange = dcCutoffStartChange
-        Enabled = True
-        Color = clBackground
+      object gbOscillators: TGroupBox
+        Left = 0
+        Height = 227
+        Top = 0
+        Width = 328
+        Align = alLeft
+        Caption = 'Oscillators'
+        ClientHeight = 214
+        ClientWidth = 324
+        TabOrder = 0
+        object dcOsc1Pitch: TDialControl
+          Left = 90
+          Height = 45
+          Top = 3
+          Width = 40
+          Value = 0
+          Caption = 'Pitch'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcOsc1ModAmount: TDialControl
+          Left = 233
+          Height = 45
+          Top = 3
+          Width = 40
+          Value = 0
+          Caption = 'Mod amount'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object cbOsc1WaveSelector: TComboBox
+          Left = 3
+          Height = 27
+          Top = 12
+          Width = 86
+          ItemHeight = 0
+          TabOrder = 2
+        end
+        object lblOSC1: TLabel
+          Left = 4
+          Height = 12
+          Top = 0
+          Width = 25
+          Caption = 'Osc 1'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object cbOsc1ModSource: TComboBox
+          Left = 131
+          Height = 27
+          Top = 12
+          Width = 102
+          ItemHeight = 0
+          TabOrder = 3
+        end
+        object lblOSC1ModAmount: TLabel
+          Left = 134
+          Height = 12
+          Top = -1
+          Width = 54
+          Caption = 'Mod Source'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object lblOSC2: TLabel
+          Left = 4
+          Height = 12
+          Top = 41
+          Width = 25
+          Caption = 'Osc 2'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object cbOsc2WaveSelector: TComboBox
+          Left = 3
+          Height = 27
+          Top = 54
+          Width = 86
+          ItemHeight = 0
+          TabOrder = 4
+        end
+        object dcOsc2Pitch: TDialControl
+          Left = 90
+          Height = 45
+          Top = 45
+          Width = 40
+          Value = 0
+          Caption = 'Pitch'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object cbOsc2ModSource: TComboBox
+          Left = 131
+          Height = 27
+          Top = 54
+          Width = 102
+          ItemHeight = 0
+          TabOrder = 6
+        end
+        object lblOSC2ModAmount: TLabel
+          Left = 134
+          Height = 12
+          Top = 40
+          Width = 54
+          Caption = 'Mod Source'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object dcOsc2ModAmount: TDialControl
+          Left = 233
+          Height = 45
+          Top = 45
+          Width = 40
+          Value = 0
+          Caption = 'Mod amount'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object lblOSC3: TLabel
+          Left = 4
+          Height = 12
+          Top = 82
+          Width = 25
+          Caption = 'Osc 3'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object cbOsc3WaveSelector: TComboBox
+          Left = 3
+          Height = 27
+          Top = 94
+          Width = 86
+          ItemHeight = 0
+          TabOrder = 8
+        end
+        object dcOsc3Pitch: TDialControl
+          Left = 90
+          Height = 45
+          Top = 85
+          Width = 40
+          Value = 0
+          Caption = 'Pitch'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object cbOsc3ModSource: TComboBox
+          Left = 131
+          Height = 27
+          Top = 94
+          Width = 102
+          ItemHeight = 0
+          TabOrder = 10
+        end
+        object lblOSC3ModAmount: TLabel
+          Left = 134
+          Height = 12
+          Top = 81
+          Width = 54
+          Caption = 'Mod Source'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object dcOsc3ModAmount: TDialControl
+          Left = 233
+          Height = 45
+          Top = 85
+          Width = 40
+          Value = 0
+          Caption = 'Mod amount'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcOSC1Level: TDialControl
+          Left = 274
+          Height = 45
+          Top = 3
+          Width = 40
+          Value = 0
+          Caption = 'Level'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcOSC3Level: TDialControl
+          Left = 274
+          Height = 45
+          Top = 85
+          Width = 40
+          Value = 0
+          Caption = 'Level'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcOSC2Level: TDialControl
+          Left = 274
+          Height = 45
+          Top = 45
+          Width = 40
+          Value = 0
+          Caption = 'Level'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
       end
-      object dcResonance: TDialControl
-        Left = 125
-        Height = 60
-        Top = 1
-        Width = 40
-        Value = 0
-        Caption = 'Res'
-        Lowest = 0
-        Highest = 100
-        OnChange = dcResonanceChange
-        OnStartChange = dcResonanceStartChange
-        Enabled = True
-        Color = clBackground
+      object gbFilter: TGroupBox
+        Left = 328
+        Height = 227
+        Top = 0
+        Width = 101
+        Align = alLeft
+        Caption = 'Filter'
+        ClientHeight = 214
+        ClientWidth = 97
+        TabOrder = 1
+        object dcCutoff: TDialControl
+          Left = 4
+          Height = 45
+          Top = -1
+          Width = 40
+          Value = 0
+          Caption = 'Cutoff'
+          Lowest = 20
+          Highest = 20000
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcResonance: TDialControl
+          Left = 47
+          Height = 45
+          Top = -1
+          Width = 40
+          Value = 0
+          Caption = 'Resonance'
+          Lowest = 0
+          Highest = 100
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
       end
-      object TrackBar1: TTrackBar
-        Left = 96
-        Height = 25
-        Hint = 'Cutoff'
-        Top = 79
-        Width = 100
-        Max = 10000
-        Min = 10
-        OnChange = TrackBar1Change
-        Position = 10000
-        OnMouseDown = TrackBar1MouseDown
+      object gbEnvelopes: TGroupBox
+        Left = 429
+        Height = 227
+        Top = 0
+        Width = 207
+        Align = alLeft
+        Caption = 'Envelopes'
+        ClientHeight = 214
+        ClientWidth = 203
         TabOrder = 2
+        object dcFilterEnvelopeAttack: TDialControl
+          Left = 34
+          Height = 45
+          Top = 3
+          Width = 40
+          Value = 0
+          Caption = 'Attack'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcFilterEnvelopeDecay: TDialControl
+          Left = 76
+          Height = 45
+          Top = 3
+          Width = 40
+          Value = 0
+          Caption = 'Decay'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcFilterEnvelopeSustain: TDialControl
+          Left = 118
+          Height = 45
+          Top = 3
+          Width = 40
+          Value = 0
+          Caption = 'Sustain'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcFilterEnvelopeRelease: TDialControl
+          Left = 163
+          Height = 45
+          Top = 3
+          Width = 40
+          Value = 0
+          Caption = 'Release'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcAmpEnvelopeAttack1: TDialControl
+          Left = 35
+          Height = 45
+          Top = 45
+          Width = 40
+          Value = 0
+          Caption = 'Attack'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcAmpEnvelopeDecay1: TDialControl
+          Left = 77
+          Height = 45
+          Top = 45
+          Width = 40
+          Value = 0
+          Caption = 'Decay'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcAmpEnvelopeSustain1: TDialControl
+          Left = 119
+          Height = 45
+          Top = 45
+          Width = 40
+          Value = 0
+          Caption = 'Sustain'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcAmpEnvelopeRelease1: TDialControl
+          Left = 164
+          Height = 45
+          Top = 45
+          Width = 40
+          Value = 0
+          Caption = 'Release'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcPitchEnvelopeAttack: TDialControl
+          Left = 34
+          Height = 45
+          Top = 85
+          Width = 40
+          Value = 0
+          Caption = 'Attack'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcPitchEnvelopeDecay: TDialControl
+          Left = 78
+          Height = 45
+          Top = 85
+          Width = 40
+          Value = 0
+          Caption = 'Decay'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcPitchEnvelopeSustain: TDialControl
+          Left = 120
+          Height = 45
+          Top = 85
+          Width = 40
+          Value = 0
+          Caption = 'Sustain'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object dcPitchEnvelopeRelease: TDialControl
+          Left = 164
+          Height = 45
+          Top = 85
+          Width = 40
+          Value = 0
+          Caption = 'Release'
+          Lowest = 0
+          Highest = 1
+          Enabled = True
+          ValueVisible = False
+          Color = clNone
+        end
+        object lblFilter: TLabel
+          Left = 7
+          Height = 12
+          Top = 0
+          Width = 25
+          Caption = 'Filter'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object lblAmp: TLabel
+          Left = 6
+          Height = 12
+          Top = 41
+          Width = 22
+          Caption = 'Amp'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object lblPitch: TLabel
+          Left = 7
+          Height = 12
+          Top = 82
+          Width = 25
+          Caption = 'Pitch'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
       end
-    end
-    object tsModulators: TTabSheet
-      Caption = 'Modulators'
-    end
-    object tsGlobal: TTabSheet
-      Caption = 'Global'
+      object gbGlobal: TGroupBox
+        Left = 636
+        Height = 227
+        Top = 0
+        Width = 188
+        Align = alClient
+        Caption = 'Global'
+        TabOrder = 3
+      end
     end
   end
 end

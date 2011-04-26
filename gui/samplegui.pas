@@ -40,21 +40,54 @@ type
   { TSampleView }
 
   TSampleView = class(TFrame, IObserver)
+    cbOsc1WaveSelector: TComboBox;
+    cbOsc1ModSource: TComboBox;
+    cbOsc2WaveSelector: TComboBox;
+    cbOsc2ModSource: TComboBox;
+    cbOsc3WaveSelector: TComboBox;
+    cbOsc3ModSource: TComboBox;
+    dcPitchEnvelopeAttack: TDialControl;
+    dcPitchEnvelopeDecay: TDialControl;
+    dcPitchEnvelopeRelease: TDialControl;
+    dcPitchEnvelopeSustain: TDialControl;
     dcCutoff: TDialControl;
+    dcAmpEnvelopeAttack1: TDialControl;
+    dcAmpEnvelopeDecay1: TDialControl;
+    dcAmpEnvelopeRelease1: TDialControl;
+    dcAmpEnvelopeSustain1: TDialControl;
+    dcOSC2Level: TDialControl;
+    dcOSC3Level: TDialControl;
+    dcOsc2ModAmount: TDialControl;
+    dcOsc3ModAmount: TDialControl;
+    dcOsc2Pitch: TDialControl;
+    dcOsc3Pitch: TDialControl;
     dcResonance: TDialControl;
+    dcOSC1Level: TDialControl;
+    dcFilterEnvelopeAttack: TDialControl;
+    dcFilterEnvelopeDecay: TDialControl;
+    dcFilterEnvelopeSustain: TDialControl;
+    dcFilterEnvelopeRelease: TDialControl;
+    lblPitch: TLabel;
+    lblAmp: TLabel;
+    lblFilter: TLabel;
+    lblOSC1: TLabel;
+    lblOSC1ModAmount: TLabel;
+    dcOsc1Pitch: TDialControl;
+    dcOsc1ModAmount: TDialControl;
+    gbOscillators: TGroupBox;
+    gbFilter: TGroupBox;
+    gbEnvelopes: TGroupBox;
+    gbGlobal: TGroupBox;
+    Label1: TLabel;
+    lblOSC2: TLabel;
+    lblOSC2ModAmount: TLabel;
+    lblOSC3: TLabel;
+    lblOSC3ModAmount: TLabel;
     pcSampler: TPageControl;
-    TrackBar1: TTrackBar;
-    tsGlobal: TTabSheet;
-    tsModulators: TTabSheet;
     tsSample: TTabSheet;
     tsTuning: TTabSheet;
-    procedure dcCutoffChange(Sender: TObject);
-    procedure dcCutoffStartChange(Sender: TObject);
-    procedure dcResonanceChange(Sender: TObject);
-    procedure dcResonanceStartChange(Sender: TObject);
-    procedure TrackBar1Change(Sender: TObject);
-    procedure TrackBar1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure DoParameterChange(Sender: TObject);
+    procedure DoParameterStartChange(Sender: TObject);
   private
     { private declarations }
     FObjectOwnerID: string;
@@ -131,121 +164,66 @@ type
 implementation
 
 uses
-  global, bankgui;
+  global, bankgui, filters;
 
 { TSampleView }
 
-procedure TSampleView.dcCutoffChange(Sender: TObject);
+procedure TSampleView.DoParameterChange(Sender: TObject);
 var
-  lFilterCutoffCommand: TFilterCutoffCommand;
+  lGenericCommand: TSampleParameterCommand;
 begin
-  DBLog('dcCutoffChange %f', dcCutoff.Value);
-
-  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
+  lGenericCommand := TSampleParameterCommand.Create(ObjectOwnerID);
   try
-    lFilterCutoffCommand.ObjectID := Self.ObjectID;
-    lFilterCutoffCommand.CutoffValue := dcCutoff.Value;
-    lFilterCutoffCommand.Persist := False;
+    lGenericCommand.Parameter := TSampleParameter(TDialControl(Sender).Tag);
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TDialControl(Sender).Value;
+    lGenericCommand.Persist := False;
 
-    GCommandQueue.PushCommand(lFilterCutoffCommand);
+    GCommandQueue.PushCommand(lGenericCommand);
   except
-    lFilterCutoffCommand.Free;
+    lGenericCommand.Free;
   end;
 end;
 
-procedure TSampleView.dcCutoffStartChange(Sender: TObject);
+procedure TSampleView.DoParameterStartChange(Sender: TObject);
 var
-  lFilterCutoffCommand: TFilterCutoffCommand;
+  lGenericCommand: TSampleParameterCommand;
 begin
-  DBLog('dcCutoffChange %f', dcCutoff.Value);
-
-  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
+  lGenericCommand := TSampleParameterCommand.Create(ObjectOwnerID);
   try
-    lFilterCutoffCommand.ObjectID := Self.ObjectID;
-    lFilterCutoffCommand.CutoffValue := dcCutoff.Value;
-    lFilterCutoffCommand.Persist := True;
+    lGenericCommand.Parameter := TSampleParameter(TDialControl(Sender).Tag);
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TDialControl(Sender).Value;
+    lGenericCommand.Persist := True;
 
-    GCommandQueue.PushCommand(lFilterCutoffCommand);
+    GCommandQueue.PushCommand(lGenericCommand);
   except
-    lFilterCutoffCommand.Free;
+    lGenericCommand.Free;
   end;
 end;
-
-procedure TSampleView.dcResonanceChange(Sender: TObject);
-var
-  lFilterResonanceCommand: TFilterCutoffCommand;
-begin
-  DBLog('dcCutoffChange %f', dcCutoff.Value);
-
-  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
-  try
-    lFilterCutoffCommand.ObjectID := Self.ObjectID;
-    lFilterCutoffCommand.CutoffValue := dcCutoff.Value;
-    lFilterCutoffCommand.Persist := False;
-
-    GCommandQueue.PushCommand(lFilterCutoffCommand);
-  except
-    lFilterCutoffCommand.Free;
-  end;
-end;
-
-procedure TSampleView.dcResonanceStartChange(Sender: TObject);
-var
-  lFilterCutoffCommand: TFilterCutoffCommand;
-begin
-  DBLog('dcCutoffChange %f', dcCutoff.Value);
-
-  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
-  try
-    lFilterCutoffCommand.ObjectID := Self.ObjectID;
-    lFilterCutoffCommand.CutoffValue := dcCutoff.Value;
-    lFilterCutoffCommand.Persist := True;
-
-    GCommandQueue.PushCommand(lFilterCutoffCommand);
-  except
-    lFilterCutoffCommand.Free;
-  end;
-end;
-
-procedure TSampleView.TrackBar1Change(Sender: TObject);
-var
-  lFilterCutoffCommand: TFilterCutoffCommand;
-begin
-  {DBLog('dcCutoffChange %f', dcCutoff.Value);
-
-  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
-  try
-    lFilterCutoffCommand.ObjectID := Self.ObjectID;
-    lFilterCutoffCommand.CutoffValue := TrackBar1.Position;
-    lFilterCutoffCommand.Persist := False;
-
-    GCommandQueue.PushCommand(lFilterCutoffCommand);
-  except
-    lFilterCutoffCommand.Free;
-  end;   }
-end;
-
-procedure TSampleView.TrackBar1MouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-var
-  lFilterCutoffCommand: TFilterCutoffCommand;
-begin
-  {DBLog('dcCutoffChange %f', dcCutoff.Value);
-
-  lFilterCutoffCommand := TFilterCutoffCommand.Create(ObjectOwnerID);
-  try
-    lFilterCutoffCommand.ObjectID := Self.ObjectID;
-    lFilterCutoffCommand.CutoffValue := TrackBar1.Position;
-    lFilterCutoffCommand.Persist := True;
-
-    GCommandQueue.PushCommand(lFilterCutoffCommand);
-  except
-    lFilterCutoffCommand.Free;
-  end;     }
-end;
-
 
 constructor TSampleView.Create(AOwner: TComponent);
+
+  procedure FillWaveSelectionComboBox(AComboBox: TComboBox);
+  var
+    lIndex: Integer;
+  begin
+    for lIndex := Low(WFStrings) to High(WFStrings) do
+    begin
+      AComboBox.Items.Add(WFStrings[lIndex]);
+    end;
+  end;
+
+  procedure FillModSourceComboBox(AComboBox: TComboBox);
+  var
+    lIndex: Integer;
+  begin
+    for lIndex := Low(ModSourceDescr) to High(ModSourceDescr) do
+    begin
+      AComboBox.Items.Add(ModSourceDescr[lIndex]);
+    end;
+  end;
+
 begin
   inherited Create(AOwner);
 
@@ -256,6 +234,76 @@ begin
   FKeyboard.Parent := Self;
   FKeyboard.Align := alBottom;
   pcSampler.Align := alClient;
+
+  {
+    Connect undo command event handlers
+  }
+
+  // filter
+  dcCutoff.Tag := Integer(spFilter_Cutoff);
+  dcCutoff.OnChange := @DoParameterChange;
+  dcCutoff.OnStartChange := @DoParameterStartChange;
+  dcCutoff.Value := dcCutoff.Highest;
+
+  dcResonance.Tag := Integer(spFilter_Resonance);
+  dcResonance.OnChange := @DoParameterChange;
+  dcResonance.OnStartChange := @DoParameterStartChange;
+  dcResonance.Value := dcResonance.Lowest;
+
+  // osc 1
+  dcOsc1Pitch.Tag := Integer(spOSC1_Pitch);
+  dcOsc1Pitch.OnChange := @DoParameterChange;
+  dcOsc1Pitch.OnStartChange := @DoParameterStartChange;
+  dcOsc1Pitch.Lowest := -24;
+  dcOsc1Pitch.Highest := 24;
+  dcOsc1Pitch.Value := 0;
+
+  dcOsc1ModAmount.Tag := Integer(spOSC1_ModAmount);
+  dcOsc1ModAmount.OnChange := @DoParameterChange;
+  dcOsc1ModAmount.OnStartChange := @DoParameterStartChange;
+  dcOsc1ModAmount.Lowest := 0;
+  dcOsc1ModAmount.Highest := 1;
+  dcOsc1ModAmount.Value := 0;
+
+  FillWaveSelectionComboBox(cbOsc1WaveSelector);
+  FillModSourceComboBox(cbOsc1ModSource);
+
+  // osc 2
+  dcOsc2Pitch.Tag := Integer(spOSC2_Pitch);
+  dcOsc2Pitch.OnChange := @DoParameterChange;
+  dcOsc2Pitch.OnStartChange := @DoParameterStartChange;
+  dcOsc2Pitch.Lowest := -24;
+  dcOsc2Pitch.Highest := 24;
+  dcOsc2Pitch.Value := 0;
+
+
+  dcOsc2ModAmount.Tag := Integer(spOSC2_ModAmount);
+  dcOsc2ModAmount.OnChange := @DoParameterChange;
+  dcOsc2ModAmount.OnStartChange := @DoParameterStartChange;
+  dcOsc2ModAmount.Lowest := 0;
+  dcOsc2ModAmount.Highest := 1;
+  dcOsc2ModAmount.Value := 0;
+
+  FillWaveSelectionComboBox(cbOsc2WaveSelector);
+  FillModSourceComboBox(cbOsc2ModSource);
+
+  // osc 3
+  dcOsc3Pitch.Tag := Integer(spOSC3_Pitch);
+  dcOsc3Pitch.OnChange := @DoParameterChange;
+  dcOsc3Pitch.OnStartChange := @DoParameterStartChange;
+  dcOsc3Pitch.Lowest := -24;
+  dcOsc3Pitch.Highest := 24;
+  dcOsc3Pitch.Value := 0;
+
+  dcOsc3ModAmount.Tag := Integer(spOSC3_ModAmount);
+  dcOsc3ModAmount.OnChange := @DoParameterChange;
+  dcOsc3ModAmount.OnStartChange := @DoParameterStartChange;
+  dcOsc3ModAmount.Lowest := 0;
+  dcOsc3ModAmount.Highest := 1;
+  dcOsc3ModAmount.Value := 0;
+
+  FillWaveSelectionComboBox(cbOsc3WaveSelector);
+  FillModSourceComboBox(cbOsc3ModSource);
 end;
 
 destructor TSampleView.Destroy;
@@ -272,7 +320,12 @@ begin
 
   dcCutoff.Value := TSample(Subject).Filter.Frequency;
   dcResonance.Value := TSample(Subject).Filter.Resonance;
-  //TrackBar1.Position := Round(TSample(Subject).Filter.Frequency);
+  dcOsc1Pitch.Value := TSample(Subject).Osc1.Pitch;
+  dcOsc1ModAmount.Value := TSample(Subject).Osc1.ModAmount;
+  dcOsc2Pitch.Value := TSample(Subject).Osc2.Pitch;
+  dcOsc2ModAmount.Value := TSample(Subject).Osc2.ModAmount;
+  dcOsc3Pitch.Value := TSample(Subject).Osc3.Pitch;
+  dcOsc3ModAmount.Value := TSample(Subject).Osc3.ModAmount;
 
   DBLog('end TSampleView.Update');
 end;
@@ -325,6 +378,12 @@ begin
   begin
     FSampleView.dcCutoff.Value := TSample(Subject).Filter.Frequency;
     FSampleView.dcResonance.Value := TSample(Subject).Filter.Resonance;
+    FSampleView.dcOsc1Pitch.Value := TSample(Subject).Osc1.Pitch;
+    FSampleView.dcOsc1ModAmount.Value := TSample(Subject).Osc1.ModAmount;
+    FSampleView.dcOsc2Pitch.Value := TSample(Subject).Osc2.Pitch;
+    FSampleView.dcOsc2ModAmount.Value := TSample(Subject).Osc2.ModAmount;
+    FSampleView.dcOsc3Pitch.Value := TSample(Subject).Osc3.Pitch;
+    FSampleView.dcOsc3ModAmount.Value := TSample(Subject).Osc3.ModAmount;
   end;
 
   writeln('end TSampleSelectControl.Update');

@@ -114,6 +114,12 @@ begin
   FSampleView := TSampleView.Create(nil);
   FSampleView.dcCutoff.Enabled := False;
   FSampleView.dcResonance.Enabled := False;
+  FSampleView.dcOsc1Pitch.Enabled := False;
+  FSampleView.dcOsc1ModAmount.Enabled := False;
+  FSampleView.dcOsc2Pitch.Enabled := False;
+  FSampleView.dcOsc2ModAmount.Enabled := False;
+  FSampleView.dcOsc3Pitch.Enabled := False;
+  FSampleView.dcOsc3ModAmount.Enabled := False;
   FSampleView.Parent := Self;
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
@@ -360,6 +366,12 @@ begin
       lOldSelectedSample.Detach(FSampleView);
       FSampleView.dcCutoff.Enabled := False;
       FSampleView.dcResonance.Enabled := False;
+      FSampleView.dcOsc1Pitch.Enabled := False;
+      FSampleView.dcOsc1ModAmount.Enabled := False;
+      FSampleView.dcOsc2Pitch.Enabled := False;
+      FSampleView.dcOsc2ModAmount.Enabled := False;
+      FSampleView.dcOsc3Pitch.Enabled := False;
+      FSampleView.dcOsc3ModAmount.Enabled := False;
     end;
   end;
 
@@ -374,6 +386,12 @@ begin
     lNewSelectedSample.Attach(FSampleView);
     FSampleView.dcCutoff.Enabled := True;
     FSampleView.dcResonance.Enabled := True;
+    FSampleView.dcOsc1Pitch.Enabled := True;
+    FSampleView.dcOsc1ModAmount.Enabled := True;
+    FSampleView.dcOsc2Pitch.Enabled := True;
+    FSampleView.dcOsc2ModAmount.Enabled := True;
+    FSampleView.dcOsc3Pitch.Enabled := True;
+    FSampleView.dcOsc3ModAmount.Enabled := True;
 
     FOldSelectedSample := lNewSelectedSample.ObjectID;
   end;

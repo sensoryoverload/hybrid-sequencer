@@ -61,9 +61,9 @@ object MainApp: TMainApp
       end
       object DialControl1: TDialControl
         Left = 118
-        Height = 60
+        Height = 45
         Hint = 'BPM Rate'
-        Top = -4
+        Top = 0
         Width = 40
         Value = 0
         Caption = 'BPM'
@@ -72,6 +72,7 @@ object MainApp: TMainApp
         OnChange = DialControl1Change
         OnStartChange = DialControl1StartChange
         Enabled = True
+        ValueVisible = False
       end
     end
     object rgEditMode: TRadioGroup

@@ -68,6 +68,8 @@ Type
     FOnStartChange: TNotifyEvent;
     FEnabled: Boolean;
 
+    FValueVisible: Boolean;
+
     procedure CalcInternals(X, Y: Longint);
     procedure SetHighest(const AValue: Single);
     procedure SetLowest(const AValue: Single);
@@ -90,6 +92,7 @@ Type
     property OnEndChange: TNotifyEvent read FOnEndChange write FOnEndChange;
     property OnStartChange: TNotifyEvent read FOnStartChange write FOnStartChange;
     property Enabled: Boolean read FEnabled write FEnabled;
+    property ValueVisible: Boolean read FValueVisible write FValueVisible;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     property Color;
@@ -550,18 +553,19 @@ begin
 
   ParentColor := True;
 
-  Constraints.MinHeight := 60;
-  Constraints.MaxHeight := 60;
+  Constraints.MinHeight := 45;
+  Constraints.MaxHeight := 45;
   Constraints.MinWidth := 40;
   Constraints.MaxWidth := 40;
   Width := 40;
-  Height := 60;
+  Height := 45;
   Left := 0;
   Top := 0;
   FAngle := 180;
   FLowest := 0;
   FHighest := 1;
   Enabled := True;
+  FValueVisible := False;
 
   DoubleBuffered:= False;
 
@@ -595,33 +599,42 @@ begin
     Bitmap.Width := Width;
 
     Bitmap.Canvas.AntialiasingMode:= amOn;
-    Bitmap.Canvas.Font.Size:= 7;
+    Bitmap.Canvas.Font.Size:= 6;
+    Bitmap.Canvas.Font.Color := clBlack;
 
     // Draws the background
     Bitmap.Canvas.Brush.Color := Color;
     Bitmap.Canvas.FillRect(0, 0, Width, Height);
 
     if FEnabled then
-      Bitmap.Canvas.Pen.Color := clBlue
+    begin
+      Bitmap.Canvas.Pen.Color := clBlack;
+      Bitmap.Canvas.Font.Color := Bitmap.Canvas.Font.Color;
+    end
     else
+    begin
       Bitmap.Canvas.Pen.Color := clGray;
+      Bitmap.Canvas.Font.Color := Bitmap.Canvas.Pen.Color;
+    end;
 
     Bitmap.Canvas.Pen.Width := 3;
 
     FAngle := FInternalValue;
 
-    lPoint := LineFromAngle(Width div 2, Height div 2, FAngle - 60, 12);
-    Bitmap.Canvas.Line(Width div 2, Height div 2, lPoint.X, lPoint.Y);
+    lPoint := LineFromAngle(20, 24, FAngle - 60, 10);
+    Bitmap.Canvas.Line(20, 24, lPoint.X, lPoint.Y);
 
-    Bitmap.Canvas.Arc(7, 17, 33, 43, -880, 4640);
-    Bitmap.Canvas.Font.Color := clBlue;
+    Bitmap.Canvas.Arc(8, 11, 32, 35, -880, 4640);
 
     lPos := 20 - (Bitmap.Canvas.TextWidth(FCaption) div 2);
-    Bitmap.Canvas.TextOut(lPos, 2, FCaption);
+    Bitmap.Canvas.TextOut(lPos, 1, FCaption);
 
-    lStr := IntToStr(Round(Value));
-    lPos := 20 - (Bitmap.Canvas.TextWidth(lStr) div 2);
-    Bitmap.Canvas.TextOut(lPos, 45, lStr);
+    if FValueVisible then
+    begin
+      lStr := IntToStr(Round(Value));
+      lPos := 20 - (Bitmap.Canvas.TextWidth(lStr) div 2);
+      Bitmap.Canvas.TextOut(lPos, 36, lStr);
+    end;
 
     Canvas.Draw(0, 0, Bitmap);
   finally
