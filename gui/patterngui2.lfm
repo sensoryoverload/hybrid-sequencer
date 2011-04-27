@@ -7,7 +7,7 @@ object PatternControls: TPatternControls
   ClientWidth = 979
   TabOrder = 0
   DesignLeft = 281
-  DesignTop = 317
+  DesignTop = 309
   object pcPatternTabs: TPageControl
     Left = 0
     Height = 245
@@ -19,8 +19,8 @@ object PatternControls: TPatternControls
     TabOrder = 0
     object tsMIDI: TTabSheet
       Caption = 'MIDI'
-      ClientHeight = 216
-      ClientWidth = 973
+      ClientHeight = 224
+      ClientWidth = 977
       object gbMidiTrackSettings: TGroupBox
         Left = 0
         Height = 216
@@ -130,8 +130,8 @@ object PatternControls: TPatternControls
     end
     object tsAudio: TTabSheet
       Caption = 'Audio'
-      ClientHeight = 216
-      ClientWidth = 973
+      ClientHeight = 224
+      ClientWidth = 977
       object gbAudioTrackSettings: TGroupBox
         Left = 0
         Height = 216
@@ -388,8 +388,8 @@ object PatternControls: TPatternControls
     end
     object tsPlugins: TTabSheet
       Caption = 'Plugin Graph'
-      ClientHeight = 216
-      ClientWidth = 973
+      ClientHeight = 224
+      ClientWidth = 977
       object gbPluginSettings: TGroupBox
         Left = 0
         Height = 216

@@ -10,7 +10,7 @@ object Track: TTrack
   PopupMenu = pmTrack
   TabOrder = 0
   DesignLeft = 768
-  DesignTop = 33
+  DesignTop = 25
   object pnlTrackControls: TPanel
     Left = 0
     Height = 245
@@ -110,6 +110,7 @@ object Track: TTrack
       Lowest = 0
       Highest = 100
       Enabled = True
+      ValueVisible = False
     end
   end
   object pnlSends: TPanel

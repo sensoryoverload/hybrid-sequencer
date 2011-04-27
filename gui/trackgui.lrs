@@ -4,7 +4,7 @@ LazarusResources.Add('TTrack','FORMDATA',[
   'TPF0'#6'TTrack'#5'Track'#4'Left'#2#0#6'Height'#3#155#2#3'Top'#2#0#5'Width'#2
   +'f'#5'Align'#7#8'alCustom'#7'Anchors'#11#5'akTop'#0#12'ClientHeight'#3#155#2
   +#11'ClientWidth'#2'f'#9'PopupMenu'#7#7'pmTrack'#8'TabOrder'#2#0#10'DesignLef'
-  +'t'#3#0#3#9'DesignTop'#2'!'#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2#0#6'H'
+  +'t'#3#0#3#9'DesignTop'#2#25#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2#0#6'H'
   +'eight'#3#245#0#3'Top'#3#166#1#5'Width'#2'f'#5'Align'#7#8'alBottom'#10'Bevel'
   +'Inner'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3#245#0#11
   +'ClientWidth'#2'f'#5'Color'#7#13'clWindowFrame'#21'Constraints.MaxHeight'#3
@@ -29,19 +29,19 @@ LazarusResources.Add('TTrack','FORMDATA',[
   +'LevelChange'#13'OnStartChange'#7#18'vcLevelStartChange'#0#0#12'TDialControl'
   +#12'DialControl1'#4'Left'#2'1'#6'Height'#2'?'#3'Top'#2'T'#5'Width'#2'('#5'Va'
   +'lue'#5#0#0#0#0#0#0#0#0#0#0#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0
-  +#0#0#0#0#0#200#5'@'#7'Enabled'#9#0#0#0#6'TPanel'#8'pnlSends'#4'Left'#2#0#6'H'
-  +'eight'#2'F'#3'Top'#3'`'#1#5'Width'#2'f'#5'Align'#7#8'alBottom'#10'BevelOute'
-  +'r'#7#9'bvLowered'#21'Constraints.MaxHeight'#2'F'#21'Constraints.MinHeight'#2
-  +'F'#8'TabOrder'#2#1#0#0#9'TSplitter'#9'Splitter2'#6'Cursor'#7#8'crVSplit'#4
-  +'Left'#2#0#6'Height'#2#7#3'Top'#3'Y'#1#5'Width'#2'f'#5'Align'#7#8'alBottom'#8
-  +'AutoSnap'#8#7'OnMoved'#7#14'Splitter2Moved'#12'ResizeAnchor'#7#8'akBottom'#0
-  +#0#6'TPanel'#11'pnlPatterns'#4'Left'#2#0#6'Height'#3'Y'#1#4'Hint'#6#18'Drop '
-  +'patterns here'#3'Top'#2#0#5'Width'#2'f'#5'Align'#7#8'alClient'#10'BevelInne'
-  +'r'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#14'ParentShowHint'#8#8'ShowHin'
-  +'t'#9#8'TabOrder'#2#3#10'OnDragDrop'#7#19'pnlPatternsDragDrop'#10'OnDragOver'
-  +#7#19'pnlPatternsDragOver'#0#0#10'TPopupMenu'#7'pmTrack'#4'left'#2'!'#3'top'
-  +#3#246#0#0#9'TMenuItem'#13'miDeleteTrack'#7'Caption'#6#12'Delete track'#0#0#0
-  +#11'TActionList'#11'ActionList1'#4'left'#2'"'#3'top'#3#201#0#0#7'TAction'#13
-  +'acDeleteTrack'#7'Caption'#6#12'Delete track'#9'OnExecute'#7#20'acDeleteTrac'
-  +'kExecute'#0#0#0#0
+  +#0#0#0#0#0#200#5'@'#7'Enabled'#9#12'ValueVisible'#8#0#0#0#6'TPanel'#8'pnlSen'
+  +'ds'#4'Left'#2#0#6'Height'#2'F'#3'Top'#3'`'#1#5'Width'#2'f'#5'Align'#7#8'alB'
+  +'ottom'#10'BevelOuter'#7#9'bvLowered'#21'Constraints.MaxHeight'#2'F'#21'Cons'
+  +'traints.MinHeight'#2'F'#8'TabOrder'#2#1#0#0#9'TSplitter'#9'Splitter2'#6'Cur'
+  +'sor'#7#8'crVSplit'#4'Left'#2#0#6'Height'#2#7#3'Top'#3'Y'#1#5'Width'#2'f'#5
+  +'Align'#7#8'alBottom'#8'AutoSnap'#8#7'OnMoved'#7#14'Splitter2Moved'#12'Resiz'
+  +'eAnchor'#7#8'akBottom'#0#0#6'TPanel'#11'pnlPatterns'#4'Left'#2#0#6'Height'#3
+  +'Y'#1#4'Hint'#6#18'Drop patterns here'#3'Top'#2#0#5'Width'#2'f'#5'Align'#7#8
+  +'alClient'#10'BevelInner'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#14'Paren'
+  +'tShowHint'#8#8'ShowHint'#9#8'TabOrder'#2#3#10'OnDragDrop'#7#19'pnlPatternsD'
+  +'ragDrop'#10'OnDragOver'#7#19'pnlPatternsDragOver'#0#0#10'TPopupMenu'#7'pmTr'
+  +'ack'#4'left'#2'!'#3'top'#3#246#0#0#9'TMenuItem'#13'miDeleteTrack'#7'Caption'
+  +#6#12'Delete track'#0#0#0#11'TActionList'#11'ActionList1'#4'left'#2'"'#3'top'
+  +#3#201#0#0#7'TAction'#13'acDeleteTrack'#7'Caption'#6#12'Delete track'#9'OnEx'
+  +'ecute'#7#20'acDeleteTrackExecute'#0#0#0#0
 ]);

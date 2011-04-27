@@ -1,12 +1,12 @@
 object MainApp: TMainApp
   Left = 177
   Height = 679
-  Top = 80
+  Top = 72
   Width = 1095
   ActiveControl = Panel2
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 664
+  ClientHeight = 660
   ClientWidth = 1095
   Font.Height = 7
   KeyPreview = True
@@ -22,12 +22,12 @@ object MainApp: TMainApp
   LCLVersion = '0.9.31'
   object gbTrackDetail: TGroupBox
     Left = 0
-    Height = 425
+    Height = 421
     Top = 25
     Width = 254
     Align = alLeft
     Caption = 'Track'
-    ClientHeight = 414
+    ClientHeight = 410
     ClientWidth = 250
     TabOrder = 0
     object gbMasterTempo: TGroupBox
@@ -142,17 +142,17 @@ object MainApp: TMainApp
   end
   object Panel1: TPanel
     Left = 265
-    Height = 425
+    Height = 421
     Top = 25
     Width = 830
     Align = alClient
     Caption = 'Panel1'
-    ClientHeight = 425
+    ClientHeight = 421
     ClientWidth = 830
     TabOrder = 1
     object sbTracks: TScrollBox
       Left = 1
-      Height = 423
+      Height = 419
       Top = 1
       Width = 828
       HorzScrollBar.Page = 621
@@ -228,7 +228,7 @@ object MainApp: TMainApp
   end
   object LeftSplitter: TCollapseSplitter
     Left = 254
-    Height = 425
+    Height = 421
     Top = 25
     Width = 11
     OnDblClick = LeftSplitterDblClick
@@ -237,7 +237,7 @@ object MainApp: TMainApp
     Cursor = crVSplit
     Left = 0
     Height = 14
-    Top = 450
+    Top = 446
     Width = 1095
     Align = alBottom
     OnDblClick = BottomSplitterDblClick
@@ -246,7 +246,7 @@ object MainApp: TMainApp
   object pcPattern: TPageControl
     Left = 0
     Height = 200
-    Top = 464
+    Top = 460
     Width = 1095
     ActivePage = tsPattern
     Align = alBottom
@@ -257,8 +257,8 @@ object MainApp: TMainApp
     end
     object tsFX: TTabSheet
       Caption = 'FX'
-      ClientHeight = 171
-      ClientWidth = 1089
+      ClientHeight = 179
+      ClientWidth = 1093
       object gbFX: TGroupBox
         Left = 0
         Height = 171
@@ -310,8 +310,8 @@ object MainApp: TMainApp
     end
     object tsMonitor: TTabSheet
       Caption = 'Monitor'
-      ClientHeight = 171
-      ClientWidth = 1089
+      ClientHeight = 179
+      ClientWidth = 1093
       object Splitter5: TSplitter
         Left = 0
         Height = 171

@@ -51,10 +51,10 @@ type
     dcPitchEnvelopeRelease: TDialControl;
     dcPitchEnvelopeSustain: TDialControl;
     dcCutoff: TDialControl;
-    dcAmpEnvelopeAttack1: TDialControl;
-    dcAmpEnvelopeDecay1: TDialControl;
-    dcAmpEnvelopeRelease1: TDialControl;
-    dcAmpEnvelopeSustain1: TDialControl;
+    dcAmpEnvelopeAttack: TDialControl;
+    dcAmpEnvelopeDecay: TDialControl;
+    dcAmpEnvelopeRelease: TDialControl;
+    dcAmpEnvelopeSustain: TDialControl;
     dcOSC2Level: TDialControl;
     dcOSC3Level: TDialControl;
     dcOsc2ModAmount: TDialControl;
@@ -95,8 +95,10 @@ type
     FModelObject: TObject;
     FObjectOwner: TObject;
     FSelectedBankObjectID: string;
+    FEnabled: Boolean;
 
     FKeyboard: TSampleKeyboardControl;
+    procedure SetEnabled(const AValue: Boolean);
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -107,6 +109,7 @@ type
     procedure DoKeyChange(Sender: TObject; AKey: Integer);
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    property Enabled: Boolean read FEnabled write SetEnabled;
     property ObjectID: string read GetObjectID write SetObjectID;
     property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ModelObject: TObject read FModelObject write FModelObject;
@@ -202,6 +205,22 @@ begin
   end;
 end;
 
+procedure TSampleView.SetEnabled(const AValue: Boolean);
+var
+  lIndex: Integer;
+begin
+  if FEnabled = AValue then exit;
+  FEnabled := AValue;
+
+  for lIndex := 0 to Pred(ComponentCount) do
+  begin
+    if Components[lIndex] is TDialControl then
+    begin
+      TDialControl(Components[lIndex]).Enabled := FEnabled;
+    end;
+  end;
+end;
+
 constructor TSampleView.Create(AOwner: TComponent);
 
   procedure FillWaveSelectionComboBox(AComboBox: TComboBox);
@@ -224,6 +243,17 @@ constructor TSampleView.Create(AOwner: TComponent);
     end;
   end;
 
+  procedure SetupDialControl(ADialControl: TDialControl; ASampleParamter: TSampleParameter;
+    ALowest: Single; AHighest: Single; ADefaultValue: Single);
+  begin
+    ADialControl.Tag := Integer(ASampleParamter);
+    ADialControl.OnChange :=  @DoParameterChange;
+    ADialControl.OnStartChange := @DoParameterStartChange;
+    ADialControl.Lowest := ALowest;
+    ADialControl.Highest := AHighest;
+    ADialControl.Value := ADefaultValue;
+  end;
+
 begin
   inherited Create(AOwner);
 
@@ -239,71 +269,49 @@ begin
     Connect undo command event handlers
   }
 
-  // filter
-  dcCutoff.Tag := Integer(spFilter_Cutoff);
-  dcCutoff.OnChange := @DoParameterChange;
-  dcCutoff.OnStartChange := @DoParameterStartChange;
-  dcCutoff.Value := dcCutoff.Highest;
+  // Filter
+  SetupDialControl(dcCutoff, spFilter_Cutoff, 20, 20000, 20000);
+  SetupDialControl(dcResonance, spFilter_Resonance, 0, 1, 0);
 
-  dcResonance.Tag := Integer(spFilter_Resonance);
-  dcResonance.OnChange := @DoParameterChange;
-  dcResonance.OnStartChange := @DoParameterStartChange;
-  dcResonance.Value := dcResonance.Lowest;
-
-  // osc 1
-  dcOsc1Pitch.Tag := Integer(spOSC1_Pitch);
-  dcOsc1Pitch.OnChange := @DoParameterChange;
-  dcOsc1Pitch.OnStartChange := @DoParameterStartChange;
-  dcOsc1Pitch.Lowest := -24;
-  dcOsc1Pitch.Highest := 24;
-  dcOsc1Pitch.Value := 0;
-
-  dcOsc1ModAmount.Tag := Integer(spOSC1_ModAmount);
-  dcOsc1ModAmount.OnChange := @DoParameterChange;
-  dcOsc1ModAmount.OnStartChange := @DoParameterStartChange;
-  dcOsc1ModAmount.Lowest := 0;
-  dcOsc1ModAmount.Highest := 1;
-  dcOsc1ModAmount.Value := 0;
+  // Oscillators
+  SetupDialControl(dcOsc1Pitch, spOSC1_Pitch, -24, 24, 0);
+  SetupDialControl(dcOsc2Pitch, spOSC2_Pitch, -24, 24, 0);
+  SetupDialControl(dcOsc3Pitch, spOSC3_Pitch, -24, 24, 0);
 
   FillWaveSelectionComboBox(cbOsc1WaveSelector);
   FillModSourceComboBox(cbOsc1ModSource);
 
-  // osc 2
-  dcOsc2Pitch.Tag := Integer(spOSC2_Pitch);
-  dcOsc2Pitch.OnChange := @DoParameterChange;
-  dcOsc2Pitch.OnStartChange := @DoParameterStartChange;
-  dcOsc2Pitch.Lowest := -24;
-  dcOsc2Pitch.Highest := 24;
-  dcOsc2Pitch.Value := 0;
+  SetupDialControl(dcOsc1ModAmount, spOSC1_ModAmount, 0, 1, 0);
+  SetupDialControl(dcOsc2ModAmount, spOSC2_ModAmount, 0, 1, 0);
+  SetupDialControl(dcOsc3ModAmount, spOSC3_ModAmount, 0, 1, 0);
 
-
-  dcOsc2ModAmount.Tag := Integer(spOSC2_ModAmount);
-  dcOsc2ModAmount.OnChange := @DoParameterChange;
-  dcOsc2ModAmount.OnStartChange := @DoParameterStartChange;
-  dcOsc2ModAmount.Lowest := 0;
-  dcOsc2ModAmount.Highest := 1;
-  dcOsc2ModAmount.Value := 0;
+  FillWaveSelectionComboBox(cbOsc1WaveSelector);
+  FillModSourceComboBox(cbOsc1ModSource);
 
   FillWaveSelectionComboBox(cbOsc2WaveSelector);
   FillModSourceComboBox(cbOsc2ModSource);
 
-  // osc 3
-  dcOsc3Pitch.Tag := Integer(spOSC3_Pitch);
-  dcOsc3Pitch.OnChange := @DoParameterChange;
-  dcOsc3Pitch.OnStartChange := @DoParameterStartChange;
-  dcOsc3Pitch.Lowest := -24;
-  dcOsc3Pitch.Highest := 24;
-  dcOsc3Pitch.Value := 0;
-
-  dcOsc3ModAmount.Tag := Integer(spOSC3_ModAmount);
-  dcOsc3ModAmount.OnChange := @DoParameterChange;
-  dcOsc3ModAmount.OnStartChange := @DoParameterStartChange;
-  dcOsc3ModAmount.Lowest := 0;
-  dcOsc3ModAmount.Highest := 1;
-  dcOsc3ModAmount.Value := 0;
-
   FillWaveSelectionComboBox(cbOsc3WaveSelector);
   FillModSourceComboBox(cbOsc3ModSource);
+
+  SetupDialControl(dcOSC1Level, spOSC1_Level, 0, 1, 1);
+  SetupDialControl(dcOSC2Level, spOSC2_Level, 0, 1, 1);
+  SetupDialControl(dcOSC3Level, spOSC3_Level, 0, 1, 1);
+
+  SetupDialControl(dcAmpEnvelopeAttack, spAmplifierEnv_Attack, 0.01, 5, 0.01);
+  SetupDialControl(dcAmpEnvelopeDecay, spAmplifierEnv_Decay, 0.01, 5, 0.5);
+  SetupDialControl(dcAmpEnvelopeSustain, spAmplifierEnv_Sustain, 0, 1, 0);
+  SetupDialControl(dcAmpEnvelopeRelease, spAmplifierEnv_Release, 0.01, 10, 0.5);
+
+  SetupDialControl(dcFilterEnvelopeAttack, spFilterEnv_Attack, 0.01, 5, 0.01);
+  SetupDialControl(dcFilterEnvelopeDecay, spFilterEnv_Decay, 0.01, 5, 0.5);
+  SetupDialControl(dcFilterEnvelopeSustain, spFilterEnv_Sustain, 0, 1, 0);
+  SetupDialControl(dcFilterEnvelopeRelease, spFilterEnv_Release, 0.01, 10, 0.5);
+
+  SetupDialControl(dcPitchEnvelopeAttack, spPitchEnv_Attack, 0.01, 5, 0.01);
+  SetupDialControl(dcPitchEnvelopeDecay, spPitchEnv_Decay, 0.01, 5, 0.5);
+  SetupDialControl(dcPitchEnvelopeSustain, spPitchEnv_Sustain, 0, 1, 0);
+  SetupDialControl(dcPitchEnvelopeRelease, spPitchEnv_Release, 0.01, 10, 0.5);
 end;
 
 destructor TSampleView.Destroy;
@@ -320,12 +328,33 @@ begin
 
   dcCutoff.Value := TSample(Subject).Filter.Frequency;
   dcResonance.Value := TSample(Subject).Filter.Resonance;
+
   dcOsc1Pitch.Value := TSample(Subject).Osc1.Pitch;
   dcOsc1ModAmount.Value := TSample(Subject).Osc1.ModAmount;
+  dcOSC1Level.Value := TSample(Subject).Osc1.Level;
+
   dcOsc2Pitch.Value := TSample(Subject).Osc2.Pitch;
   dcOsc2ModAmount.Value := TSample(Subject).Osc2.ModAmount;
+  dcOSC2Level.Value := TSample(Subject).Osc2.Level;
+
   dcOsc3Pitch.Value := TSample(Subject).Osc3.Pitch;
   dcOsc3ModAmount.Value := TSample(Subject).Osc3.ModAmount;
+  dcOSC3Level.Value := TSample(Subject).Osc3.Level;
+
+  dcAmpEnvelopeAttack.Value := TSample(Subject).AmpEnvelope.Attack;
+  dcAmpEnvelopeDecay.Value := TSample(Subject).AmpEnvelope.Decay;
+  dcAmpEnvelopeSustain.Value := TSample(Subject).AmpEnvelope.Sustain;
+  dcAmpEnvelopeRelease.Value := TSample(Subject).AmpEnvelope.Release;
+
+  dcFilterEnvelopeAttack.Value := TSample(Subject).FilterEnvelope.Attack;
+  dcFilterEnvelopeDecay.Value := TSample(Subject).FilterEnvelope.Decay;
+  dcFilterEnvelopeSustain.Value := TSample(Subject).FilterEnvelope.Sustain;
+  dcFilterEnvelopeRelease.Value := TSample(Subject).FilterEnvelope.Release;
+
+  dcPitchEnvelopeAttack.Value := TSample(Subject).PitchEnvelope.Attack;
+  dcPitchEnvelopeDecay.Value := TSample(Subject).PitchEnvelope.Decay;
+  dcPitchEnvelopeSustain.Value := TSample(Subject).PitchEnvelope.Sustain;
+  dcPitchEnvelopeRelease.Value := TSample(Subject).PitchEnvelope.Release;
 
   DBLog('end TSampleView.Update');
 end;
@@ -376,14 +405,21 @@ begin
 
   if Assigned(FSampleView) then
   begin
-    FSampleView.dcCutoff.Value := TSample(Subject).Filter.Frequency;
+    FSampleView.Update(THybridPersistentModel(FSampleView.ModelObject));
+    {FSampleView.dcCutoff.Value := TSample(Subject).Filter.Frequency;
     FSampleView.dcResonance.Value := TSample(Subject).Filter.Resonance;
+
     FSampleView.dcOsc1Pitch.Value := TSample(Subject).Osc1.Pitch;
     FSampleView.dcOsc1ModAmount.Value := TSample(Subject).Osc1.ModAmount;
+    FSampleView.dcOSC1Level.Value := TSample(Subject).Osc1.Level;
+
     FSampleView.dcOsc2Pitch.Value := TSample(Subject).Osc2.Pitch;
     FSampleView.dcOsc2ModAmount.Value := TSample(Subject).Osc2.ModAmount;
+    FSampleView.dcOSC2Level.Value := TSample(Subject).Osc2.Level;
+
     FSampleView.dcOsc3Pitch.Value := TSample(Subject).Osc3.Pitch;
     FSampleView.dcOsc3ModAmount.Value := TSample(Subject).Osc3.ModAmount;
+    FSampleView.dcOSC3Level.Value := TSample(Subject).Osc3.Level; }
   end;
 
   writeln('end TSampleSelectControl.Update');

@@ -3,7 +3,7 @@
 LazarusResources.Add('TSamplerGUI','FORMDATA',[
   'TPF0'#11'TSamplerGUI'#10'SamplerGUI'#4'Left'#2#0#6'Height'#3#225#0#3'Top'#2#0
   +#5'Width'#3#138#4#5'Align'#7#8'alClient'#12'ClientHeight'#3#225#0#11'ClientW'
-  +'idth'#3#138#4#8'TabOrder'#2#0#10'DesignLeft'#2':'#9'DesignTop'#3#222#1#0#9
+  +'idth'#3#138#4#8'TabOrder'#2#0#10'DesignLeft'#2':'#9'DesignTop'#3#214#1#0#9
   +'TGroupBox'#11'gbStructure'#4'Left'#2#0#6'Height'#3#225#0#3'Top'#2#0#5'Width'
   +#3#198#0#5'Align'#7#6'alLeft'#7'Caption'#6#11'Samplebanks'#12'ClientHeight'#3
   +#212#0#11'ClientWidth'#3#194#0#8'TabOrder'#2#0#0#6'TPanel'#12'pnlStructure'#4

@@ -235,6 +235,8 @@ type
     FWaveForm: TOscWaveform;
     FPitch: Single;
     FModAmount: Single;
+    FLevel: Single;
+    procedure SetLevel(const AValue: Single);
     procedure SetModAmount(const AValue: Single);
     procedure SetPitch(const AValue: Single);
     procedure SetStartPhase(const AValue: dword);
@@ -246,7 +248,7 @@ type
     property StartPhase: dword read FStartPhase write SetStartPhase;
     property Pitch: Single read FPitch write SetPitch;
     property ModAmount: Single read FModAmount write SetModAmount;
-
+    property Level: Single read FLevel write SetLevel;
   end;
 
   { TOscillatorEngine }
@@ -442,12 +444,27 @@ type
   TSampleParameter = (
     spOSC1_Pitch,
     spOSC1_ModAmount,
+    spOSC1_Level,
     spOSC2_Pitch,
     spOSC2_ModAmount,
+    spOSC2_Level,
     spOSC3_Pitch,
     spOSC3_ModAmount,
+    spOSC3_Level,
     spFilter_Cutoff,
-    spFilter_Resonance
+    spFilter_Resonance,
+    spFilterEnv_Attack,
+    spFilterEnv_Decay,
+    spFilterEnv_Sustain,
+    spFilterEnv_Release,
+    spAmplifierEnv_Attack,
+    spAmplifierEnv_Decay,
+    spAmplifierEnv_Sustain,
+    spAmplifierEnv_Release,
+    spPitchEnv_Attack,
+    spPitchEnv_Decay,
+    spPitchEnv_Sustain,
+    spPitchEnv_Release
   );
 
   { TSampleParameterCommand }
@@ -701,6 +718,11 @@ begin
       FOldValue := FSample.Osc1.ModAmount;
       FSample.Osc1.ModAmount := FValue;
     end;
+    spOSC1_Level:
+    begin
+      FOldValue := FSample.Osc1.Level;
+      FSample.Osc1.Level := FValue;
+    end;
     spOSC2_Pitch:
     begin
       FOldValue := FSample.Osc2.Pitch;
@@ -710,6 +732,11 @@ begin
     begin
       FOldValue := FSample.Osc2.ModAmount;
       FSample.Osc2.ModAmount := FValue;
+    end;
+    spOSC2_Level:
+    begin
+      FOldValue := FSample.Osc2.Level;
+      FSample.Osc2.Level := FValue;
     end;
     spOSC3_Pitch:
     begin
@@ -721,6 +748,11 @@ begin
       FOldValue := FSample.Osc3.ModAmount;
       FSample.Osc3.ModAmount := FValue;
     end;
+    spOSC3_Level:
+    begin
+      FOldValue := FSample.Osc3.Level;
+      FSample.Osc3.Level := FValue;
+    end;
     spFilter_Cutoff:
     begin
       FOldValue := FSample.Filter.Frequency;
@@ -730,6 +762,66 @@ begin
     begin
       FOldValue := FSample.Filter.Resonance;
       FSample.Filter.Resonance := FValue;
+    end;
+    spFilterEnv_Attack:
+    begin
+      FOldValue := FSample.FilterEnvelope.Attack;
+      FSample.FilterEnvelope.Attack := FValue;
+    end;
+    spFilterEnv_Decay:
+    begin
+      FOldValue := FSample.FilterEnvelope.Decay;
+      FSample.FilterEnvelope.Decay := FValue;
+    end;
+    spFilterEnv_Sustain:
+    begin
+      FOldValue := FSample.FilterEnvelope.Sustain;
+      FSample.FilterEnvelope.Sustain := FValue;
+    end;
+    spFilterEnv_Release:
+    begin
+      FOldValue := FSample.FilterEnvelope.Release;
+      FSample.FilterEnvelope.Release := FValue;
+    end;
+    spAmplifierEnv_Attack:
+    begin
+      FOldValue := FSample.AmpEnvelope.Attack;
+      FSample.AmpEnvelope.Attack := FValue;
+    end;
+    spAmplifierEnv_Decay:
+    begin
+      FOldValue := FSample.AmpEnvelope.Decay;
+      FSample.AmpEnvelope.Decay := FValue;
+    end;
+    spAmplifierEnv_Sustain:
+    begin
+      FOldValue := FSample.AmpEnvelope.Sustain;
+      FSample.AmpEnvelope.Sustain := FValue;
+    end;
+    spAmplifierEnv_Release:
+    begin
+      FOldValue := FSample.AmpEnvelope.Release;
+      FSample.AmpEnvelope.Release := FValue;
+    end;
+    spPitchEnv_Attack:
+    begin
+      FOldValue := FSample.PitchEnvelope.Attack;
+      FSample.PitchEnvelope.Attack := FValue;
+    end;
+    spPitchEnv_Decay:
+    begin
+      FOldValue := FSample.PitchEnvelope.Decay;
+      FSample.PitchEnvelope.Decay := FValue;
+    end;
+    spPitchEnv_Sustain:
+    begin
+      FOldValue := FSample.PitchEnvelope.Sustain;
+      FSample.PitchEnvelope.Sustain := FValue;
+    end;
+    spPitchEnv_Release:
+    begin
+      FOldValue := FSample.PitchEnvelope.Release;
+      FSample.PitchEnvelope.Release := FValue;
     end;
   end;
 
@@ -907,6 +999,12 @@ procedure TOscillator.SetModAmount(const AValue: Single);
 begin
   if FModAmount = AValue then exit;
   FModAmount := AValue;
+end;
+
+procedure TOscillator.SetLevel(const AValue: Single);
+begin
+  if FLevel = AValue then exit;
+  FLevel := AValue;
 end;
 
 procedure TOscillator.SetWaveForm(const Value: TOscWaveForm);
@@ -2122,6 +2220,12 @@ begin
           // External audio in Envelope follower
 //          FEnvelopeFollower.Process(AInputBuffer[i]);
 
+          // ADSR Pitch
+          FPitchEnvelopeEngine.Process;
+          FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;
+
+          // Pitch
+
           // Oscillatorbank
           lSampleA := FOsc1Engine.Process;
           lSampleB := FOsc2Engine.Process;
@@ -2134,19 +2238,12 @@ begin
           FLFO2Engine.Process;
           FLFO3Engine.Process;}
 
-          // ADSR Pitch
-          {FPitchEnvelopeEngine.Process;
-          FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;}
-
-          // Pitch
-
-
           // ADSR Filter
           FFilterEnvelopeEngine.Process;
 
           // Filter
           FFilterEngine.Frequency := FFilterEngine.Filter.Frequency * FFilterEnvelopeEngine.Level;
-          FFilterEngine.Resonance := FFilterEngine.Filter.Resonance * 0.01;
+          FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
           lSample := FFilterEngine.Process(lSample);
 
           // ADSR Amplifier
@@ -2168,14 +2265,6 @@ begin
           if (FSamplePosition + FSample.PitchScaleFactor) < FSample.Wave.Frames then
           begin
             FSamplePosition := FSamplePosition + FSample.PitchScaleFactor;
-          end
-          else
-          begin
-            // Single shot
-            //FSamplePosition := FSample.Wave.Frames;
-
-            // Loop
-            //FSamplePosition := 0;
           end;
 
           // Virtual note of when FLength <= 0
