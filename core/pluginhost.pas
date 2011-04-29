@@ -72,7 +72,6 @@ type
   private
     FAudioOut: TPluginAudioOut;
     FAudioIn: TPluginAudioIn;
-    FMidiIn: TPluginMidiIn;
     FConnectionList: TObjectList;
     FBuffer: PSingle;
     FEnabled: Boolean;
@@ -94,7 +93,6 @@ type
     property Buffer: PSingle read FBuffer write FBuffer;
     property AudioOut: TPluginAudioOut read FAudioOut write FAudioOut;
     property AudioIn: TPluginAudioIn read FAudioIn write FAudioIn;
-    property MidiIn: TPluginMidiIn read FMidiIn write FMidiIn;
   published
     property Enabled: Boolean read FEnabled write FEnabled;
     property NodeList: TObjectList read FNodeList write FNodeList;
@@ -243,9 +241,6 @@ begin
   FAudioIn := TPluginAudioIn.Create(ObjectID);
   FAudioIn.PluginName := 'AudioIn';
 
-  FMidiIn := TPluginMidiIn.Create(ObjectID);
-  FMidiIn.PluginName := 'MidiIn';
-
   FBuffer := GetMem(FFrames * SizeOf(Single));
 
   AddChild(FAudioOut, FAudioIn);
@@ -259,7 +254,6 @@ begin
 
   FAudioOut.Free;
   FAudioIn.Free;
-  FMidiIn.Free;
   FreeMem(FBuffer);
 
   FNodeList.Free;

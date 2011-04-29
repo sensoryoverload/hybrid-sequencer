@@ -1,0 +1,28 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TfmOptions','FORMDATA',[
+  'TPF0'#10'TfmOptions'#9'fmOptions'#4'Left'#3#243#0#6'Height'#3#241#0#3'Top'#3
+  +#145#0#5'Width'#3'C'#1#7'Caption'#6#7'Options'#12'ClientHeight'#3#241#0#11'C'
+  +'lientWidth'#3'C'#1#12'OnCloseQuery'#7#14'FormCloseQuery'#8'OnCreate'#7#10'F'
+  +'ormCreate'#9'OnDestroy'#7#11'FormDestroy'#6'OnShow'#7#8'FormShow'#10'LCLVer'
+  +'sion'#6#6'0.9.31'#0#6'TPanel'#6'Panel1'#4'Left'#2#0#6'Height'#2'2'#3'Top'#3
+  +#191#0#5'Width'#3'C'#1#5'Align'#7#8'alBottom'#10'BevelOuter'#7#6'bvNone'#12
+  +'ClientHeight'#2'2'#11'ClientWidth'#3'C'#1#8'TabOrder'#2#0#0#7'TButton'#9'bt'
+  +'nCancel'#4'Left'#3#231#0#6'Height'#2#25#3'Top'#2#16#5'Width'#2'N'#7'Anchors'
+  +#11#5'akTop'#7'akRight'#0#7'Caption'#6#6'Cancel'#11'ModalResult'#2#2#8'TabOr'
+  +'der'#2#0#0#0#7'TButton'#7'Button2'#4'Left'#3#149#0#6'Height'#2#25#3'Top'#2
+  +#16#5'Width'#2'N'#7'Anchors'#11#5'akTop'#7'akRight'#0#7'Caption'#6#2'OK'#11
+  +'ModalResult'#2#1#7'OnClick'#7#12'Button2Click'#8'TabOrder'#2#1#0#0#0#9'TGro'
+  +'upBox'#9'GroupBox1'#4'Left'#2#0#6'Height'#3#191#0#3'Top'#2#0#5'Width'#3'C'#1
+  +#5'Align'#7#8'alClient'#7'Caption'#6#9'Locations'#12'ClientHeight'#3#178#0#11
+  +'ClientWidth'#3'?'#1#8'TabOrder'#2#1#0#12'TLabeledEdit'#19'edtCurrentSampleM'
+  +'ap'#4'Left'#2'D'#6'Height'#2#21#3'Top'#2#10#5'Width'#3#238#0#7'Anchors'#11#5
+  +'akTop'#6'akLeft'#7'akRight'#0' EditLabel.AnchorSideLeft.Control'#7#19'edtCu'
+  +'rrentSampleMap'#31'EditLabel.AnchorSideTop.Control'#7#19'edtCurrentSampleMa'
+  +'p'#28'EditLabel.AnchorSideTop.Side'#7#9'asrCenter!EditLabel.AnchorSideRight'
+  +'.Control'#7#19'edtCurrentSampleMap"EditLabel.AnchorSideBottom.Control'#7#19
+  +'edtCurrentSampleMap'#14'EditLabel.Left'#2#11#16'EditLabel.Height'#2#12#13'E'
+  +'ditLabel.Top'#2#14#15'EditLabel.Width'#2'6'#17'EditLabel.Caption'#6#10'Samp'
+  +'le map'#21'EditLabel.ParentColor'#8#13'LabelPosition'#7#6'lpLeft'#8'TabOrde'
+  +'r'#2#0#0#0#0#0
+]);

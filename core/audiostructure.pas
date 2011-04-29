@@ -116,7 +116,6 @@ type
   TAudioStructure = class(THybridPersistentModel)
   private
     FTrack: TObjectList;
-    FSampler: TSampler;
     FActive: Boolean;
     FModelThread: TModelThread;
 
@@ -141,7 +140,6 @@ type
     function IndexOfTrack(AObjectID: string): Integer;
 
     property Active: Boolean read FActive write FActive;
-    property Sampler: TSampler read FSampler write FSampler;
     property ModelThread: TModelThread read FModelThread write FModelThread;
     property SelectedBank: TSampleBank read FSelectedBank write SetSelectedBank;
     property OldSelectedBank: TSampleBank read FOldSelectedBank write FOldSelectedBank;
@@ -171,7 +169,6 @@ begin
   inherited Create(AObjectOwner, AMapped);
 
   FTrack := TObjectList.create(True);
-  FSampler := TSampler.Create(ObjectID, MAPPED);
 
   FSelectedBank := nil;
   FOldSelectedBank := nil;
@@ -188,7 +185,6 @@ destructor TAudioStructure.Destroy;
 begin
 //  FModelThread.Terminate;
   FTrack.Free;
-  FSampler.Free;
 
   inherited Destroy;
 end;

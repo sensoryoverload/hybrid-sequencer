@@ -67,7 +67,6 @@ type
     { private declarations }
     FAudioOutGUI: TPluginNodeGUI;
     FAudioInGUI: TPluginNodeGUI;
-    FMidiInGUI: TPluginNodeGUI;
 
     FObjectOwnerID: string;
     FObjectID: string;
@@ -106,7 +105,6 @@ type
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
     property AudioOutGUI: TPluginNodeGUI read FAudioOutGUI write FAudioOutGUI;
     property AudioInGUI: TPluginNodeGUI read FAudioInGUI write FAudioInGUI;
-    property MidiInGUI: TPluginNodeGUI read FMidiInGUI write FMidiInGUI;
   end;
 
 implementation
@@ -198,12 +196,6 @@ begin
   FAudioOutGUI.YLocation := 50;
   FAudioOutGUI.OnConnection := @DoConnection;
 
-  FMidiInGUI := TPluginNodeGUI.Create(Self);
-  FMidiInGUI.Parent := sbPluginGraph;
-  FMidiInGUI.XLocation := 50;
-  FMidiInGUI.YLocation := 150;
-  FMidiInGUI.OnConnection := @DoConnection;
-
   DBLog('end TPluginProcessorGUI.Create');
 end;
 
@@ -217,7 +209,6 @@ begin
 
   FAudioInGUI.Free;
   FAudioOutGUI.Free;
-  FMidiInGUI.Free;
 
   inherited Destroy;
 
@@ -278,12 +269,6 @@ var
     if AObjectID = FAudioOutGUI.ObjectID then
     begin
       Result := FAudioOutGUI;
-      exit;
-    end;
-
-    if AObjectID = FMidiInGUI.ObjectID then
-    begin
-      Result := FMidiInGUI;
       exit;
     end;
 
@@ -367,12 +352,10 @@ begin
   TPluginProcessor(ModelObject).AudioIn.Attach(FAudioInGUI);
   FAudioInGUI.ObjectID := TPluginProcessor(Model).AudioIn.ObjectID;
   FAudioInGUI.PluginName := TPluginProcessor(Model).AudioIn.PluginName;
+
   TPluginProcessor(ModelObject).AudioOut.Attach(FAudioOutGUI);
   FAudioOutGUI.ObjectID := TPluginProcessor(Model).AudioOut.ObjectID;
   FAudioOutGUI.PluginName := TPluginProcessor(Model).AudioOut.PluginName;
-  TPluginProcessor(ModelObject).MidiIn.Attach(FMidiInGUI);
-  FMidiInGUI.ObjectID := TPluginProcessor(Model).MidiIn.ObjectID;
-  FMidiInGUI.PluginName := TPluginProcessor(Model).MidiIn.PluginName;
 end;
 
 procedure TPluginProcessorGUI.CreateNodeGUI(AObjectID: string);

@@ -603,7 +603,7 @@ begin
     Bitmap.Canvas.Font.Color := clBlack;
 
     // Draws the background
-    Bitmap.Canvas.Brush.Color := Color;
+    Bitmap.Canvas.Brush.Color := clBtnFace;
     Bitmap.Canvas.FillRect(0, 0, Width, Height);
 
     if FEnabled then

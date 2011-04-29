@@ -27,7 +27,7 @@ uses
   Classes, Sysutils, Lresources, Forms, LCLProc, Controls, Graphics, Dialogs,
   StdCtrls, jack, midiport, jacktypes, ExtCtrls, Math, sndfile, waveform, Spin,
   ContNrs, transport, FileCtrl, PairSplitter, Utils, ComCtrls, GlobalConst,
-  Menus, ActnList, dialcontrol, bpm, samplergui, SoundTouchObject,
+  Menus, ActnList, dialcontrol, bpm, SoundTouchObject,
   Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg, rubberband,
   TypInfo, FileUtil, global_command, LCLType, LCLIntf,
   ShellCtrls, Grids, TrackGUI, waveformgui, global, track, pattern,
@@ -48,15 +48,43 @@ type
 
   TMainApp = class;
 
-  { TMIDIThread }
+  { TMidiMessage }
+
+  TMidiMessage = class(TObject)
+  public
+    // No function yet as midi-events are processed as fast as possible
+    // all depending on samplerate, midithread priority and rate
+    Time: longword;
+    // Size of 'Data' buffer as these are the packets delivered by Jack
+    Size: Integer;
+    Buffer: ^Byte;
+
+    constructor Create(AJackMidiEvent: jack_midi_event_t);
+    destructor Destroy; override;
+  end;
+
+  {
+
+    TMIDIThread
+
+      Receives midi data from the jack callback function. Here it will map a midi
+      controller # to a model parameter.
+
+  }
 
   TMIDIThread = class(TThread)
   private
+    FRingBuffer: pjack_ringbuffer_t;
+    FBufferSize: Integer;
+
     procedure Updater;
   protected
     procedure Execute; override;
   public
     constructor Create(CreateSuspended : boolean);
+    destructor Destroy; override;
+    procedure PushMidiMessage(AJackMidiEvent: jack_midi_event_t);
+    function PopMidiMessage: TMidiMessage;
   end;
 
 
@@ -106,7 +134,6 @@ type
     stBitrate: TStaticText;
     stSampleRate: TStaticText;
     ScreenUpdater: TTimer;
-    tsSampler: TTabSheet;
     tsFX: TTabSheet;
     tsMonitor: TTabSheet;
     tsPattern: TTabSheet;
@@ -154,7 +181,6 @@ type
       State: TDragState; var Accept: Boolean);
     procedure sbTracksResize(Sender: TObject);
     procedure ScreenUpdaterTimer(Sender: TObject);
-    procedure spnMidiChannelChange(Sender: TObject);
     procedure Formdestroy(Sender: Tobject);
     procedure Formcreate(Sender: Tobject);
     procedure Btndeletetrackclick(Sender: Tobject);
@@ -174,7 +200,6 @@ type
     Tracks: TObjectList;
     FSimpleWaveForm: TSimpleWaveForm;
     FOutputWaveform: Boolean;
-    FSamplerGUI: TSamplerGUI;
     FMappingMonitor: TfmMappingMonitor;
     FObjectID: string;
     FObjectOwnerID: string;
@@ -462,6 +487,16 @@ begin
       begin
 				// clock stop
       end;
+
+      {
+        Push midi messages directly to the midithread to handle recording of notes,
+        midi controller mapping, etc
+      }
+      if in_event.buffer^ and $f0 = $B0 then
+      begin
+        //GLogger.PushMessage(Format('midi at: %d', [in_event.time]));
+        MIDIThread.PushMidiMessage(in_event);
+      end;
       
       if note <> 0 then
         last_note := note;
@@ -508,8 +543,6 @@ begin
         process_midi_buffer(lTrack.PlayingPattern, midi_out_buf, nframes, lTrack);
       end;
     end;
-
-
 
     for i := 0 to Pred(nframes) do
     begin
@@ -754,8 +787,8 @@ lPlayingPattern.WaveForm.BufferData2[i] := 0;
     for i := 0 to Pred(nframes) do
     begin
       // clamp tsPattern to prevent fpu errors
-      if lTrack.OutputBuffer[i] > 1 then lTrack.OutputBuffer[i] := 1;
-      if lTrack.OutputBuffer[i] < -1 then lTrack.OutputBuffer[i] := -1;
+{      if lTrack.OutputBuffer[i] > 1 then lTrack.OutputBuffer[i] := 1;
+      if lTrack.OutputBuffer[i] < -1 then lTrack.OutputBuffer[i] := -1; }
 
       TempLevel := Abs(lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier * 1.5);
       if TempLevel > lTrack.Level then
@@ -786,6 +819,26 @@ lPlayingPattern.WaveForm.BufferData2[i] := 0;
   end;
 
   Result := 0;
+end;
+
+{ TMidiMessage }
+
+constructor TMidiMessage.Create(AJackMidiEvent: jack_midi_event_t);
+begin
+  inherited Create;
+
+  Buffer := GetMem(AJackMidiEvent.size);
+
+  Move(AJackMidiEvent.buffer, Buffer, AJackMidiEvent.size);
+  Time := AJackMidiEvent.time;
+  Size := AJackMidiEvent.size;
+end;
+
+destructor TMidiMessage.Destroy;
+begin
+  Freemem(Buffer);
+
+  inherited Destroy;
 end;
 
 
@@ -1140,7 +1193,13 @@ var
   lTrack: TWaveFormTrack;
   lPatternGUI: TPatternGUI;
 begin
+
   try
+    if pcPattern.ActivePage = tsMonitor then
+    begin
+      FSimpleWaveForm.Invalidate;
+    end;
+
     // Handle update of objects
     if FHighPriorityInterval = 0 then
     begin
@@ -1210,11 +1269,6 @@ begin
   end;
 end;
 
-procedure TMainApp.spnMidiChannelChange(Sender: TObject);
-begin
-  // Change pgPattern-channel for track
-end;
-
 procedure TMainApp.Formdestroy(Sender: Tobject);
 var
    i: Integer;
@@ -1240,13 +1294,8 @@ begin
       TWaveFormTrack(GAudioStruct.Tracks.Items[i]).Playing := False;
   end;
 
-  GAudioStruct.Sampler.Detach(FSamplerGUI);
-
   if Assigned(buffer_allocate2) then
     Freemem(buffer_allocate2);
-
-  if Assigned(FSamplerGUI) then
-    FSamplerGUI.Free;
 
   if Assigned(FShuffleList) then
     FShuffleList.Free;
@@ -1366,20 +1415,14 @@ begin
   FShuffleList := TObjectList.create(False);
   FShuffleList.Sort(@compareByLocation);
 
-  {FSimpleWaveForm := TSimpleWaveForm.Create(Self);
+  FSimpleWaveForm := TSimpleWaveForm.Create(Self);
   FSimpleWaveForm.Data := buffer_allocate2;
   FSimpleWaveForm.Top := 0;
   FSimpleWaveForm.Left := 0;
-  FSimpleWaveForm.Width := pgMonitor.Width;
+  FSimpleWaveForm.Width := tsMonitor.Width;
   FSimpleWaveForm.Align := alClient;
-  FSimpleWaveForm.Parent := pgMonitor;}
+  FSimpleWaveForm.Parent := tsMonitor;
   
-  FSamplerGUI := TSamplerGUI.Create(nil);
-  FSamplerGUI.ObjectOwnerID := MainApp.ObjectID;
-  FSamplerGUI.ObjectID := GAudioStruct.Sampler.ObjectID;
-  GAudioStruct.Sampler.Attach(FSamplerGUI);
-  FSamplerGUI.Parent := tsSampler;
-
   FMappingMonitor := TfmMappingMonitor.Create(Self);
   FMappingMonitor.Maps := GObjectMapper.Maps;
   if FShowMapping then
@@ -1977,7 +2020,10 @@ end;
 }
 procedure TMIDIThread.Updater;
 begin
-  //dblog('midi thread: '+char(random(100)));
+  while jack_ringbuffer_read_space(FRingBuffer) > 0 do
+  begin
+    writeln(Format('MidiEvent.Buffer %d', [PopMidiMessage.Time]));
+  end;
 end;
 
 {
@@ -1988,7 +2034,8 @@ begin
   while (not Terminated) do
   begin
     // Only update at 1000 ms / 100 ms = about 10 fps
-    Sleep(100);
+    sleep(100);
+
     Synchronize(@Updater);
   end;
 end;
@@ -1996,7 +2043,49 @@ end;
 constructor TMIDIThread.Create(CreateSuspended: boolean);
 begin
   inherited Create(CreateSuspended);
+
+  FBufferSize := 2048;
+
+  FRingBuffer := jack_ringbuffer_create(FBufferSize);
 end;
+
+destructor TMIDIThread.Destroy;
+begin
+  jack_ringbuffer_free(FRingBuffer);
+
+  inherited Destroy;
+end;
+
+procedure TMIDIThread.PushMidiMessage(AJackMidiEvent: jack_midi_event_t);
+var
+  lMidiMessage: TMidiMessage;
+begin
+  if jack_ringbuffer_write_space(FRingBuffer) > SizeOf(lMidiMessage) then
+  begin
+    lMidiMessage := TMidiMessage.Create(AJackMidiEvent);
+    try
+      jack_ringbuffer_write(FRingBuffer, @lMidiMessage, SizeOf(lMidiMessage));
+    except
+      lMidiMessage.Free;
+    end;
+  end;
+end;
+
+function TMIDIThread.PopMidiMessage: TMidiMessage;
+var
+  lMidiMessage: TMidiMessage;
+begin
+  jack_ringbuffer_read(FRingBuffer, @lMidiMessage, SizeOf(lMidiMessage));
+
+  if Assigned(lMidiMessage) then
+  begin
+    Result := lMidiMessage;
+
+    lMidiMessage.Free;
+  end;
+end;
+
+
 
 initialization
   {$I simplejack.lrs}

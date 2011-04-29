@@ -37,12 +37,10 @@ type
   TPatternControls = class(TFrame, IObserver)
     cbPitched: TCheckBox;
     cbQuantize: TComboBox;
-    cbSampleBankSelecter: TComboBox;
     cbMidiChannel: TComboBox;
     edtFilename: TLabeledEdit;
     gbPluginSettings: TGroupBox;
     lblMidiChannel: TLabel;
-    lblSampleBank: TLabel;
     pnlMidiGrid: TPanel;
     pnlMidigridOverview: TPanel;
     splitMidiTab: TSplitter;
@@ -336,12 +334,6 @@ begin
   cbMidiChannel.Items.Add('14');
   cbMidiChannel.Items.Add('15');
   cbMidiChannel.Items.Add('16');
-
-  cbSampleBankSelecter.Items.Add('Local');
-  for i := 0 to Pred(GAudioStruct.Sampler.BankList.Count) do
-  begin
-    cbSampleBankSelecter.Items.Add(TSampleBank(GAudioStruct.Sampler.BankList[i]).BankName);
-  end;
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 

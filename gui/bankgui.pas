@@ -112,14 +112,7 @@ begin
   FSampleListGUI := TObjectList.Create;
 
   FSampleView := TSampleView.Create(nil);
-  FSampleView.dcCutoff.Enabled := False;
-  FSampleView.dcResonance.Enabled := False;
-  FSampleView.dcOsc1Pitch.Enabled := False;
-  FSampleView.dcOsc1ModAmount.Enabled := False;
-  FSampleView.dcOsc2Pitch.Enabled := False;
-  FSampleView.dcOsc2ModAmount.Enabled := False;
-  FSampleView.dcOsc3Pitch.Enabled := False;
-  FSampleView.dcOsc3ModAmount.Enabled := False;
+  FSampleView.Enabled := False;
   FSampleView.Parent := Self;
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);

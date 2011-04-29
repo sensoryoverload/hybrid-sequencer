@@ -261,18 +261,18 @@ object MainApp: TMainApp
       ClientWidth = 1093
       object gbFX: TGroupBox
         Left = 0
-        Height = 171
+        Height = 179
         Top = 0
         Width = 459
         Align = alLeft
         Anchors = [akTop, akLeft, akRight, akBottom]
         Caption = 'FX'
-        ClientHeight = 160
+        ClientHeight = 168
         ClientWidth = 455
         TabOrder = 0
         object sbFXBitRate: TScrollBar
           Left = 48
-          Height = 18
+          Height = 14
           Top = 4
           Width = 181
           Max = 32
@@ -291,7 +291,7 @@ object MainApp: TMainApp
         end
         object sbFXSampleRate: TScrollBar
           Left = 74
-          Height = 18
+          Height = 14
           Top = 22
           Width = 155
           PageSize = 0
@@ -314,13 +314,10 @@ object MainApp: TMainApp
       ClientWidth = 1093
       object Splitter5: TSplitter
         Left = 0
-        Height = 171
+        Height = 179
         Top = 0
         Width = 5
       end
-    end
-    object tsSampler: TTabSheet
-      Caption = 'Sampler'
     end
   end
   object MainMenu1: TMainMenu
