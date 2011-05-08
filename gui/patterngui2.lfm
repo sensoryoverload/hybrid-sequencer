@@ -1,126 +1,119 @@
 object PatternControls: TPatternControls
   Left = 0
-  Height = 245
+  Height = 348
   Top = 0
   Width = 979
-  ClientHeight = 245
+  ClientHeight = 348
   ClientWidth = 979
   TabOrder = 0
   DesignLeft = 281
-  DesignTop = 309
+  DesignTop = 206
   object pcPatternTabs: TPageControl
     Left = 0
-    Height = 245
+    Height = 348
     Top = 0
     Width = 979
-    ActivePage = tsMIDI
+    ActivePage = tsAudio
     Align = alClient
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 0
+    TabPosition = tpLeft
     object tsMIDI: TTabSheet
       Caption = 'MIDI'
-      ClientHeight = 224
-      ClientWidth = 977
-      object gbMidiTrackSettings: TGroupBox
-        Left = 0
-        Height = 224
-        Top = 0
-        Width = 239
-        Align = alLeft
-        Caption = 'Settings'
-        ClientHeight = 211
-        ClientWidth = 235
-        TabOrder = 0
-        object cbQuantize: TComboBox
-          Left = 0
-          Height = 22
-          Top = 11
-          Width = 67
-          AutoSize = False
-          ItemHeight = 0
-          OnChange = cbQuantizeChange
-          Style = csDropDownList
-          TabOrder = 0
-        end
-        object lblQuantize: TLabel
-          Left = 1
-          Height = 12
-          Top = -1
-          Width = 38
-          Caption = 'Quantize'
-          ParentColor = False
-        end
-        object lblMidiChannel: TLabel
-          Left = 69
-          Height = 12
-          Top = -1
-          Width = 53
-          Caption = 'MidiChannel'
-          ParentColor = False
-        end
-        object cbMidiChannel: TComboBox
-          Left = 69
-          Height = 22
-          Top = 11
-          Width = 65
-          AutoSize = False
-          ItemHeight = 0
-          OnChange = cbMidiChannelChange
-          Style = csDropDownList
-          TabOrder = 1
-        end
-      end
-      object splitMidiTab: TSplitter
-        Left = 239
-        Height = 224
-        Top = 0
-        Width = 2
-      end
+      ClientHeight = 342
+      ClientWidth = 907
       object pnlMidiGrid: TPanel
-        Left = 241
-        Height = 224
+        Left = 0
+        Height = 216
         Top = 0
-        Width = 736
-        Align = alClient
+        Width = 907
+        Align = alTop
         BevelOuter = bvNone
-        ClientHeight = 224
-        ClientWidth = 736
-        TabOrder = 2
+        ClientHeight = 216
+        ClientWidth = 907
+        TabOrder = 0
         object pnlMidigridOverview: TPanel
           Left = 0
-          Height = 57
-          Top = 167
-          Width = 736
+          Height = 35
+          Top = 181
+          Width = 907
           Align = alBottom
           BevelWidth = 2
           TabOrder = 0
         end
-        object splitMidiGrid: TSplitter
-          Cursor = crVSplit
+        object pnlMidiSettings: TPanel
           Left = 0
-          Height = 5
-          Top = 162
-          Width = 736
-          Align = alBottom
-          ResizeAnchor = akBottom
+          Height = 27
+          Top = 0
+          Width = 907
+          Align = alTop
+          ClientHeight = 27
+          ClientWidth = 907
+          Constraints.MaxHeight = 27
+          Constraints.MinHeight = 27
+          TabOrder = 1
+          object lblQuantize: TLabel
+            Left = 1
+            Height = 12
+            Top = 6
+            Width = 38
+            Caption = 'Quantize'
+            ParentColor = False
+          end
+          object cbQuantize: TComboBox
+            Left = 41
+            Height = 22
+            Top = 2
+            Width = 67
+            AutoSize = False
+            ItemHeight = 0
+            OnChange = cbQuantizeChange
+            Style = csDropDownList
+            TabOrder = 0
+          end
+          object lblMidiChannel: TLabel
+            Left = 112
+            Height = 12
+            Top = 6
+            Width = 53
+            Caption = 'MidiChannel'
+            ParentColor = False
+          end
+          object cbMidiChannel: TComboBox
+            Left = 167
+            Height = 22
+            Top = 2
+            Width = 65
+            AutoSize = False
+            ItemHeight = 0
+            OnChange = cbMidiChannelChange
+            Style = csDropDownList
+            TabOrder = 1
+          end
         end
       end
-    end
-    object tsSampeBank: TTabSheet
-      Caption = 'Sampe Bank'
+      object Splitter1: TSplitter
+        Cursor = crVSplit
+        Left = 0
+        Height = 5
+        Top = 216
+        Width = 907
+        Align = alTop
+        ResizeAnchor = akTop
+      end
     end
     object tsAudio: TTabSheet
       Caption = 'Audio'
-      ClientHeight = 224
-      ClientWidth = 977
+      ClientHeight = 342
+      ClientWidth = 907
       object gbAudioTrackSettings: TGroupBox
         Left = 0
-        Height = 224
+        Height = 342
         Top = 0
         Width = 379
         Align = alLeft
         Caption = 'Settings'
-        ClientHeight = 211
+        ClientHeight = 329
         ClientWidth = 375
         TabOrder = 0
         object lblRootNote: TLabel
@@ -369,8 +362,8 @@ object PatternControls: TPatternControls
     end
     object tsPlugins: TTabSheet
       Caption = 'Plugin Graph'
-      ClientHeight = 224
-      ClientWidth = 977
+      ClientHeight = 342
+      ClientWidth = 907
       object gbPluginSettings: TGroupBox
         Left = 0
         Height = 224

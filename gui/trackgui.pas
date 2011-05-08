@@ -42,17 +42,20 @@ type
     ComboBox1: TComboBox;
     cbOutput: TComboBox;
     DialControl1: TDialControl;
+    dcLowFreq: TDialControl;
+    dcLowLevel: TDialControl;
+    dcHighFreq: TDialControl;
+    dcMidFreq: TDialControl;
+    dcMidLevel: TDialControl;
+    dcHighLevel: TDialControl;
     miDeleteTrack: TMenuItem;
     pnlPatterns: TPanel;
-    pnlSends: TPanel;
     pnlTrackControls: TPanel;
-    lblInput: TStaticText;
-    lblOutput: TStaticText;
     pmTrack: TPopupMenu;
-    Splitter2: TSplitter;
     tcOn: TToggleControl;
     vcLevel: TVolumeControl;
     procedure acDeleteTrackExecute(Sender: TObject);
+    procedure dcHighFreqChange(Sender: TObject);
     procedure pnlPatternsDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
     procedure Splitter2Moved(Sender: TObject);
@@ -95,10 +98,8 @@ type
     property OnTracksRefreshGUI: TTracksRefreshGUIEvent read FOnTracksRefreshGUI write FOnTracksRefreshGUI;
     property IsShuffling: Boolean read FShuffling write FShuffling;
     property Shuffle: TShuffle read FShuffle write FShuffle;
-    property SplitterSends: TSplitter read Splitter2 write Splitter2;
     property OnUpdateTrackControls: TNotifyEvent read FOnUpdateTrackControls write FOnUpdateTrackControls;
     property PanelPatterns: TPanel read pnlPatterns write pnlPatterns;
-    property PanelSends: TPanel read pnlSends write pnlSends;
     property PatternListGUI: TObjectList read FPatternListGUI write FPatternListGUI;
     property SelectedPattern: TPatternGUI read FSelectedPattern write FSelectedPattern;
     property ModelObject: TObject read FModelObject write FModelObject;
@@ -405,6 +406,11 @@ end;
 procedure TTrack.acDeleteTrackExecute(Sender: TObject);
 begin
   // Delete track
+end;
+
+procedure TTrack.dcHighFreqChange(Sender: TObject);
+begin
+
 end;
 
 procedure TTrack.Splitter2Moved(Sender: TObject);

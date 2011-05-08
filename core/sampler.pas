@@ -605,7 +605,7 @@ type
 implementation
 
 uses
-  audiostructure, utils, fx;
+  audiostructure, utils, fx, audioutils;
 
 { TSampleParameterCommand }
 
@@ -1538,31 +1538,25 @@ var
   lMementoSample: TSample;
   lSample: TSample;
   lSampleIndex: Integer;
-  lBank: TSampleBank;
 begin
   DBLog('start TDeleteSampleCommand.DoExecute');
 
-  if Assigned(GAudioStruct.SelectedBank) then
+  if Assigned(FSampleBank) then
   begin
-    lBank := TSampleBank(GObjectMapper.GetModelObject(GAudioStruct.SelectedBank.ObjectID));
 
-    if Assigned(lBank) then
+    for lSampleIndex := 0 to Pred(FSampleBank.SampleList.Count) do
     begin
+      lSample := TSample(FSampleBank.SampleList[lSampleIndex]);
 
-      for lSampleIndex := 0 to Pred(lBank.SampleList.Count) do
+      if lSample.Selected then
       begin
-        lSample := TSample(lBank.SampleList[lSampleIndex]);
+        lMementoSample := TSample.Create(FSampleBank.ObjectID, NOT_MAPPED);
+        lMementoSample.Assign(lSample);
+        lMementoSample.ObjectOwnerID := ObjectOwner;
+        lMementoSample.ObjectID := ObjectID;
+        Memento.Add(lMementoSample);
 
-        if lSample.Selected then
-        begin
-          lMementoSample := TSample.Create(lBank.ObjectID, NOT_MAPPED);
-          lMementoSample.Assign(lSample);
-          lMementoSample.ObjectOwnerID := ObjectOwner;
-          lMementoSample.ObjectID := ObjectID;
-          Memento.Add(lMementoSample);
-
-          lBank.SampleList.Remove(lSample);
-        end;
+        FSampleBank.SampleList.Remove(lSample);
       end;
     end;
   end;
@@ -1603,31 +1597,25 @@ end;
 procedure TCreateSampleCommand.DoExecute;
 var
   lSample: TSample;
-  lBank: TSampleBank;
 begin
   DBLog('start TCreateSampleCommand.DoExecute');
 
-  if Assigned(GAudioStruct.SelectedBank) then
+  if Assigned(FSampleBank) then
   begin
-    lBank := GAudioStruct.SelectedBank;
+    FSampleBank.BeginUpdate;
 
-    if Assigned(lBank) then
-    begin
-      lBank.BeginUpdate;
+    lSample := TSample.Create(FSampleBank.ObjectID);
+    lSample.LoadSample(SampleLocation);
 
-      lSample := TSample.Create(lBank.ObjectID);
-      lSample.LoadSample(SampleLocation);
+    FOldObjectID := lSample.ObjectID;
 
-      FOldObjectID := lSample.ObjectID;
+    FSampleBank.SampleList.Add(lSample);
 
-      lBank.SampleList.Add(lSample);
+    DBLog('Add sample to samplelist: %s', lSample.ObjectID);
 
-      DBLog('Add sample to samplelist: %s', lSample.ObjectID);
+    DBLog(Format('lBank.SampleList.Count %d', [FSampleBank.SampleList.Count]));
 
-      DBLog(Format('lBank.SampleList.Count %d', [lBank.SampleList.Count]));
-
-      lBank.EndUpdate;
-    end;
+    FSampleBank.EndUpdate;
   end;
 
   DBLog('end TCreateSampleCommand.DoExecute');
@@ -1641,23 +1629,21 @@ var
 begin
   DBLog('start TCreateSampleCommand.DoRollback');
 
-  lBank := TSampleBank(GObjectMapper.GetModelObject(ObjectOwner));
-
-  if Assigned(lBank) then
+  if Assigned(FSampleBank) then
   begin
 
     DBLog('Try finding sample...');
     // Search for sample where ObjectID same as Memento.ObjectID
-    for lSampleIndex := Pred(lBank.SampleList.Count) downto 0 do
+    for lSampleIndex := Pred(FSampleBank.SampleList.Count) downto 0 do
     begin
-      lSample := TSample(lBank.SampleList[lSampleIndex]);
+      lSample := TSample(FSampleBank.SampleList[lSampleIndex]);
       if lSample.ObjectID = FOldObjectID then
       begin
         DBLog('Found sample, deleting...' + lSample.ObjectID);
 
-        lBank.BeginUpdate;
-        lBank.SampleList.Remove(lSample);
-        lBank.EndUpdate;
+        FSampleBank.BeginUpdate;
+        FSampleBank.SampleList.Remove(lSample);
+        FSampleBank.EndUpdate;
         break;
       end;
     end;
@@ -2092,6 +2078,11 @@ begin
           // External audio in Envelope follower
 //          FEnvelopeFollower.Process(AInputBuffer[i]);
 
+          // LFO's
+          FLFO1Engine.Process;
+          FLFO2Engine.Process;
+          FLFO3Engine.Process;
+
           // ADSR Pitch
           FPitchEnvelopeEngine.Process;
           FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;
@@ -2102,20 +2093,15 @@ begin
           lSampleA := FOsc1Engine.Process * FOsc1Engine.Oscillator.Level;
           lSampleB := FOsc2Engine.Process * FOsc2Engine.Oscillator.Level;
           lSampleC := FOsc3Engine.Process * FOsc3Engine.Oscillator.Level;
-          lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
-          lSample := lSample  + lSampleC - (lSample  * lSampleC);
-
-          // LFO's
-          FLFO1Engine.Process;
-          FLFO2Engine.Process;
-          FLFO3Engine.Process;
+          {lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
+          lSample := lSample  + lSampleC - (lSample  * lSampleC);}
+          lSample := lSampleA + lSampleB + lSampleC;
 
           // ADSR Filter
           FFilterEnvelopeEngine.Process;
 
           // Filter
-//          FFilterEngine.Frequency := FFilterEngine.Filter.Frequency * FFilterEnvelopeEngine.Level;
-          FFilterEngine.Frequency := FFilterEngine.Filter.Frequency + FFilterEngine.Modifier^ {* FFilterEngine.ModAmount};
+          FFilterEngine.Frequency := FFilterEngine.Filter.Frequency{ * (FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
           FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
           lSample := FFilterEngine.Process(lSample);
 
@@ -2144,8 +2130,9 @@ begin
           FLength := FLength - GAudioStruct.BPMAdder;
         end;
 
-        GLogger.PushMessage(Format('FFilter %f, FFilter.Filter.Frequency %f, FFilterEngine.Modifier %f',
-        [FFilterEngine.Frequency, FFilterEngine.Filter.Frequency, FFilterEngine.Modifier^]));
+        GLogger.PushMessage(Format('FFilter %f, FFilter.Filter.Frequency %f, FFilterEngine.Modifier %f, FLFO1Engine %f',
+        [FFilterEngine.Frequency, FFilterEngine.Filter.Frequency, FFilterEngine.Modifier^,
+        FLFO1Engine.Level]));
 
         // Next iteration, start from the beginning
         FNoteOnOffset := 0;
@@ -2187,9 +2174,12 @@ begin
   FOsc1Engine.Rate := GNoteToFreq[ClampNote(ANote + Round(FSample.Osc1.Pitch))];
   FOsc2Engine.Rate := GNoteToFreq[ClampNote(ANote + Round(FSample.Osc2.Pitch))] - 1;
   FOsc3Engine.Rate := GNoteToFreq[ClampNote(ANote + Round(FSample.Osc3.Pitch))] + 1;
-{  FOsc1Engine.Rate := GNoteToFreq[ANote{ + Round(FSample.Osc1.Pitch)}];
-  FOsc2Engine.Rate := GNoteToFreq[ANote{ + Round(FSample.Osc2.Pitch)}] - 1;
-  FOsc3Engine.Rate := GNoteToFreq[ANote{ + Round(FSample.Osc3.Pitch)}] + 1;}
+
+  FLFO1Engine.Rate := FSample.LFO1.Pitch;
+  FLFO2Engine.Rate := FSample.LFO2.Pitch;
+  FLFO3Engine.Rate := FSample.LFO3.Pitch;
+
+  FFilterEngine.ModAmount := FFilterEngine.Filter.FreqModAmount;
 end;
 
 procedure TSampleVoiceEngine.NoteOff;

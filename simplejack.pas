@@ -104,7 +104,6 @@ type
     LeftSplitter: TCollapseSplitter;
     BottomSplitter: TCollapseSplitter;
     DialControl1: TDialControl;
-    gbFX: TGroupBox;
     gbMasterTempo: TGroupBox;
     ilGlobalImages: TImageList;
     MainMenu1: TMainMenu;
@@ -115,7 +114,7 @@ type
     MenuItem2: TMenuItem;
     LoadMenu: TMenuItem;
     LoadSession: TMenuItem;
-    Panel2: TPanel;
+    pnlButtonBar: TPanel;
     pnlFileManager: TPanel;
     rbMaster: TRadioButton;
     rbMidiSync: TRadioButton;
@@ -125,16 +124,12 @@ type
     OptionMenu: TMenuItem;
     SaveSession: TMenuItem;
     SaveTrack: TMenuItem;
-    sbFXBitRate: TScrollBar;
-    sbFXSampleRate: TScrollBar;
     Splitter5: TSplitter;
     gbTrackDetail: Tgroupbox;
-    Panel1: Tpanel;
+    pnlTop: Tpanel;
     Sbtracks: Tscrollbox;
-    stBitrate: TStaticText;
-    stSampleRate: TStaticText;
     ScreenUpdater: TTimer;
-    tsFX: TTabSheet;
+    tsTrack: TTabSheet;
     tsMonitor: TTabSheet;
     tsPattern: TTabSheet;
     ToolBar1: TToolBar;
@@ -1526,9 +1521,6 @@ begin
 
     if Sender <> Tracks[i] then
     begin
-// TODO Custom splitter manager
-    DBLog(inttostr(i));
-      TTrack(Tracks[i]).PanelSends.Height := (Sender as TTrack).PanelSends.Height;
 
     end;
   end;
@@ -1792,6 +1784,7 @@ begin
   // Create track with remote ObjectID
   lTrackGUI := TTrack.Create(nil);
   lTrackGUI.Parent := MainApp.Sbtracks;
+  lTrackGUI.Height := MainApp.Height;
   lTrackGUI.OnUpdateTrackControls := @UpdateTrackControls;
   lTrackGUI.OnTracksRefreshGUI := @DoTracksRefreshEvent;
 

@@ -421,16 +421,11 @@ begin
 end;
 
 procedure TSampleView.Connect;
-var
-  lSelectedBank: TSampleBank;
 begin
-  lSelectedBank := TSampleBank(GObjectMapper.GetModelObject(ObjectID));
+  //
 end;
 
 procedure TSampleView.Disconnect;
-var
-  lSelectedSample: TSample;
-  lSelectedBank: TSampleBank;
 begin
   //
 end;

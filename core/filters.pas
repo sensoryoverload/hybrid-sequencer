@@ -190,6 +190,8 @@ end;
 
 function TLP24DB.Process(I: Single): Single;
 begin
+  if Frequency > 20000 then Frequency := 20000;
+  if Frequency < 20 then Frequency := 20;
   f := (Frequency + Frequency) * divbysamplerate;
   p := f * (1.8 - 0.8 * f);
   k := p + p - 1.0;

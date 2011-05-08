@@ -532,9 +532,12 @@ begin
   if FRange = 0 then
     FRange := 0.001;
 
-  FInternalValue := AValue * FScaleExternalValueToInternalValue;
+  if FInternalValue <> (AValue * FScaleExternalValueToInternalValue) then
+  begin;
+    FInternalValue := AValue * FScaleExternalValueToInternalValue;
 
-  Repaint;
+    Repaint;
+  end;
 end;
 
 procedure TDialControl.Initialize;
@@ -553,12 +556,12 @@ begin
 
   ParentColor := True;
 
-  Constraints.MinHeight := 45;
-  Constraints.MaxHeight := 45;
-  Constraints.MinWidth := 40;
-  Constraints.MaxWidth := 40;
-  Width := 40;
-  Height := 45;
+  Constraints.MinHeight := 40;
+  Constraints.MaxHeight := 40;
+  Constraints.MinWidth := 36;
+  Constraints.MaxWidth := 36;
+  Width := 36;
+  Height := 40;
   Left := 0;
   Top := 0;
   FAngle := 180;
@@ -621,19 +624,19 @@ begin
 
     FAngle := FInternalValue;
 
-    lPoint := LineFromAngle(20, 24, FAngle - 60, 10);
-    Bitmap.Canvas.Line(20, 24, lPoint.X, lPoint.Y);
+    lPoint := LineFromAngle(18, 21, FAngle - 60, 8);
+    Bitmap.Canvas.Line(18, 21, lPoint.X, lPoint.Y);
 
-    Bitmap.Canvas.Arc(8, 11, 32, 35, -880, 4640);
+    Bitmap.Canvas.Arc(8, 10, 28, 30, -880, 4640);
 
-    lPos := 20 - (Bitmap.Canvas.TextWidth(FCaption) div 2);
+    lPos := 18 - (Bitmap.Canvas.TextWidth(FCaption) div 2);
     Bitmap.Canvas.TextOut(lPos, 1, FCaption);
 
     if FValueVisible then
     begin
       lStr := IntToStr(Round(Value));
-      lPos := 20 - (Bitmap.Canvas.TextWidth(lStr) div 2);
-      Bitmap.Canvas.TextOut(lPos, 36, lStr);
+      lPos := 18 - (Bitmap.Canvas.TextWidth(lStr) div 2);
+      Bitmap.Canvas.TextOut(lPos, 31, lStr);
     end;
 
     Canvas.Draw(0, 0, Bitmap);

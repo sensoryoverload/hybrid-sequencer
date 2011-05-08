@@ -41,13 +41,12 @@ type
     edtFilename: TLabeledEdit;
     gbPluginSettings: TGroupBox;
     lblMidiChannel: TLabel;
+    pnlMidiSettings: TPanel;
     pnlMidiGrid: TPanel;
     pnlMidigridOverview: TPanel;
-    splitMidiTab: TSplitter;
-    splitMidiGrid: TSplitter;
+    Splitter1: TSplitter;
     spnPitchValue: TFloatSpinEditControl;
     gbAudioTrackSettings: TGroupBox;
-    gbMidiTrackSettings: TGroupBox;
     Label1: TLabel;
     lblLoopEnd: TLabel;
     lblLoopLength: TLabel;
@@ -58,7 +57,6 @@ type
     pcPatternTabs: TPageControl;
     spnBeatsPerMinute: TFloatSpinEdit;
     spnRootNote: TSpinEdit;
-    tsSampeBank: TTabSheet;
     tsPlugins: TTabSheet;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
@@ -377,6 +375,20 @@ procedure TPatternControls.Connect;
 begin
   DBLog('start TPatternControls.Connect');
 
+  FSampleBank := Model.SampleBank;
+  FSampleBank.Attach(FSampleBankGUI);
+  FSampleBankGUI.Bank := FSampleBank;
+  FSampleBankGUI.ObjectID := FSampleBank.ObjectID;
+  FSampleBankGUI.ObjectOwnerID := FSampleBank.ObjectOwnerID;
+  FSampleBankGUI.Connect;
+  FSampleBankGUI.Align := alBottom;
+  FSampleBankGUI.Parent := nil;
+  FSampleBankGUI.Parent := tsMIDI;
+
+  pnlMidiGrid.Parent := nil;
+  pnlMidiGrid.Parent := tsMIDI;
+  pnlMidiGrid.Align := alClient;
+
   FMidiGrid := Model.MidiGrid;
   FMidiGrid.Attach(FMidiGridGUI);
   FMidiGridGUI.Model := FMidiGrid;
@@ -387,7 +399,7 @@ begin
   FMidiGridGUI.ZoomFactorY := 1000;
   FMidiGridGUI.Align := alClient;
   FMidiGridGUI.Parent := nil;
-  FMidiGridGUI.Parent := pnlMidiGrid;//tsMIDI;
+  FMidiGridGUI.Parent := pnlMidiGrid;
 
   FMidigrid.Attach(FMidigridOverview);
   FMidigridOverview.ObjectID := FMidiGrid.ObjectID;
@@ -411,16 +423,6 @@ begin
   FWaveFormGUI.Align := alClient;
   FWaveFormGUI.Parent := nil;
   FWaveFormGUI.Parent := tsAudio;
-
-  FSampleBank := Model.SampleBank;
-  FSampleBank.Attach(FSampleBankGUI);
-  FSampleBankGUI.Bank := FSampleBank;
-  FSampleBankGUI.ObjectID := FSampleBank.ObjectID;
-  FSampleBankGUI.ObjectOwnerID := FSampleBank.ObjectOwnerID;
-  FSampleBankGUI.Connect;
-  FSampleBankGUI.Align := alClient;
-  FSampleBankGUI.Parent := nil;
-  FSampleBankGUI.Parent := tsSampeBank;
 
   FPluginProcessor := Model.PluginProcessor;
   FPluginProcessor.Attach(FPluginProcessorGUI);

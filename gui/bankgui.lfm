@@ -1,35 +1,35 @@
 object BankView: TBankView
   Left = 0
-  Height = 237
+  Height = 141
   Top = 0
-  Width = 944
+  Width = 922
   Align = alClient
-  ClientHeight = 237
-  ClientWidth = 944
+  ClientHeight = 141
+  ClientWidth = 922
   TabOrder = 0
   DesignLeft = 316
   DesignTop = 473
   object gbSampleSelect: TGroupBox
     Left = 0
-    Height = 237
+    Height = 141
     Top = 0
-    Width = 181
+    Width = 91
     Align = alLeft
     Caption = 'Samples'
-    ClientHeight = 224
-    ClientWidth = 177
+    ClientHeight = 128
+    ClientWidth = 87
     TabOrder = 0
     object lbSampleSelector: TListBox
       Left = 0
-      Height = 175
-      Top = 49
-      Width = 177
-      Align = alBottom
+      Height = 128
+      Top = 0
+      Width = 87
+      Align = alClient
       ItemHeight = 0
       OnClick = lbSampleSelectorClick
       OnDragDrop = lbSampleSelectorDragDrop
       OnDragOver = lbSampleSelectorDragOver
-      ScrollWidth = 175
+      ScrollWidth = 85
       TabOrder = 0
       TopIndex = -1
     end

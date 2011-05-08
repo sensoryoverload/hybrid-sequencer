@@ -1,29 +1,29 @@
 object SampleView: TSampleView
   Left = 0
-  Height = 302
+  Height = 134
   Top = 0
-  Width = 956
+  Width = 955
   Align = alClient
-  ClientHeight = 302
-  ClientWidth = 956
+  ClientHeight = 134
+  ClientWidth = 955
   TabOrder = 0
-  DesignLeft = 185
-  DesignTop = 347
+  DesignLeft = 448
+  DesignTop = 380
   object gbOscillators: TGroupBox
     Left = 0
-    Height = 302
+    Height = 134
     Top = 0
-    Width = 328
+    Width = 273
     Align = alLeft
     Caption = 'Oscillators'
-    ClientHeight = 289
-    ClientWidth = 324
+    ClientHeight = 121
+    ClientWidth = 269
     TabOrder = 0
     object dcOsc1Pitch: TDialControl
-      Left = 90
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 80
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Pitch'
       Lowest = 0
@@ -33,10 +33,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOsc1ModAmount: TDialControl
-      Left = 205
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 195
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'ModLevel'
       Lowest = 0
@@ -49,7 +49,7 @@ object SampleView: TSampleView
       Left = 3
       Height = 25
       Top = 12
-      Width = 86
+      Width = 75
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 2
@@ -65,7 +65,7 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object cbOsc1ModSource: TComboBox
-      Left = 131
+      Left = 121
       Height = 25
       Top = 12
       Width = 72
@@ -76,7 +76,7 @@ object SampleView: TSampleView
     object lblOSC1ModAmount: TLabel
       Left = 134
       Height = 12
-      Top = -1
+      Top = 0
       Width = 54
       Caption = 'Mod Source'
       Font.Style = [fsBold]
@@ -86,7 +86,7 @@ object SampleView: TSampleView
     object lblOSC2: TLabel
       Left = 4
       Height = 12
-      Top = 48
+      Top = 42
       Width = 25
       Caption = 'Osc 2'
       Font.Style = [fsBold]
@@ -96,17 +96,17 @@ object SampleView: TSampleView
     object cbOsc2WaveSelector: TComboBox
       Left = 3
       Height = 25
-      Top = 60
-      Width = 86
+      Top = 54
+      Width = 75
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 4
     end
     object dcOsc2Pitch: TDialControl
-      Left = 90
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 80
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'Pitch'
       Lowest = 0
@@ -116,18 +116,18 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbOsc2ModSource: TComboBox
-      Left = 131
+      Left = 121
       Height = 25
-      Top = 60
+      Top = 54
       Width = 72
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 6
     end
     object lblOSC2ModAmount: TLabel
-      Left = 134
+      Left = 124
       Height = 12
-      Top = 47
+      Top = 41
       Width = 54
       Caption = 'Mod Source'
       Font.Style = [fsBold]
@@ -135,10 +135,10 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object dcOsc2ModAmount: TDialControl
-      Left = 205
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 195
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'ModLevel'
       Lowest = 0
@@ -150,7 +150,7 @@ object SampleView: TSampleView
     object lblOSC3: TLabel
       Left = 4
       Height = 12
-      Top = 96
+      Top = 80
       Width = 25
       Caption = 'Osc 3'
       Font.Style = [fsBold]
@@ -160,17 +160,17 @@ object SampleView: TSampleView
     object cbOsc3WaveSelector: TComboBox
       Left = 3
       Height = 25
-      Top = 108
-      Width = 86
+      Top = 92
+      Width = 75
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 8
     end
     object dcOsc3Pitch: TDialControl
-      Left = 90
-      Height = 45
-      Top = 99
-      Width = 40
+      Left = 80
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'Pitch'
       Lowest = 0
@@ -180,18 +180,18 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbOsc3ModSource: TComboBox
-      Left = 131
+      Left = 121
       Height = 25
-      Top = 108
+      Top = 92
       Width = 72
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 10
     end
     object lblOSC3ModAmount: TLabel
-      Left = 134
+      Left = 124
       Height = 12
-      Top = 95
+      Top = 79
       Width = 54
       Caption = 'Mod Source'
       Font.Style = [fsBold]
@@ -199,10 +199,10 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object dcOsc3ModAmount: TDialControl
-      Left = 205
-      Height = 45
-      Top = 99
-      Width = 40
+      Left = 195
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'ModLevel'
       Lowest = 0
@@ -212,10 +212,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOSC1Level: TDialControl
-      Left = 279
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 230
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Level'
       Lowest = 0
@@ -225,10 +225,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOSC3Level: TDialControl
-      Left = 279
-      Height = 45
-      Top = 99
-      Width = 40
+      Left = 230
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'Level'
       Lowest = 0
@@ -238,10 +238,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOSC2Level: TDialControl
-      Left = 279
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 230
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'Level'
       Lowest = 0
@@ -252,20 +252,20 @@ object SampleView: TSampleView
     end
   end
   object gbFilter: TGroupBox
-    Left = 720
-    Height = 302
+    Left = 569
+    Height = 134
     Top = 0
-    Width = 173
+    Width = 154
     Align = alLeft
     Caption = 'Filter'
-    ClientHeight = 289
-    ClientWidth = 169
+    ClientHeight = 121
+    ClientWidth = 150
     TabOrder = 1
     object dcLowpassCutoff: TDialControl
       Left = 4
-      Height = 45
-      Top = 1
-      Width = 40
+      Height = 40
+      Top = -2
+      Width = 36
       Value = 0
       Caption = 'Lowpass'
       Lowest = 20
@@ -276,9 +276,9 @@ object SampleView: TSampleView
     end
     object dcResonance: TDialControl
       Left = 4
-      Height = 45
-      Top = 52
-      Width = 40
+      Height = 40
+      Top = 41
+      Width = 36
       Value = 0
       Caption = 'Resonance'
       Lowest = 0
@@ -288,7 +288,7 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbCutoffModSource: TComboBox
-      Left = 49
+      Left = 41
       Height = 25
       Top = 12
       Width = 72
@@ -297,7 +297,7 @@ object SampleView: TSampleView
       TabOrder = 2
     end
     object lblOSC2ModAmount1: TLabel
-      Left = 52
+      Left = 44
       Height = 12
       Top = -1
       Width = 54
@@ -307,10 +307,10 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object dcCutoffModAmount: TDialControl
-      Left = 123
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 112
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'ModLevel'
       Lowest = 0
@@ -320,19 +320,19 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbResoModSource: TComboBox
-      Left = 49
+      Left = 41
       Height = 25
-      Top = 60
+      Top = 54
       Width = 72
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 4
     end
     object dcResoModAmount: TDialControl
-      Left = 123
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 112
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'ModLevel'
       Lowest = 0
@@ -342,9 +342,9 @@ object SampleView: TSampleView
       Color = clNone
     end
     object lblOSC2ModAmount2: TLabel
-      Left = 52
+      Left = 44
       Height = 12
-      Top = 47
+      Top = 41
       Width = 54
       Caption = 'Mod Source'
       Font.Style = [fsBold]
@@ -353,20 +353,20 @@ object SampleView: TSampleView
     end
   end
   object gbEnvelopes: TGroupBox
-    Left = 513
-    Height = 302
+    Left = 384
+    Height = 134
     Top = 0
-    Width = 207
+    Width = 185
     Align = alLeft
     Caption = 'Envelopes'
-    ClientHeight = 289
-    ClientWidth = 203
+    ClientHeight = 121
+    ClientWidth = 181
     TabOrder = 2
     object dcFilterEnvelopeAttack: TDialControl
       Left = 34
-      Height = 45
-      Top = 3
-      Width = 40
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Attack'
       Lowest = 0
@@ -376,10 +376,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcFilterEnvelopeDecay: TDialControl
-      Left = 77
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 70
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Decay'
       Lowest = 0
@@ -389,10 +389,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcFilterEnvelopeSustain: TDialControl
-      Left = 119
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 106
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Sustain'
       Lowest = 0
@@ -402,10 +402,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcFilterEnvelopeRelease: TDialControl
-      Left = 160
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 141
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Release'
       Lowest = 0
@@ -416,9 +416,9 @@ object SampleView: TSampleView
     end
     object dcAmpEnvelopeAttack: TDialControl
       Left = 34
-      Height = 45
-      Top = 51
-      Width = 40
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'Attack'
       Lowest = 0
@@ -428,10 +428,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcAmpEnvelopeDecay: TDialControl
-      Left = 77
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 70
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'Decay'
       Lowest = 0
@@ -441,10 +441,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcAmpEnvelopeSustain: TDialControl
-      Left = 119
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 106
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'Sustain'
       Lowest = 0
@@ -454,10 +454,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcAmpEnvelopeRelease: TDialControl
-      Left = 160
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 140
+      Height = 40
+      Top = 41
+      Width = 36
       Value = 0
       Caption = 'Release'
       Lowest = 0
@@ -468,9 +468,9 @@ object SampleView: TSampleView
     end
     object dcPitchEnvelopeAttack: TDialControl
       Left = 34
-      Height = 45
-      Top = 99
-      Width = 40
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'Attack'
       Lowest = 0
@@ -480,10 +480,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcPitchEnvelopeDecay: TDialControl
-      Left = 77
-      Height = 45
-      Top = 99
-      Width = 40
+      Left = 70
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'Decay'
       Lowest = 0
@@ -493,10 +493,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcPitchEnvelopeSustain: TDialControl
-      Left = 119
-      Height = 45
-      Top = 99
-      Width = 40
+      Left = 106
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'Sustain'
       Lowest = 0
@@ -506,10 +506,10 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcPitchEnvelopeRelease: TDialControl
-      Left = 160
-      Height = 45
-      Top = 99
-      Width = 40
+      Left = 141
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'Release'
       Lowest = 0
@@ -531,7 +531,7 @@ object SampleView: TSampleView
     object lblAmp: TLabel
       Left = 6
       Height = 12
-      Top = 48
+      Top = 42
       Width = 22
       Caption = 'Amp'
       Font.Style = [fsBold]
@@ -541,7 +541,7 @@ object SampleView: TSampleView
     object lblPitch: TLabel
       Left = 7
       Height = 12
-      Top = 96
+      Top = 80
       Width = 25
       Caption = 'Pitch'
       Font.Style = [fsBold]
@@ -550,20 +550,20 @@ object SampleView: TSampleView
     end
   end
   object gbLFO: TGroupBox
-    Left = 328
-    Height = 302
+    Left = 273
+    Height = 134
     Top = 0
-    Width = 185
+    Width = 111
     Align = alLeft
     Caption = 'LFO'
-    ClientHeight = 289
-    ClientWidth = 181
+    ClientHeight = 121
+    ClientWidth = 107
     TabOrder = 3
     object dcLFO1Rate: TDialControl
-      Left = 20
-      Height = 45
-      Top = 3
-      Width = 40
+      Left = 2
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Rate'
       Lowest = 0.05000000074505
@@ -573,10 +573,10 @@ object SampleView: TSampleView
       Color = clBtnFace
     end
     object dcLFO2Rate: TDialControl
-      Left = 20
-      Height = 45
-      Top = 51
-      Width = 40
+      Left = 2
+      Height = 40
+      Top = 40
+      Width = 36
       Value = 0
       Caption = 'Rate'
       Lowest = 0.05000000074505
@@ -586,10 +586,10 @@ object SampleView: TSampleView
       Color = clBtnFace
     end
     object dcLFO3Rate: TDialControl
-      Left = 20
-      Height = 45
-      Top = 95
-      Width = 40
+      Left = 2
+      Height = 40
+      Top = 80
+      Width = 36
       Value = 0
       Caption = 'Rate'
       Lowest = 0.05000000074505
@@ -599,34 +599,34 @@ object SampleView: TSampleView
       Color = clBtnFace
     end
     object cbLFO1WaveSelector: TComboBox
-      Left = 66
+      Left = 38
       Height = 25
       Top = 12
-      Width = 86
+      Width = 65
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 3
     end
     object cbLFO2WaveSelector: TComboBox
-      Left = 66
+      Left = 38
       Height = 25
-      Top = 60
-      Width = 86
+      Top = 54
+      Width = 65
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 4
     end
     object cbLFO3WaveSelector: TComboBox
-      Left = 66
+      Left = 38
       Height = 25
-      Top = 108
-      Width = 86
+      Top = 92
+      Width = 65
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 5
     end
     object lblLFO1: TLabel
-      Left = 68
+      Left = 40
       Height = 12
       Top = 0
       Width = 23
@@ -636,9 +636,9 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object lblLFO2: TLabel
-      Left = 68
+      Left = 40
       Height = 12
-      Top = 48
+      Top = 42
       Width = 23
       Caption = 'LFO2'
       Font.Style = [fsBold]
@@ -646,9 +646,9 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object lblLFO3: TLabel
-      Left = 68
+      Left = 40
       Height = 12
-      Top = 96
+      Top = 80
       Width = 23
       Caption = 'LFO3'
       Font.Style = [fsBold]
@@ -657,20 +657,20 @@ object SampleView: TSampleView
     end
   end
   object gbGlobal: TGroupBox
-    Left = 893
-    Height = 302
+    Left = 723
+    Height = 134
     Top = 0
-    Width = 63
+    Width = 232
     Align = alClient
     Caption = 'Global'
-    ClientHeight = 289
-    ClientWidth = 59
+    ClientHeight = 121
+    ClientWidth = 228
     TabOrder = 4
     object dcGlobalLevel: TDialControl
       Left = 5
-      Height = 45
-      Top = 3
-      Width = 40
+      Height = 40
+      Top = 0
+      Width = 36
       Value = 0
       Caption = 'Level'
       Lowest = 0.5

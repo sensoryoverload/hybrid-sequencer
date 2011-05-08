@@ -357,19 +357,6 @@ begin
     begin
       // Release last sample connection
       lOldSelectedSample.Detach(FSampleView);
-      {FSampleView.dcCutoff.Enabled := False;
-      FSampleView.dcResonance.Enabled := False;
-      FSampleView.dcOsc1Pitch.Enabled := False;
-      FSampleView.dcOsc1ModAmount.Enabled := False;
-      FSampleView.dcOSC1Level.Enabled := False;
-      FSampleView.dcOsc2Pitch.Enabled := False;
-      FSampleView.dcOsc2ModAmount.Enabled := False;
-      FSampleView.dcOSC2Level.Enabled := False;
-      FSampleView.dcOsc3Pitch.Enabled := False;
-      FSampleView.dcOsc3ModAmount.Enabled := False;
-      FSampleView.dcOSC3Level.Enabled := False; }
-
-      FSampleView.Enabled := False;
     end;
   end;
 
@@ -382,19 +369,6 @@ begin
 
     // Attach new view
     lNewSelectedSample.Attach(FSampleView);
-    {FSampleView.dcCutoff.Enabled := True;
-    FSampleView.dcResonance.Enabled := True;
-    FSampleView.dcOsc1Pitch.Enabled := True;
-    FSampleView.dcOsc1ModAmount.Enabled := True;
-    FSampleView.dcOSC1Level.Enabled := True;
-    FSampleView.dcOsc2Pitch.Enabled := True;
-    FSampleView.dcOsc2ModAmount.Enabled := True;
-    FSampleView.dcOSC2Level.Enabled := True;
-    FSampleView.dcOsc3Pitch.Enabled := True;
-    FSampleView.dcOsc3ModAmount.Enabled := True;
-    FSampleView.dcOSC3Level.Enabled := True;}
-
-    FSampleView.Enabled := True;
 
     FOldSelectedSample := lNewSelectedSample.ObjectID;
   end;

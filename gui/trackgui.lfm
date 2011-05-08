@@ -2,57 +2,44 @@ object Track: TTrack
   Left = 0
   Height = 667
   Top = 0
-  Width = 102
+  Width = 104
   Align = alCustom
   Anchors = [akTop]
   ClientHeight = 667
-  ClientWidth = 102
+  ClientWidth = 104
   PopupMenu = pmTrack
   TabOrder = 0
   DesignLeft = 768
   DesignTop = 25
   object pnlTrackControls: TPanel
     Left = 0
-    Height = 245
-    Top = 422
-    Width = 102
+    Height = 307
+    Top = 360
+    Width = 104
     Align = alBottom
     BevelInner = bvLowered
     BevelOuter = bvNone
-    ClientHeight = 245
-    ClientWidth = 102
-    Color = clWindowFrame
-    Constraints.MaxHeight = 245
-    Constraints.MinHeight = 245
+    ClientHeight = 307
+    ClientWidth = 104
+    Color = clBtnFace
     ParentColor = False
     TabOrder = 0
     OnMouseDown = TrackControlsMouseDown
     OnMouseMove = TrackControlsMouseMove
     OnMouseUp = TrackControlsMouseUp
     object tcOn: TToggleControl
-      Left = 54
+      Left = 9
       Height = 14
-      Top = 147
+      Top = 153
       Width = 30
       SwitchedOn = False
       OnChange = tcOnChange
     end
-    object lblInput: TStaticText
-      Left = 31
-      Height = 15
-      Top = 2
-      Width = 35
-      Caption = 'Input'
-      Font.Height = 7
-      Font.Style = [fsBold]
-      ParentFont = False
-      TabOrder = 1
-    end
     object ComboBox1: TComboBox
-      Left = 1
+      Left = 0
       Height = 22
-      Top = 17
-      Width = 96
+      Top = 67
+      Width = 65
       AutoSize = False
       Font.Height = 7
       ItemHeight = 0
@@ -62,25 +49,14 @@ object Track: TTrack
       )
       ParentFont = False
       Style = csDropDownList
-      TabOrder = 2
+      TabOrder = 1
       Text = 'None'
     end
-    object lblOutput: TStaticText
-      Left = 26
-      Height = 17
-      Top = 39
-      Width = 50
-      Caption = 'Output'
-      Font.Height = 7
-      Font.Style = [fsBold]
-      ParentFont = False
-      TabOrder = 3
-    end
     object cbOutput: TComboBox
-      Left = 1
+      Left = 0
       Height = 22
-      Top = 54
-      Width = 96
+      Top = 88
+      Width = 65
       AutoSize = False
       Font.Height = 7
       ItemHeight = 0
@@ -90,63 +66,115 @@ object Track: TTrack
       )
       ParentFont = False
       Style = csDropDownList
-      TabOrder = 4
+      TabOrder = 2
       Text = 'Master'
     end
     object vcLevel: TVolumeControl
       Left = 6
-      Height = 160
-      Top = 84
+      Height = 137
+      Top = 168
       Width = 41
       OnChange = vcLevelChange
       OnStartChange = vcLevelStartChange
     end
     object DialControl1: TDialControl
-      Left = 49
-      Height = 63
-      Top = 84
-      Width = 40
+      Left = 6
+      Height = 40
+      Top = 113
+      Width = 36
       Value = 0
+      Caption = 'Balance'
       Lowest = 0
       Highest = 100
       Enabled = True
-      ValueVisible = False
+      ValueVisible = True
     end
-  end
-  object pnlSends: TPanel
-    Left = 0
-    Height = 70
-    Top = 352
-    Width = 102
-    Align = alBottom
-    BevelOuter = bvLowered
-    Constraints.MaxHeight = 70
-    Constraints.MinHeight = 70
-    TabOrder = 1
-  end
-  object Splitter2: TSplitter
-    Cursor = crVSplit
-    Left = 0
-    Height = 7
-    Top = 345
-    Width = 102
-    Align = alBottom
-    AutoSnap = False
-    OnMoved = Splitter2Moved
-    ResizeAnchor = akBottom
+    object dcLowFreq: TDialControl
+      Left = 64
+      Height = 40
+      Top = 227
+      Width = 36
+      Value = 0
+      Caption = 'Low Freq'
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = True
+    end
+    object dcLowLevel: TDialControl
+      Left = 64
+      Height = 40
+      Top = 267
+      Width = 36
+      Value = 0
+      Caption = 'Low Level'
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = True
+    end
+    object dcHighFreq: TDialControl
+      Left = 64
+      Height = 40
+      Top = 67
+      Width = 36
+      Value = 0
+      Caption = 'Hi Freq'
+      Lowest = 0
+      Highest = 1
+      OnChange = dcHighFreqChange
+      Enabled = True
+      ValueVisible = True
+    end
+    object dcMidFreq: TDialControl
+      Left = 64
+      Height = 40
+      Top = 147
+      Width = 36
+      Value = 0
+      Caption = 'Mid Freq'
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = True
+    end
+    object dcMidLevel: TDialControl
+      Left = 64
+      Height = 40
+      Top = 187
+      Width = 36
+      Value = 0
+      Caption = 'Mid Level'
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = True
+    end
+    object dcHighLevel: TDialControl
+      Left = 64
+      Height = 40
+      Top = 107
+      Width = 36
+      Value = 0
+      Caption = 'Hi Level'
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = True
+    end
   end
   object pnlPatterns: TPanel
     Left = 0
-    Height = 345
+    Height = 360
     Hint = 'Drop patterns here'
     Top = 0
-    Width = 102
+    Width = 104
     Align = alClient
     BevelInner = bvLowered
     BevelOuter = bvNone
     ParentShowHint = False
     ShowHint = True
-    TabOrder = 3
+    TabOrder = 1
     OnDragDrop = pnlPatternsDragDrop
     OnDragOver = pnlPatternsDragOver
   end
