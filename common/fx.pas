@@ -39,7 +39,7 @@ type
   TDummyFilter = class(TInternalPlugin)
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TDecimateFX }
@@ -57,7 +57,7 @@ type
     constructor Create(AObjectOwnerID: string);
     function Decimate(i: single): single;
     procedure Init(bits: integer; shrate: single);
-    procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TMoogFilter }
@@ -78,7 +78,7 @@ type
   public
     constructor Create(AObjectOwnerID: string);
     function Process(const I : Single):Single;
-    procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
     property Frequency: single read fF write SetFrequency;
     property SampleRate: single read fFS write SetFS;
     property Resonance: single read fQ write SetQ;
@@ -141,7 +141,7 @@ begin
   rate:= shrate;
 end;
 
-procedure TDecimateFX.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+procedure TDecimateFX.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -297,7 +297,7 @@ begin
  Result:=fOld;
 end;
 
-procedure TMoogFilter.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+procedure TMoogFilter.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -377,7 +377,7 @@ begin
   Inherited Create(AObjectOwnerID);
 end;
 
-procedure TDummyFilter.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+procedure TDummyFilter.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin

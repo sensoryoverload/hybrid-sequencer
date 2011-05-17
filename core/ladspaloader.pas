@@ -5,7 +5,16 @@ unit ladspaloader;
 interface
 
 uses
-  Classes, SysUtils; 
+  Classes, SysUtils, ladspa;
+
+type
+  TLadspaPlugin = class
+  private
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Activate
+  end;
 
 implementation
 

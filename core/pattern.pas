@@ -34,8 +34,8 @@ type
 
   TPattern = class(THybridPersistentModel)
   private
-    FWaveForm: TWaveForm;
-    FMidiGrid: TMidiGrid;
+    FWavePattern: TWavePattern;
+    FMidiPattern: TMidiPattern;
     FPatternColor: TColor;
     FPitched: Boolean;
     FPosition: Integer; // Vertical position in the patterngrid
@@ -49,9 +49,9 @@ type
     FScheduled: Boolean;
     FPatternLength: Longint;
     FPatternName: string;
-    FPluginProcessor: TPluginProcessor;
+    {FPluginProcessor: TPluginProcessor;
     FFilter: TDecimateFX;
-    FFilter2: TMoogFilter;
+    FFilter2: TMoogFilter;}
 
     // Private sampler, not a plugin so it's more thightly integrated
     FSampleBank: TSampleBank;
@@ -77,10 +77,10 @@ type
     property PatternColor: TColor read FPatternColor write SetPatternColor;
 
   published
-    property WaveForm: TWaveForm read FWaveForm write FWaveForm;
-    property MidiGrid: TMidiGrid read FMidiGrid write FMidiGrid;
+    property WavePattern: TWavePattern read FWavePattern write FWavePattern;
+    property MidiPattern: TMidiPattern read FMidiPattern write FMidiPattern;
     property SampleBank: TSampleBank read FSampleBank write FSampleBank;
-    property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
+    //property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property Position: Integer read FPosition write SetPosition;
     property Text: string read FText write SetText;
@@ -246,8 +246,8 @@ end;
 
 procedure TPattern.Initialize;
 begin
-  Self.WaveForm.Initialize;
-  Self.MidiGrid.Initialize;
+  Self.WavePattern.Initialize;
+  Self.MidiPattern.Initialize;
 
   Notify;
 end;
@@ -260,8 +260,8 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FMidiGrid := TMidiGrid.Create(AObjectOwner, AMapped);
-  FWaveForm := TWaveForm.Create(AObjectOwner, AMapped);
+  FMidiPattern := TMidiPattern.Create(AObjectOwner, AMapped);
+  FWavePattern := TWavePattern.Create(AObjectOwner, AMapped);
 
   FSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
   FSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
@@ -276,7 +276,7 @@ begin
 
   DBLog('KICK.WAV loading');
 
-  FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
+  //FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
   {
   FFilter := TDecimateFX.Create(FPluginProcessor.ObjectID);
   FFilter.PluginName := 'DecimateFX';
@@ -299,12 +299,12 @@ end;
 
 destructor TPattern.Destroy;
 begin
-  FPluginProcessor.Free;
+  //FPluginProcessor.Free;
   //FFilter.Free;
   //FFilter2.Free;
 
-  FWaveForm.Free;
-  FMidiGrid.Free;
+  FWavePattern.Free;
+  FMidiPattern.Free;
 
   FSampleBankEngine.Free;
 
@@ -322,7 +322,7 @@ end;
 
 procedure TPattern.RecalculateSynchronize;
 begin
-  //FPatternLength := Round(WaveForm.SampleRate * (60 / FRealBPM)) * 4; // TODO choose next multiple of 4
+  //FPatternLength := Round(WavePattern.SampleRate * (60 / FRealBPM)) * 4; // TODO choose next multiple of 4
 end;
 
 { TPatternDropWaveCommand }
@@ -333,8 +333,8 @@ begin
 
   FPattern.BeginUpdate;
 
-  FOldFileName := FPattern.WaveForm.SampleFileName;
-  FPattern.WaveForm.SampleFileName := FFileName;
+  FOldFileName := FPattern.WavePattern.SampleFileName;
+  FPattern.WavePattern.SampleFileName := FFileName;
   FPattern.Initialize;
   FPattern.OkToPlay := True;
 
@@ -350,8 +350,8 @@ begin
   FPattern.BeginUpdate;
 
   FPattern.OkToPlay := False;
-  FPattern.WaveForm.SampleFileName := FFileName;
-  FPattern.WaveForm.UnLoadSample;
+  FPattern.WavePattern.SampleFileName := FFileName;
+  FPattern.WavePattern.UnLoadSample;
 
   FPattern.EndUpdate;
 
@@ -424,7 +424,7 @@ begin
   FPattern.BeginUpdate;
 
   // Store Threshold
-  FOldThreshold := FPattern.WaveForm.TransientThreshold;
+  FOldThreshold := FPattern.WavePattern.TransientThreshold;
 
   FPattern.EndUpdate;
 
@@ -438,7 +438,7 @@ begin
   FPattern.BeginUpdate;
 
   // Restore Threshold
-  FPattern.WaveForm.TransientThreshold := FOldThreshold;
+  FPattern.WavePattern.TransientThreshold := FOldThreshold;
 
   FPattern.EndUpdate;
 
@@ -455,7 +455,7 @@ begin
 
   // Store RealBPM
   FOldRealBPM := FRealBPM;
-  FPattern.WaveForm.RealBPM := FRealBPM;
+  FPattern.WavePattern.RealBPM := FRealBPM;
 
   FPattern.EndUpdate;
 
@@ -469,7 +469,7 @@ begin
   FPattern.BeginUpdate;
 
   // Restore RealBPM
-  FPattern.WaveForm.RealBPM := FOldRealBPM;
+  FPattern.WavePattern.RealBPM := FOldRealBPM;
 
   FPattern.EndUpdate;
 

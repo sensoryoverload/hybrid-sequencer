@@ -350,7 +350,7 @@ type
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
     procedure Assign(Source:TPersistent); override;
     property Selected: Boolean read FSelected write FSelected;
     property SelectedSample: TSample read FSelectedSample write FSelectedSample;
@@ -368,7 +368,7 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TSampleCommand }
@@ -542,7 +542,7 @@ type
     constructor Create(AFrames: Integer);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiGrid: TMidiGrid; AInputBuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiPattern: TMidiPattern; AInputBuffer: PSingle; AFrames: Integer);
     procedure NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single);
     procedure NoteOff;
 
@@ -577,7 +577,7 @@ type
     constructor Create(AFrames: Integer);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 
     property Sample: TSample read FSample write SetSample;
   end;
@@ -595,7 +595,7 @@ type
     constructor Create(AFrames: Integer);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 
     property SampleBank: TSampleBank read FSampleBank write SetSampleBank;
   end;
@@ -1501,7 +1501,7 @@ end;
 {
   Play all samples 'FSampleList' of the TSampleBank
 }
-procedure TSampleBank.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+procedure TSampleBank.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 var
   buffer: ^byte;
   lFrameOffsetLow: Integer;
@@ -1514,7 +1514,7 @@ begin
 
   for lSampleIndex := 0 to Pred(FSampleList.Count) do
   begin
-    TSampleEngine(FSampleList[lSampleIndex]).Process(AMidiGrid, ABuffer, AFrames);
+    TSampleEngine(FSampleList[lSampleIndex]).Process(AMidiPattern, ABuffer, AFrames);
   end;
 
 end;
@@ -1721,7 +1721,7 @@ begin
   //
 end;
 
-procedure TPluginSampleBank.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginSampleBank.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
@@ -1848,7 +1848,7 @@ begin
 
 end;
 
-procedure TSampleEngine.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle; AFrames: Integer);
+procedure TSampleEngine.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
 var
   lVoiceIndex: Integer;
   lVoice: TSampleVoiceEngine;
@@ -1860,7 +1860,7 @@ var
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
 begin
-  lMidiBuffer := AMidiGrid.MidiBuffer;
+  lMidiBuffer := AMidiPattern.MidiBuffer;
   lMidiBuffer.Seek(0);
 
   if lMidiBuffer.Count > 0 then
@@ -1929,7 +1929,7 @@ begin
   begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-    lVoice.Process(AMidiGrid, ABuffer, AFrames);
+    lVoice.Process(AMidiPattern, ABuffer, AFrames);
   end;
 
   // Mix all voices into buffer
@@ -1939,9 +1939,10 @@ begin
 
     for lBufferIndex := 0 to Pred(Frames) do
     begin
-      lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
+      {lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
       lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
-      ABuffer[lBufferIndex] := lSampleAdd - lSampleMul;
+      ABuffer[lBufferIndex] := lSampleAdd - lSampleMul;}
+      ABuffer[lBufferIndex] := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
     end;
   end;
 
@@ -1965,8 +1966,6 @@ begin
   inherited Create(AFrames);
 
   FInternalBuffer := GetMem(Frames * SizeOf(Single));
-
-  GLogger.PushMessage(Format('FInternalBuffer %d', [Frames * SizeOf(Single)]));
 
   FOsc1Engine := TOscillatorEngine.Create(Frames);
   FOsc2Engine := TOscillatorEngine.Create(Frames);
@@ -2040,7 +2039,7 @@ begin
   FStopVoice := False;
 end;
 
-procedure TSampleVoiceEngine.Process(AMidiGrid: TMidiGrid; AInputBuffer: PSingle; AFrames: Integer);
+procedure TSampleVoiceEngine.Process(AMidiPattern: TMidiPattern; AInputBuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
   lSample, lSampleA, lSampleB, lSampleC: single;
@@ -2075,48 +2074,51 @@ begin
 
           lSample := FInternalBuffer[i];
 
-          // External audio in Envelope follower
-//          FEnvelopeFollower.Process(AInputBuffer[i]);
-
-          // LFO's
-          FLFO1Engine.Process;
-          FLFO2Engine.Process;
-          FLFO3Engine.Process;
-
-          // ADSR Pitch
-          FPitchEnvelopeEngine.Process;
-          FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;
-
-          // Pitch
-
-          // Oscillatorbank
-          lSampleA := FOsc1Engine.Process * FOsc1Engine.Oscillator.Level;
-          lSampleB := FOsc2Engine.Process * FOsc2Engine.Oscillator.Level;
-          lSampleC := FOsc3Engine.Process * FOsc3Engine.Oscillator.Level;
-          {lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
-          lSample := lSample  + lSampleC - (lSample  * lSampleC);}
-          lSample := lSampleA + lSampleB + lSampleC;
-
-          // ADSR Filter
-          FFilterEnvelopeEngine.Process;
-
-          // Filter
-          FFilterEngine.Frequency := FFilterEngine.Filter.Frequency{ * (FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
-          FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
-          lSample := FFilterEngine.Process(lSample);
-
           // ADSR Amplifier
           FAmpEnvelopeEngine.Process;
-
-          // Amplifier
-          lSample := lSample * FAmpEnvelopeEngine.Level;
 
           if FAmpEnvelopeEngine.State = esEnd then
           begin
             FRunning := False;
-          end;
+          end
+          else
+          begin
 
-          // FX
+            // Waveform input in Envelope follower
+            FEnvelopeFollower.Process(FInternalBuffer[i]);
+
+            // LFO's
+            FLFO1Engine.Process;
+            FLFO2Engine.Process;
+            FLFO3Engine.Process;
+
+            // ADSR Pitch
+            FPitchEnvelopeEngine.Process;
+            FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;
+
+            // Pitch
+
+            // Oscillatorbank
+            lSampleA := FOsc1Engine.Process * FOsc1Engine.Oscillator.Level;
+            lSampleB := FOsc2Engine.Process * FOsc2Engine.Oscillator.Level;
+            lSampleC := FOsc3Engine.Process * FOsc3Engine.Oscillator.Level;
+            {lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
+            lSample := lSample  + lSampleC - (lSample  * lSampleC);}
+            lSample := lSampleA + lSampleB + lSampleC;
+
+            // ADSR Filter
+            FFilterEnvelopeEngine.Process;
+
+            // Filter
+            FFilterEngine.Frequency := FFilterEngine.Filter.Frequency{ * (FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
+            FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
+            lSample := FFilterEngine.Process(lSample);
+
+            // Amplifier
+            lSample := lSample * FAmpEnvelopeEngine.Level;
+
+            // FX
+          end;
 
           FInternalBuffer[i] := lSample;
 
@@ -2130,9 +2132,9 @@ begin
           FLength := FLength - GAudioStruct.BPMAdder;
         end;
 
-        GLogger.PushMessage(Format('FFilter %f, FFilter.Filter.Frequency %f, FFilterEngine.Modifier %f, FLFO1Engine %f',
+{        GLogger.PushMessage(Format('FFilter %f, FFilter.Filter.Frequency %f, FFilterEngine.Modifier %f, FLFO1Engine %f',
         [FFilterEngine.Frequency, FFilterEngine.Filter.Frequency, FFilterEngine.Modifier^,
-        FLFO1Engine.Level]));
+        FLFO1Engine.Level]));}
 
         // Next iteration, start from the beginning
         FNoteOnOffset := 0;
@@ -2218,8 +2220,6 @@ begin
     lSampleEngine.Sample := TSample(FSampleBank.SampleList[lSampleEngineIndex]);
 
     FSampleEngineList.Add(lSampleEngine);
-
-    DBLog(Format('TSampleBankEngine.SetSampleBank: set sampleengine %s', [lSampleEngine.Sample.SampleName]));
   end;
 end;
 
@@ -2243,16 +2243,15 @@ begin
 
 end;
 
-procedure TSampleBankEngine.Process(AMidiGrid: TMidiGrid; ABuffer: PSingle;
+procedure TSampleBankEngine.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle;
   AFrames: Integer);
 var
   lSampleEngineIndex: Integer;
 begin
   for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
   begin
-    // Listens to AMidiGrid midi buffer and mixes samples to ABuffer for a length of
-    // AFrames
-    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Process(AMidiGrid, ABuffer, AFrames);
+    // Listens to AMidiPattern midi buffer and mixes samples to ABuffer for a length of
+    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Process(AMidiPattern, ABuffer, AFrames);
   end;
 end;
 

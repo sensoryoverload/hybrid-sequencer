@@ -3,7 +3,7 @@
 LazarusResources.Add('TPatternControls','FORMDATA',[
   'TPF0'#16'TPatternControls'#15'PatternControls'#4'Left'#2#0#6'Height'#3'\'#1#3
   +'Top'#2#0#5'Width'#3#211#3#12'ClientHeight'#3'\'#1#11'ClientWidth'#3#211#3#8
-  +'TabOrder'#2#0#10'DesignLeft'#3#25#1#9'DesignTop'#3#206#0#0#12'TPageControl'
+  +'TabOrder'#2#0#10'DesignLeft'#3#26#1#9'DesignTop'#3#206#0#0#12'TPageControl'
   +#13'pcPatternTabs'#4'Left'#2#0#6'Height'#3'\'#1#3'Top'#2#0#5'Width'#3#211#3
   +#10'ActivePage'#7#7'tsAudio'#5'Align'#7#8'alClient'#8'TabIndex'#2#1#8'TabOrd'
   +'er'#2#0#11'TabPosition'#7#6'tpLeft'#0#9'TTabSheet'#6'tsMIDI'#7'Caption'#6#4

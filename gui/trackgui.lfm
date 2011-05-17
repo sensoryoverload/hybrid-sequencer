@@ -1,4 +1,4 @@
-object Track: TTrack
+object TrackGUI: TTrackGUI
   Left = 0
   Height = 667
   Top = 0
@@ -182,7 +182,7 @@ object Track: TTrack
     left = 33
     top = 246
     object miDeleteTrack: TMenuItem
-      Caption = 'Delete track'
+      Action = acDeleteTrack
     end
   end
   object ActionList1: TActionList

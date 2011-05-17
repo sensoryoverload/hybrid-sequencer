@@ -27,16 +27,17 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, StdCtrls, ExtCtrls, ComCtrls,
   dialcontrol, Controls, LCLType, Graphics, globalconst, ContNrs, global, track,
-  global_command, ShellCtrls, pattern, patterngui, LCLIntf, Menus, ActnList;
+  global_command, ShellCtrls, pattern, patterngui, LCLIntf, Menus, ActnList,
+  audiostructure;
 
 type
   TPatternChangeEvent = procedure of object;
 
-  TTrack = class;
+  TTrackGUI = class;
 
-  { TTrack }
+  { TTrackGUI }
 
-  TTrack = class(TFrame, IObserver)
+  TTrackGUI = class(TFrame, IObserver)
     acDeleteTrack: TAction;
     ActionList1: TActionList;
     ComboBox1: TComboBox;
@@ -82,6 +83,7 @@ type
     FShuffle: TShuffle;
     FModelObject: TObject;
     FObjectOwner: TObject;
+    FObjectOwnerID: string;
 
     procedure SetSelected(const AValue: Boolean);
     procedure CreatePatternGUI(AObjectID: string);
@@ -103,6 +105,7 @@ type
     property PatternListGUI: TObjectList read FPatternListGUI write FPatternListGUI;
     property SelectedPattern: TPatternGUI read FSelectedPattern write FSelectedPattern;
     property ModelObject: TObject read FModelObject write FModelObject;
+    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
 
@@ -112,9 +115,9 @@ implementation
 uses
   utils;
 
-{ TTrack }
+{ TTrackGUI }
 
-procedure TTrack.tcOnChange(Sender: TObject);
+procedure TTrackGUI.tcOnChange(Sender: TObject);
 var
   lActivateTrack: TActivateTrackCommand;
 begin
@@ -133,7 +136,7 @@ begin
   DBLog('start Track On/Off ' + ObjectID);
 end;
 
-procedure TTrack.vcLevelChange(Sender: TObject);
+procedure TTrackGUI.vcLevelChange(Sender: TObject);
 var
   lTrackLevelCommand: TTrackLevelCommand;
 begin
@@ -148,7 +151,7 @@ begin
   end;
 end;
 
-procedure TTrack.vcLevelStartChange(Sender: TObject);
+procedure TTrackGUI.vcLevelStartChange(Sender: TObject);
 var
   lTrackLevelCommand: TTrackLevelCommand;
 begin
@@ -164,7 +167,7 @@ begin
 end;
 
 
-procedure TTrack.SetSelected(const AValue: Boolean);
+procedure TTrackGUI.SetSelected(const AValue: Boolean);
 begin
   FSelected := AValue;
 
@@ -176,7 +179,7 @@ begin
   Invalidate;
 end;
 
-procedure TTrack.Update(Subject: THybridPersistentModel);
+procedure TTrackGUI.Update(Subject: THybridPersistentModel);
 var
   i: Integer;
 begin
@@ -184,19 +187,19 @@ begin
   DBLog('start TTrack.Update');
 
   DiffLists(
-    TWaveFormTrack(Subject).PatternList,
+    TTrack(Subject).PatternList,
     PatternListGUI,
     @CreatePatternGUI,
     @DeletePatternGUI);
 
-  tcOn.SwitchedOn := TWaveFormTrack(Subject).Active;
-  vcLevel.Position := TWaveFormTrack(Subject).Volume;
+  tcOn.SwitchedOn := TTrack(Subject).Active;
+  vcLevel.Position := TTrack(Subject).Volume;
 
   for i := 0 to Pred(Self.PatternListGUI.Count) do
   begin
-    if Assigned(TWaveFormTrack(Subject).SelectedPattern) then
+    if Assigned(TTrack(Subject).SelectedPattern) then
     begin
-      if TPatternGUI(Self.PatternListGUI[i]).ObjectID = TWaveFormTrack(Subject).SelectedPattern.ObjectID then
+      if TPatternGUI(Self.PatternListGUI[i]).ObjectID = TTrack(Subject).SelectedPattern.ObjectID then
       begin
         GSettings.SelectedPatternGUI := Self.PatternListGUI[i];
         Self.SelectedPattern := TPatternGUI(Self.PatternListGUI[i]);
@@ -211,17 +214,17 @@ begin
   DBLog('end TTrack.Update');
 end;
 
-function TTrack.GetObjectID: string;
+function TTrackGUI.GetObjectID: string;
 begin
   Result := FObjectID;
 end;
 
-procedure TTrack.SetObjectID(AObjectID: string);
+procedure TTrackGUI.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
 end;
 
-procedure TTrack.CreatePatternGUI(AObjectID: string);
+procedure TTrackGUI.CreatePatternGUI(AObjectID: string);
 var
   lPatternGUI: TPatternGUI;
   lPattern: TPattern;
@@ -249,7 +252,7 @@ begin
   DBLog('end TTrack.CreatePatternGUI');
 end;
 
-procedure TTrack.DeletePatternGUI(AObjectID: string);
+procedure TTrackGUI.DeletePatternGUI(AObjectID: string);
 var
   lPatternGUI: TPatternGUI;
   lIndex: Integer;
@@ -276,7 +279,7 @@ begin
   end;
 end;
 
-constructor TTrack.Create(AOwner: TComponent);
+constructor TTrackGUI.Create(AOwner: TComponent);
 begin
   DBLog('start TTrack.Create');
 
@@ -291,7 +294,7 @@ begin
   DBLog('end TTrack.Create');
 end;
 
-destructor TTrack.Destroy;
+destructor TTrackGUI.Destroy;
 begin
   if Assigned(FPatternListGUI) then
     FPatternListGUI.Free;
@@ -302,7 +305,7 @@ begin
   inherited Destroy;
 end;
 
-procedure TTrack.pnlPatternsDragDrop(Sender, Source: TObject; X, Y: Integer);
+procedure TTrackGUI.pnlPatternsDragDrop(Sender, Source: TObject; X, Y: Integer);
 var
   P, Q:Tpoint;
   lCreatePattern: TCreatePatternCommand;
@@ -378,7 +381,7 @@ begin
   DBLog('end TTrack.pnlPatternsDragDrop');
 end;
 
-procedure TTrack.TrackControlsMouseDown(Sender: TObject; Button: TMouseButton;
+procedure TTrackGUI.TrackControlsMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   Selected:= True;
@@ -395,7 +398,7 @@ begin
   inherited Mousedown(Button, Shift, X, Y);
 end;
 
-procedure TTrack.pnlPatternsDragOver(Sender, Source: TObject; X, Y: Integer;
+procedure TTrackGUI.pnlPatternsDragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 begin
   inherited DragOver(Source, X, Y, State, Accept);
@@ -403,22 +406,31 @@ begin
   Accept := True;
 end;
 
-procedure TTrack.acDeleteTrackExecute(Sender: TObject);
+procedure TTrackGUI.acDeleteTrackExecute(Sender: TObject);
+var
+  lCommandDeleteTrack: TDeleteTrackCommand;
 begin
-  // Delete track
+  lCommandDeleteTrack := TDeleteTrackCommand.Create(ObjectID);
+  try
+    lCommandDeleteTrack.ObjectIdList.Add(ObjectID);
+
+    GCommandQueue.PushCommand(lCommandDeleteTrack);
+  except
+    lCommandDeleteTrack.Free;
+  end;
 end;
 
-procedure TTrack.dcHighFreqChange(Sender: TObject);
+procedure TTrackGUI.dcHighFreqChange(Sender: TObject);
 begin
 
 end;
 
-procedure TTrack.Splitter2Moved(Sender: TObject);
+procedure TTrackGUI.Splitter2Moved(Sender: TObject);
 begin
   OnUpdateTrackControls(Self);
 end;
 
-procedure TTrack.TrackControlsMouseMove(Sender: TObject; Shift: TShiftState; X,
+procedure TTrackGUI.TrackControlsMouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
 begin
   inherited MouseMove(Shift, X, Y);
@@ -431,7 +443,7 @@ begin
   end;
 end;
 
-procedure TTrack.TrackControlsMouseUp(Sender: TObject; Button: TMouseButton;
+procedure TTrackGUI.TrackControlsMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   inherited MouseUp(Button, Shift, X, Y);
@@ -445,11 +457,11 @@ end;
 var
   lIndexPattern: Integer;
   lIndexID: Integer;
-  lTrackGUI: TTrack;
+  lTrackGUI: TTrackGUI;
   lPatternGUI: TPatternGUI;
 begin
   DBLog('start TSelectPatternUpdate.Execute');
-  lTrackGUI := TTrack(AObject);
+  lTrackGUI := TTrackGUI(AObject);
 
   if Assigned(lTrackGUI) then
   begin
@@ -474,7 +486,7 @@ end;}
 
 initialization
   {$I trackgui.lrs}
-  RegisterClass(TTrack);
+  RegisterClass(TTrackGUI);
 
 end.
 

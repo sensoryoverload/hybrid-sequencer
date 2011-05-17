@@ -395,9 +395,9 @@ begin
   PatternControls.Update(Subject);
 
   Position := Model.Position;
-  PatternLength := Model.MidiGrid.LoopEnd;  //todo Use global patternlength
-  PatternControls.RealBPM := Model.WaveForm.RealBPM;
-  Text := ExtractFileName(TPattern(Subject).WaveForm.SampleFileName);
+  PatternLength := Model.MidiPattern.LoopEnd;  //todo Use global patternlength
+  PatternControls.RealBPM := Model.WavePattern.RealBPM;
+  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
   writeln(inttostr(PatternLength));
   DBLog('end TPatternGUI.Update');
 end;

@@ -416,59 +416,65 @@ var
   lViewIntf: IObserver;
 begin
   DBLog('start DiffLists');
-
-  if Assigned(AModelList) and Assigned(AViewList) and
-    Assigned(ACreateProc) and Assigned(ADestroyProc) then
-  begin
-    // First look for missing observer on the client side
-    for lModelIndex := 0 to Pred(AModelList.Count) do
+  try
+    if Assigned(AModelList) and Assigned(AViewList) and
+      Assigned(ACreateProc) and Assigned(ADestroyProc) then
     begin
-      lViewFound := False;
+      // First look for missing observer on the client side
+      for lModelIndex := 0 to Pred(AModelList.Count) do
+      begin
+        lViewFound := False;
 
-      for lViewIndex := 0 to Pred(AViewList.Count) do
+        for lViewIndex := 0 to Pred(AViewList.Count) do
+        begin
+          lViewIntf := (AViewList[lViewIndex] as IObserver);
+
+          if lViewIntf.ObjectID = THybridPersistentModel(AModelList[lModelIndex]).ObjectID then
+          begin
+            lViewFound := True;
+            break;
+          end;
+        end;
+
+        // Create observer by callback
+        if not lViewFound then
+        begin
+          DBLog('start ACreateProc %s', THybridPersistent(AModelList[lModelIndex]).ObjectID);
+          ACreateProc(THybridPersistent(AModelList[lModelIndex]).ObjectID);
+          DBLog('end ACreateProc');
+        end;
+      end;
+
+      // Now look for missing subjects on the model side as to destroy them
+      for lViewIndex := Pred(AViewList.Count) downto 0 do
       begin
         lViewIntf := (AViewList[lViewIndex] as IObserver);
 
-        if lViewIntf.ObjectID = THybridPersistentModel(AModelList[lModelIndex]).ObjectID then
-        begin
-          lViewFound := True;
-          break;
-        end;
-      end;
+        lModelFound := False;
 
-      // Create observer by callback
-      if not lViewFound then
-      begin
-        DBLog('start ACreateProc %s', THybridPersistent(AModelList[lModelIndex]).ObjectID);
-        ACreateProc(THybridPersistent(AModelList[lModelIndex]).ObjectID);
-        DBLog('end ACreateProc');
+        for lModelIndex := 0 to Pred(AModelList.Count) do
+        begin
+          if lViewIntf.ObjectID = THybridPersistentModel(AModelList[lModelIndex]).ObjectID then
+          begin
+            lModelFound := True;
+            break;
+          end;
+        end;
+
+        // Delete observer by callback
+        if not lModelFound then
+        begin
+          DBLog('start ADestroyProc %s', lViewIntf.ObjectID);
+          ADestroyProc(lViewIntf.ObjectID);
+          DBLog('end ADestroyProc');
+        end;
       end;
     end;
 
-    // Now look for missing subjects on the model side as to destroy them
-    for lViewIndex := Pred(AViewList.Count) downto 0 do
+  except
+    on e: exception do
     begin
-      lViewIntf := (AViewList[lViewIndex] as IObserver);
-
-
-      lModelFound := False;
-
-      for lModelIndex := 0 to Pred(AModelList.Count) do
-      begin
-        if lViewIntf.ObjectID = THybridPersistentModel(AModelList[lModelIndex]).ObjectID then
-        begin
-          lModelFound := True;
-          break;
-        end;
-      end;
-
-      // Delete observer by callback
-      if not lModelFound then
-      begin
-        DBLog('start ADestroyProc %s', lViewIntf.ObjectID);
-        ADestroyProc(lViewIntf.ObjectID);
-        DBLog('end ADestroyProc');
-      end;
+      DBLog('DiffLists error: ' + e.Message);
     end;
   end;
   DBLog('end DiffLists');

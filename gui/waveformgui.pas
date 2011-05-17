@@ -130,7 +130,7 @@ type
     FReadCount: Integer;
     FSampleFileName: string;
     FTransientThreshold: Integer;
-    FModel: TWaveForm;
+    FModel: TWavePattern;
     FBitmap: TBitmap;
     FCacheIsDirty: Boolean;
     FOldCursorPosition: Integer;
@@ -168,7 +168,7 @@ type
     property SampleFileName: string read FSampleFileName write FSampleFileName;
     property TransientThreshold: Integer read FTransientThreshold write SetTransientThreshold;
     property BarLength: Integer read FBarLength write FBarLength;
-    property Model: TWaveForm read FModel write FModel;
+    property Model: TWavePattern read FModel write FModel;
     property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -325,14 +325,14 @@ begin
   DBLog('start TWaveFormGUI.Update');
 
   DiffLists(
-    TWaveForm(Subject).SliceList,
+    TWavePattern(Subject).SliceList,
     SliceListGUI,
     @CreateMarkerGUI,
     @DeleteMarkerGUI);
 
-  FLoopStart.Update(TWaveForm(Subject).LoopStart);
-  FLoopEnd.Update(TWaveForm(Subject).LoopEnd);
-  FLoopLength.Update(TWaveForm(Subject).LoopLength);
+  FLoopStart.Update(TWavePattern(Subject).LoopStart);
+  FLoopEnd.Update(TWavePattern(Subject).LoopEnd);
+  FLoopLength.Update(TWavePattern(Subject).LoopLength);
 
   Sortslices;
 

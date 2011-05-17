@@ -35,13 +35,13 @@ type
   TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
 
   { Forward declarations }
-  TMidiGrid = class;
+  TMidiPattern = class;
 
   { TMidiCommand }
 
   TMidiCommand = class(TCommand)
   private
-    FMidiGrid: TMidiGrid;
+    FMidiGrid: TMidiPattern;
   protected
     procedure Initialize; override;
   end;
@@ -185,9 +185,9 @@ type
     property Selected: Boolean read FSelected write FSelected;
   end;
 
-  { TMidiGrid }
+  { TMidiPattern }
 
-  TMidiGrid = class(THybridPersistentModel)
+  TMidiPattern = class(THybridPersistentModel)
   private
     // Data
 
@@ -253,7 +253,7 @@ implementation
 
 uses Fx;
 
-constructor TMidiGrid.Create(AObjectOwner: string; AMapped: Boolean = True);
+constructor TMidiPattern.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   DBLog('start TMidiGrid.Create');
 
@@ -276,7 +276,7 @@ begin
   DBLog('end TMidiGrid.Create');
 end;
 
-destructor TMidiGrid.Destroy;
+destructor TMidiPattern.Destroy;
 begin
   if Assigned(FNoteList) then
     FNoteList.Free;
@@ -290,14 +290,14 @@ begin
   inherited Destroy;
 end;
 
-procedure TMidiGrid.Initialize;
+procedure TMidiPattern.Initialize;
 begin
   BeginUpdate;
 
   EndUpdate;
 end;
 
-function TMidiGrid.QuantizeLocation(ALocation: Integer): Integer;
+function TMidiPattern.QuantizeLocation(ALocation: Integer): Integer;
 begin
   DBLog(Format('FQuantizeSetting %d', [FQuantizeSetting]));
   if FQuantizeSetting = 0 then
@@ -312,7 +312,7 @@ begin
   end;
 end;
 
-function TMidiGrid.StartVirtualLocation(ALocation: Integer): TMidiData;
+function TMidiPattern.StartVirtualLocation(ALocation: Integer): TMidiData;
 var
   lIndex: Integer;
 begin
@@ -329,7 +329,7 @@ end;
 {
   Process advances cursor
 }
-procedure TMidiGrid.Process(ABuffer: PSingle; AFrames: Integer);
+procedure TMidiPattern.Process(ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -339,7 +339,7 @@ begin
   end;
 end;
 
-function TMidiGrid.NoteByObjectID(AObjectID: string): TMidiNote;
+function TMidiPattern.NoteByObjectID(AObjectID: string): TMidiNote;
 var
   lIndex: Integer;
 begin
@@ -354,13 +354,13 @@ begin
   end;
 end;
 
-procedure TMidiGrid.SetLoopEnd(const AValue: Longint);
+procedure TMidiPattern.SetLoopEnd(const AValue: Longint);
 begin
   if FLoopEnd = AValue then exit;
   FLoopEnd := AValue;
 end;
 
-procedure TMidiGrid.SetLoopStart(const AValue: Longint);
+procedure TMidiPattern.SetLoopStart(const AValue: Longint);
 begin
   if FLoopStart = AValue then exit;
   FLoopStart := AValue;
@@ -368,12 +368,12 @@ begin
 
 end;
 
-function TMidiGrid.GetEnabled: Boolean;
+function TMidiPattern.GetEnabled: Boolean;
 begin
   Result := (FUpdateCount = 0);
 end;
 
-procedure TMidiGrid.DoCreateInstance(var AObject: TObject; AClassName: string);
+procedure TMidiPattern.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
   lMidiNote: TMidiNote;
 begin
@@ -390,7 +390,7 @@ begin
   DBLog('end TMidiGrid.DoCreateInstance');
 end;
 
-procedure TMidiGrid.Assign(Source: TPersistent);
+procedure TMidiPattern.Assign(Source: TPersistent);
 begin
   inherited Assign(Source);
 end;
@@ -475,7 +475,6 @@ var
 begin
   DBLog('start TDeleteNotesCommand.DoExecute');
 
-  FMidiGrid.Enabled := False;
   FMidiGrid.BeginUpdate;
 
   for i := Pred(FMidiGrid.NoteList.Count) downto 0 do
@@ -512,7 +511,6 @@ begin
   FMidiGrid.MidiDataList.IndexList;
 
   FMidiGrid.EndUpdate;
-  FMidiGrid.Enabled := True;
 
   DBLog('end TDeleteNotesCommand.DoExecute');
 end;
@@ -996,7 +994,7 @@ end;
 
 procedure TMidiCommand.Initialize;
 begin
-  FMidiGrid := TMidiGrid(GObjectMapper.GetModelObject(ObjectOwner));
+  FMidiGrid := TMidiPattern(GObjectMapper.GetModelObject(ObjectOwner));
 end;
 
 initialization

@@ -91,14 +91,14 @@ type
     FModel: TPattern;
 
     // State reference to server
-    FWaveForm: TWaveForm;
-    FMidiGrid: TMidiGrid;
+    FWaveForm: TWavePattern;
+    FMidiGrid: TMidiPattern;
     FSampleBank: TSampleBank;
-    FPluginProcessor: TPluginProcessor;
+    //FPluginProcessor: TPluginProcessor;
 
     FWaveFormGUI: TWaveFormGUI;
     FMidiGridGUI: TMidiGridGUI;
-    FPluginProcessorGUI: TPluginProcessorGUI;
+    //FPluginProcessorGUI: TPluginProcessorGUI;
     FMidigridOverview: TMidigridOverview;
     FSampleBankGUI: TBankView;
 
@@ -132,9 +132,9 @@ type
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property WaveFormGUI: TWaveFormGUI read FWaveFormGUI write FWaveFormGUI;
     property MidiGridGUI: TMidiGridGUI read FMidiGridGUI write FMidiGridGUI;
-    property PluginProcessorGUI: TPluginProcessorGUI read FPluginProcessorGUI write FPluginProcessorGUI;
-    property WaveForm: TWaveForm read FWaveForm write FWaveForm;
-    property MidiGrid: TMidiGrid read FMidiGrid write FMidiGrid;
+    //property PluginProcessorGUI: TPluginProcessorGUI read FPluginProcessorGUI write FPluginProcessorGUI;
+    property WavePattern: TWavePattern read FWaveForm write FWaveForm;
+    property MidiPattern: TMidiPattern read FMidiGrid write FMidiGrid;
     property OkToPlay: Boolean read FOkToPlay write FOkToPlay;
     property Pitch: Single read FPitch write SetPitch default 1;
     property Pitched: Boolean read FPitched write FPitched default False;
@@ -179,7 +179,7 @@ begin
     end;
   end;
 
-  lQuantizeSettingCommand := TQuantizeSettingCommand.Create(MidiGrid.ObjectID);
+  lQuantizeSettingCommand := TQuantizeSettingCommand.Create(MidiPattern.ObjectID);
   try
     lQuantizeSettingCommand.QuantizeSetting := cbQuantize.ItemIndex;
 
@@ -298,7 +298,7 @@ begin
   FMidiGridGUI := TMidiGridGUI.Create(Self);
   FWaveFormGUI := TWaveFormGUI.Create(Self);
   FSampleBankGUI := TBankView.Create(Self);
-  FPluginProcessorGUI := TPluginProcessorGUI.Create(Self);
+  //FPluginProcessorGUI := TPluginProcessorGUI.Create(Self);
   FMidigridOverview := TMidigridOverview.Create(Self);
   FMidigridOverview.ZoomCallback := @FMidiGridGUI.HandleZoom;
 
@@ -343,7 +343,7 @@ begin
   FMidiGridGUI.Free;
   FWaveFormGUI.Free;
   FSampleBankGUI.Free;
-  FPluginProcessorGUI.Free;
+  //FPluginProcessorGUI.Free;
   FMidigridOverview.Free;
 
   inherited Destroy;
@@ -389,7 +389,7 @@ begin
   pnlMidiGrid.Parent := tsMIDI;
   pnlMidiGrid.Align := alClient;
 
-  FMidiGrid := Model.MidiGrid;
+  FMidiGrid := Model.MidiPattern;
   FMidiGrid.Attach(FMidiGridGUI);
   FMidiGridGUI.Model := FMidiGrid;
   FMidiGridGUI.ObjectID := FMidiGrid.ObjectID;
@@ -409,7 +409,7 @@ begin
   FMidigridOverview.Parent := nil;
   FMidigridOverview.Parent := pnlMidigridOverview;
 
-  FWaveForm := Model.WaveForm;
+  FWaveForm := Model.WavePattern;
   FWaveForm.Attach(FWaveFormGUI);
   FWaveFormGUI.Model := FWaveForm;
   FWaveFormGUI.ObjectID := FWaveForm.ObjectID;
@@ -424,7 +424,7 @@ begin
   FWaveFormGUI.Parent := nil;
   FWaveFormGUI.Parent := tsAudio;
 
-  FPluginProcessor := Model.PluginProcessor;
+  {FPluginProcessor := Model.PluginProcessor;
   FPluginProcessor.Attach(FPluginProcessorGUI);
   FPluginProcessorGUI.Model := FPluginProcessor;
   FPluginProcessorGUI.ObjectID := FPluginProcessor.ObjectID;
@@ -437,7 +437,7 @@ begin
   FPluginProcessorGUI.Parent := nil;
   FPluginProcessorGUI.Parent := tsPlugins;
 
-  FPluginProcessor.Notify;
+  FPluginProcessor.Notify;  }
 
   DBLog('end TPatternControls.Connect');
 end;
@@ -458,9 +458,9 @@ begin
   FSampleBankGUI.Parent := nil;
   DBLog(Format('Disconnected samplebank (%s)', [FSampleBankGUI.ObjectID]));
 
-  FPluginProcessor.Detach(FPluginProcessorGUI);
-  FPluginProcessorGUI.Parent := nil;
-  DBLog(Format('Disconnected pluginprocessor (%s)', [FPluginProcessorGUI.ObjectID]));
+  //FPluginProcessor.Detach(FPluginProcessorGUI);
+  //FPluginProcessorGUI.Parent := nil;
+  //DBLog(Format('Disconnected pluginprocessor (%s)', [FPluginProcessorGUI.ObjectID]));
 
   DBLog('end TPatternControls.Disconnect');
 end;

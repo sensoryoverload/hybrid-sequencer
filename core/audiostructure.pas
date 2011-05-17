@@ -117,7 +117,7 @@ type
   private
     FTrack: TObjectList;
     FActive: Boolean;
-    FModelThread: TModelThread;
+    //FModelThread: TModelThread;
 
     FMainSyncCounter: Integer;
     FMainSyncModula: Integer;
@@ -140,7 +140,7 @@ type
     function IndexOfTrack(AObjectID: string): Integer;
 
     property Active: Boolean read FActive write FActive;
-    property ModelThread: TModelThread read FModelThread write FModelThread;
+    //property ModelThread: TModelThread read FModelThread write FModelThread;
     property SelectedBank: TSampleBank read FSelectedBank write SetSelectedBank;
     property OldSelectedBank: TSampleBank read FOldSelectedBank write FOldSelectedBank;
   published
@@ -172,7 +172,7 @@ begin
 
   FSelectedBank := nil;
   FOldSelectedBank := nil;
-//  FModelThread := TModelThread.Create(False);
+  //FModelThread := TModelThread.Create(False);
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
@@ -183,7 +183,7 @@ end;
 
 destructor TAudioStructure.Destroy;
 begin
-//  FModelThread.Terminate;
+  //FModelThread.Terminate;
   FTrack.Free;
 
   inherited Destroy;
@@ -202,7 +202,7 @@ begin
 
   for i := 0 to Pred(Tracks.Count) do
   begin
-    if TWaveFormTrack(Tracks[i]).ObjectID = AObjectID then
+    if TTrack(Tracks[i]).ObjectID = AObjectID then
     begin
       Result := i;
       break;
@@ -227,11 +227,11 @@ end;
 
 procedure TAudioStructure.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
-  lTrack: TWaveFormTrack;
+  lTrack: TTrack;
 begin
   DBLog('start TAudioStructure.DoCreateInstance');
 
-  lTrack := TWaveFormTrack.Create(GAudioStruct.ObjectID, MAPPED);
+  lTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
   lTrack.Selected:= True;
   lTrack.Level:= 0;
 
@@ -256,7 +256,7 @@ begin
   if GCommandQueue.CommandQueue.Count > 0 then
   begin;
     //DBLog('start GCommandQueue.ExecuteCommandQueue');
-//    GCommandQueue.ExecuteCommandQueue;
+    GCommandQueue.ExecuteCommandQueue;
     //DBLog('end GCommandQueue.ExecuteCommandQueue');
   end;
 end;
@@ -282,8 +282,7 @@ end;
 procedure TDeleteTrackCommand.DoExecute;
 var
   i, j: Integer;
-  lMemento: TWaveFormTrack;
-  lModelObject: TWaveFormTrack;
+  lModelObject: TTrack;
 begin
   DBLog('start TDeleteTrackCommand.DoExecute');
 
@@ -294,16 +293,16 @@ begin
   begin
     for j := 0 to Pred(GAudioStruct.Tracks.Count) do
     begin
-      if TWaveFormTrack(GAudioStruct.Tracks[j]).ObjectID = ObjectIdList[i] then
-      begin
-        lModelObject := TWaveFormTrack(GAudioStruct.Tracks[j]);
-        lMemento := TWaveFormTrack.Create(lModelObject.ObjectID, False);
-        lMemento.ObjectID := ObjectIdList[i];
+      lModelObject := TTrack(GAudioStruct.Tracks[j]);
 
-        { Make ASSIGN work! }
-        //lMemento.Assign(TWaveFormTrack(GAudioStruct.Tracks[j]));
-        Memento.Add(lMemento);
-        GAudioStruct.Tracks.Remove(lModelObject);
+      if lModelObject.ObjectID = ObjectIdList[i] then
+      begin
+        // Remove from live objectlist
+        GAudioStruct.Tracks.Extract(lModelObject);
+
+        GObjectMapper.DeleteMapping(lModelObject.ObjectID);
+
+        Memento.Add(lModelObject);
 
         break;
       end;
@@ -317,7 +316,7 @@ end;
 
 procedure TDeleteTrackCommand.DoRollback;
 var
-  lTrack: TWaveFormTrack;
+  lTrack: TTrack;
   i: Integer;
 begin
   DBLog('start TDeleteTrackCommand.DoRollback');
@@ -326,14 +325,10 @@ begin
 
   for i := 0 to Pred(Memento.Count) do
   begin
-    lTrack := TWaveFormTrack.Create(GAudioStruct.ObjectID);
-    lTrack.ObjectID := TWaveFormTrack(Memento[i]).ObjectID;
-
-    { TODO Make Assign work! }
-    //lTrack.Assign(TWaveFormTrack(Memento[i]));
-    GAudioStruct.Tracks.Add(lTrack);
+    lTrack := TTrack(Memento[i]);
 
     GObjectMapper.AddMapping(lTrack);
+    GAudioStruct.Tracks.Add(lTrack);
   end;
 
   FAudioStructure.EndUpdate;
@@ -346,7 +341,7 @@ end;
 
 procedure TCreateTrackCommand.DoExecute;
 var
-  lTrack: TWaveFormTrack;
+  lTrack: TTrack;
   i: Integer;
   lPattern: TPattern;
 begin
@@ -354,7 +349,7 @@ begin
 
   FAudioStructure.BeginUpdate;
 
-  lTrack := TWaveFormTrack.Create(GAudioStruct.ObjectID, MAPPED);
+  lTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
   lTrack.Selected:= True;
   lTrack.Level:= 0;
 
@@ -364,7 +359,7 @@ begin
 
   for i := 0 to Pred(GAudioStruct.Tracks.Count) do
   begin
-    TWaveFormTrack(GAudioStruct.Tracks[i]).Selected := (lTrack = TWaveFormTrack(GAudioStruct.Tracks[i]));
+    TTrack(GAudioStruct.Tracks[i]).Selected := (lTrack = TTrack(GAudioStruct.Tracks[i]));
   end;
 
   // Store action about creating a track
@@ -377,7 +372,7 @@ begin
 
       lPattern := TPattern.Create(lTrack.ObjectID);
       lPattern.PatternName := PatternName;
-      lPattern.WaveForm.SampleFileName := SourceLocation;
+      lPattern.WavePattern.SampleFileName := SourceLocation;
       lPattern.Position := Position;
       lTrack.PatternList.Add(lPattern);
       lTrack.SelectedPattern := lPattern;
@@ -389,8 +384,8 @@ begin
       end;
       lTrack.EndUpdate;
       lPattern.Notify;
-      lPattern.WaveForm.Notify;
-      lPattern.MidiGrid.Notify;
+      lPattern.WavePattern.Notify;
+      lPattern.MidiPattern.Notify;
     end;
     fsMIDI:
     begin

@@ -94,8 +94,8 @@ type
 
 
 
-  { TWaveForm }
-  TWaveForm = class(THybridPersistentModel)
+  { TWavePattern }
+  TWavePattern = class(THybridPersistentModel)
   private
     { Audio }
     FDecimatedData: PSingle;
@@ -197,7 +197,7 @@ type
 
   TWaveFormCommand = class(TCommand)
   private
-    FWaveForm: TWaveForm;
+    FWaveForm: TWavePattern;
   protected
     procedure Initialize; override;
   end;
@@ -308,14 +308,14 @@ begin
     Result := -1;
 end;
 
-procedure TWaveForm.SetTransientThreshold(const AValue: Integer);
+procedure TWavePattern.SetTransientThreshold(const AValue: Integer);
 begin
   FTransientThreshold:= AValue;
   BeatDetect.setThresHold(FTransientThreshold / 100);
 //  AutoMarkerProcess(True);
 end;
 
-procedure TWaveForm.DoCreateInstance(var AObject: TObject; AClassName: string);
+procedure TWavePattern.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
   lMarker: TMarker;
 begin
@@ -332,7 +332,7 @@ begin
   DBLog('end TWaveForm.DoCreateInstance');
 end;
 
-constructor Twaveform.Create(AObjectOwner: string; AMapped: Boolean = True);
+constructor TWavePattern.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   DBLog('start Twaveform.Create');
 
@@ -392,7 +392,7 @@ begin
   DBLog('end Twaveform.Create');
 end;
 
-destructor Twaveform.Destroy;
+destructor TWavePattern.Destroy;
 begin
   if Assigned(FSliceList) then
     FSliceList.Free;
@@ -428,12 +428,12 @@ begin
   inherited Destroy;
 end;
 
-procedure TWaveForm.Assign(Source: TPersistent);
+procedure TWavePattern.Assign(Source: TPersistent);
 begin
   inherited Assign(Source);
 end;
 
-procedure TWaveForm.Initialize;
+procedure TWavePattern.Initialize;
 begin
   BeginUpdate;
 
@@ -445,7 +445,7 @@ begin
   EndUpdate;
 end;
 
-function TWaveForm.LoadSample(AFilename: string): Boolean;
+function TWavePattern.LoadSample(AFilename: string): Boolean;
 var
   lBuffer: PSingle;
   i, j: Integer;
@@ -538,7 +538,7 @@ begin
   DBLog('start TWaveForm.LoadSampleData');
 end;
 
-procedure TWaveForm.UnLoadSample;
+procedure TWavePattern.UnLoadSample;
 var
   lMarkerIndex: Integer;
 begin
@@ -551,7 +551,7 @@ begin
   end;
 end;
 
-function Twaveform.AddSlice(Location,
+function TWavePattern.AddSlice(Location,
   Slicetype: Integer; Active: Boolean; Mode: Integer = 0; Margin: single = 5): TMarker;
 var
   lWaveSlice: TMarker;
@@ -648,7 +648,7 @@ begin
   DBLog('end Twaveform.AddSlice');
 end;
 
-function Twaveform.SliceAt(Location: Integer; Margin: single): TMarker;
+function TWavePattern.SliceAt(Location: Integer; Margin: single): TMarker;
 var
   i: Integer;
   lSlice: TMarker;
@@ -667,7 +667,7 @@ begin
   end;
 end;
 
-function Twaveform.NextSlice: TMarker;
+function TWavePattern.NextSlice: TMarker;
 var
   lMarker: TMarker;
 begin
@@ -684,17 +684,17 @@ begin
     Result := nil;
 end;
 
-function TWaveForm.LastSlice: TMarker;
+function TWavePattern.LastSlice: TMarker;
 begin
   result := TMarker(FSliceList.Last);
 end;
 
-function TWaveForm.FirstSlice: TMarker;
+function TWavePattern.FirstSlice: TMarker;
 begin
   result := TMarker(FSliceList.First);
 end;
 
-procedure Twaveform.Sortslices;
+procedure TWavePattern.Sortslices;
 var
   i: Integer;
 begin
@@ -718,7 +718,7 @@ begin
   RecalculateWarp;
 end;
 
-procedure TWaveForm.RecalculateWarp;
+procedure TWavePattern.RecalculateWarp;
 var
   i: Integer;
 begin
@@ -730,7 +730,7 @@ begin
   end;
 end;
 
-function TWaveForm.GetSliceAt(Location: Integer; AMargin: single): TMarker;
+function TWavePattern.GetSliceAt(Location: Integer; AMargin: single): TMarker;
 var
   i: Integer;
   lSlice: TMarker;
@@ -753,7 +753,7 @@ end;
   ALocation: Location in the timeline
   AFrameData: Structure returned with info about the sampleframe
 }
-procedure TWaveForm.VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData);
+procedure TWavePattern.VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData);
 var
   i: Integer;
   lSliceStart: TMarker;
@@ -781,7 +781,7 @@ end;
   for the method VirtualLocation. This prevents a big loop every sample when there are
   lots of warp markers.
 }
-function TWaveForm.StartVirtualLocation(ALocation: single): Integer;
+function TWavePattern.StartVirtualLocation(ALocation: single): Integer;
 var
   i: Integer;
   lSliceStart: TMarker;
@@ -802,7 +802,7 @@ end;
 
 { TWaveFormScrollBox }
 
-procedure TWaveform.AutoMarkerProcess(ACalculateStatistics: Boolean = True);
+procedure TWavePattern.AutoMarkerProcess(ACalculateStatistics: Boolean = True);
 var
   i: Integer;
   WindowLength: Integer;
@@ -1229,7 +1229,7 @@ end;
 
 procedure TWaveFormCommand.Initialize;
 begin
-  FWaveForm := TWaveForm(GObjectMapper.GetModelObject(ObjectOwner));
+  FWaveForm := TWavePattern(GObjectMapper.GetModelObject(ObjectOwner));
 end;
 
 { TDiskReaderThread }

@@ -29,8 +29,9 @@ uses
   sndfile, Dialogs, bpm, global_command, global, plugin, pluginhost;
 
 type
-  { TWaveFormTrack }
-  TWaveFormTrack = class(THybridPersistentModel)
+  { TTrack }
+
+  TTrack = class(THybridPersistentModel)
   private
     FPatternList: TObjectList;
     FSelectedPattern: TPattern;
@@ -56,7 +57,7 @@ type
     FVolume: Single;
     FVolumeMultiplier: Single;
 
-    FPluginProcessor: TPluginProcessor;
+    //FPluginProcessor: TPluginProcessor;
 
     // Location where track puts its output samples
     // This is then used by the mixing and routing function to serve this data to
@@ -90,7 +91,7 @@ type
     property Recording: Boolean read FRecording write FRecording;
   published
     property PatternList: TObjectList read FPatternList write FPatternList;
-    property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
+    //property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property Level: jack_default_audio_sample_t read FLevel write SetLevel default 0;
     property Selected: Boolean read FSelected write FSelected;
     property Volume: single read GetVolume write SetVolume;
@@ -102,13 +103,13 @@ type
     property DevValue: shortstring read GetDevValue write SetDevValue;
   end;
 
-  PWaveFormTrack = ^TWaveFormTrack;
+  PWaveFormTrack = ^TTrack;
 
   { TTrackCommand }
 
   TTrackCommand = class(TCommand)
   private
-    FTrack: TWaveFormTrack;
+    FTrack: TTrack;
   protected
     procedure Initialize; override;
   end;
@@ -204,7 +205,7 @@ type
     property TrackLevel: Single read FTrackLevel write FTrackLevel;
   end;
 
-  TTracksRefreshEvent = procedure (TrackObject: TWaveFormTrack) of object;
+  TTracksRefreshEvent = procedure (TrackObject: TTrack) of object;
 
 var
   BPMDetect: TBPMDetect;
@@ -215,7 +216,7 @@ implementation
 uses
   audiostructure;
 
-procedure TWaveFormTrack.SetPlaying(const AValue: Boolean);
+procedure TTrack.SetPlaying(const AValue: Boolean);
 begin
   if AValue then
     dec(FBooleanStack)
@@ -223,13 +224,13 @@ begin
     inc(FBooleanStack);
 end;
 
-procedure TWaveFormTrack.SetVolume(const AValue: single);
+procedure TTrack.SetVolume(const AValue: single);
 begin
   FVolume := AValue;
   FVolumeMultiplier := FVolume / 100;
 end;
 
-procedure TWaveFormTrack.DoCreateInstance(var AObject: TObject; AClassName: string);
+procedure TTrack.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
   lPattern: TPattern;
 begin
@@ -248,7 +249,7 @@ begin
   DBLog('end TWaveFormTrack.DoCreateInstance');
 end;
 
-procedure TWaveFormTrack.Initialize;
+procedure TTrack.Initialize;
 var
   lPattern: TPattern;
   i: Integer;
@@ -259,9 +260,9 @@ begin
   begin
     lPattern := TPattern(PatternList[i]);
 
-    if FileExists(lPattern.WaveForm.SampleFileName) and (not lPattern.OkToPlay) then
+    if FileExists(lPattern.WavePattern.SampleFileName) and (not lPattern.OkToPlay) then
     begin
-      lPattern.WaveForm.LoadSample(lPattern.WaveForm.SampleFileName);
+      lPattern.WavePattern.LoadSample(lPattern.WavePattern.SampleFileName);
       lPattern.Initialize;
       lPattern.OkToPlay := True;
       FSelectedPattern := lPattern;
@@ -275,7 +276,7 @@ begin
   DBLog('end TWaveFormTrack.Initialize');
 end;
 
-constructor TWaveFormTrack.Create(AObjectOwner: string; AMapped: Boolean = True);
+constructor TTrack.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   DBLog('start TwaveformTrack.Create');
 
@@ -293,8 +294,8 @@ begin
   FPitched:= False;
   FVolume := 1;
 
-  FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
-  FPluginProcessor.AudioIn.Buffer := FOutputBuffer;
+  //FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
+  //FPluginProcessor.AudioIn.Buffer := FOutputBuffer;
 
   if Assigned(SelectedPattern) then
   begin
@@ -304,12 +305,12 @@ begin
   DBLog('end TwaveformTrack.Create');
 end;
 
-destructor TwaveformTrack.Destroy;
+destructor TTrack.Destroy;
 begin
   DBLog('start TwaveformTrack.Destroy');
 
-  if Assigned(FPluginProcessor) then
-    FPluginProcessor.Free;
+  //if Assigned(FPluginProcessor) then
+  //  FPluginProcessor.Free;
 
   if Assigned(FOutputBuffer) then
     Freemem(FOutputBuffer);
@@ -322,14 +323,14 @@ begin
   DBLog('end TwaveformTrack.Destroy');
 end;
 
-function Twaveformtrack.Clearsample: Boolean;
+function TTrack.Clearsample: Boolean;
 begin
   // Undefined behaviour
 
   Result := False;
 end;
 
-procedure TWaveFormTrack.CreatePattern;
+procedure TTrack.CreatePattern;
 var
   lPattern: TPattern;
 begin
@@ -341,7 +342,7 @@ begin
   FSelectedPattern := lPattern;
 end;
 
-procedure TWaveFormTrack.RemovePattern;
+procedure TTrack.RemovePattern;
 begin
   // Should remove currently selected (not neccessary playing) pattern
   if Assigned(SelectedPattern) then
@@ -354,34 +355,34 @@ begin
   end;
 end;
 
-procedure TWaveFormTrack.Assign(Source: TPersistent);
+procedure TTrack.Assign(Source: TPersistent);
 begin
   inherited Assign(Source);
 end;
 
-procedure TWaveFormTrack.SetLevel(const AValue: jack_default_audio_sample_t);
+procedure TTrack.SetLevel(const AValue: jack_default_audio_sample_t);
 begin
   if FLevel > 2 then FLevel := 2;
   if FLevel < 0 then FLevel := 0;
   FLevel:= AValue;
 end;
 
-function TWaveFormTrack.GetVolume: single;
+function TTrack.GetVolume: single;
 begin
   Result := FVolume;
 end;
 
-function TWaveFormTrack.GetDevValue: shortstring;
+function TTrack.GetDevValue: shortstring;
 begin
   Result := FDevValue;
 end;
 
-procedure TWaveFormTrack.SetDevValue(const AValue: shortstring);
+procedure TTrack.SetDevValue(const AValue: shortstring);
 begin
   FDevValue := AValue;
 end;
 
-function TWaveFormTrack.GetPlaying: Boolean;
+function TTrack.GetPlaying: Boolean;
 begin
   if FBooleanStack <= 0 then
     Result := True
@@ -394,13 +395,13 @@ end;
 procedure TSchedulePatternCommand.DoExecute;
 var
   lPattern: TPattern;
-  lTrack: TWaveFormTrack;
+  lTrack: TTrack;
   lIteratePattern: TPattern;
   i: Integer;
 begin
   // Only one pattern per track can be scheduled
   lPattern := TPattern(GObjectMapper.GetModelObject(ObjectIdList[0]));
-  lTrack := TWaveFormTrack(GObjectMapper.GetModelObject(lPattern.ObjectOwnerID));
+  lTrack := TTrack(GObjectMapper.GetModelObject(lPattern.ObjectOwnerID));
   if Assigned(lTrack) then
   begin
     lTrack.BeginUpdate;
@@ -446,7 +447,7 @@ begin
   begin
     lPattern.PatternName := PatternName;
     lPattern.Position := Position;
-    lPattern.WaveForm.SampleFileName := SourceLocation;
+    lPattern.WavePattern.SampleFileName := SourceLocation;
     lPattern.ObjectOwnerID := ObjectOwner;
 
     FTrack.PatternList.Add(lPattern);
@@ -487,7 +488,7 @@ begin
         FTrack.Playing := False;
         FTrack.PlayingPattern := nil;
         lPattern.OkToPlay := False;
-        lPattern.WaveForm.UnLoadSample;
+        lPattern.WavePattern.UnLoadSample;
       end;
 
       FTrack.PatternList.Remove(FTrack.PatternList[i]);
@@ -619,16 +620,16 @@ end;
 procedure TMovePatternToTrackCommand.DoExecute;
 var
   lPattern: TPattern;
-  lSourceTrack: TWaveFormTrack;
-  lTargetTrack: TWaveFormTrack;
+  lSourceTrack: TTrack;
+  lTargetTrack: TTrack;
 begin
   DBLog('start TMovePatternToTrackCommand.DoExecute');
 
   DBLog(format('lSourceTrack: %s, lTargetTrack: %s, lPattern: %s', [SourceTrackID, TargetTrackID, PatternID]));
 
   // Get source track
-  lSourceTrack := TWaveFormTrack(GObjectMapper.GetModelObject(SourceTrackID));
-  lTargetTrack := TWaveFormTrack(GObjectMapper.GetModelObject(TargetTrackID));
+  lSourceTrack := TTrack(GObjectMapper.GetModelObject(SourceTrackID));
+  lTargetTrack := TTrack(GObjectMapper.GetModelObject(TargetTrackID));
   lPattern := TPattern(GObjectMapper.GetModelObject(PatternID));
 
   if Assigned(lSourceTrack) and Assigned(lTargetTrack) and Assigned(lPattern) then
@@ -652,14 +653,14 @@ end;
 procedure TMovePatternToTrackCommand.DoRollback;
 var
   lPattern: TPattern;
-  lSourceTrack: TWaveFormTrack;
-  lTargetTrack: TWaveFormTrack;
+  lSourceTrack: TTrack;
+  lTargetTrack: TTrack;
 begin
   DBLog('start TMovePatternToTrackCommand.DoRollback');
 
   // Get source track
-  lSourceTrack := TWaveFormTrack(GObjectMapper.GetModelObject(SourceTrackID));
-  lTargetTrack := TWaveFormTrack(GObjectMapper.GetModelObject(TargetTrackID));
+  lSourceTrack := TTrack(GObjectMapper.GetModelObject(SourceTrackID));
+  lTargetTrack := TTrack(GObjectMapper.GetModelObject(TargetTrackID));
   lPattern := TPattern(GObjectMapper.GetModelObject(PatternID));
 
   if Assigned(lSourceTrack) and Assigned(lTargetTrack) and Assigned(lPattern) then
@@ -685,16 +686,16 @@ end;
 
 procedure TTrackCommand.Initialize;
 begin
-  FTrack := TWaveFormTrack(GObjectMapper.GetModelObject(ObjectOwner));
+  FTrack := TTrack(GObjectMapper.GetModelObject(ObjectOwner));
 end;
 
 initialization
-  RegisterClass(TWaveFormTrack);
+  RegisterClass(TTrack);
   BPMDetect := TBPMDetect.Create(1, 44100);
 
 finalization
   BPMDetect.Free;
-  UnRegisterClass(TWaveFormTrack);
+  UnRegisterClass(TTrack);
 
 end.
 

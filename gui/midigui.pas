@@ -127,7 +127,7 @@ type
     FOldQuantizedLocation: Integer;
 
     FZoomingMode: Boolean;
-    FModel: TMidiGrid;
+    FModel: TMidiPattern;
     FBitmap: TBitmap;
     FBitmapIsDirty: Boolean;
 
@@ -184,7 +184,7 @@ type
     property LocationOffset: Integer read FLocationOffset write FLocationOffset;
     property NoteOffset: Integer read FNoteOffset write FNoteOffset;
     property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
-    property Model: TMidiGrid read FModel write FModel;
+    property Model: TMidiPattern read FModel write FModel;
     property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -840,7 +840,7 @@ begin
   DBLog('start TMidiGridGUI.Update');
 
   DiffLists(
-    TMidiGrid(Subject).NoteList,
+    TMidiPattern(Subject).NoteList,
     FNoteListGUI,
     @CreateNoteGUI,
     @DeleteNoteGUI);
@@ -1243,7 +1243,7 @@ begin
   DBLog('start TMidigridOverview.Update');
 
   DiffLists(
-    TMidiGrid(Subject).NoteList,
+    TMidiPattern(Subject).NoteList,
     FNoteListGUI,
     @CreateNoteGUI,
     @DeleteNoteGUI);
