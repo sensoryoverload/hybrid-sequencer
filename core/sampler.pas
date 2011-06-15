@@ -31,6 +31,10 @@ uses
   sndfile, jack, plugin, midiport, samplestreamprovider, filters, baseengine,
   variants;
 
+const
+  DENORMAL_KILLER = 1E-20;
+
+
 type
 
   { TEnvelope }
@@ -46,9 +50,13 @@ type
     // Time in seconds for the level to drop to 0 after NOTE OFF
     FRelease: single;
     // Loop envelope active state (ie LFO'ish)
-    FLoopActive: Boolean;
+    FLoop: Boolean;
+    // Active
+    FActive: Boolean;
+    procedure SetActive(const AValue: Boolean);
     procedure SetAttack(const AValue: single);
     procedure SetDecay(const AValue: single);
+    procedure SetLoop(const AValue: Boolean);
     procedure SetRelease(const AValue: single);
   public
     procedure Initialize; override;
@@ -57,7 +65,8 @@ type
     property Decay: single read FDecay write SetDecay;
     property Sustain: single read FSustain write FSustain;
     property Release: single read FRelease write SetRelease;
-    property LoopActive: Boolean read FLoopActive write FLoopActive;
+    property Loop: Boolean read FLoop write SetLoop;
+    property Active: Boolean read FActive write SetActive;
   end;
 
 var
@@ -83,7 +92,7 @@ type
     procedure SetEnvelope(const AValue: TEnvelope);
   public
     procedure Initialize; override;
-    procedure Process;
+    procedure Process; inline;
     procedure NoteOn;
     procedure NoteOff;
     property Envelope: TEnvelope read FEnvelope write SetEnvelope;
@@ -145,7 +154,7 @@ type
     FEnvelopeFollower: TEnvelopeFollower;
     procedure SetEnvelopeFollower(const AValue: TEnvelopeFollower);
   public
-    function Process(const I : Single):Single;
+    function Process(const I : Single):Single; inline;
     procedure Initialize; override;
     property EnvelopeFollower: TEnvelopeFollower read FEnvelopeFollower write SetEnvelopeFollower;
   end;
@@ -175,7 +184,7 @@ type
     FAmplifier: TAmplifier;
     procedure SetAmplifier(const AValue: TAmplifier);
   public
-    function Process(const I : Single):Single;
+    function Process(const I : Single):Single; inline;
     procedure Initialize; override;
     property Amplifier: TAmplifier read FAmplifier write SetAmplifier;
   end;
@@ -198,6 +207,8 @@ type
     FModSource: TModSource;
     FModAmount: Single;
     FLevel: Single;
+    FActive: Boolean;
+    procedure SetActive(const AValue: Boolean);
     procedure SetLevel(const AValue: Single);
     procedure SetModAmount(const AValue: Single);
     procedure SetModSource(const AValue: TModSource);
@@ -213,6 +224,7 @@ type
     property ModSource: TModSource read FModSource write SetModSource;
     property ModAmount: Single read FModAmount write SetModAmount;
     property Level: Single read FLevel write SetLevel;
+    property Active: Boolean read FActive write SetActive;
   end;
 
   { TOscillatorEngine }
@@ -233,7 +245,7 @@ type
   public
     // increments the phase and outputs the new LFO value.
     // return the new LFO value between [-1;+1]
-    function Process:Single;
+    function Process:Single; inline;
     procedure Initialize; override;
     procedure Sync;
     property Rate: single read FRate write SetRate;
@@ -1039,7 +1051,7 @@ begin
   Initialize;
 end;
 
-function TOscillatorEngine.Process: Single;
+function TOscillatorEngine.Process: Single; inline;
 var
   i: integer;
   frac: Single;
@@ -1078,7 +1090,7 @@ begin
   for i:=0 to 63 do
   begin
     FTable[sinus, i] := i / 64;
-    FTable[sinus, i+64] :=(64-i) / 64;
+    FTable[sinus, i+64] := (64-i) / 64;
     FTable[sinus, i+128] := - i / 64;
     FTable[sinus, i+192] := - (64-i) / 64;
   end;
@@ -1086,22 +1098,22 @@ begin
 
   for i:=0 to 255 do
   begin
-    FTable[sawtooth, i] := 2*(i/255) - 1;
+    FTable[sawtooth, i] := 2 * (i / 255) - 1;
   end;
   FTable[sawtooth, 256] := -1;
 
   for i := 0 to 127 do
   begin
     FTable[square, i]     :=  1;
-    FTable[square, i+128] := -1;
+    FTable[square, i + 128] := -1;
   end;
   FTable[square, 256] := 1;
 
   // symetric exponent similar to triangle
   for i:=0 to 127 do
   begin
-    FTable[exponent, i] := 2 * ((exp(i/128) - 1) / (exp(1) - 1)) - 1  ;
-    FTable[exponent, i+128] := 2 * ((exp((128-i)/128) - 1) / (exp(1) - 1)) - 1  ;
+    FTable[exponent, i] := 2 * ((exp(i / 128) - 1) / (exp(1) - 1)) - 1  ;
+    FTable[exponent, i + 128] := 2 * ((exp((128 - i) / 128) - 1) / (exp(1) - 1)) - 1  ;
   end;
   FTable[exponent, 256] := -1;
 end;
@@ -1154,6 +1166,12 @@ begin
   FLevel := AValue;
 end;
 
+procedure TOscillator.SetActive(const AValue: Boolean);
+begin
+  if FActive = AValue then exit;
+  FActive := AValue;
+end;
+
 procedure TOscillator.SetWaveForm(const Value: TOscWaveForm);
 var
   i: integer;
@@ -1171,6 +1189,7 @@ begin
   FPitch := 1000;
   FModAmount := 0;
   FLevel := 0.3;
+  FActive := True;
 
   Notify;
 end;
@@ -1185,7 +1204,7 @@ begin
   Initialize;
 end;
 
-function TAmplifierEngine.Process(const I: Single): Single;
+function TAmplifierEngine.Process(const I: Single): Single; inline;
 begin
   Result := I;
 end;
@@ -1219,7 +1238,7 @@ begin
   Initialize;
 end;
 
-function TEnvelopeFollowerEngine.Process(const I: Single): Single;
+function TEnvelopeFollowerEngine.Process(const I: Single): Single; inline;
 begin
   // get your data into 'input'
   FEnvIn := abs(I);
@@ -1285,7 +1304,7 @@ begin
   FState := esStart;
 end;
 
-procedure TEnvelopeEngine.Process;
+procedure TEnvelopeEngine.Process; inline;
 begin
   case FState of
   esStart:
@@ -1666,6 +1685,12 @@ begin
   end;
 end;
 
+procedure TEnvelope.SetActive(const AValue: Boolean);
+begin
+  if FActive = AValue then exit;
+  FActive := AValue;
+end;
+
 procedure TEnvelope.SetDecay(const AValue: single);
 begin
   if FDecay = AValue then exit;
@@ -1676,6 +1701,12 @@ begin
   begin
     FDecay := 0.01;
   end;
+end;
+
+procedure TEnvelope.SetLoop(const AValue: Boolean);
+begin
+  if FLoop = AValue then exit;
+  FLoop := AValue;
 end;
 
 procedure TEnvelope.SetRelease(const AValue: single);
@@ -1696,6 +1727,8 @@ begin
   Decay := 0.3;
   Sustain := 0.1;
   Release := 1.5;
+
+  Active := True;
 
   Notify;
 end;
@@ -1946,12 +1979,20 @@ begin
     end;
   end;
 
-  // Global level TODO could be done in SampleVoiceEngine.process?
-  for lBufferIndex := 0 to Pred(Frames) do
+  if FSample.GlobalLevel > DENORMAL_KILLER then
   begin
-    ABuffer[lBufferIndex] := ABuffer[lBufferIndex] * FSample.GlobalLevel;
+    for lBufferIndex := 0 to Pred(Frames) do
+    begin
+      ABuffer[lBufferIndex] := ABuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
+    end;
+  end
+  else
+  begin
+    for lBufferIndex := 0 to Pred(Frames) do
+    begin
+      ABuffer[lBufferIndex] := 0;
+    end;
   end;
-
 end;
 
 { TSampleVoice - Initializes the voice with the newly assigned TSample }
@@ -2045,6 +2086,7 @@ var
   lSample, lSampleA, lSampleB, lSampleC: single;
   lChannel: TChannel;
 begin
+  try
   if Assigned(FSample.Wave.ChannelList) then
   begin
     if FSample.Wave.ChannelCount > 0 then
@@ -2085,12 +2127,21 @@ begin
           begin
 
             // Waveform input in Envelope follower
-            FEnvelopeFollower.Process(FInternalBuffer[i]);
+//            FEnvelopeFollower.Process(FInternalBuffer[i]);
 
             // LFO's
-            FLFO1Engine.Process;
-            FLFO2Engine.Process;
-            FLFO3Engine.Process;
+            if FLFO1Engine.Oscillator.Active and (FLFO1Engine.Oscillator.Level > DENORMAL_KILLER) then
+            begin
+              FLFO1Engine.Process;
+            end;
+            if FLFO2Engine.Oscillator.Active and (FLFO2Engine.Oscillator.Level > DENORMAL_KILLER) then
+            begin
+              FLFO2Engine.Process;
+            end;
+            if FLFO3Engine.Oscillator.Active and (FLFO3Engine.Oscillator.Level > DENORMAL_KILLER) then
+            begin
+              FLFO3Engine.Process;
+            end;
 
             // ADSR Pitch
             FPitchEnvelopeEngine.Process;
@@ -2099,23 +2150,55 @@ begin
             // Pitch
 
             // Oscillatorbank
-            lSampleA := FOsc1Engine.Process * FOsc1Engine.Oscillator.Level;
-            lSampleB := FOsc2Engine.Process * FOsc2Engine.Oscillator.Level;
-            lSampleC := FOsc3Engine.Process * FOsc3Engine.Oscillator.Level;
+            if FOsc1Engine.Oscillator.Active and (FOsc1Engine.Oscillator.Level > DENORMAL_KILLER) then
+            begin
+              lSampleA := FOsc1Engine.Process * log_approx(FOsc1Engine.Oscillator.Level);
+            end
+            else
+            begin
+              lSampleA := DENORMAL_KILLER;
+            end;
+            if FOsc2Engine.Oscillator.Active and (FOsc2Engine.Oscillator.Level > DENORMAL_KILLER) then
+            begin
+              lSampleB := FOsc2Engine.Process * log_approx(FOsc2Engine.Oscillator.Level);
+            end
+            else
+            begin
+              lSampleB := DENORMAL_KILLER;
+            end;
+            if FOsc3Engine.Oscillator.Active and (FOsc3Engine.Oscillator.Level > DENORMAL_KILLER) then
+            begin
+              lSampleC := FOsc3Engine.Process * log_approx(FOsc3Engine.Oscillator.Level);
+            end
+            else
+            begin
+              lSampleC := DENORMAL_KILLER;
+            end;
             {lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
             lSample := lSample  + lSampleC - (lSample  * lSampleC);}
-            lSample := lSampleA + lSampleB + lSampleC;
+
+            lSample := lSample + lSampleA + lSampleB + lSampleC;
 
             // ADSR Filter
             FFilterEnvelopeEngine.Process;
 
             // Filter
-            FFilterEngine.Frequency := FFilterEngine.Filter.Frequency{ * (FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
-            FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
-            lSample := FFilterEngine.Process(lSample);
+            if FFilterEngine.Filter.Active then
+            begin
+              FFilterEngine.Frequency := FFilterEngine.Filter.Frequency{ * (FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
+              FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
+              lSample := FFilterEngine.Process(lSample);
+            end;
 
             // Amplifier
-            lSample := lSample * FAmpEnvelopeEngine.Level;
+            if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
+            begin
+              lSample := lSample * log_approx(FAmpEnvelopeEngine.Level);
+            end
+            else
+            begin
+              lSample := DENORMAL_KILLER;
+            end;
 
             // FX
           end;
@@ -2132,14 +2215,13 @@ begin
           FLength := FLength - GAudioStruct.BPMAdder;
         end;
 
-{        GLogger.PushMessage(Format('FFilter %f, FFilter.Filter.Frequency %f, FFilterEngine.Modifier %f, FLFO1Engine %f',
-        [FFilterEngine.Frequency, FFilterEngine.Filter.Frequency, FFilterEngine.Modifier^,
-        FLFO1Engine.Level]));}
-
         // Next iteration, start from the beginning
         FNoteOnOffset := 0;
       end;
     end;
+  end;
+
+  finally
   end;
 end;
 

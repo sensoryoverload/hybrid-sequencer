@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, ExtCtrls, globalconst,
   dialcontrol, utils, contnrs, LCLType, Controls, Graphics, StdCtrls, ComCtrls,
-  sampler, global_command;
+  Spin, sampler, global_command;
 
 type
 
@@ -79,6 +79,9 @@ type
     dcLFO2Rate: TDialControl;
     dcLFO3Rate: TDialControl;
     gbLFO: TGroupBox;
+    lblBaseNote: TLabel;
+    lblLowNote: TLabel;
+    lblHighNote: TLabel;
     lblOSC2ModAmount1: TLabel;
     lblLFO1: TLabel;
     lblLFO2: TLabel;
@@ -99,6 +102,9 @@ type
     lblOSC2ModAmount: TLabel;
     lblOSC3: TLabel;
     lblOSC3ModAmount: TLabel;
+    spnBaseNote: TSpinEdit;
+    spnLowNote: TSpinEdit;
+    spnHighNote: TSpinEdit;
     procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);

@@ -468,11 +468,15 @@ begin
     GAudioStruct.Tracks.Remove(GAudioStruct.Tracks[i]);
   end;
   ReadXMLFile(xDoc, 'teste.xml');
-  RootNode := xDoc.DocumentElement.FirstChild;
-  if RootNode <> nil then
-  begin
-    GAudioStruct.LoadFromXML(RootNode);
-    GAudioStruct.RecurseNotify(GAudioStruct);
+  try
+    RootNode := xDoc.DocumentElement.FirstChild;
+    if RootNode <> nil then
+    begin
+      GAudioStruct.LoadFromXML(RootNode);
+      GAudioStruct.RecurseNotify(GAudioStruct);
+    end;
+  finally
+    xdoc.Free;
   end;
 
   FAudioStructure.EndUpdate;

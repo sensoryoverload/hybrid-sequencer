@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, LCLIntf, LMessages, Controls, Forms, jacktypes, ContNrs,
-  typinfo, Sqlite3DS, db, variants, Laz_XMLStreaming, DOM, XMLWrite;
+  typinfo, variants, Laz_XMLStreaming, DOM, XMLWrite, XMLRead;
 
 const
   MAX_LATENCY = 20000;
@@ -152,7 +152,7 @@ type
     procedure Assign(Source: TPersistent); override;
     property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
-  published
+  //published
     property ObjectID: string read GetObjectID write SetObjectID;
     property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
   end;
@@ -166,6 +166,7 @@ type
   protected
     FObservers: TInterfaceList;
     FUpdateCount: Integer;
+    FClassType: string;
     FOnCreateInstanceCallback: TCreateInstanceCallback;
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
@@ -179,9 +180,13 @@ type
     procedure Initialize; virtual; abstract;
     procedure Assign(Source: TPersistent); override;
     procedure SaveToXML(pVisitor: THybridPersistentModel; ALevel: Integer; AXMLNode: TDOMNode);
+    procedure SaveToFile(AXMLFileName: string);
     procedure LoadFromXML(AXMLNode: TDOMNode);
+    procedure LoadFromFile(AXMLFileName: string);
     procedure RecurseNotify(pVisitor: THybridPersistentModel);
     property OnCreateInstanceCallback: TCreateInstanceCallback read FOnCreateInstanceCallback write FOnCreateInstanceCallback;
+  published
+    property ClassType: string read FClassType;
   end;
 
   { THybridPersistentView }
@@ -390,7 +395,7 @@ type
 
 procedure ChangeControlStyle(AControl: TControl; const AInclude: TControlStyle; const AExclude: TControlStyle = []; Recursive: Boolean = True);
 procedure DiffLists(AModelList, AViewList: TObjectList; ACreateProc, ADestroyProc: TDiffCallback);
-
+function PeekFileType(AFileName: string): string;
 
 implementation
 
@@ -478,6 +483,38 @@ begin
     end;
   end;
   DBLog('end DiffLists');
+end;
+
+function PeekFileType(AFileName: string): string;
+var
+  i: Integer;
+  xdoc: TXMLDocument;
+  RootNode: TDOMNode;
+  lProperties: TDOMNode;
+begin
+  Result := '';
+
+  ReadXMLFile(xDoc, AFileName);
+  try
+    RootNode := xDoc.DocumentElement.FirstChild;
+    if RootNode <> nil then
+    begin
+      lProperties := RootNode.FirstChild;
+      while Assigned(lProperties) do
+      begin
+        if SameText(lProperties.NodeName, 'CLASSTYPE') then
+        begin
+          Result := lProperties.NodeValue;
+          Break;
+        end;
+
+        lProperties := lProperties.NextSibling;
+      end;
+    end;
+
+  finally
+    xDoc.Free;
+  end;
 end;
 
 procedure CopyObjectToObject(Source, Dest: TObject);
@@ -625,6 +662,8 @@ var
   lGUID: TGuid;
 begin
   inherited Create(AObjectOwner);
+
+  FClassType := ClassName;
 
   if AMapped then
   begin
@@ -848,6 +887,28 @@ begin
   DBLog('end THybridPersistentModel.LoadFromXML ' + ClassName);
 end;
 
+procedure THybridPersistentModel.LoadFromFile(AXMLFileName: string);
+var
+  xdoc: TXMLDocument;
+  RootNode: TDOMNode;
+begin
+  BeginUpdate;
+
+  ReadXMLFile(xDoc, AXMLFileName);
+  try
+    RootNode := xDoc.DocumentElement.FirstChild;
+    if RootNode <> nil then
+    begin
+      LoadFromXML(RootNode);
+      RecurseNotify(Self);
+    end;
+  finally
+    xdoc.Free;
+  end;
+
+  EndUpdate;
+end;
+
 procedure THybridPersistentModel.SaveToXML(pVisitor: THybridPersistentModel; ALevel: Integer; AXMLNode: TDOMNode);
 var
   lPropXMLNode: TDOMNode;
@@ -897,8 +958,8 @@ begin
               lPropXMLNode := AXMLNode.OwnerDocument.CreateElement(PropName);
               TDOMElement(lPropXMLNode).SetAttribute('DataType', THybridPersistentModel(lObjectList[j]).ClassName);
               TDOMElement(lPropXMLNode).SetAttribute('Kind', 'Iterate');
-              TDOMElement(lPropXMLNode).SetAttribute('ObjectOwnerID', THybridPersistentModel(lObjectList[j]).ObjectOwnerID);
-              TDOMElement(lPropXMLNode).SetAttribute('ObjectID', THybridPersistentModel(lObjectList[j]).ObjectID);
+              {TDOMElement(lPropXMLNode).SetAttribute('ObjectOwnerID', THybridPersistentModel(lObjectList[j]).ObjectOwnerID);
+              TDOMElement(lPropXMLNode).SetAttribute('ObjectID', THybridPersistentModel(lObjectList[j]).ObjectID);}
 
               THybridPersistentModel(lObjectList[j]).SaveToXML(pVisitor, ALevel, lPropXMLNode);
               AXMLNode.Appendchild(lPropXMLNode);
@@ -910,8 +971,8 @@ begin
           lPropXMLNode := AXMLNode.OwnerDocument.CreateElement(PropName);
           TDOMElement(lPropXMLNode).SetAttribute('DataType', THybridPersistentModel(lVisited).ClassName);
           TDOMElement(lPropXMLNode).SetAttribute('Kind', 'Recurse');
-          TDOMElement(lPropXMLNode).SetAttribute('ObjectOwnerID', THybridPersistentModel(lVisited).ObjectOwnerID);
-          TDOMElement(lPropXMLNode).SetAttribute('ObjectID', THybridPersistentModel(lVisited).ObjectID);
+          {TDOMElement(lPropXMLNode).SetAttribute('ObjectOwnerID', THybridPersistentModel(lVisited).ObjectOwnerID);
+          TDOMElement(lPropXMLNode).SetAttribute('ObjectID', THybridPersistentModel(lVisited).ObjectID);}
 
           THybridPersistentModel(lVisited).SaveToXML(pVisitor, ALevel, lPropXMLNode);
           AXMLNode.Appendchild(lPropXMLNode);
@@ -927,6 +988,36 @@ begin
       AXMLNode.Appendchild(lPropXMLNode);
     end;
   end;
+end;
+
+procedure THybridPersistentModel.SaveToFile(AXMLFileName: string);
+var
+  xdoc: TXMLDocument;
+  RootNode: TDOMNode;
+begin
+  BeginUpdate;
+
+  //create a document
+  xdoc := TXMLDocument.create;
+
+  //create a root node
+  RootNode := xdoc.CreateElement('root');
+  Xdoc.Appendchild(RootNode);
+
+  //create a Self node
+  RootNode:= xdoc.DocumentElement;
+
+  // pass xmldocument to iterate function
+  // pass mode to iterate (Store,Retrieve) ie. Save to xml or load from xml
+  // load from xml should create instance of property objects
+  SaveToXML(Self, 0, RootNode);
+
+  // write to XML
+  writeXMLFile(xDoc, AXMLFileName);
+  // free memory
+  Xdoc.free;
+
+  EndUpdate;
 end;
 
 procedure THybridPersistentModel.RecurseNotify(pVisitor: THybridPersistentModel);

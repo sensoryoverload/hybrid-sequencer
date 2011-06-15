@@ -65,6 +65,8 @@ type
     FResoModSource: TModSource;
     FResoModAMount: Single;
     FFilterType: TEnumFilterTypes;
+    FActive: Boolean;
+    procedure SetActive(const AValue: Boolean);
     procedure SetFilterType(const AValue: TEnumFilterTypes);
   protected
   public
@@ -78,6 +80,7 @@ type
     property ResoModSource: TModSource read FResoModSource write FResoModSource;
     property ResoModAmount: single read FResoModAmount write FResoModAmount;
     property FilterType: TEnumFilterTypes read FFilterType write SetFilterType;
+    property Active: Boolean read FActive write SetActive;
   end;
 
 
@@ -205,7 +208,7 @@ begin
   y4:= y3 * p + oldy3 * p - k * y4;
   y4 := y4 - ((y4 * y4 * y4) * divby6);
   oldx := x;
-  oldy1 := y1 +_kd; // _kd not initialized
+  oldy1 := y1 +_kd;
   oldy2 := y2 +_kd;
   oldy3 := y3 +_kd;
   Result := y4;
@@ -215,6 +218,12 @@ procedure TFilter.SetFilterType(const AValue: TEnumFilterTypes);
 begin
   if FFilterType = AValue then exit;
   FFilterType := AValue;
+end;
+
+procedure TFilter.SetActive(const AValue: Boolean);
+begin
+  if FActive = AValue then exit;
+  FActive := AValue;
 end;
 
 constructor TFilter.Create(AObjectOwner: string; AMapped: Boolean = True);
@@ -227,6 +236,8 @@ end;
 
 procedure TFilter.Initialize;
 begin
+  Active := True;
+
   Notify;
 end;
 

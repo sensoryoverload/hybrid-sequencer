@@ -7,8 +7,8 @@ object SamplerGUI: TSamplerGUI
   ClientHeight = 225
   ClientWidth = 1162
   TabOrder = 0
-  DesignLeft = 58
-  DesignTop = 470
+  DesignLeft = 155
+  DesignTop = 475
   object gbStructure: TGroupBox
     Left = 0
     Height = 225

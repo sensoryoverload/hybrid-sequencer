@@ -436,6 +436,7 @@ end;
 procedure TCreatePatternCommand.DoExecute;
 var
   lPattern: TPattern;
+  lSourceType: string;
 begin
   DBLog('start TCreatePatternCommand.DoExecute');
 
@@ -445,14 +446,23 @@ begin
   lPattern := TPattern.Create(ObjectOwner, MAPPED);
   if Assigned(lPattern) then
   begin
-    lPattern.PatternName := PatternName;
+    lSourceType := PeekFileType(SourceLocation);
+    if SameText(lSourceType, 'TPATTERN') then
+    begin
+      lPattern.LoadFromFile(SourceLocation);
+    end
+    else if SameText(lSourceType, '') then
+    begin
+      lPattern.WavePattern.SampleFileName := SourceLocation;
+      lPattern.PatternName := PatternName;
+    end;
+
     lPattern.Position := Position;
-    lPattern.WavePattern.SampleFileName := SourceLocation;
     lPattern.ObjectOwnerID := ObjectOwner;
 
     FTrack.PatternList.Add(lPattern);
 
-    FOldObjectID :=lPattern.ObjectID;
+    FOldObjectID := lPattern.ObjectID;
 
     FTrack.SelectedPattern := lPattern;
 

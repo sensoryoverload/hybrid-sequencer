@@ -1,11 +1,11 @@
 object MainApp: TMainApp
   Left = 177
   Height = 679
-  Top = 81
+  Top = 86
   Width = 1095
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 679
+  ClientHeight = 660
   ClientWidth = 1095
   Font.Height = 7
   KeyPreview = True
@@ -78,6 +78,8 @@ object MainApp: TMainApp
           OnChange = TreeView1Change
           OnCollapsed = TreeView1Collapsed
           OnDeletion = TreeView1Deletion
+          OnDragDrop = TreeView1DragDrop
+          OnDragOver = TreeView1DragOver
           OnExpanding = TreeView1Expanding
           OnMouseDown = TreeView1MouseDown
           Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips]
@@ -218,8 +220,8 @@ object MainApp: TMainApp
           Left = 197
           Height = 26
           Top = 11
-          Width = 47
-          Caption = 'btnDeleteTrack'
+          Width = 49
+          Caption = 'Delete Track'
           OnClick = btnDeleteTrackClick
           TabOrder = 2
         end
@@ -245,12 +247,12 @@ object MainApp: TMainApp
   end
   object pcPattern: TPageControl
     Left = 0
-    Height = 330
+    Height = 311
     Top = 349
     Width = 1095
-    ActivePage = tsMonitor
+    ActivePage = tsPattern
     Align = alClient
-    TabIndex = 2
+    TabIndex = 1
     TabOrder = 2
     TabPosition = tpLeft
     object tsTrack: TTabSheet
@@ -261,11 +263,11 @@ object MainApp: TMainApp
     end
     object tsMonitor: TTabSheet
       Caption = 'Monitor'
-      ClientHeight = 324
-      ClientWidth = 1042
+      ClientHeight = 305
+      ClientWidth = 1041
       object Splitter5: TSplitter
         Left = 0
-        Height = 324
+        Height = 326
         Top = 0
         Width = 5
       end
@@ -298,6 +300,13 @@ object MainApp: TMainApp
       object SaveTrack: TMenuItem
         Caption = 'Track'
         OnClick = SaveTrackClick
+      end
+      object SavePattern: TMenuItem
+        Caption = 'New Item13'
+        OnClick = SavePatternClick
+      end
+      object MenuItem3: TMenuItem
+        Caption = 'New Item14'
       end
     end
     object LoadMenu: TMenuItem
@@ -991,5 +1000,9 @@ object MainApp: TMainApp
     OnTimer = ScreenUpdaterTimer
     left = 320
     top = 64
+  end
+  object SaveDialog1: TSaveDialog
+    left = 411
+    top = 200
   end
 end

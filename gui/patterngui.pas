@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, Controls, waveform, waveformgui, midi, midigui, graphics,
   track, LCLType, globalconst, global_command, global, pattern, ComCtrls, patterngui2,
-  imglist, LCLintf;
+  imglist, LCLintf, Menus;
 
 type
 
@@ -164,6 +164,7 @@ begin
 
   OnEndDrag := @DoEndDrag;
 
+
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 end;
 
@@ -259,37 +260,42 @@ begin
   if Button = mbLeft then
   begin
     Self.BeginDrag(False, 5);
-  end;
 
-  // TODO Playing pattern should be scheduler
-  if (X - Self.Left) < 15 then
-  begin
-    Scheduled := True;
-    writeln('SCHEDULE');
-    lSchedulePattern := TSchedulePatternCommand.Create(ObjectID);
-    try
-      lSchedulePattern.ObjectIdList.Add(Self.ObjectID);
-      lSchedulePattern.TrackID := Self.ObjectOwnerID;
-      lSchedulePattern.Persist := False;
-      GCommandQueue.PushCommand(lSchedulePattern);
-    except
-      on e:exception do
-      begin
-        DBLog('Internal error: ' + e.message);
-        lSchedulePattern.Free;
+    // TODO Playing pattern should be scheduler
+    if (X - Self.Left) < 15 then
+    begin
+      Scheduled := True;
+      writeln('SCHEDULE');
+      lSchedulePattern := TSchedulePatternCommand.Create(ObjectID);
+      try
+        lSchedulePattern.ObjectIdList.Add(Self.ObjectID);
+        lSchedulePattern.TrackID := Self.ObjectOwnerID;
+        lSchedulePattern.Persist := False;
+        GCommandQueue.PushCommand(lSchedulePattern);
+      except
+        on e:exception do
+        begin
+          DBLog('Internal error: ' + e.message);
+          lSchedulePattern.Free;
+        end;
       end;
+    end
+    else
+    begin
+      Selected := True;
     end;
+
+    GSettings.SelectedPatternGUI := Self;
+
+    FCacheIsDirty := True;
+
+    DoTrackRefreshGUI;
   end
-  else
+  else if Button = mbRight then
   begin
-    Selected := True;
+    //
   end;
 
-  GSettings.SelectedPatternGUI := Self;
-
-  FCacheIsDirty := True;
-
-  DoTrackRefreshGUI;
 
   inherited MouseDown(Button, Shift, X, Y);
 end;

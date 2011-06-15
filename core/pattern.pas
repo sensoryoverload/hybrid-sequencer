@@ -49,13 +49,11 @@ type
     FScheduled: Boolean;
     FPatternLength: Longint;
     FPatternName: string;
+    FFileName: string; // The name of the xml file
     {FPluginProcessor: TPluginProcessor;
     FFilter: TDecimateFX;
     FFilter2: TMoogFilter;}
 
-    // Private sampler, not a plugin so it's more thightly integrated
-    FSampleBank: TSampleBank;
-    FSampleBankEngine: TSampleBankEngine;
 
     FSample: TSample;
 
@@ -73,13 +71,11 @@ type
     procedure RecalculateSynchronize;
     procedure Initialize; override;
 
-    property SampleBankEngine: TSampleBankEngine read FSampleBankEngine write FSampleBankEngine;
     property PatternColor: TColor read FPatternColor write SetPatternColor;
 
   published
     property WavePattern: TWavePattern read FWavePattern write FWavePattern;
     property MidiPattern: TMidiPattern read FMidiPattern write FMidiPattern;
-    property SampleBank: TSampleBank read FSampleBank write FSampleBank;
     //property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property Position: Integer read FPosition write SetPosition;
@@ -93,6 +89,7 @@ type
     property Scheduled: Boolean read FScheduled write FScheduled default False;
     property PatternLength: Longint read FPatternLength write FPatternLength;
     property PatternName: string read FPatternName write FPatternName;
+    property FileName: string read FFileName write FFileName;
   end;
 
   { TPatternCommand }
@@ -199,10 +196,106 @@ type
     property AlgoType: Boolean read FAlgoType write FAlgoType;
   end;
 
+  { TLoadPatternCommand }
+
+  TLoadPatternCommand = class(TPatternCommand)
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+  end;
+
+  { TSavePatternCommand }
+
+  TSavePatternCommand = class(TPatternCommand)
+  private
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+  end;
+
 implementation
 
 uses
-  utils;
+  utils, DOM, XMLWrite, XMLRead;
+
+{ TSavePatternCommand }
+
+procedure TSavePatternCommand.DoExecute;
+var
+  xdoc: TXMLDocument;
+  RootNode: TDOMNode;
+begin
+  FPattern.BeginUpdate;
+
+  //create a document
+  xdoc := TXMLDocument.create;
+
+  //create a root node
+  RootNode := xdoc.CreateElement('root');
+  Xdoc.Appendchild(RootNode);
+
+  //create a pattern node
+  RootNode:= xdoc.DocumentElement;
+
+  // pass xmldocument to iterate function
+  // pass mode to iterate (Store,Retrieve) ie. Save to xml or load from xml
+  // load from xml should create instance of property objects
+  FPattern.SaveToXML(FPattern, 0, RootNode);
+
+  // write to XML
+  writeXMLFile(xDoc, FPattern.FileName);
+
+  // free memory
+  Xdoc.free;
+
+  FPattern.EndUpdate;
+end;
+
+procedure TSavePatternCommand.DoRollback;
+begin
+  inherited DoRollback;
+end;
+
+{ TLoadPatternCommand }
+
+procedure TLoadPatternCommand.DoExecute;
+var
+  i: Integer;
+  xdoc: TXMLDocument;
+  RootNode: TDOMNode;
+begin
+  FPattern.BeginUpdate;
+
+  { TODO
+    erase current pattern
+  }
+
+  ReadXMLFile(xDoc, FPattern.FileName);
+  RootNode := xDoc.DocumentElement.FirstChild;
+  if RootNode <> nil then
+  begin
+    FPattern.LoadFromXML(RootNode);
+    FPattern.RecurseNotify(FPattern);
+  end;
+
+  FPattern.EndUpdate;
+end;
+
+procedure TLoadPatternCommand.DoRollback;
+var
+  i: Integer;
+begin
+  FPattern.BeginUpdate;
+
+  {for i := Pred(GAudioStruct.Tracks.Count) downto 0 do
+  begin
+    GAudioStruct.Tracks.Remove(GAudioStruct.Tracks[i]);
+  end; }
+
+  FPattern.EndUpdate;
+end;
 
 { TPattern }
 

@@ -209,6 +209,10 @@ type
 
     FMidiBuffer: TMidiBuffer;
 
+    // Private sampler, not a plugin so it's more thightly integrated
+    FSampleBank: TSampleBank;
+    FSampleBankEngine: TSampleBankEngine;
+
     function GetEnabled: Boolean;
     function NoteByObjectID(AObjectID: string): TMidiNote;
     procedure SetLoopEnd(const AValue: Longint);
@@ -235,7 +239,9 @@ type
       Engine
     }
     property MidiBuffer: TMidiBuffer read FMidiBuffer write FMidiBuffer;
+    property SampleBankEngine: TSampleBankEngine read FSampleBankEngine write FSampleBankEngine;
   published
+    property SampleBank: TSampleBank read FSampleBank write FSampleBank;
     property NoteList: TObjectList read FNoteList write FNoteList;
     property LoopStart: Longint read FLoopStart write SetLoopStart;
     property LoopEnd: Longint read FLoopEnd write SetLoopEnd;

@@ -318,7 +318,7 @@ begin
   DBLog('start TTrack.pnlPatternsDragDrop');
 
   Inherited DragDrop(Source, X, Y);
-  writeln('xxxx');
+
   // Insert pattern in track from treeview-node
   if Source is TTreeView then
   begin

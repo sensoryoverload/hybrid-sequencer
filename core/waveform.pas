@@ -24,7 +24,7 @@ interface
 uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
  jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils,
- globalconst, rubberband, SoundTouchObject, contnrs, global_command,
+ globalconst, librubberband, SoundTouchObject, contnrs, global_command,
  ShellCtrls, global, multiband_wsola, flqueue, math, ringbuffer;
 
 const
@@ -133,15 +133,27 @@ type
     FDiskWriterThread: TDiskWriterThread;
     FDiskReaderThread: TDiskReaderThread;
     MultiWSOLA: TMultiWSOLA;
-//    FTimePitchScale: RubberbandState;
+    FTimePitchScale: RubberbandState;
     FTimePitchOptions: Longint;
     FPitchAlgorithm: TPitchAlgorithm;
 
+    procedure SetCursorRamp(const AValue: Single);
+    procedure SetRealBPM(const AValue: Single);
     function SliceAt(Location: Integer; Margin: single): TMarker;
     procedure SetTransientThreshold(const AValue: Integer);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
+    // Hermite interpolation
+    frac_pos,xm1,x0,x1,x2: single;
+    CalculatedPitch: Single;
+    psBeginLocation: Integer;
+    psEndLocation: Integer;
+    psLastScaleValue: Single;
+    StartingSliceIndex: Integer;
+    DivideByRealBPM_Multiplier: Single;
+    DivideByCursorRamp_Multiplier: Single;
+
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Assign(Source: TPersistent); override;
@@ -168,13 +180,13 @@ type
     property BufferData: PSingle read FBufferData write FBufferData;
     property BufferData2: PSingle read FBufferData2 write FBufferData2;
     property BufferData3: PSingle read FBufferData3 write FBufferData3;
-//    property TimePitchScale: RubberBandState read FTimePitchScale write FTimePitchScale;
+    property TimePitchScale: RubberBandState read FTimePitchScale write FTimePitchScale;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
     property VirtualCursorPosition: Integer read FVirtualCursorPosition write FVirtualCursorPosition;
     property CurrentSliceIndex: Integer read FCurrentSliceIndex write FCurrentSliceIndex;
     property CursorAdder: Single read FCursorAdder write FCursorAdder;
     property CursorReal: Single read FCursorReal write FCursorReal default 1.0;
-    property CursorRamp: Single read FCursorRamp write FCursorRamp default 1.0;
+    property CursorRamp: Single read FCursorRamp write SetCursorRamp default 1.0;
     property BufferFrames: Integer read FBufferFrames write FBufferFrames;
     property DiskWriterThread: TDiskWriterThread read FDiskWriterThread;
     property DiskReaderThread: TDiskReaderThread read FDiskReaderThread;
@@ -188,7 +200,7 @@ type
     property SampleFileName: string read FSampleFileName write FSampleFileName;
     property TransientThreshold: Integer read FTransientThreshold write SetTransientThreshold;
     property BarLength: Integer read FBarLength write FBarLength;
-    property RealBPM: Single read FRealBPM write FRealBPM;
+    property RealBPM: Single read FRealBPM write SetRealBPM;
     property PatternLength: Integer read FPatternLength write FPatternLength;
     property PitchAlgorithm: TPitchAlgorithm read FPitchAlgorithm write FPitchAlgorithm;
   end;
@@ -377,8 +389,8 @@ begin
     RubberBandOptionWindowShort or
     RubberBandOptionPitchHighQuality; }
 
-//  FTimePitchScale := rubberband_new(44100, 1, FTimePitchOptions, 1, 1);
-//  rubberband_set_max_process_size(FTimePitchScale, 4096);
+  FTimePitchScale := rubberband_new(44100, 1, FTimePitchOptions, 1, 1);
+  rubberband_set_max_process_size(FTimePitchScale, 4096);
 
   FPitchAlgorithm := paST;
 
@@ -410,8 +422,8 @@ begin
     FTimeStretch.Free;
   if Assigned(MultiWSOLA) then
     MultiWSOLA.Free;
-{  if Assigned(FTimePitchScale) then
-    rubberband_delete(FTimePitchScale);}
+  if Assigned(FTimePitchScale) then
+    rubberband_delete(FTimePitchScale);
   if Assigned(FWave) then
     FWave.Free;
   if Assigned(FLoopStart) then
@@ -667,6 +679,30 @@ begin
   end;
 end;
 
+procedure TWavePattern.SetRealBPM(const AValue: Single);
+begin
+  if FRealBPM = AValue then exit;
+  FRealBPM := AValue;
+
+  if FRealBPM = 0 then
+  begin
+    FRealBPM := 120;
+  end;
+  DivideByRealBPM_Multiplier := 1 / FRealBPM;
+end;
+
+procedure TWavePattern.SetCursorRamp(const AValue: Single);
+begin
+  if FCursorRamp = AValue then exit;
+  FCursorRamp := AValue;
+
+  if FCursorRamp <> 0 then
+  begin
+    FCursorRamp := 1;
+  end;
+  DivideByCursorRamp_Multiplier := 1 / FCursorRamp;
+end;
+
 function TWavePattern.NextSlice: TMarker;
 var
   lMarker: TMarker;
@@ -855,7 +891,12 @@ begin
     BarLength:= BarLength div 2;
 
   LoopStart.Location := 0;
-  LoopEnd.Location:= (lSample div BarLength) * BarLength;
+
+  if BarLength > 0 then
+  begin
+    LoopEnd.Location:= (lSample div BarLength) * BarLength;
+  end;
+
   LoopLength.Location := LoopEnd.Location - LoopStart.Location;
 end;
 

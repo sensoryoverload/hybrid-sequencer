@@ -28,12 +28,15 @@ uses
   StdCtrls, jack, midiport, jacktypes, ExtCtrls, Math, sndfile, waveform, Spin,
   ContNrs, transport, FileCtrl, PairSplitter, Utils, ComCtrls, GlobalConst,
   Menus, ActnList, dialcontrol, bpm, SoundTouchObject,
-  Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg, rubberband,
+  Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg,
   TypInfo, FileUtil, global_command, LCLType, LCLIntf,
   ShellCtrls, Grids, TrackGUI, waveformgui, global, track, pattern,
   audiostructure, midigui, patterngui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
   ringbuffer, optionsgui;
+
+const
+  DIVIDE_BY_120_MULTIPLIER = 1 / 120;
 
 type
 
@@ -108,6 +111,9 @@ type
     ilGlobalImages: TImageList;
     MainMenu1: TMainMenu;
     HelpMenu: TMenuItem;
+    MenuItem3: TMenuItem;
+    SaveDialog1: TSaveDialog;
+    SavePattern: TMenuItem;
     MenuItem4: TMenuItem;
     pnlTransport: TPanel;
     pcPattern: TPageControl;
@@ -166,6 +172,7 @@ type
     procedure LoadSessionClick(Sender: TObject);
     procedure MenuItem1Click(Sender: TObject);
     procedure MenuItem2Click(Sender: TObject);
+    procedure SavePatternClick(Sender: TObject);
     procedure MenuItem4Click(Sender: TObject);
     procedure OptionMenuClick(Sender: TObject);
     procedure rgEditModeClick(Sender: TObject);
@@ -183,6 +190,9 @@ type
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure TreeView1Collapsed(Sender: TObject; Node: TTreeNode);
     procedure TreeView1Deletion(Sender: TObject; Node: TTreeNode);
+    procedure TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
     procedure TreeView1Expanding(Sender: TObject; Node: TTreeNode;
       var AllowExpansion: Boolean);
     procedure TreeView1MouseDown(Sender: TObject; Button: TMouseButton;
@@ -268,7 +278,7 @@ var
 implementation
 
 uses
-  fx;
+  fx, librubberband;
 
 function compareByLocation(Item1 : Pointer; Item2 : Pointer) : Integer;
 var
@@ -388,12 +398,8 @@ var
   transport_state : jack_transport_state_t;
   lTrack: TTrack;
   TempLevel: jack_default_audio_sample_t;
-  CalculatedPitch: Single;
   BPMscale: Single;
   GlobalBPMscale: Single;
-  psBeginLocation: Integer;
-  psEndLocation: Integer;
-  psLastScaleValue: Single;
   lFrames: Longint;
   lPlayingPattern: TPattern;
   lAudioPlaying: Boolean;
@@ -401,8 +407,6 @@ var
   lFramePacket: TFrameData;
   lStartingSliceIndex: Integer;
 
-  // Hermite interpolation
-  frac_pos,xm1,x0,x1,x2: single;
 
   buf_offset: integer;
   buffer_size: Integer;
@@ -505,7 +509,7 @@ begin
     inc(sync_counter);
   end;
 
-  GlobalBPMscale := GAudioStruct.BPM / 120;
+  GlobalBPMscale := GAudioStruct.BPM * DIVIDE_BY_120_MULTIPLIER;
 
   for j := 0 to Pred(GAudioStruct.Tracks.Count) do
   begin
@@ -514,24 +518,27 @@ begin
      // Increment cursor regardless if audible or not
     if Assigned(lTrack.PlayingPattern) then
     begin
-      if lTrack.PlayingPattern.WavePattern.RealBPM = 0 then
-        lTrack.PlayingPattern.WavePattern.RealBPM := 120;
+      {if lTrack.PlayingPattern.WavePattern.RealBPM = 0 then
+        lTrack.PlayingPattern.WavePattern.RealBPM := 120;}
 
-      BPMscale := GAudioStruct.BPM / NoDivByZero(lTrack.PlayingPattern.WavePattern.RealBPM);
+//      BPMscale := GAudioStruct.BPM * lTrack.PlayingPattern.WavePattern.DivideByRealBPM_Multiplier;
+      BPMscale := GAudioStruct.BPM / lTrack.PlayingPattern.WavePattern.RealBPM;
       if BPMscale > 16 then
         BPMscale := 16
       else if BPMscale < 0.1 then
         BPMscale := 0.1;
-    end;
 
-    psBeginLocation:= 0;
+      if Assigned(lTrack.PlayingPattern.WavePattern) then
+      begin
+        lTrack.PlayingPattern.WavePattern.psBeginLocation:= 0;
+      end;
 
-    if Assigned(lTrack.PlayingPattern) then
-    begin
       // Reset buffer at beginning of callback
-      lTrack.PlayingPattern.MidiPattern.MidiBuffer.Reset;
-
-      lTrack.PlayingPattern.MidiPattern.BPMScale := GlobalBPMscale;
+      if Assigned(lTrack.PlayingPattern.MidiPattern) then
+      begin
+        lTrack.PlayingPattern.MidiPattern.MidiBuffer.Reset;
+        lTrack.PlayingPattern.MidiPattern.BPMScale := GlobalBPMscale;
+      end;
 
       if lTrack.Playing then
       begin
@@ -582,7 +589,7 @@ begin
 
             if i = 0 then
             begin
-              psLastScaleValue := lPlayingPattern.WavePattern.CursorRamp;
+              lPlayingPattern.WavePattern.psLastScaleValue := lPlayingPattern.WavePattern.CursorRamp;
             end;
 
             // Synchronize with global quantize track
@@ -607,9 +614,9 @@ begin
             // Fetch frame data packet containing warp factor and virtual location in wave data
             if i = 0 then
             begin
-              lStartingSliceIndex := lPlayingPattern.WavePattern.StartVirtualLocation(lPlayingPattern.WavePattern.CursorReal);
+              lPlayingPattern.WavePattern.StartingSliceIndex := lPlayingPattern.WavePattern.StartVirtualLocation(lPlayingPattern.WavePattern.CursorReal);
             end;
-            lPlayingPattern.WavePattern.VirtualLocation(lStartingSliceIndex, lPlayingPattern.WavePattern.CursorReal, lFramePacket);
+            lPlayingPattern.WavePattern.VirtualLocation(lPlayingPattern.WavePattern.StartingSliceIndex, lPlayingPattern.WavePattern.CursorReal, lFramePacket);
             lPlayingPattern.WavePattern.CursorAdder := lFramePacket.Location;
             lPlayingPattern.WavePattern.CursorRamp := lFramePacket.Ramp * BPMscale;
 
@@ -619,18 +626,24 @@ begin
             // Put sound in buffer, interpolate with Hermite4 function
             lBuffer := TChannel(lPlayingPattern.WavePattern.Wave.ChannelList[0]).Buffer;
 
-            frac_pos := Frac(lPlayingPattern.WavePattern.CursorAdder);
+            lPlayingPattern.WavePattern.frac_pos := Frac(lPlayingPattern.WavePattern.CursorAdder);
             buf_offset := (Trunc(lPlayingPattern.WavePattern.CursorAdder) * lPlayingPattern.WavePattern.Wave.ChannelCount);
 
             if buf_offset <= 0 then
-              xm1 := 0
+              lPlayingPattern.WavePattern.xm1 := 0
             else
-              xm1 := lBuffer[buf_offset - 1];
+              lPlayingPattern.WavePattern.xm1 := lBuffer[buf_offset - 1];
 
-            x0 := lBuffer[buf_offset];
-            x1 := lBuffer[buf_offset + 1];
-            x2 := lBuffer[buf_offset + 2];
-            lPlayingPattern.WavePattern.WorkBuffer[i] := hermite4(frac_pos, xm1, x0, x1, x2);
+            lPlayingPattern.WavePattern.x0 := lBuffer[buf_offset];
+            lPlayingPattern.WavePattern.x1 := lBuffer[buf_offset + 1];
+            lPlayingPattern.WavePattern.x2 := lBuffer[buf_offset + 2];
+            lPlayingPattern.WavePattern.WorkBuffer[i] :=
+              hermite4(
+                lPlayingPattern.WavePattern.frac_pos,
+                lPlayingPattern.WavePattern.xm1,
+                lPlayingPattern.WavePattern.x0,
+                lPlayingPattern.WavePattern.x1,
+                lPlayingPattern.WavePattern.x2);
 
             if lTrack.Active then
             begin
@@ -638,45 +651,45 @@ begin
               // the end of the buffer has been reached.
               if lPlayingPattern.WavePattern.PitchAlgorithm <> paNone then
               begin
-                if (lPlayingPattern.WavePattern.CursorRamp <> psLastScaleValue) or (i = (nframes - 1)) then
+                if (lPlayingPattern.WavePattern.CursorRamp <> lPlayingPattern.WavePattern.psLastScaleValue) or (i = (nframes - 1)) then
                 begin
-                  psEndLocation := i;
-                  CalculatedPitch := lPlayingPattern.Pitch * (1 / NoDivByZero(lPlayingPattern.WavePattern.CursorRamp));
-                  if CalculatedPitch < 0.062 then CalculatedPitch := 0.062;
-                  if CalculatedPitch > 16 then CalculatedPitch := 16;
+                  lPlayingPattern.WavePattern.psEndLocation := i;
+                  lPlayingPattern.WavePattern.CalculatedPitch := lPlayingPattern.Pitch * lPlayingPattern.WavePattern.DivideByCursorRamp_Multiplier;
+                  if lPlayingPattern.WavePattern.CalculatedPitch < 0.062 then lPlayingPattern.WavePattern.CalculatedPitch := 0.062;
+                  if lPlayingPattern.WavePattern.CalculatedPitch > 16 then lPlayingPattern.WavePattern.CalculatedPitch := 16;
 
                   // Frames to process this window
-                  lFrames := (psEndLocation - psBeginLocation) + 1;
+                  lFrames := (lPlayingPattern.WavePattern.psEndLocation - lPlayingPattern.WavePattern.psBeginLocation) + 1;
 
                   for k := 0 to Pred(lFrames) do
-                    CB_TimeBuffer[k] := lPlayingPattern.WavePattern.WorkBuffer[psBeginLocation + k];
+                    CB_TimeBuffer[k] := lPlayingPattern.WavePattern.WorkBuffer[lPlayingPattern.WavePattern.psBeginLocation + k];
 
                   case lPlayingPattern.WavePattern.PitchAlgorithm of
                     paST:
                     begin
-                      lPlayingPattern.WavePattern.TimeStretch.Pitch := CalculatedPitch;
+                      lPlayingPattern.WavePattern.TimeStretch.Pitch := lPlayingPattern.WavePattern.CalculatedPitch;
                       lPlayingPattern.WavePattern.TimeStretch.PutSamples(CB_TimeBuffer, lFrames);
                       lPlayingPattern.WavePattern.TimeStretch.ReceiveSamples(CB_TimeBuffer, lFrames);
                     end;
                     paMultiST:
                     begin
-                      lPlayingPattern.WavePattern.WSOLA.Pitch := CalculatedPitch;
+                      lPlayingPattern.WavePattern.WSOLA.Pitch := lPlayingPattern.WavePattern.CalculatedPitch;
                       lPlayingPattern.WavePattern.WSOLA.Process(CB_TimeBuffer, CB_TimeBuffer, lFrames);
                     end;
                     paRubberband:
                     begin
-                      {rubberband_set_pitch_scale(lPlayingPattern.WavePattern.TimePitchScale, CalculatedPitch);
+                      rubberband_set_pitch_scale(lPlayingPattern.WavePattern.TimePitchScale, lPlayingPattern.WavePattern.CalculatedPitch);
                       rubberband_process(lPlayingPattern.WavePattern.TimePitchScale, @CB_TimeBuffer, lFrames, 0);
-                      rubberband_retrieve(lPlayingPattern.WavePattern.TimePitchScale, @CB_TimeBuffer, lFrames);}
+                      rubberband_retrieve(lPlayingPattern.WavePattern.TimePitchScale, @CB_TimeBuffer, lFrames);
                     end;
                   end;
 
                   for k := 0 to Pred(lFrames) do
-                    lPlayingPattern.WavePattern.BufferData2[psBeginLocation + k] := CB_TimeBuffer[k];
+                    lPlayingPattern.WavePattern.BufferData2[lPlayingPattern.WavePattern.psBeginLocation + k] := CB_TimeBuffer[k];
 
                   // Remember last change
-                  psBeginLocation:= i;
-                  psLastScaleValue:= lPlayingPattern.WavePattern.CursorRamp;
+                  lPlayingPattern.WavePattern.psBeginLocation:= i;
+                  lPlayingPattern.WavePattern.psLastScaleValue:= lPlayingPattern.WavePattern.CursorRamp;
                 end;
               end
               else
@@ -740,7 +753,9 @@ lPlayingPattern.WavePattern.BufferData2[i] := 0;
 
           if lTrack.Active then
           begin
-            lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input[0], nframes);
+            { TODO Not switched on
+              lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input[0], nframes);
+            }
 
             lPlayingPattern.SampleBankEngine.Process(lPlayingPattern.MidiPattern,
               lTrack.OutputBuffer, nframes);
@@ -773,20 +788,9 @@ lPlayingPattern.WavePattern.BufferData2[i] := 0;
       end;
     end;
 
-    // TODO when switching playing pattern calculate the division count
-{    for i := 0 to Pred(nframes) do
-    begin
-      output_left[i] /= GAudioStruct.Tracks.Count;
-      output_right[i] /= GAudioStruct.Tracks.Count;
-    end;    }
-
     for i := 0 to Pred(nframes) do
     begin
-      // clamp tsPattern to prevent fpu errors
-{      if lTrack.OutputBuffer[i] > 1 then lTrack.OutputBuffer[i] := 1;
-      if lTrack.OutputBuffer[i] < -1 then lTrack.OutputBuffer[i] := -1; }
-
-      TempLevel := Abs(lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier * 1.5);
+      TempLevel := Abs(lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier);
       if TempLevel > lTrack.Level then
         lTrack.Level := (attack_coef * (lTrack.Level - TempLevel)) + TempLevel
       else
@@ -1101,6 +1105,11 @@ procedure TMainApp.MenuItem2Click(Sender: TObject);
 begin
   //
   Application.Terminate;
+end;
+
+procedure TMainApp.SavePatternClick(Sender: TObject);
+begin
+
 end;
 
 procedure TMainApp.MenuItem4Click(Sender: TObject);
@@ -1483,6 +1492,68 @@ begin
   TreeFolderData := TTreeFolderData(Node.Data);
   if TreeFolderData <> nil then
     TreeFolderData.Free;
+end;
+
+{
+  When dragsource is
+    tpattern : save pattern
+    ttrack : save track
+}
+procedure TMainApp.TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  lPatternGUI: TPatternGUI;
+  lPattern: TPattern;
+  lTrackGUI: TTrackGUI;
+  lTrack: TTrack;
+  lNode: TTreeNode;
+  lSavePatternCommand: TSavePatternCommand;
+  lSavePatternDialog: TSaveDialog;
+begin
+  if Source is TPatternGUI then
+  begin
+    lPattern := TPatternGUI(Source).Model;
+    if Assigned(lPattern) then
+    begin
+      {
+        create save pattern command
+      }
+      lSavePatternDialog :=  TSaveDialog.Create(nil);
+      try
+        lSavePatternDialog.FileName := lPattern.FileName;
+        if lSavePatternDialog.Execute then
+        begin
+          lPattern.FileName := lSavePatternDialog.FileName;
+
+          lSavePatternCommand := TSavePatternCommand.Create(lPattern.ObjectID);
+
+          GCommandQueue.PushCommand(lSavePatternCommand);
+        end;
+      finally
+        lSavePatternDialog.Free;
+      end;
+    end;
+  end
+  else if Source is TTrackGUI then
+  begin
+    lTrack := TTrack(TTrackGUI(Source).ModelObject);
+  end;
+end;
+
+procedure TMainApp.TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+begin
+  if Source is TPatternGUI then
+  begin
+    Accept := True;
+  end
+  else if Source is TTrackGUI then
+  begin
+    Accept := True;
+  end
+  else
+  begin
+    Accept := False;
+  end;
 end;
 
 procedure TMainApp.TreeView1Expanding(Sender: TObject; Node: TTreeNode;
@@ -1894,7 +1965,7 @@ begin
     RootNode.Data := TreeFolderData;
 
     // Add FileTree
-    AddSubFolders('/home/robbert/dev/sources/jack/'{PathDelim}, RootNode);
+    AddSubFolders('/home/robbert/dev/hybrid-sequencer/bin/'{PathDelim}, RootNode);
 
     // Add plugins
     lFilterNode := TreeView1.Items.Add(RootNode, 'Plugins');
@@ -1934,7 +2005,9 @@ begin
 
           if (SearchRec.Name <> '.') and (SearchRec.Name <> '..') then
           begin
-            if SameText(ExtractFileExt(SearchRec.Name), '.wav') or ((SearchRec.Attr and faDirectory) > 0) then
+            if SameText(ExtractFileExt(SearchRec.Name), '.wav') or
+              SameText(ExtractFileExt(SearchRec.Name), '.xml') or
+              ((SearchRec.Attr and faDirectory) > 0) then
             begin
 
               NewNode := TreeView1.Items.AddChild(ParentNode, SearchRec.Name);

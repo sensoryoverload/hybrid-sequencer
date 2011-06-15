@@ -290,10 +290,21 @@ procedure TCommandQueue.PushCommand(AObject: TObject);
 begin
   if Assigned(CommandQueue) then
   begin
-    CommandQueue.Push(AObject);
+    try
+      //GCommandQueue.PushCommand(lSavePatternCommand);
+      CommandQueue.Push(AObject);
 
-    // just testing TODO
-    ExecuteCommandQueue;
+      ExecuteCommandQueue;
+    except
+      on e: Exception do
+      begin
+        DBLog('CommandQueue error: ' + e.Message);
+        if Assigned(AObject) then
+        begin
+          AObject.Free;
+        end;
+      end;
+    end;
   end;
 end;
 
