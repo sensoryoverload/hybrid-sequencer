@@ -96,11 +96,13 @@ type
     procedure DoConnection(AObjectID: string; AParameter: string);
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     property Model: TPluginProcessor read FModel write FModel;
     property NodeListGUI: TObjectList read FNodeListGUI write FNodeListGUI;
     property ConnectionListGUI: TObjectList read FConnectionListGUI write FConnectionListGUI;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
     property AudioOutGUI: TPluginNodeGUI read FAudioOutGUI write FAudioOutGUI;
@@ -499,6 +501,16 @@ end;
 procedure TPluginProcessorGUI.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
+end;
+
+function TPluginProcessorGUI.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TPluginProcessorGUI.SetObjectOwnerID(const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
 end;
 
 { TInterConnectGUI }

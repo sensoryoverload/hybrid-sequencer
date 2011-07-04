@@ -1,11 +1,11 @@
 object MainApp: TMainApp
   Left = 177
   Height = 679
-  Top = 86
+  Top = 98
   Width = 1095
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 660
+  ClientHeight = 679
   ClientWidth = 1095
   Font.Height = 7
   KeyPreview = True
@@ -26,18 +26,19 @@ object MainApp: TMainApp
     Width = 1095
     Align = alTop
     Caption = 'pnlTop'
-    ClientHeight = 340
-    ClientWidth = 1095
+    ClientHeight = 336
+    ClientWidth = 1091
     TabOrder = 0
     object sbTracks: TScrollBox
       Left = 263
-      Height = 338
+      Height = 334
       Top = 1
-      Width = 831
+      Width = 827
       HorzScrollBar.Page = 621
       VertScrollBar.Page = 507
       Align = alClient
       AutoScroll = False
+      PopupMenu = pupScrollBox
       TabOrder = 0
       OnDragDrop = sbTracksDragDrop
       OnDragOver = sbTracksDragOver
@@ -45,29 +46,29 @@ object MainApp: TMainApp
     end
     object gbTrackDetail: TGroupBox
       Left = 1
-      Height = 338
+      Height = 334
       Top = 1
       Width = 254
       Align = alLeft
       Caption = 'Track'
-      ClientHeight = 327
+      ClientHeight = 323
       ClientWidth = 250
       TabOrder = 1
       object pnlFileManager: TPanel
         Left = 0
-        Height = 246
+        Height = 242
         Top = 27
         Width = 250
         Align = alClient
         Anchors = [akTop, akLeft, akRight]
-        ClientHeight = 246
-        ClientWidth = 250
+        ClientHeight = 238
+        ClientWidth = 246
         TabOrder = 0
         object TreeView1: TTreeView
           Left = 1
-          Height = 244
+          Height = 236
           Top = 1
-          Width = 248
+          Width = 244
           Align = alClient
           BorderStyle = bsNone
           DefaultItemHeight = 16
@@ -140,11 +141,11 @@ object MainApp: TMainApp
       object pnlTransport: TPanel
         Left = 0
         Height = 54
-        Top = 273
+        Top = 269
         Width = 250
         Align = alBottom
-        ClientHeight = 54
-        ClientWidth = 250
+        ClientHeight = 50
+        ClientWidth = 246
         TabOrder = 2
         object gbMasterTempo: TGroupBox
           Left = 4
@@ -229,7 +230,7 @@ object MainApp: TMainApp
     end
     object LeftSplitter: TCollapseSplitter
       Left = 255
-      Height = 338
+      Height = 334
       Top = 1
       Width = 8
       OnDblClick = LeftSplitterDblClick
@@ -247,7 +248,7 @@ object MainApp: TMainApp
   end
   object pcPattern: TPageControl
     Left = 0
-    Height = 311
+    Height = 330
     Top = 349
     Width = 1095
     ActivePage = tsPattern
@@ -263,8 +264,8 @@ object MainApp: TMainApp
     end
     object tsMonitor: TTabSheet
       Caption = 'Monitor'
-      ClientHeight = 305
-      ClientWidth = 1041
+      ClientHeight = 324
+      ClientWidth = 1042
       object Splitter5: TSplitter
         Left = 0
         Height = 326
@@ -1004,5 +1005,13 @@ object MainApp: TMainApp
   object SaveDialog1: TSaveDialog
     left = 411
     top = 200
+  end
+  object pupScrollBox: TPopupMenu
+    left = 676
+    top = 82
+    object miCreateTrack: TMenuItem
+      Caption = 'Create track'
+      OnClick = miCreateTrackClick
+    end
   end
 end

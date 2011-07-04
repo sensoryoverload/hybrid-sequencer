@@ -9,8 +9,8 @@ object TrackGUI: TTrackGUI
   ClientWidth = 104
   PopupMenu = pmTrack
   TabOrder = 0
-  DesignLeft = 768
-  DesignTop = 30
+  DesignLeft = 784
+  DesignTop = 106
   object pnlTrackControls: TPanel
     Left = 0
     Height = 307
@@ -19,10 +19,11 @@ object TrackGUI: TTrackGUI
     Align = alBottom
     BevelInner = bvLowered
     BevelOuter = bvNone
-    ClientHeight = 307
-    ClientWidth = 104
+    ClientHeight = 303
+    ClientWidth = 100
     Color = clBtnFace
     ParentColor = False
+    PopupMenu = pmTrack
     TabOrder = 0
     OnMouseDown = TrackControlsMouseDown
     OnMouseMove = TrackControlsMouseMove
@@ -173,16 +174,19 @@ object TrackGUI: TTrackGUI
     BevelInner = bvLowered
     BevelOuter = bvNone
     ParentShowHint = False
+    PopupMenu = pupPatternList
     ShowHint = True
     TabOrder = 1
     OnDragDrop = pnlPatternsDragDrop
     OnDragOver = pnlPatternsDragOver
+    OnMouseDown = pnlPatternsMouseDown
   end
   object pmTrack: TPopupMenu
     left = 33
     top = 246
     object miDeleteTrack: TMenuItem
       Action = acDeleteTrack
+      OnClick = miDeleteTrackClick
     end
   end
   object ActionList1: TActionList
@@ -191,6 +195,24 @@ object TrackGUI: TTrackGUI
     object acDeleteTrack: TAction
       Caption = 'Delete track'
       OnExecute = acDeleteTrackExecute
+    end
+    object acCreateWavePattern: TAction
+      Caption = 'acCreateWavePattern'
+      OnExecute = acCreateWavePatternExecute
+    end
+    object acCreateMidiPattern: TAction
+      Caption = 'acCreateMidiPattern'
+      OnExecute = acCreateMidiPatternExecute
+    end
+  end
+  object pupPatternList: TPopupMenu
+    left = 38
+    top = 77
+    object miCreateWavePattern: TMenuItem
+      Action = acCreateWavePattern
+    end
+    object miCreateMidiPattern: TMenuItem
+      Action = acCreateMidiPattern
     end
   end
 end

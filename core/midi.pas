@@ -25,7 +25,7 @@ uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
  jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils,
  globalconst, SoundTouchObject, contnrs, global_command, ShellCtrls,
- global, math;
+ global, math, pattern, sampler;
 
 const
   MAX_LATENCY = 20000;
@@ -41,7 +41,7 @@ type
 
   TMidiCommand = class(TCommand)
   private
-    FMidiGrid: TMidiPattern;
+    FMidiPattern: TMidiPattern;
   protected
     procedure Initialize; override;
   end;
@@ -144,6 +144,20 @@ type
     procedure DoRollback; override;
   end;
 
+  { TChangeMidiChannelCommand }
+
+  TChangeMidiChannelCommand = class(TMidiCommand)
+  private
+    FMidiChannel: Integer;
+    FOldMidiChannel: Integer;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+
+  published
+    property MidiChannel: Integer read FMidiChannel write FMidiChannel;
+  end;
+
 
   { TMidiNote }
 
@@ -187,12 +201,10 @@ type
 
   { TMidiPattern }
 
-  TMidiPattern = class(THybridPersistentModel)
+  TMidiPattern = class(TPattern)
   private
     // Data
 
-    FLoopStart: Longint;
-    FLoopEnd: Longint;
     FMidiDataList: TMidiDataList;
     FNoteList: TObjectList;
     FQuantizeSetting: Integer;
@@ -210,13 +222,12 @@ type
     FMidiBuffer: TMidiBuffer;
 
     // Private sampler, not a plugin so it's more thightly integrated
+    FSample: TSample;
     FSampleBank: TSampleBank;
     FSampleBankEngine: TSampleBankEngine;
 
     function GetEnabled: Boolean;
     function NoteByObjectID(AObjectID: string): TMidiNote;
-    procedure SetLoopEnd(const AValue: Longint);
-    procedure SetLoopStart(const AValue: Longint);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -226,7 +237,10 @@ type
     procedure Assign(Source: TPersistent); override;
     function QuantizeLocation(ALocation: Integer): Integer;
     function StartVirtualLocation(ALocation: Integer): TMidiData;
-    procedure Process(ABuffer: PSingle; AFrames: Integer);
+
+    procedure ProcessInit; override;
+    procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
+    procedure ProcessAdvance; override;
 
     property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
     property Enabled: Boolean read GetEnabled write FEnabled default True;
@@ -243,8 +257,6 @@ type
   published
     property SampleBank: TSampleBank read FSampleBank write FSampleBank;
     property NoteList: TObjectList read FNoteList write FNoteList;
-    property LoopStart: Longint read FLoopStart write SetLoopStart;
-    property LoopEnd: Longint read FLoopEnd write SetLoopEnd;
     property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 1;
   end;
@@ -257,7 +269,7 @@ type
 
 implementation
 
-uses Fx;
+uses Fx, audiostructure;
 
 constructor TMidiPattern.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
@@ -267,9 +279,7 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FLoopStart:= 0;
-  FLoopEnd:= Round(44100 * 4);
-  FRealCursorPosition:= FLoopStart;
+  FRealCursorPosition:= LoopStart;
 
   FNoteList := TObjectList.Create;
   FMidiDataList := TMidiDataList.Create;
@@ -278,6 +288,21 @@ begin
 
   FQuantizeSetting := 3;
   FQuantizeValue := 100;
+
+  FSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
+  FSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
+
+  FSample := TSample.Create(AObjectOwner, AMapped);
+  FSample.LoadSample('kick.wav');
+  FSample.Initialize;
+
+  FSampleBank.SampleList.Add(FSample);
+
+  FSampleBankEngine.SampleBank := FSampleBank;
+
+  DBLog('KICK.WAV loading');
+
+
 
   DBLog('end TMidiGrid.Create');
 end;
@@ -292,6 +317,12 @@ begin
 
   if Assigned(FMidiBuffer) then
     FMidiBuffer.Free;
+
+  FSampleBankEngine.Free;
+
+  FSample.UnloadSample; // TODO Should be done by TSample class itself
+  FSample.Free;
+  FSampleBank.Free;
 
   inherited Destroy;
 end;
@@ -332,17 +363,65 @@ begin
   end;
 end;
 
+procedure TMidiPattern.ProcessInit;
+begin
+  // Reset buffer at beginning of callback
+  FMidiBuffer.Reset;
+  FBPMScale := GAudioStruct.BPMScale;
+end;
+
 {
   Process advances cursor
 }
-procedure TMidiPattern.Process(ABuffer: PSingle; AFrames: Integer);
+procedure TMidiPattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
 var
   i: Integer;
 begin
-  for i := 0 to Pred(AFrames) do
+{  for i := 0 to Pred(AFrames) do
   begin
     FCursorAdder := FCursorAdder + FBPMScale;
+  end;     }
+
+  if (CursorAdder >= LoopEnd) or SyncQuantize then
+  begin
+    SyncQuantize := False;
+    CursorAdder := LoopStart;
+
+    if MidiDataList.Count > 0 then
+    begin
+      MidiDataList.First;
+      MidiDataCursor := TMidiData( MidiDataList.Items[0] );
+    end;
   end;
+
+  // Fill MidiBuffer with midi data if found
+  if not Updating then
+  begin
+    if MidiDataList.Count > 0 then
+    begin
+      while CursorAdder >= MidiDataCursor.Location do
+      begin
+        // Put event in buffer
+        MidiBuffer.WriteEvent(MidiDataCursor, i);
+
+        if Assigned(MidiDataCursor.Next) then
+        begin
+          MidiDataCursor := MidiDataCursor.Next
+        end
+        else
+        begin
+          break;
+        end;
+      end;
+    end;
+  end;
+
+end;
+
+procedure TMidiPattern.ProcessAdvance;
+begin
+  RealCursorPosition := Round(CursorAdder);
+  CursorAdder := CursorAdder + GAudioStruct.BPMScale;
 end;
 
 function TMidiPattern.NoteByObjectID(AObjectID: string): TMidiNote;
@@ -358,20 +437,6 @@ begin
       Result := TMidiNote(NoteList[lIndex]);
     end;
   end;
-end;
-
-procedure TMidiPattern.SetLoopEnd(const AValue: Longint);
-begin
-  if FLoopEnd = AValue then exit;
-  FLoopEnd := AValue;
-end;
-
-procedure TMidiPattern.SetLoopStart(const AValue: Longint);
-begin
-  if FLoopStart = AValue then exit;
-  FLoopStart := AValue;
-
-
 end;
 
 function TMidiPattern.GetEnabled: Boolean;
@@ -481,15 +546,15 @@ var
 begin
   DBLog('start TDeleteNotesCommand.DoExecute');
 
-  FMidiGrid.BeginUpdate;
+  FMidiPattern.BeginUpdate;
 
-  for i := Pred(FMidiGrid.NoteList.Count) downto 0 do
+  for i := Pred(FMidiPattern.NoteList.Count) downto 0 do
   begin
-    lMidinote := TMidiNote(FMidiGrid.NoteList[i]);
+    lMidinote := TMidiNote(FMidiPattern.NoteList[i]);
 
     if lMidinote.Selected or (lMidinote.ObjectID = ObjectID) then
     begin
-      lMementoNote := TMidiNote.Create(FMidiGrid.ObjectID, NOT_MAPPED);
+      lMementoNote := TMidiNote.Create(FMidiPattern.ObjectID, NOT_MAPPED);
       lMementoNote.Note := lMidiNote.Note;
       lMementoNote.NoteLength := lMidiNote.NoteLength;
       lMementoNote.NoteLocation := lMidiNote.NoteLocation;
@@ -499,24 +564,24 @@ begin
       Memento.Add(lMementoNote);
 
       // Set the midicursor to another not if possible to prevent AV's in the callback
-      if (FMidiGrid.MidiDataCursor = lMidinote.MidiNoteStart) or
-        (FMidiGrid.MidiDataCursor = lMidinote.MidiNoteEnd) then
+      if (FMidiPattern.MidiDataCursor = lMidinote.MidiNoteStart) or
+        (FMidiPattern.MidiDataCursor = lMidinote.MidiNoteEnd) then
       begin
-        if FMidiGrid.MidiDataList.Count > 0 then
+        if FMidiPattern.MidiDataList.Count > 0 then
         begin
           // TODO Make engine for iterating the list
-          FMidiGrid.MidiDataCursor := TMidiData(FMidiGrid.MidiDataList[0]);
+          FMidiPattern.MidiDataCursor := TMidiData(FMidiPattern.MidiDataList[0]);
         end;
       end;
-      FMidiGrid.MidiDataList.Remove(lMidinote.MidiNoteStart);
-      FMidiGrid.MidiDataList.Remove(lMidinote.MidiNoteEnd);
-      FMidiGrid.NoteList.Remove(lMidinote);
+      FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteStart);
+      FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteEnd);
+      FMidiPattern.NoteList.Remove(lMidinote);
 
     end;
   end;
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 
-  FMidiGrid.EndUpdate;
+  FMidiPattern.EndUpdate;
 
   DBLog('end TDeleteNotesCommand.DoExecute');
 end;
@@ -529,14 +594,14 @@ var
 begin
   DBLog('start TDeleteNotesCommand.DoRollback');
 
-  FMidiGrid.BeginUpdate;
+  FMidiPattern.BeginUpdate;
 
   if Memento.Count > 0 then
   begin
     for i := 0 to Pred(Memento.Count) do
     begin
       lMementoNote := TMidiNote(Memento[i]);
-      lMidiNote := TMidiNote.Create(FMidiGrid.ObjectID, NOT_MAPPED);
+      lMidiNote := TMidiNote.Create(FMidiPattern.ObjectID, NOT_MAPPED);
       lMidiNote.Note := lMementoNote.Note;
       lMidiNote.NoteLength := lMementoNote.NoteLength;
       lMidiNote.NoteLocation := lMementoNote.NoteLocation;
@@ -544,15 +609,15 @@ begin
       lMidiNote.ObjectID := lMementoNote.ObjectID;
       lMidiNote.ObjectOwnerID := lMementoNote.ObjectOwnerID;
 
-      FMidiGrid.NoteList.Add(lMidiNote);
-      FMidiGrid.MidiDataList.Add(lMidiNote.MidiNoteStart);
-      FMidiGrid.MidiDataList.Add(lMidiNote.MidiNoteEnd);
+      FMidiPattern.NoteList.Add(lMidiNote);
+      FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
+      FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);
 
-      FMidiGrid.MidiDataList.IndexList;
+      FMidiPattern.MidiDataList.IndexList;
     end;
   end;
 
-  FMidiGrid.EndUpdate;
+  FMidiPattern.EndUpdate;
 
   DBLog('end TDeleteNotesCommand.DoRollback');
 end;
@@ -565,22 +630,22 @@ var
 begin
   DBLog('start TCreateNotesCommand.DoExecute');
 
-  FMidiGrid.BeginUpdate;
+  FMidiPattern.BeginUpdate;
 
-  lMidiNote := TMidiNote.Create(FMidiGrid.ObjectID, MAPPED);
+  lMidiNote := TMidiNote.Create(FMidiPattern.ObjectID, MAPPED);
   lMidiNote.Note := Note;
   lMidiNote.NoteLocation := Location;
-  lMidiNote.NoteLength := Round(FMidiGrid.QuantizeValue);
+  lMidiNote.NoteLength := Round(FMidiPattern.QuantizeValue);
   lMidiNote.NoteVelocity := DEFAULT_NOTE_VELOCITY;
-  FMidiGrid.NoteList.Add(lMidiNote);
-  FMidiGrid.MidiDataList.Add(lMidiNote.MidiNoteStart);
-  FMidiGrid.MidiDataList.Add(lMidiNote.MidiNoteEnd);
+  FMidiPattern.NoteList.Add(lMidiNote);
+  FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
+  FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);
 
   FOldObjectID := lMidiNote.ObjectID;
 
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 
-  FMidiGrid.EndUpdate;
+  FMidiPattern.EndUpdate;
 
   DBLog('end TCreateNotesCommand.DoExecute');
 end;
@@ -592,24 +657,24 @@ var
 begin
   DBLog('start TCreateNotesCommand.DoRollback');
 
-  FMidiGrid.BeginUpdate;
+  FMidiPattern.BeginUpdate;
 
-  for lNoteIndex := Pred(FMidiGrid.NoteList.Count) downto 0 do
+  for lNoteIndex := Pred(FMidiPattern.NoteList.Count) downto 0 do
   begin
-    lMidiNote := TMidiNote(FMidiGrid.NoteList[lNoteIndex]);
+    lMidiNote := TMidiNote(FMidiPattern.NoteList[lNoteIndex]);
     if FOldObjectID = lMidiNote.ObjectID then
     begin
-      writeln(Format('MidiDataList before count %d', [FMidiGrid.MidiDataList.Count]));
-      FMidiGrid.MidiDataList.Remove(lMidiNote.MidiNoteStart);
-      FMidiGrid.MidiDataList.Remove(lMidiNote.MidiNoteEnd);
-      writeln(Format('MidiDataList after count %d', [FMidiGrid.MidiDataList.Count]));
+      writeln(Format('MidiDataList before count %d', [FMidiPattern.MidiDataList.Count]));
+      FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteStart);
+      FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteEnd);
+      writeln(Format('MidiDataList after count %d', [FMidiPattern.MidiDataList.Count]));
 
-      FMidiGrid.NoteList.Remove(lMidiNote);
+      FMidiPattern.NoteList.Remove(lMidiNote);
     end;
   end;
 
-  FMidiGrid.MidiDataList.IndexList;
-  FMidiGrid.EndUpdate;
+  FMidiPattern.MidiDataList.IndexList;
+  FMidiPattern.EndUpdate;
 
   DBLog('end TCreateNotesCommand.DoRollback');
 end;
@@ -626,7 +691,7 @@ var
 begin
   DBLog('start TSelectNoteCommand.DoExecute');
 
-  lMidiNote := FMidiGrid.NoteByObjectID(ObjectID);
+  lMidiNote := FMidiPattern.NoteByObjectID(ObjectID);
   lCurrentNote := lMidiNote;
 
   // If actual selected note is already selected => do not clear other selection
@@ -637,9 +702,9 @@ begin
       // Clear selection if not in adding mode 'Shift down'
       if not FAddMode then
       begin
-        for lNoteIndex := 0 to Pred(FMidiGrid.NoteList.Count) do
+        for lNoteIndex := 0 to Pred(FMidiPattern.NoteList.Count) do
         begin
-          lMidinote:= TMidiNote(FMidiGrid.NoteList[lNoteIndex]);
+          lMidinote:= TMidiNote(FMidiPattern.NoteList[lNoteIndex]);
           lMidinote.Selected := False;
           lMidiNote.Notify;
         end;
@@ -650,7 +715,7 @@ begin
   // Now select/deselect the current note
   if Assigned(lCurrentNote) then
   begin
-    lMementoNote := TMidiNote.Create(FMidiGrid.ObjectID, NOT_MAPPED);
+    lMementoNote := TMidiNote.Create(FMidiPattern.ObjectID, NOT_MAPPED);
     lMementoNote.ObjectID := lCurrentNote.ObjectID;
     lMementoNote.Selected := lCurrentNote.Selected;
     Memento.Add(lMementoNote);
@@ -678,7 +743,7 @@ begin
   begin
     lMementoNote := TMidiNote(Memento[lIndex]);
 
-    lMidiNote := FMidiGrid.NoteByObjectID(lMementoNote.ObjectID);
+    lMidiNote := FMidiPattern.NoteByObjectID(lMementoNote.ObjectID);
 
     if Assigned(lMidiNote) then
     begin
@@ -701,9 +766,9 @@ begin
   DBLog('start TMoveNotesCommand.DoExecute');
 
   // Move selected notes
-  for lNoteIndex := 0 to Pred(FMidiGrid.NoteList.Count) do
+  for lNoteIndex := 0 to Pred(FMidiPattern.NoteList.Count) do
   begin
-    lMidinote := TMidiNote(FMidiGrid.NoteList[lNoteIndex]);
+    lMidinote := TMidiNote(FMidiPattern.NoteList[lNoteIndex]);
 
     if lMidinote.Selected then
     begin
@@ -712,7 +777,7 @@ begin
         lMidiNote.OriginalNote := lMidiNote.Note;
         lMidiNote.OriginalNoteLocation := lMidiNote.NoteLocation;
 
-        lMementoNote := TMidiNote.Create(FMidiGrid.ObjectID, NOT_MAPPED);
+        lMementoNote := TMidiNote.Create(FMidiPattern.ObjectID, NOT_MAPPED);
         lMementoNote.ObjectID := lMidinote.ObjectID;
         lMementoNote.Note := lMidinote.OriginalNote;
         lMementoNote.NoteLength := lMidinote.NoteLength;
@@ -726,15 +791,15 @@ begin
 
 
       // now quantize it
-      lMidiNote.NoteLocation := FMidiGrid.QuantizeLocation(lMidiNote.NoteLocation);
+      lMidiNote.NoteLocation := FMidiPattern.QuantizeLocation(lMidiNote.NoteLocation);
 
       lMidiNote.Notify;
     end;
   end;
 
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 
-  FMidiGrid.Notify;
+  FMidiPattern.Notify;
 
   DBLog('end TMoveNotesCommand.DoExecute');
 end;
@@ -748,7 +813,7 @@ begin
   for i := 0 to Pred(Memento.Count) do
   begin
     lMementoMidinote := TMidiNote(Memento[i]);
-    lMidinote := FMidiGrid.NoteByObjectID(lMementoMidinote.ObjectID);
+    lMidinote := FMidiPattern.NoteByObjectID(lMementoMidinote.ObjectID);
 
     if Assigned(lMidinote) then
     begin
@@ -757,9 +822,9 @@ begin
       lMidinote.Notify;
     end;
   end;
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 
-  FMidiGrid.Notify;
+  FMidiPattern.Notify;
 end;
 
 { TStretchNotesCommand }
@@ -770,9 +835,9 @@ var
   lMidinote: TMidiNote;
   lMementoNote: TMidiNote;
 begin
-  for j := 0 to Pred(FMidiGrid.NoteList.Count) do
+  for j := 0 to Pred(FMidiPattern.NoteList.Count) do
   begin
-    lMidinote:= TMidiNote(FMidiGrid.NoteList[j]);
+    lMidinote:= TMidiNote(FMidiPattern.NoteList[j]);
 
     if lMidinote.Selected then
     begin
@@ -798,7 +863,7 @@ begin
       end;
     end;
   end;
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 end;
 
 
@@ -811,7 +876,7 @@ begin
   for i := 0 to Pred(Memento.Count) do
   begin
     lMementoMidiNote := TMidiNote(Memento[i]);
-    lMidinote := FMidiGrid.NoteByObjectID(lMementoMidiNote.ObjectID);
+    lMidinote := FMidiPattern.NoteByObjectID(lMementoMidiNote.ObjectID);
 
     if Assigned(lMidinote) then
     begin
@@ -819,7 +884,7 @@ begin
       lMidinote.Notify;
     end;
   end;
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 end;
 
 { TQuantizeSettingCommand }
@@ -828,27 +893,27 @@ procedure TQuantizeSettingCommand.DoExecute;
 begin
   DBLog('start TQuantizeSettingCommand.DoExecute');
 
-  FMidiGrid.BeginUpdate;
+  FMidiPattern.BeginUpdate;
 
-  FOldQuantizeSetting := FMidiGrid.QuantizeSetting;
+  FOldQuantizeSetting := FMidiPattern.QuantizeSetting;
 
-  FMidiGrid.QuantizeSetting := QuantizeSetting;
+  FMidiPattern.QuantizeSetting := QuantizeSetting;
 
-  case FMidiGrid.QuantizeSetting of
-  0: FMidiGrid.QuantizeValue := -1;
-  1: FMidiGrid.QuantizeValue := 100 * 4;
-  2: FMidiGrid.QuantizeValue := 100 * 2;
-  3: FMidiGrid.QuantizeValue := 100;
-  4: FMidiGrid.QuantizeValue := 100 / 2;
-  5: FMidiGrid.QuantizeValue := 100 / 3;
-  6: FMidiGrid.QuantizeValue := 100 / 4;
-  7: FMidiGrid.QuantizeValue := 100 / 6;
-  8: FMidiGrid.QuantizeValue := 100 / 8;
-  9: FMidiGrid.QuantizeValue := 100 / 16;
-  10: FMidiGrid.QuantizeValue := 100 / 32;
+  case FMidiPattern.QuantizeSetting of
+  0: FMidiPattern.QuantizeValue := -1;
+  1: FMidiPattern.QuantizeValue := 100 * 4;
+  2: FMidiPattern.QuantizeValue := 100 * 2;
+  3: FMidiPattern.QuantizeValue := 100;
+  4: FMidiPattern.QuantizeValue := 100 / 2;
+  5: FMidiPattern.QuantizeValue := 100 / 3;
+  6: FMidiPattern.QuantizeValue := 100 / 4;
+  7: FMidiPattern.QuantizeValue := 100 / 6;
+  8: FMidiPattern.QuantizeValue := 100 / 8;
+  9: FMidiPattern.QuantizeValue := 100 / 16;
+  10: FMidiPattern.QuantizeValue := 100 / 32;
   end;
 
-  FMidiGrid.EndUpdate;
+  FMidiPattern.EndUpdate;
 
   DBLog('end TQuantizeSettingCommand.DoExecute');
 end;
@@ -857,25 +922,25 @@ procedure TQuantizeSettingCommand.DoRollback;
 begin
   DBLog('start TQuantizeSettingCommand.DoRollback');
 
-  FMidiGrid.BeginUpdate;
+  FMidiPattern.BeginUpdate;
 
-  FMidiGrid.QuantizeSetting := FOldQuantizeSetting;
+  FMidiPattern.QuantizeSetting := FOldQuantizeSetting;
 
-  case FMidiGrid.QuantizeSetting of
-  0: FMidiGrid.QuantizeValue := -1;
-  1: FMidiGrid.QuantizeValue := 100 * 4;
-  2: FMidiGrid.QuantizeValue := 100 * 2;
-  3: FMidiGrid.QuantizeValue := 100;
-  4: FMidiGrid.QuantizeValue := 100 / 2;
-  5: FMidiGrid.QuantizeValue := 100 / 3;
-  6: FMidiGrid.QuantizeValue := 100 / 4;
-  7: FMidiGrid.QuantizeValue := 100 / 6;
-  8: FMidiGrid.QuantizeValue := 100 / 8;
-  9: FMidiGrid.QuantizeValue := 100 / 16;
-  10: FMidiGrid.QuantizeValue := 100 / 32;
+  case FMidiPattern.QuantizeSetting of
+  0: FMidiPattern.QuantizeValue := -1;
+  1: FMidiPattern.QuantizeValue := 100 * 4;
+  2: FMidiPattern.QuantizeValue := 100 * 2;
+  3: FMidiPattern.QuantizeValue := 100;
+  4: FMidiPattern.QuantizeValue := 100 / 2;
+  5: FMidiPattern.QuantizeValue := 100 / 3;
+  6: FMidiPattern.QuantizeValue := 100 / 4;
+  7: FMidiPattern.QuantizeValue := 100 / 6;
+  8: FMidiPattern.QuantizeValue := 100 / 8;
+  9: FMidiPattern.QuantizeValue := 100 / 16;
+  10: FMidiPattern.QuantizeValue := 100 / 32;
   end;
 
-  FMidiGrid.EndUpdate;
+  FMidiPattern.EndUpdate;
 
   DBLog('end TQuantizeSettingCommand.DoRollback');
 end;
@@ -888,9 +953,9 @@ var
   lMidinote: TMidiNote;
   lMementoNote: TMidiNote;
 begin
-  for j := 0 to Pred(FMidiGrid.NoteList.Count) do
+  for j := 0 to Pred(FMidiPattern.NoteList.Count) do
   begin
-    lMidinote:= TMidiNote(FMidiGrid.NoteList[j]);
+    lMidinote:= TMidiNote(FMidiPattern.NoteList[j]);
 
     if lMidinote.Selected then
     begin
@@ -906,11 +971,11 @@ begin
         Memento.Add(lMementoNote);
       end;
 
-      lMidinote.NoteLocation:= (lMidinote.NoteLocation div FMidiGrid.QuantizeSetting) * FMidiGrid.QuantizeSetting;
+      lMidinote.NoteLocation:= (lMidinote.NoteLocation div FMidiPattern.QuantizeSetting) * FMidiPattern.QuantizeSetting;
       lMidinote.Notify;
     end;
   end;
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 end;
 
 procedure TQuantizeSelectionCommand.DoRollback;
@@ -922,9 +987,9 @@ begin
   for i := 0 to Pred(Memento.Count) do
   begin
     lMementoNote := TMidiNote(Memento[i]);
-    for j := 0 to Pred(FMidiGrid.NoteList.Count) do
+    for j := 0 to Pred(FMidiPattern.NoteList.Count) do
     begin
-      lMidinote := TMidiNote(FMidiGrid.NoteList[j]);
+      lMidinote := TMidiNote(FMidiPattern.NoteList[j]);
       if lMementoNote.ObjectID = lMidinote.ObjectID then
       begin
         lMidinote.NoteLocation := lMementoNote.NoteLocation;
@@ -934,7 +999,7 @@ begin
       end;
     end;
   end;
-  FMidiGrid.MidiDataList.IndexList;
+  FMidiPattern.MidiDataList.IndexList;
 end;
 
 { TSelectObjectListCommand }
@@ -947,9 +1012,9 @@ var
 begin
   if not FAddMode then
   begin
-    for lIndex := 0 to Pred(FMidiGrid.NoteList.Count) do
+    for lIndex := 0 to Pred(FMidiPattern.NoteList.Count) do
     begin
-      lMidinote := TMidiNote(FMidiGrid.NoteList[lIndex]);
+      lMidinote := TMidiNote(FMidiPattern.NoteList[lIndex]);
 
       if Assigned(lMidinote) then
       begin
@@ -966,7 +1031,7 @@ begin
 
   for lIndex := 0 to Pred(ObjectIdList.Count) do
   begin
-    lMidinote := FMidiGrid.NoteByObjectID(ObjectIdList[lIndex]);
+    lMidinote := FMidiPattern.NoteByObjectID(ObjectIdList[lIndex]);
 
     if Assigned(lMidinote) then
     begin
@@ -985,7 +1050,7 @@ begin
   for lIndex := 0 to Pred(Memento.Count) do
   begin
     lMementoNote := TMidiNote(Memento[lIndex]);
-    lMidinote := FMidiGrid.NoteByObjectID(lMementoNote.ObjectID);
+    lMidinote := FMidiPattern.NoteByObjectID(lMementoNote.ObjectID);
 
     if Assigned(lMidinote) then
     begin
@@ -995,12 +1060,44 @@ begin
   end;
 end;
 
+{ TChangeMidiChannelCommand }
+
+procedure TChangeMidiChannelCommand.DoExecute;
+begin
+  DBLog('start TChangeMidiChannelCommand.DoExecute');
+
+  FMidiPattern.BeginUpdate;
+
+  // Store MidiChannel
+  FOldMidiChannel := FMidiChannel;
+  FMidiPattern.MidiChannel := FMidiChannel;
+  writeln(Format('Change midiChannel to %d',[FMidiPattern.MidiChannel]));
+
+  FMidiPattern.EndUpdate;
+
+  DBLog('end TChangeMidiChannelCommand.DoExecute');
+end;
+
+procedure TChangeMidiChannelCommand.DoRollback;
+begin
+  DBLog('start TChangeMidiChannelCommand.DoRollback');
+
+  FMidiPattern.BeginUpdate;
+
+  FMidiPattern.MidiChannel := FOldMidiChannel;
+  writeln(Format('Change midiChannel to %d',[FMidiPattern.MidiChannel]));
+
+  FMidiPattern.EndUpdate;
+
+  DBLog('end TChangeMidiChannelCommand.DoRollback');
+end;
+
 
 { TMidiCommand }
 
 procedure TMidiCommand.Initialize;
 begin
-  FMidiGrid := TMidiPattern(GObjectMapper.GetModelObject(ObjectOwner));
+  FMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(ObjectOwner));
 end;
 
 initialization

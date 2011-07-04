@@ -7,8 +7,8 @@ object BankView: TBankView
   ClientHeight = 141
   ClientWidth = 922
   TabOrder = 0
-  DesignLeft = 316
-  DesignTop = 478
+  DesignLeft = 332
+  DesignTop = 554
   object gbSampleSelect: TGroupBox
     Left = 0
     Height = 141

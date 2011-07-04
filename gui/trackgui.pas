@@ -27,8 +27,8 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, StdCtrls, ExtCtrls, ComCtrls,
   dialcontrol, Controls, LCLType, Graphics, globalconst, ContNrs, global, track,
-  global_command, ShellCtrls, pattern, patterngui, LCLIntf, Menus, ActnList,
-  audiostructure;
+  global_command, ShellCtrls, pattern, LCLIntf, Menus, ActnList,
+  audiostructure, patterngui;
 
 type
   TPatternChangeEvent = procedure of object;
@@ -39,6 +39,8 @@ type
 
   TTrackGUI = class(TFrame, IObserver)
     acDeleteTrack: TAction;
+    acCreateWavePattern: TAction;
+    acCreateMidiPattern: TAction;
     ActionList1: TActionList;
     ComboBox1: TComboBox;
     cbOutput: TComboBox;
@@ -49,16 +51,24 @@ type
     dcMidFreq: TDialControl;
     dcMidLevel: TDialControl;
     dcHighLevel: TDialControl;
+    miCreateMidiPattern: TMenuItem;
+    miCreateWavePattern: TMenuItem;
     miDeleteTrack: TMenuItem;
     pnlPatterns: TPanel;
     pnlTrackControls: TPanel;
     pmTrack: TPopupMenu;
+    pupPatternList: TPopupMenu;
     tcOn: TToggleControl;
     vcLevel: TVolumeControl;
+    procedure acCreateMidiPatternExecute(Sender: TObject);
+    procedure acCreateWavePatternExecute(Sender: TObject);
     procedure acDeleteTrackExecute(Sender: TObject);
     procedure dcHighFreqChange(Sender: TObject);
+    procedure miDeleteTrackClick(Sender: TObject);
     procedure pnlPatternsDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
+    procedure pnlPatternsMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure Splitter2Moved(Sender: TObject);
     procedure TrackControlsMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -81,9 +91,10 @@ type
     FOnUpdateTrackControls: TNotifyEvent;
     FSelectedPattern: TPatternGUI;
     FShuffle: TShuffle;
-    FModelObject: TObject;
-    FObjectOwner: TObject;
+    FTrack: TTrack;
     FObjectOwnerID: string;
+    FObjectOwner: TObject;
+    FClickLocationY: Integer;
 
     procedure SetSelected(const AValue: Boolean);
     procedure CreatePatternGUI(AObjectID: string);
@@ -95,6 +106,9 @@ type
     procedure Update(Subject: THybridPersistentModel); reintroduce;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     property Selected: Boolean read FSelected write SetSelected;
     property OnTracksRefreshGUI: TTracksRefreshGUIEvent read FOnTracksRefreshGUI write FOnTracksRefreshGUI;
@@ -104,8 +118,7 @@ type
     property PanelPatterns: TPanel read pnlPatterns write pnlPatterns;
     property PatternListGUI: TObjectList read FPatternListGUI write FPatternListGUI;
     property SelectedPattern: TPatternGUI read FSelectedPattern write FSelectedPattern;
-    property ModelObject: TObject read FModelObject write FModelObject;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
+    property Track: TTrack read FTrack write FTrack;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
 
@@ -113,7 +126,7 @@ type
 implementation
 
 uses
-  utils;
+  utils, wavepatterngui, midipatterngui, wave, midi;
 
 { TTrackGUI }
 
@@ -195,20 +208,6 @@ begin
   tcOn.SwitchedOn := TTrack(Subject).Active;
   vcLevel.Position := TTrack(Subject).Volume;
 
-  for i := 0 to Pred(Self.PatternListGUI.Count) do
-  begin
-    if Assigned(TTrack(Subject).SelectedPattern) then
-    begin
-      if TPatternGUI(Self.PatternListGUI[i]).ObjectID = TTrack(Subject).SelectedPattern.ObjectID then
-      begin
-        GSettings.SelectedPatternGUI := Self.PatternListGUI[i];
-        Self.SelectedPattern := TPatternGUI(Self.PatternListGUI[i]);
-        OnTracksRefreshGUI(Self);
-        break;
-      end;
-    end;
-  end;
-
   Invalidate;
 
   DBLog('end TTrack.Update');
@@ -224,10 +223,39 @@ begin
   FObjectID := AObjectID;
 end;
 
+function TTrackGUI.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TTrackGUI.SetObjectOwnerID(const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
+end;
+
 procedure TTrackGUI.CreatePatternGUI(AObjectID: string);
 var
   lPatternGUI: TPatternGUI;
+  lWavePatternGUI: TWavePatternGUI;
+  lMidiPatternGUI: TMidiPatternGUI;
   lPattern: TPattern;
+
+  procedure InitializePattern(APatternGUI: TPatternGUI);
+  begin
+    APatternGUI.ObjectID := AObjectID;
+    APatternGUI.ModelObject := lPattern;
+    APatternGUI.ObjectOwnerID := Self.ObjectID;
+    APatternGUI.Position := lPattern.Position;
+    APatternGUI.Text := lPattern.PatternName;
+    APatternGUI.OnTracksRefreshGUI := OnTracksRefreshGUI;
+    APatternGUI.Parent := nil;
+    APatternGUI.Parent := pnlPatterns;
+
+    APatternGUI.Connect;
+
+    PatternListGUI.Add(APatternGUI);
+  end;
+
 begin
   DBLog('start TTrack.CreatePatternGUI' + AObjectID);
 
@@ -235,19 +263,18 @@ begin
   lPattern := TPattern(GObjectMapper.GetModelObject(AObjectID));
   if Assigned(lPattern) then
   begin
-    lPatternGUI := TPatternGUI.Create(Self);
-    lPatternGUI.ObjectID := AObjectID;
-    lPatternGUI.ModelObject := lPattern;
-    lPatternGUI.Model := lPattern;
-    lPatternGUI.ObjectOwnerID := Self.ObjectID;
-    lPatternGUI.Position := lPattern.Position;
-    lPatternGUI.OnTracksRefreshGUI := OnTracksRefreshGUI;
-    lPatternGUI.Parent := Self;
-    lPatternGUI.Connect;
-
-    PatternListGUI.Add(lPatternGUI);
-
-    lPatternGUI.Text := lPattern.PatternName;
+    if lPattern.ClassType = 'TWavePattern' then
+    begin
+      lWavePatternGUI := TWavePatternGUI.Create(Self);
+      lWavePatternGUI.WavePattern := TWavePattern(lPattern);
+      InitializePattern(lWavePatternGUI);
+    end
+    else if lPattern.ClassType = 'TMidiPattern' then
+    begin
+      lMidiPatternGUI := TMidiPatternGUI.Create(Self);
+        lMidiPatternGUI.MidiPattern := TMidiPattern(lPattern);
+      InitializePattern(lMidiPatternGUI);
+    end;
   end;
   DBLog('end TTrack.CreatePatternGUI');
 end;
@@ -267,7 +294,6 @@ begin
     begin
       try
         lPatternGUI.Disconnect;
-
       except
         on e:exception do
         begin
@@ -317,7 +343,7 @@ var
 begin
   DBLog('start TTrack.pnlPatternsDragDrop');
 
-  Inherited DragDrop(Source, X, Y);
+//  Inherited DragDrop(Source, X, Y);
 
   // Insert pattern in track from treeview-node
   if Source is TTreeView then
@@ -406,6 +432,12 @@ begin
   Accept := True;
 end;
 
+procedure TTrackGUI.pnlPatternsMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  FClickLocationY := Y;
+end;
+
 procedure TTrackGUI.acDeleteTrackExecute(Sender: TObject);
 var
   lCommandDeleteTrack: TDeleteTrackCommand;
@@ -420,9 +452,46 @@ begin
   end;
 end;
 
+procedure TTrackGUI.acCreateMidiPatternExecute(Sender: TObject);
+var
+  lCreateMidiPattern: TCreatePatternCommand;
+begin
+  lCreateMidiPattern := TCreatePatternCommand.Create(FObjectID);
+  try
+    lCreateMidiPattern.PatternName := '- midi -';
+    lCreateMidiPattern.Position := (FClickLocationY div 15) * 15;
+    lCreateMidiPattern.SourceType := fsMidi;
+
+    GCommandQueue.PushCommand(lCreateMidiPattern);
+  except
+    lCreateMidiPattern.Free;
+  end;
+end;
+
+procedure TTrackGUI.acCreateWavePatternExecute(Sender: TObject);
+var
+  lCreateWavePattern: TCreatePatternCommand;
+begin
+  lCreateWavePattern := TCreatePatternCommand.Create(FObjectID);
+  try
+    lCreateWavePattern.PatternName := '- audio -';
+    lCreateWavePattern.Position := (FClickLocationY div 15) * 15;
+    lCreateWavePattern.SourceType := fsWave;
+
+    GCommandQueue.PushCommand(lCreateWavePattern);
+  except
+    lCreateWavePattern.Free;
+  end;
+end;
+
 procedure TTrackGUI.dcHighFreqChange(Sender: TObject);
 begin
 
+end;
+
+procedure TTrackGUI.miDeleteTrackClick(Sender: TObject);
+begin
+  // todo
 end;
 
 procedure TTrackGUI.Splitter2Moved(Sender: TObject);

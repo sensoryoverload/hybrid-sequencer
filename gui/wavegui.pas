@@ -18,7 +18,7 @@
   waveformgui.pas
 }
 
-unit waveformgui;
+unit wavegui;
 
 {$mode objfpc}{$H+}
 
@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, LCLType, Graphics, globalconst, global, jacktypes,
-  ComCtrls, pattern, global_command, waveform, utils, ContNrs;
+  ComCtrls, pattern, global_command, wave, utils, ContNrs;
 
 const
   DECIMATED_CACHE_DISTANCE = 64;
@@ -55,7 +55,7 @@ type
   private
     FLocation: Integer;
     FOriginalLocation: Integer;
-    FModel: TMarker;
+    FMarker: TMarker;
     FSelected: Boolean;
     FLocked: Boolean;
     FSliceType: Integer;
@@ -68,7 +68,7 @@ type
     property Locked: Boolean read FLocked write FLocked;
     property Location: Integer read FLocation write FLocation;
     property OriginalLocation: Integer read FOriginalLocation write FOriginalLocation;
-    property Model: TMarker read FModel write FModel;
+    property Marker: TMarker read FMarker write FMarker;
     property SliceType: Integer read FSliceType write FSliceType;
     property DecayRate: single read FDecayRate write FDecayRate;
     property NextSlice: TMarkerGUI read FNextSlice write FNextSlice;
@@ -81,17 +81,17 @@ type
   private
     FDataType: TLoopMarkerType;
     FLocation: Integer;
-    FModel: TLoopMarker;
+    FLoopMarker: TLoopMarker;
   public
     constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType);
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
-    property Model: TLoopMarker read FModel write FModel;
+    property LoopMarker: TLoopMarker read FLoopMarker write FLoopMarker;
     property DataType: TLoopMarkerType read FDataType write FDataType;
     property Location: Integer read FLocation write FLocation;
   end;
 
-  { TWaveFormGUI }
-  TWaveFormGUI = class(TPersistentCustomControl)
+  { TWaveGUI }
+  TWaveGUI = class(TPersistentCustomControl)
   private
     { GUI }
     FZoomFactorX: Single;
@@ -130,15 +130,19 @@ type
     FReadCount: Integer;
     FSampleFileName: string;
     FTransientThreshold: Integer;
-    FModel: TWavePattern;
+    FWavePattern: TWavePattern;
     FBitmap: TBitmap;
     FCacheIsDirty: Boolean;
     FOldCursorPosition: Integer;
+    FPitch: Single;
+    FRealBPM: Single;
+    FPitched: Boolean;
 
     procedure RecalculateWarp;
     procedure SetTransientThreshold(const AValue: Integer);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
+    procedure Setpitch(const Avalue: Single);
     procedure Sortslices;
   public
     constructor Create(AOwner: TComponent); override;
@@ -168,8 +172,11 @@ type
     property SampleFileName: string read FSampleFileName write FSampleFileName;
     property TransientThreshold: Integer read FTransientThreshold write SetTransientThreshold;
     property BarLength: Integer read FBarLength write FBarLength;
-    property Model: TWavePattern read FModel write FModel;
+    property WavePattern: TWavePattern read FWavePattern write FWavePattern;
     property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
+    property Pitch: Single read FPitch write SetPitch default 1;
+    property Pitched: Boolean read FPitched write FPitched default False;
+    property RealBPM: Single read FRealBPM write FRealBPM default 120;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -256,14 +263,14 @@ begin
   inherited Paint;
 end;
 
-procedure TWaveFormGUI.SetTransientThreshold(const AValue: Integer);
+procedure TWaveGUI.SetTransientThreshold(const AValue: Integer);
 begin
   FTransientThreshold:= AValue;
 //  BeatDetect.setThresHold(FTransientThreshold / 100);
 //  AutoMarkerProcess(True);
 end;
 
-procedure TWaveFormGUI.SetZoomFactorX(const AValue: Single);
+procedure TWaveGUI.SetZoomFactorX(const AValue: Single);
 begin
   FZoomFactorX := AValue;
   if FZoomFactorX <= 2 then FZoomFactorX := 2;
@@ -273,12 +280,22 @@ begin
   FCacheIsDirty := True;
 end;
 
-procedure TWaveFormGUI.SetZoomFactorY(const AValue: Single);
+procedure TWaveGUI.SetZoomFactorY(const AValue: Single);
 begin
   FCacheIsDirty := True;
 end;
 
-constructor TWaveFormGUI.Create(Aowner: Tcomponent);
+procedure TWaveGUI.Setpitch(const Avalue: Single);
+begin
+  if Avalue > 8 then
+    FPitch := 8
+  else if Avalue < 0.1 then
+    FPitch := 0.1
+  else
+    FPitch := Avalue;
+end;
+
+constructor TWaveGUI.Create(Aowner: Tcomponent);
 begin
   inherited Create(Aowner);
 
@@ -300,6 +317,7 @@ begin
   FCursorAdder:= 0;
   FVolumeDecay:= 1;
   FCacheIsDirty := True;
+  FRealBPM := 120;
 
   FSliceListGUI := TObjectList.Create(True);
   FCurrentSliceIndex:= 0;
@@ -307,7 +325,7 @@ begin
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 end;
 
-destructor TWaveFormGUI.Destroy;
+destructor TWaveGUI.Destroy;
 begin
   FSliceListGUI.Free;
 
@@ -320,7 +338,7 @@ begin
   inherited Destroy;
 end;
 
-procedure TWaveFormGUI.Update(Subject: THybridPersistentModel);
+procedure TWaveGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TWaveFormGUI.Update');
 
@@ -341,36 +359,31 @@ begin
   DBLog('end TWaveFormGUI.Update');
 end;
 
-procedure TWaveFormGUI.Connect;
+procedure TWaveGUI.Connect;
 begin
   writeln('start TWaveFormGUI.Connect');
 
-  FLoopStart.ObjectID := Model.LoopStart.ObjectID;
-  Model.LoopStart.Attach(FLoopStart);
-
-  FLoopEnd.ObjectID := Model.LoopEnd.ObjectID;
-  Model.LoopEnd.Attach(FLoopEnd);
-
-  FLoopLength.ObjectID := Model.LoopLength.ObjectID;
-  Model.LoopLength.Attach(FLoopLength);
+  WavePattern.LoopStart.Attach(FLoopStart);
+  WavePattern.LoopEnd.Attach(FLoopEnd);
+  WavePattern.LoopLength.Attach(FLoopLength);
 
   writeln('end TWaveFormGUI.Connect');
 end;
 
-procedure TWaveFormGUI.Disconnect;
+procedure TWaveGUI.Disconnect;
 begin
-  Model.LoopStart.Detach(FLoopStart);
-  Model.LoopEnd.Detach(FLoopEnd);
-  Model.LoopLength.Detach(FLoopLength);
+  WavePattern.LoopStart.Detach(FLoopStart);
+  WavePattern.LoopEnd.Detach(FLoopEnd);
+  WavePattern.LoopLength.Detach(FLoopLength);
 end;
 
-procedure TWaveFormGUI.EraseBackground(DC: HDC);
+procedure TWaveGUI.EraseBackground(DC: HDC);
 begin
   // Uncomment this to enable default background erasing
   inherited EraseBackground(DC);
 end;
 
-procedure TWaveFormGUI.Paint;
+procedure TWaveGUI.Paint;
 var
   ChannelLoop: Integer;
   ScreenLoop: Integer;
@@ -397,6 +410,8 @@ var
   TimeMarkerLocation: Integer;
   lClipRect: TRect;
 begin
+  if not Assigned(WavePattern) then exit;
+
   if FCacheIsDirty then
   begin
     FBitmap.Canvas.Clear;
@@ -413,7 +428,7 @@ begin
     FBitmap.Canvas.Clipping := False;
     FBitmap.Canvas.Rectangle(0, 0, Width, TrackHeight);
 
-    if (TChannel(Model.Wave.ChannelList[0]).Buffer <> nil) and (Model.Wave.Frames > 0) then
+    if (TChannel(WavePattern.Wave.ChannelList[0]).Buffer <> nil) and (WavePattern.Wave.Frames > 0) then
     begin
       // Bound parameters
       FOffset := GSettings.CursorPosition;
@@ -439,15 +454,15 @@ begin
         FBitmap.Canvas.Brush.Color:= clWhite;
       end;
 
-      ChannelHeight := FBitmap.Height div Model.Wave.ChannelCount;
-      for ChannelLoop := 0 to Pred(Model.Wave.ChannelCount) do
+      ChannelHeight := FBitmap.Height div WavePattern.Wave.ChannelCount;
+      for ChannelLoop := 0 to Pred(WavePattern.Wave.ChannelCount) do
       begin
         FBitmap.Canvas.Pen.Color := clBlack;
         FBitmap.Canvas.Line(0, ChannelHeight * ChannelLoop, Width, ChannelHeight * ChannelLoop);
 
         // First point
         ChannelScreenOffset := ChannelLoop * ChannelHeight + ChannelHeight shr 1;
-        ChannelZeroLine := ChannelHeight div Model.Wave.ChannelCount;
+        ChannelZeroLine := ChannelHeight div WavePattern.Wave.ChannelCount;
         FBitmap.Canvas.Pen.Color := clBlue;
         FBitmap.Canvas.Pen.Width := 1;
         FBitmap.Canvas.MoveTo(0, ChannelScreenOffset);
@@ -475,10 +490,10 @@ begin
                 if FZoomFactorToData > 50 then
                 begin
                   // Subsampling sample values when zoomed in
-                  DataValue := Model.DecimatedData[Round(PositionInData1 * Model.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                  DataValue := WavePattern.DecimatedData[Round(PositionInData1 * WavePattern.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
                   for SubSampleLoop := Round(PositionInData1) to Round(PositionInData2) - 1 do
                   begin
-                    DataValue := Model.DecimatedData[(SubSampleLoop * Model.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                    DataValue := WavePattern.DecimatedData[(SubSampleLoop * WavePattern.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
                     if DataValue < MinValue then MinValue := DataValue;
                     if DataValue > MaxValue then MaxValue := DataValue;
                   end;
@@ -488,8 +503,8 @@ begin
                 else
                 begin
                   // Pixelview
-                  DataValue := Model.DecimatedData[(Round(PositionInData1) * Model.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
-                  if PositionInData1 < Model.Wave.ReadCount then
+                  DataValue := WavePattern.DecimatedData[(Round(PositionInData1) * WavePattern.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                  if PositionInData1 < WavePattern.Wave.ReadCount then
                   begin
                     FBitmap.Canvas.LineTo(ScreenLoop, Round(DataValue * FZoomFactorY * ChannelZeroLine) + ChannelScreenOffset);
                   end;
@@ -566,7 +581,7 @@ begin
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  SliceX := Round((Model.RealCursorPosition) * FZoomFactorToScreen - FOffset);
+  SliceX := Round((WavePattern.RealCursorPosition) * FZoomFactorToScreen - FOffset);
   if FOldCursorPosition <> SliceX then
   begin
     Canvas.Pen.Color := clBlack;
@@ -578,7 +593,7 @@ begin
   inherited Paint;
 end;
 
-procedure TWaveFormGUI.Mousedown(Button: Tmousebutton; Shift: Tshiftstate; X,
+procedure TWaveGUI.Mousedown(Button: Tmousebutton; Shift: Tshiftstate; X,
   Y: Integer);
 var
   XRelative: Integer;
@@ -627,7 +642,7 @@ begin
 
         if Assigned(FSelectedSlice) then
         begin
-          FSelectedSlice.Selected:= True;
+          FSelectedSlice.Selected := True;
 
           case lMode of
             1:
@@ -731,7 +746,7 @@ begin
   inherited Mousedown(Button, Shift, X, Y);
 end;
 
-procedure TWaveFormGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
+procedure TWaveGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 var
   XRelative: Integer;
@@ -786,7 +801,7 @@ begin
   inherited MouseUp(Button, Shift, X, Y);
 end;
 
-procedure TWaveFormGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
+procedure TWaveGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
 var
   XRelative: Integer;
 begin
@@ -831,7 +846,7 @@ begin
   Invalidate;
 end;
 
-procedure TWaveFormGUI.DragDrop(Source: TObject; X, Y: Integer);
+procedure TWaveGUI.DragDrop(Source: TObject; X, Y: Integer);
 var
   lTreeView: TTreeView;
   lDropWave: TPatternDropWaveCommand;
@@ -856,7 +871,7 @@ begin
   end;
 end;
 
-procedure TWaveFormGUI.DragOver(Source: TObject; X, Y: Integer;
+procedure TWaveGUI.DragOver(Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 begin
   inherited DragOver(Source, X, Y, State, Accept);
@@ -865,7 +880,7 @@ begin
 end;
 
 
-function TwaveformGUI.NextSlice: TMarkerGUI;
+function TWaveGUI.NextSlice: TMarkerGUI;
 var
   lMarker: TMarkerGUI;
 begin
@@ -882,10 +897,13 @@ begin
     Result := nil;
 end;
 
-procedure TWaveFormGUI.Sortslices;
+procedure TWaveGUI.Sortslices;
 var
   i: Integer;
 begin
+  if FSliceListGUI.Count = 0 then
+    exit;
+
   // Link all sorted
   FSliceListGUI.Sort(@compareByLocation);
   for i := 0 to FSliceListGUI.Count - 2 do
@@ -906,7 +924,7 @@ begin
   RecalculateWarp;
 end;
 
-procedure TWaveFormGUI.RecalculateWarp;
+procedure TWaveGUI.RecalculateWarp;
 var
   i: Integer;
 begin
@@ -923,7 +941,7 @@ begin
   CacheIsDirty := True;
 end;
 
-function TWaveFormGUI.GetSliceAt(Location: Integer; AMargin: Single): TMarkerGUI;
+function TWaveGUI.GetSliceAt(Location: Integer; AMargin: Single): TMarkerGUI;
 var
   i: Integer;
   lSlice: TMarkerGUI;
@@ -946,11 +964,11 @@ begin
   end;
 end;
 
-function TWaveFormGUI.LoopMarkerAt(Location: Integer; AMargin: Single): TLoopMarkerGUI;
+function TWaveGUI.LoopMarkerAt(Location: Integer; AMargin: Single): TLoopMarkerGUI;
 begin
-  LoopStart.Location := Model.LoopStart.Location;
-  LoopEnd.Location := Model.LoopEnd.Location;
-  LoopLength.Location := Model.LoopLength.Location;
+  LoopStart.Location := WavePattern.LoopStart.Location;
+  LoopEnd.Location := WavePattern.LoopEnd.Location;
+  LoopLength.Location := WavePattern.LoopLength.Location;
 
   Result := nil;
 
@@ -970,7 +988,7 @@ begin
   end;
 end;
 
-procedure TWaveFormGUI.CreateMarkerGUI(AObjectID: string);
+procedure TWaveGUI.CreateMarkerGUI(AObjectID: string);
 var
   lMarker: TMarker;
   lMarkerGUI: TMarkerGUI;
@@ -978,23 +996,25 @@ begin
   DBLog('start TWaveFormGUI.CreateMarkerGUI ' + AObjectID);
 
   lMarker := TMarker(GObjectMapper.GetModelObject(AObjectID));
+  if Assigned(lMarker) then
+  begin
+    lMarkerGUI := TMarkerGUI.Create(ObjectID);
+    lMarkerGUI.Location := lMarker.Location;
+    lMarkerGUI.OriginalLocation := lMarker.OrigLocation;
+    lMarkerGUI.Selected := lMarker.Selected;
+    lMarkerGUI.Locked := lMarker.Locked;
+    lMarkerGUI.DecayRate := lMarker.DecayRate;
+    lMarkerGUI.Marker := lMarker;
 
-  lMarkerGUI := TMarkerGUI.Create(ObjectID);
-  lMarkerGUI.ObjectID := AObjectID;
-  lMarkerGUI.Location := lMarker.Location;
-  lMarkerGUI.OriginalLocation := lMarker.OrigLocation;
-  lMarkerGUI.Selected := lMarker.Selected;
-  lMarkerGUI.Locked := lMarker.Locked;
-  lMarkerGUI.DecayRate := lMarker.DecayRate;
-  lMarkerGUI.Model := lMarker;
-  lMarker.Attach(lMarkerGUI);
+    FSliceListGUI.Add(lMarkerGUI);
 
-  FSliceListGUI.Add(lMarkerGUI);
+    lMarker.Attach(lMarkerGUI);
+  end;
 
   DBLog('end TWaveFormGUI.CreateMarkerGUI');
 end;
 
-procedure TWaveFormGUI.DeleteMarkerGUI(AObjectID: string);
+procedure TWaveGUI.DeleteMarkerGUI(AObjectID: string);
 var
   lMarker: TMarker;
   lMarkerGUI: TMarkerGUI;
@@ -1010,6 +1030,7 @@ begin
 
     if lMarkerGUI.ObjectID = AObjectID then
     begin
+      lMarker.Detach(lMarkerGUI);
       FSliceListGUI.Remove(lMarkerGUI);
       break;
     end;
@@ -1035,18 +1056,23 @@ end;
 { TMarkerGUI }
 
 procedure TMarkerGUI.Update(Subject: THybridPersistentModel);
+var
+  lMarker: TMarker;
 begin
-  Self.ObjectID := TMarker(Subject).ObjectID;
-  Self.Selected := TMarker(Subject).Selected;
-  Self.Location := TMarker(Subject).Location;
-  Self.OriginalLocation := TMarker(Subject).OrigLocation;
-  Self.DecayRate := TMarker(Subject).DecayRate;
-  Self.SliceType := TMarker(Subject).SliceType;
-  Self.Locked := TMarker(Subject).Locked;
+  lMarker := TMarker(Subject);
+  if Assigned(lMarker) then
+  begin
+    Self.Selected := lMarker.Selected;
+    Self.Location := lMarker.Location;
+    Self.OriginalLocation := lMarker.OrigLocation;
+    Self.DecayRate := lMarker.DecayRate;
+    Self.SliceType := lMarker.SliceType;
+    Self.Locked := lMarker.Locked;
+  end;
 end;
 
 initialization
-  RegisterClass(TWaveFormGUI);
+  RegisterClass(TWaveGUI);
 
 end.
 

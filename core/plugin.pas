@@ -25,7 +25,7 @@ unit plugin;
 interface
 
 uses
-  Classes, SysUtils, ContNrs, globalconst, utils, global_command, global, midi;
+  Classes, SysUtils, ContNrs, globalconst, utils, global_command, global;
 
 type
   TPluginNodeType = (pntSource, pntSink, pntPlugin);
@@ -34,7 +34,7 @@ type
 
   TBasePlugin = class(TObject)
   public
-    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
   end;
 
   { TPluginNode }
@@ -47,8 +47,8 @@ type
     FMixBuffer: PSingle;
     FParameterList: TObjectList;
     FReturnBuffer: PSingle;
+    FMidiBuffer: TMidiBuffer;
     FBuffer: PSingle;
-    FMidiGrid: TMidiPattern;
     FFrames: Integer;
     FNodeType: TPluginNodeType;
     FPluginName: string;
@@ -65,7 +65,7 @@ type
     procedure Initialize; override;
     procedure ApplyToAll(AApplyProc: TApplyProc);
     function Execute(AFrames: Integer): PSingle;
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
     procedure Clear;
     property MixBuffer: PSingle read FMixBuffer write FMixBuffer;
     property PortList: TObjectList read FPortList write FPortList;
@@ -94,14 +94,14 @@ type
 
   TLADSPAPlugin = class(TPluginNode)
   public
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TMementoPlugin }
 
   TMementoPlugin = class(TPluginNode)
   public
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TInternalPlugin }
@@ -115,7 +115,7 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TPluginAudioOut }
@@ -124,7 +124,7 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TPluginAudioIn }
@@ -133,7 +133,7 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TPluginMidiOut }
@@ -142,7 +142,7 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TPluginMidiIn }
@@ -151,7 +151,7 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
 implementation
@@ -161,7 +161,7 @@ uses
 
 { TPlugin }
 
-procedure TLADSPAPlugin.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TLADSPAPlugin.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   // TODO implement DSP stuff
 end;
@@ -177,7 +177,7 @@ begin
   NodeType := pntSink;
 end;
 
-procedure TPluginAudioOut.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginAudioOut.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
@@ -193,7 +193,7 @@ begin
   NodeType := pntSource;
 end;
 
-procedure TPluginMidiIn.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginMidiIn.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
@@ -209,7 +209,7 @@ begin
   NodeType := pntSink;
 end;
 
-procedure TPluginMidiOut.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginMidiOut.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -229,7 +229,7 @@ begin
   NodeType := pntSource;
 end;
 
-procedure TPluginAudioIn.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginAudioIn.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -343,7 +343,7 @@ begin
   end;
 
   // Apply plugin to mixed childs
-  Process(FMidiGrid, FMixBuffer, AFrames);
+  Process(FMidiBuffer, FMixBuffer, AFrames);
 
   FCached := True;
 
@@ -393,14 +393,14 @@ begin
   //
 end;
 
-procedure TPluginExternal.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginExternal.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
 
 { TMementoPlugin }
 
-procedure TMementoPlugin.Process(AMidiGrid: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TMementoPlugin.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   // Virtual base method
 end;

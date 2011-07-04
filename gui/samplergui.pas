@@ -193,8 +193,6 @@ begin
     FBankListGUI.Add(lBankSelectControl);
 
     FBankView.Bank := lSampleBank;
-    FBankView.ObjectID := AObjectID;
-    FBankView.ObjectOwnerID := Self.ObjectID;
     lSampleBank.Attach(FBankView);
 
     GAudioStruct.SelectedBank := lSampleBank;
@@ -409,10 +407,8 @@ begin
               end;
 
               // Now attach newly selected bank
-              FBankView.Bank := GAudioStruct.SelectedBank;
-              FBankView.ObjectID := GAudioStruct.SelectedBank.ObjectID;
-              FBankView.ObjectOwnerID := Self.ObjectID;
               GAudioStruct.SelectedBank.Attach(FBankView);
+              FBankView.Bank := GAudioStruct.SelectedBank;
             end;
           end;
         end;

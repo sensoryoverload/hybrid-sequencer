@@ -123,6 +123,7 @@ type
     FMainSyncModula: Integer;
     FMainQuantizeLength: Integer;
     FBPM: Single;
+    FBPMScale: Single;
     FBPMAdder: Single;
     FMainSampleRate: Single;
     FPlayState: Integer;
@@ -148,6 +149,7 @@ type
     property MainSyncCounter: Integer read FMainSyncCounter write FMainSyncCounter;
     property MainSyncModula: Integer read FMainSyncModula write FMainSyncModula;
     property BPM: Single read FBPM write SetBPM;
+    property BPMScale: Single read FBPMScale;
     property BPMAdder: Single read FBPMAdder;
     property PlayState: Integer read FPlayState write FPlayState;
     property MainSampleRate: Single read FMainSampleRate write FMainSampleRate;
@@ -160,7 +162,7 @@ var
 implementation
 
 uses
-  SimpleJack, sndfile, Pattern, DOM, XMLWrite, XMLRead;
+  SimpleJack, sndfile, Wave, DOM, XMLWrite, XMLRead;
 
 { TAudioStructure }
 
@@ -217,6 +219,8 @@ begin
 
   FBPMAdder := FBPM / 120;
 
+  FBPMscale := FBPM * DIVIDE_BY_120_MULTIPLIER;
+
   RecalculateSynchronize;
 end;
 
@@ -265,8 +269,8 @@ procedure TModelThread.Execute;
 begin
   while (not Terminated) do
   begin
-    // Only update at 1000 ms / 10 ms = about 100 fps
-    Sleep(10);
+    // Only update at 1000 ms / 40 ms = about 25 fps
+    Sleep(40);
     Synchronize(@Updater);
   end;
 end;
@@ -343,7 +347,8 @@ procedure TCreateTrackCommand.DoExecute;
 var
   lTrack: TTrack;
   i: Integer;
-  lPattern: TPattern;
+  lWavePattern: TWavePattern;
+  lMidiPattern: TMidiPattern;
 begin
   DBLog('start TCreateTrackCommand.DoExecute');
 
@@ -370,28 +375,39 @@ begin
     begin
       lTrack.BeginUpdate;
 
-      lPattern := TPattern.Create(lTrack.ObjectID);
-      lPattern.PatternName := PatternName;
-      lPattern.WavePattern.SampleFileName := SourceLocation;
-      lPattern.Position := Position;
-      lTrack.PatternList.Add(lPattern);
-      lTrack.SelectedPattern := lPattern;
+      lWavePattern := TWavePattern.Create(lTrack.ObjectID);
+      lWavePattern.PatternName := PatternName;
+      lWavePattern.WaveFileName := SourceLocation;
+      lWavePattern.Position := Position;
+      lTrack.PatternList.Add(lWavePattern);
+      lTrack.SelectedPattern := lWavePattern;
 
       if FileExists(SourceLocation) then
       begin
-        lPattern.Initialize;
-        lPattern.OkToPlay := True;
+        lWavePattern.Initialize;
       end;
       lTrack.EndUpdate;
-      lPattern.Notify;
-      lPattern.WavePattern.Notify;
-      lPattern.MidiPattern.Notify;
+      lWavePattern.Notify;
     end;
     fsMIDI:
     begin
+      lTrack.BeginUpdate;
 
+      lMidiPattern := TMidiPattern.Create(lTrack.ObjectID);
+      lMidiPattern.PatternName := PatternName;
+      lMidiPattern.Position := Position;
+      lTrack.PatternList.Add(lMidiPattern);
+      lTrack.SelectedPattern := lMidiPattern;
+
+      //Nothing to load here..
+      {if FileExists(SourceLocation) then
+      begin}
+        lMidiPattern.Initialize;
+      {end;}
+      lTrack.EndUpdate;
+      lWavePattern.Notify;
     end;
-    fsPattern:
+    fsEmpty:
     begin
 
     end;

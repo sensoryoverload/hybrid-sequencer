@@ -5,7 +5,7 @@ unit GUIFactory;
 interface
 
 uses
-  Classes, SysUtils, global, globalconst, pattern, patterngui, track, trackgui,
+  Classes, SysUtils, global, globalconst, pattern, track, trackgui,
   ExtCtrls, Controls, ContNrs, global_command, syncobjs;
 
 type

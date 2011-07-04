@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, Forms, LCLType, Graphics, Menus, globalconst,
-  jacktypes, ContNrs, waveform, global_command, midi, global, unix, BaseUNIX,
+  jacktypes, ContNrs, wave, global_command, midi, global, unix, BaseUNIX,
   lclintf, ActnList;
 
 
@@ -36,7 +36,7 @@ type
 
   TZoomCallback = procedure(AZoomTimeLeft, AZoomTimeRight: Integer) of object;
 
-  TMidiGridGUI = class;
+  TMidiPatternGUI = class;
 
   { TMidiNoteGUI }
 
@@ -47,7 +47,7 @@ type
     FOriginalNoteLocation: Integer;
     FOriginalNote: Integer;
 
-    FMidiGrid: TMidiGridGUI;
+    FMidiPattern: TMidiPatternGUI;
 
     { Audio }
     FNoteLocation: Integer; // Which time format ? in samples ??
@@ -67,14 +67,14 @@ type
     property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
     property NoteLength: Integer read FNoteLength write FNoteLength;
     property OriginalNoteLength: Integer read FOriginalNoteLength write FOriginalNoteLength;
-    property MidiGridGUI: TMidiGridGUI read FMidiGrid write FMidiGrid;
+    property MidiGridGUI: TMidiPatternGUI read FMidiPattern write FMidiPattern;
   published
     property Selected: Boolean read FSelected write FSelected;
   end;
 
-  { TMidiGridGUI }
+  { TMidiPatternGUI }
 
-  TMidiGridGUI = class(TFrame, IObserver)
+  TMidiPatternGUI = class(TFrame, IObserver)
     acDeleteNote: TAction;
     acDuplicate: TAction;
     acLoop: TAction;
@@ -127,7 +127,7 @@ type
     FOldQuantizedLocation: Integer;
 
     FZoomingMode: Boolean;
-    FModel: TMidiPattern;
+    FMidiPattern: TMidiPattern;
     FBitmap: TBitmap;
     FBitmapIsDirty: Boolean;
 
@@ -154,6 +154,9 @@ type
 
     FOldCursorPosition: Integer;
 
+    FRootNote: Integer;
+    FMidiChannel: Integer;
+
     procedure HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
       Y: Integer);
     procedure HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
@@ -176,7 +179,7 @@ type
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string;
-    procedure SetObjectOwnerID(AObjectOwnerID: string);
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
     procedure HandleZoom(AZoomTimeLeft, AZoomTimeRight: Integer);
 
     property ObjectID: string read GetObjectID write SetObjectID;
@@ -184,7 +187,7 @@ type
     property LocationOffset: Integer read FLocationOffset write FLocationOffset;
     property NoteOffset: Integer read FNoteOffset write FNoteOffset;
     property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
-    property Model: TMidiPattern read FModel write FModel;
+    property MidiPattern: TMidiPattern read FMidiPattern write FMidiPattern;
     property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -193,6 +196,8 @@ type
     property LoopEnd: Longint read FLoopEnd write FLoopEnd;
     property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 100;
+    property RootNote: Integer read FRootNote write FRootNote default 0;
+    property MidiChannel: Integer read FMidiChannel write FMidiChannel;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -308,7 +313,7 @@ begin
   DBLog('end TMidiNoteGUI.Update');
 end;
 
-procedure TMidiGridGUI.acDeleteNoteExecute(Sender: TObject);
+procedure TMidiPatternGUI.acDeleteNoteExecute(Sender: TObject);
 var
   lDeleteNoteCommand: TDeleteNotesCommand;
 begin
@@ -322,17 +327,17 @@ begin
   end;
 end;
 
-procedure TMidiGridGUI.acDuplicateExecute(Sender: TObject);
+procedure TMidiPatternGUI.acDuplicateExecute(Sender: TObject);
 begin
   // Duplicate after current selection end point
 end;
 
-procedure TMidiGridGUI.acLoopExecute(Sender: TObject);
+procedure TMidiPatternGUI.acLoopExecute(Sender: TObject);
 begin
   // Set loop to current selection
 end;
 
-procedure TMidiGridGUI.FrameDragDrop(Sender, Source: TObject; X, Y: Integer);
+procedure TMidiPatternGUI.FrameDragDrop(Sender, Source: TObject; X, Y: Integer);
 begin
   // TODO implement
   {
@@ -342,14 +347,14 @@ begin
   writeln('TODO Drop samples to midigrid instantely creates a sample in the current samplebank for this midigrid ');
 end;
 
-procedure TMidiGridGUI.FrameDragOver(Sender, Source: TObject; X, Y: Integer;
+procedure TMidiPatternGUI.FrameDragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 begin
   // TODO test if source object is a valid sample
   Accept := True;
 end;
 
-procedure TMidiGridGUI.FrameResize(Sender: TObject);
+procedure TMidiPatternGUI.FrameResize(Sender: TObject);
 begin
   // Hmmm..self initialize..
   ZoomFactorY := FZoomFactorY;
@@ -357,7 +362,7 @@ begin
   FBitmapIsDirty := True;
 end;
 
-procedure TMidiGridGUI.HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
+procedure TMidiPatternGUI.HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 var
   lSelectNoteCommand: TSelectNoteCommand;
@@ -441,14 +446,14 @@ begin
   end;
 end;
 
-procedure TMidiGridGUI.HandleNoteMouseUp(Button: TMouseButton; Shift: TShiftState; X,
+procedure TMidiPatternGUI.HandleNoteMouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
   FDragging:= False;
   FDraggedNote := nil;
 end;
 
-procedure TMidiGridGUI.HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
+procedure TMidiPatternGUI.HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
 var
   lMoveNotesCommand: TMoveNotesCommand;
   lStretchNotesCommand: TStretchNotesCommand;
@@ -515,7 +520,7 @@ begin
   end;
 end;
 
-procedure TMidiGridGUI.SetZoomFactorX(const AValue: Single);
+procedure TMidiPatternGUI.SetZoomFactorX(const AValue: Single);
 begin
   FZoomFactorX := AValue;
   if FZoomFactorX <= 0 then FZoomFactorX := 1;
@@ -523,7 +528,7 @@ begin
   FZoomFactorToDataX := (1000 / ZoomFactorX);
 end;
 
-procedure TMidiGridGUI.SetZoomFactorY(const AValue: Single);
+procedure TMidiPatternGUI.SetZoomFactorY(const AValue: Single);
 begin
   FZoomFactorY := AValue;
   if FZoomFactorY <= 0 then FZoomFactorY := 1;
@@ -533,7 +538,7 @@ begin
   FZoomNoteHeight := Round((Height / 32) * FZoomFactorToScreenY);
 end;
 
-procedure TMidiGridGUI.HandleZoom(AZoomTimeLeft, AZoomTimeRight: Integer);
+procedure TMidiPatternGUI.HandleZoom(AZoomTimeLeft, AZoomTimeRight: Integer);
 begin
   ZoomFactorX := 1000000 / (AZoomTimeRight - AZoomTimeLeft);
   FLocationOffset := 0 - ConvertTimeToScreen(AZoomTimeLeft);
@@ -543,7 +548,7 @@ begin
 end;
 
 
-constructor TMidiGridGUI.Create(AOwner: TComponent);
+constructor TMidiPatternGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
@@ -577,7 +582,7 @@ begin
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 end;
 
-destructor TMidiGridGUI.Destroy;
+destructor TMidiPatternGUI.Destroy;
 begin
   if Assigned(FNoteListGUI) then
     FNoteListGUI.Free;
@@ -587,12 +592,12 @@ begin
   inherited Destroy;
 end;
 
-procedure TMidiGridGUI.EraseBackground(DC: HDC);
+procedure TMidiPatternGUI.EraseBackground(DC: HDC);
 begin
   inherited EraseBackground(DC);
 end;
 
-procedure TMidiGridGUI.Paint;
+procedure TMidiPatternGUI.Paint;
 var
   x: Integer;
   lTime: Integer;
@@ -607,6 +612,8 @@ var
   lMidiNoteKey: TKey;
 
 begin
+  if not Assigned(MidiPattern) then exit;
+
   if FBitmapIsDirty then
   begin
     FBitmap.Canvas.Clear;
@@ -798,7 +805,7 @@ begin
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  x := Round((Model.RealCursorPosition * FZoomFactorToScreenX) / 220 + FLocationOffset + FNoteInfoWidth);
+  x := Round((MidiPattern.RealCursorPosition * FZoomFactorToScreenX) / 220 + FLocationOffset + FNoteInfoWidth);
   if FOldCursorPosition <> x then
   begin
     if x >= FNoteInfoWidth then
@@ -815,27 +822,27 @@ begin
   inherited Paint;
 end;
 
-function TMidiGridGUI.GetObjectID: string;
+function TMidiPatternGUI.GetObjectID: string;
 begin
   Result := FObjectID;
 end;
 
-procedure TMidiGridGUI.SetObjectID(AObjectID: string);
+procedure TMidiPatternGUI.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
 end;
 
-function TMidiGridGUI.GetObjectOwnerID: string;
+function TMidiPatternGUI.GetObjectOwnerID: string;
 begin
   Result := FObjectOwnerID;
 end;
 
-procedure TMidiGridGUI.SetObjectOwnerID(AObjectOwnerID: string);
+procedure TMidiPatternGUI.SetObjectOwnerID(const AObjectOwnerID: string);
 begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
-procedure TMidiGridGUI.Update(Subject: THybridPersistentModel);
+procedure TMidiPatternGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TMidiGridGUI.Update');
 
@@ -851,7 +858,7 @@ begin
   DBLog('end TMidiGridGUI.Update');
 end;
 
-procedure TMidiGridGUI.CreateNoteGUI(AObjectID: string);
+procedure TMidiPatternGUI.CreateNoteGUI(AObjectID: string);
 var
   lMidiNote: TMidiNote;
   lMidiNoteGUI: TMidiNoteGUI;
@@ -874,7 +881,7 @@ begin
   DBLog('end TMidiGridGUI.CreateNoteGUI');
 end;
 
-procedure TMidiGridGUI.DeleteNoteGUI(AObjectID: string);
+procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
 var
   lMidiNoteGUI: TMidiNoteGUI;
   lIndex: Integer;
@@ -895,7 +902,7 @@ begin
   DBLog('end TMidiGridGUI.DeleteNoteGUI');
 end;
 
-function TMidiGridGUI.NoteByObjectID(AObjectID: string): TMidiNoteGUI;
+function TMidiPatternGUI.NoteByObjectID(AObjectID: string): TMidiNoteGUI;
 var
   lIndex: Integer;
 begin
@@ -910,7 +917,7 @@ begin
   end;
 end;
 
-procedure TMidiGridGUI.NoteListByRect(AObjectIDList: TStringList; ARect: TRect);
+procedure TMidiPatternGUI.NoteListByRect(AObjectIDList: TStringList; ARect: TRect);
 var
   lIndex: Integer;
   lMidiNoteGUI: TMidiNoteGUI;
@@ -960,7 +967,7 @@ end;
 {
   Convert a screen cursor position to a location in time
 }
-function TMidiGridGUI.ConvertScreenToTime(AX: Integer): Integer;
+function TMidiPatternGUI.ConvertScreenToTime(AX: Integer): Integer;
 begin
   Result := Round((AX - FNoteInfoWidth) * FZoomFactorToDataX);
 end;
@@ -968,7 +975,7 @@ end;
 {
   Convert location in time to a screen cursor position
 }
-function TMidiGridGUI.ConvertTimeToScreen(ATime: Integer): Integer;
+function TMidiPatternGUI.ConvertTimeToScreen(ATime: Integer): Integer;
 begin
   Result := Round(ATime * FZoomFactorToScreenX) + FNoteInfoWidth;
 end;
@@ -976,7 +983,7 @@ end;
 {
   Convert a note to a screen note position
 }
-function TMidiGridGUI.ConvertNoteToScreen(ANote: Integer): Integer;
+function TMidiPatternGUI.ConvertNoteToScreen(ANote: Integer): Integer;
 var
   lScale: single;
 begin
@@ -988,7 +995,7 @@ end;
 {
   Convert a screen note position to a note
 }
-function TMidiGridGUI.ConvertScreenToNote(AY: Integer): Integer;
+function TMidiPatternGUI.ConvertScreenToNote(AY: Integer): Integer;
 var
   lScale: single;
 begin
@@ -997,7 +1004,7 @@ begin
   Result := Round((Height - AY) * lScale);
 end;
 
-function TMidiGridGUI.NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
+function TMidiPatternGUI.NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
 var
   lIndex: Integer;
   lNote: TMidiNoteGUI;
@@ -1024,7 +1031,7 @@ begin
   end;
 end;
 
-procedure TMidiGridGUI.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
+procedure TMidiPatternGUI.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
   // First handle already present notes under mouseposition
@@ -1065,7 +1072,7 @@ begin
   end;
 end;
 
-procedure TMidiGridGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
+procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
   inherited MouseUp(Button, Shift, X, Y);
@@ -1086,7 +1093,7 @@ begin
   end;
 end;
 
-function TMidiGridGUI.QuantizeLocation(ALocation: Integer): Integer;
+function TMidiPatternGUI.QuantizeLocation(ALocation: Integer): Integer;
 begin
   if FQuantizeSetting = 0 then
   begin
@@ -1098,7 +1105,7 @@ begin
   end;
 end;
 
-procedure TMidiGridGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
+procedure TMidiPatternGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
 var
   lSelectObjectListCommand: TSelectObjectListCommand;
 begin
@@ -1157,7 +1164,7 @@ begin
   Invalidate;
 end;
 
-procedure TMidiGridGUI.DblClick;
+procedure TMidiPatternGUI.DblClick;
 var
   lCreateNoteCommand: TCreateNotesCommand;
   lDeleteNoteCommand: TDeleteNotesCommand;
@@ -1193,7 +1200,7 @@ begin
   inherited DblClick;
 end;
 
-function TMidiGridGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
+function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
   ): Boolean;
 begin
   ZoomFactorY := ZoomFactorY + 100;
@@ -1206,7 +1213,7 @@ begin
   Result := inherited DoMouseWheelDown(Shift, MousePos);
 end;
 
-function TMidiGridGUI.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
+function TMidiPatternGUI.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
   ): Boolean;
 begin
   ZoomFactorY := ZoomFactorY - 100;
@@ -1543,7 +1550,7 @@ begin
 end;
 
 initialization
-  RegisterClass(TMidiGridGUI);
+  RegisterClass(TMidiPatternGUI);
   RegisterClass(TMidiNoteGUI);
 end.
 

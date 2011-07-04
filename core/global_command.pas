@@ -130,7 +130,7 @@ var
 implementation
 
 uses
-  patterngui, trackgui, pattern;
+  trackgui, pattern;
 
 { TMidiBuffer }
 

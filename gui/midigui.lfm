@@ -1,4 +1,4 @@
-object MidiGridGUI: TMidiGridGUI
+object MidiPatternGUI: TMidiPatternGUI
   Left = 0
   Height = 289
   Top = 0
@@ -9,8 +9,8 @@ object MidiGridGUI: TMidiGridGUI
   OnDragOver = FrameDragOver
   OnResize = FrameResize
   TabOrder = 0
-  DesignLeft = 337
-  DesignTop = 161
+  DesignLeft = 353
+  DesignTop = 237
   object pmNoteMenu: TPopupMenu
     left = 93
     top = 123

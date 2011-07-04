@@ -27,7 +27,7 @@ unit sampler;
 interface
 
 uses
-  Classes, SysUtils, globalconst, jacktypes, ContNrs, global_command, global, midi,
+  Classes, SysUtils, globalconst, jacktypes, ContNrs, global_command, global,
   sndfile, jack, plugin, midiport, samplestreamprovider, filters, baseengine,
   variants;
 
@@ -362,7 +362,7 @@ type
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
     procedure Assign(Source:TPersistent); override;
     property Selected: Boolean read FSelected write FSelected;
     property SelectedSample: TSample read FSelectedSample write FSelectedSample;
@@ -380,7 +380,7 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TSampleCommand }
@@ -554,7 +554,7 @@ type
     constructor Create(AFrames: Integer);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiPattern: TMidiPattern; AInputBuffer: PSingle; AFrames: Integer);
+    procedure Process(AInputBuffer: PSingle; AFrames: Integer);
     procedure NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single);
     procedure NoteOff;
 
@@ -589,7 +589,7 @@ type
     constructor Create(AFrames: Integer);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 
     property Sample: TSample read FSample write SetSample;
   end;
@@ -607,7 +607,7 @@ type
     constructor Create(AFrames: Integer);
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 
     property SampleBank: TSampleBank read FSampleBank write SetSampleBank;
   end;
@@ -1520,7 +1520,7 @@ end;
 {
   Play all samples 'FSampleList' of the TSampleBank
 }
-procedure TSampleBank.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TSampleBank.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   buffer: ^byte;
   lFrameOffsetLow: Integer;
@@ -1533,7 +1533,7 @@ begin
 
   for lSampleIndex := 0 to Pred(FSampleList.Count) do
   begin
-    TSampleEngine(FSampleList[lSampleIndex]).Process(AMidiPattern, ABuffer, AFrames);
+    TSampleEngine(FSampleList[lSampleIndex]).Process(AMidiBuffer, ABuffer, AFrames);
   end;
 
 end;
@@ -1754,7 +1754,7 @@ begin
   //
 end;
 
-procedure TPluginSampleBank.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginSampleBank.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
@@ -1881,7 +1881,7 @@ begin
 
 end;
 
-procedure TSampleEngine.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle; AFrames: Integer);
+procedure TSampleEngine.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   lVoiceIndex: Integer;
   lVoice: TSampleVoiceEngine;
@@ -1889,19 +1889,17 @@ var
   lSampleAdd: Single;
   lSampleMul: Single;
 
-  lMidiBuffer: TMidiBuffer;
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
 begin
-  lMidiBuffer := AMidiPattern.MidiBuffer;
-  lMidiBuffer.Seek(0);
+  AMidiBuffer.Seek(0);
 
-  if lMidiBuffer.Count > 0 then
+  if AMidiBuffer.Count > 0 then
   begin
-    for lMidiBufferIndex := 0 to Pred(lMidiBuffer.Count) do
+    for lMidiBufferIndex := 0 to Pred(AMidiBuffer.Count) do
     begin
       // Shortcut for current event in buffer
-      lMidiEvent := lMidiBuffer.ReadEvent;
+      lMidiEvent := AMidiBuffer.ReadEvent;
 
       if lMidiEvent.DataType = mtNoteOff then
       begin
@@ -1962,7 +1960,7 @@ begin
   begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-    lVoice.Process(AMidiPattern, ABuffer, AFrames);
+    lVoice.Process(ABuffer, AFrames);
   end;
 
   // Mix all voices into buffer
@@ -2080,7 +2078,7 @@ begin
   FStopVoice := False;
 end;
 
-procedure TSampleVoiceEngine.Process(AMidiPattern: TMidiPattern; AInputBuffer: PSingle; AFrames: Integer);
+procedure TSampleVoiceEngine.Process(AInputBuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
   lSample, lSampleA, lSampleB, lSampleC: single;
@@ -2325,7 +2323,7 @@ begin
 
 end;
 
-procedure TSampleBankEngine.Process(AMidiPattern: TMidiPattern; ABuffer: PSingle;
+procedure TSampleBankEngine.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle;
   AFrames: Integer);
 var
   lSampleEngineIndex: Integer;
@@ -2333,7 +2331,7 @@ begin
   for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
   begin
     // Listens to AMidiPattern midi buffer and mixes samples to ABuffer for a length of
-    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Process(AMidiPattern, ABuffer, AFrames);
+    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Process(AMidiBuffer, ABuffer, AFrames);
   end;
 end;
 

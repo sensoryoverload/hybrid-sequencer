@@ -129,9 +129,11 @@ type
     procedure DoKeyChange(Sender: TObject; AKey: Integer);
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property Enabled: Boolean read FEnabled write SetEnabled;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
@@ -449,6 +451,16 @@ end;
 procedure TSampleView.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
+end;
+
+function TSampleView.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TSampleView.SetObjectOwnerID(const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
 end;
 
 { TSampleSelectControl }

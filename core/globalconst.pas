@@ -109,7 +109,7 @@ type
 
   //TMidiTypes = (mtNoteOn, mtNoteOff, mtProgramChange, mtBankSelect, mtCC, mtVelocity);
 
-  TFileSourceTypes = (fsTrack, fsPattern, fsWave, fsMIDI, fsPlugin);
+  TFileSourceTypes = (fsTrack, fsEmpty, fsWave, fsMIDI, fsPlugin);
 
   TPitchAlgorithm = (paNone, paST, paMultiST, paRubberband, paPitched);
 
@@ -125,7 +125,10 @@ type
     procedure Update(Subject: THybridPersistentModel);
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
     property ObjectID: string read GetObjectID write SetObjectID;
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
   end;
 
   ISubject = interface['{7F0461A3-E078-49F3-B9A4-9FB7840F86DA}']
@@ -178,6 +181,7 @@ type
     procedure Detach(AObserver: IObserver);
     procedure Notify;
     procedure Initialize; virtual; abstract;
+    procedure Finalize; virtual; abstract;
     procedure Assign(Source: TPersistent); override;
     procedure SaveToXML(pVisitor: THybridPersistentModel; ALevel: Integer; AXMLNode: TDOMNode);
     procedure SaveToFile(AXMLFileName: string);
@@ -192,11 +196,15 @@ type
   { THybridPersistentView }
 
   THybridPersistentView = class(THybridPersistent, IObserver)
+  private
   public
     constructor Create(AObjectOwner: string);
     destructor Destroy; override;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     procedure Update(Subject: THybridPersistentModel); virtual;
   end;
@@ -218,8 +226,10 @@ type
     procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
@@ -238,8 +248,10 @@ type
     procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
@@ -257,8 +269,10 @@ type
     procedure Connect; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
@@ -276,8 +290,10 @@ type
     procedure Connect; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
     property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
@@ -395,7 +411,7 @@ type
 
 procedure ChangeControlStyle(AControl: TControl; const AInclude: TControlStyle; const AExclude: TControlStyle = []; Recursive: Boolean = True);
 procedure DiffLists(AModelList, AViewList: TObjectList; ACreateProc, ADestroyProc: TDiffCallback);
-function PeekFileType(AFileName: string): string;
+function PeekFileType(AFileName: string): TFileSourceTypes;
 
 implementation
 
@@ -485,35 +501,49 @@ begin
   DBLog('end DiffLists');
 end;
 
-function PeekFileType(AFileName: string): string;
+function PeekFileType(AFileName: string): TFileSourceTypes;
 var
   i: Integer;
   xdoc: TXMLDocument;
   RootNode: TDOMNode;
   lProperties: TDOMNode;
 begin
-  Result := '';
+  Result := fsEmpty;
 
-  ReadXMLFile(xDoc, AFileName);
-  try
-    RootNode := xDoc.DocumentElement.FirstChild;
-    if RootNode <> nil then
-    begin
-      lProperties := RootNode.FirstChild;
-      while Assigned(lProperties) do
+  if SameText(Uppercase(ExtractFileExt(AFileName)), '.WAV') then
+  begin
+    Result := fsWave;
+  end
+  else if SameText(Uppercase(ExtractFileExt(AFileName)), '.XML') then
+  begin
+    ReadXMLFile(xDoc, AFileName);
+    try
+      RootNode := xDoc.DocumentElement.FirstChild;
+      if RootNode <> nil then
       begin
-        if SameText(lProperties.NodeName, 'CLASSTYPE') then
+        lProperties := RootNode.FirstChild;
+        while Assigned(lProperties) do
         begin
-          Result := lProperties.NodeValue;
-          Break;
+          if SameText(lProperties.NodeName, 'CLASSTYPE') then
+          begin
+            if SameText(lProperties.NodeValue, 'TMIDIPATTERN') then
+            begin
+              Result := fsMIDI;
+            end
+            else if SameText(lProperties.NodeValue, 'TWAVEPATTERN') then
+            begin
+              Result := fsWave;
+            end;
+            Break;
+          end;
+
+          lProperties := lProperties.NextSibling;
         end;
-
-        lProperties := lProperties.NextSibling;
       end;
-    end;
 
-  finally
-    xDoc.Free;
+    finally
+      xDoc.Free;
+    end;
   end;
 end;
 
@@ -606,6 +636,17 @@ begin
   FObjectID := AObjectID;
 end;
 
+function TPersistentCustomControl.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TPersistentCustomControl.SetObjectOwnerID(const AObjectOwnerID: string
+  );
+begin
+  FObjectOwnerID := AObjectOwnerID;
+end;
+
 { TPersistentScrollBox }
 
 procedure TPersistentScrollBox.Update(Subject: THybridPersistentModel);
@@ -626,6 +667,16 @@ end;
 procedure TPersistentScrollBox.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
+end;
+
+function TPersistentScrollBox.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TPersistentScrollBox.SetObjectOwnerID(const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
 end;
 
 { TWaveData }
@@ -695,10 +746,10 @@ begin
   DBLog('start THybridPersistentModel.Attach');
 
   FObservers.Add(AObserver);
+  AObserver.ObjectID := FObjectID;
+  AObserver.ObjectOwnerID := FObjectOwnerID;
 
   Notify;
-
-//  DBLog(Format('%s has %d observers', [Self.ClassName, FObservers.Count]));
 
   DBLog('end THybridPersistentModel.Attach');
 end;
@@ -721,8 +772,10 @@ end;
 
 procedure THybridPersistentModel.Detach(AObserver: IObserver);
 begin
-  DBLog('start THybridPersistentModel.Detach');
+  DBLog(Format('start THybridPersistentModel.Detach (%s)', [Self.ClassName]));
 
+  AObserver.ObjectID := '';
+  AObserver.ObjectOwnerID := '';
   FObservers.Remove(AObserver);
 
   DBLog('end THybridPersistentModel.Detach');
@@ -733,8 +786,6 @@ var
   i: Integer;
 begin
   DBLog('start THybridPersistentModel.Notify');
-
-  DBLog(Format('%s has %d observers', [Self.ClassName, FObservers.Count]));
 
   if FObservers <> nil then
   begin
@@ -1076,6 +1127,16 @@ end;
 
 { THybridPersistentView }
 
+function THybridPersistentView.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure THybridPersistentView.SetObjectOwnerID(const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
+end;
+
 constructor THybridPersistentView.Create(AObjectOwner: string);
 begin
   inherited Create(AObjectOwner);
@@ -1137,6 +1198,16 @@ begin
   FObjectID := AObjectID;
 end;
 
+function TPersistentFrame.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TPersistentFrame.SetObjectOwnerID(const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
+end;
+
 
 { TMarker }
 
@@ -1170,6 +1241,17 @@ end;
 procedure TPersistentGraphicControl.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
+end;
+
+function TPersistentGraphicControl.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TPersistentGraphicControl.SetObjectOwnerID(
+  const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
 end;
 
 end.

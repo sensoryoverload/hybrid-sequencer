@@ -79,8 +79,6 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     function ClearSample: Boolean;
-    procedure CreatePattern;
-    procedure RemovePattern;
     procedure Assign(Source: TPersistent); override;
     property SelectedPattern: TPattern read FSelectedPattern write FSelectedPattern;
     property PlayingPattern: TPattern read FPlayingPattern write FPlayingPattern;
@@ -214,7 +212,7 @@ var
 implementation
 
 uses
-  audiostructure;
+  audiostructure, wave, midi;
 
 procedure TTrack.SetPlaying(const AValue: Boolean);
 begin
@@ -232,42 +230,74 @@ end;
 
 procedure TTrack.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
-  lPattern: TPattern;
+  lWavePattern: TWavePattern;
+  lMidiPattern: TMidiPattern;
 begin
   DBLog('start TWaveFormTrack.DoCreateInstance');
 
   // create model pattern
-  lPattern := TPattern.Create(ObjectID, MAPPED);
+  if SameText(UpperCase(AClassName), 'TWAVEPATTERN') then
+  begin
+    lWavePattern := TWavePattern.Create(ObjectID, MAPPED);
 
-  lPattern.ObjectOwnerID := ObjectID;
-  AObject := lPattern;
+    lWavePattern.ObjectOwnerID := ObjectID;
+    AObject := lWavePattern;
 
-  PatternList.Add(lPattern);
+    PatternList.Add(lWavePattern);
 
-  FSelectedPattern := lPattern;
+    FSelectedPattern := lWavePattern;
+  end
+  else if SameText(UpperCase(AClassName), 'TMIDIPATTERN') then
+  begin
+    lMidiPattern := TMidiPattern.Create(ObjectID, MAPPED);
+
+    lMidiPattern.ObjectOwnerID := ObjectID;
+    AObject := lMidiPattern;
+
+    PatternList.Add(lMidiPattern);
+
+    FSelectedPattern := lMidiPattern;
+  end;
 
   DBLog('end TWaveFormTrack.DoCreateInstance');
 end;
 
 procedure TTrack.Initialize;
 var
-  lPattern: TPattern;
+  lWavePattern: TWavePattern;
+  lMidiPattern: TMidiPattern;
   i: Integer;
 begin
   DBLog('start TWaveFormTrack.Initialize');
 
   for i := 0 to Pred(PatternList.Count) do
   begin
-    lPattern := TPattern(PatternList[i]);
-
-    if FileExists(lPattern.WavePattern.SampleFileName) and (not lPattern.OkToPlay) then
+    if PatternList[i].ClassType = TWavePattern then
     begin
-      lPattern.WavePattern.LoadSample(lPattern.WavePattern.SampleFileName);
-      lPattern.Initialize;
-      lPattern.OkToPlay := True;
-      FSelectedPattern := lPattern;
+      lWavePattern := TWavePattern(PatternList[i]);
 
-      lPattern.Notify;
+      if FileExists(lWavePattern.WaveFileName) and (not lWavePattern.OkToPlay) then
+      begin
+        lWavePattern.LoadSample(lWavePattern.WaveFileName);
+        lWavePattern.Initialize;
+        lWavePattern.OkToPlay := True;
+        FSelectedPattern := lWavePattern;
+
+        lWavePattern.Notify;
+      end;
+    end
+    else if PatternList[i].ClassType = TMidiPattern then
+    begin
+      lMidiPattern := TMidiPattern(PatternList[i]);
+
+      if not lMidiPattern.OkToPlay then
+      begin
+        lMidiPattern.Initialize;
+        lMidiPattern.OkToPlay := True;
+        FSelectedPattern := lMidiPattern;
+
+        lMidiPattern.Notify;
+      end;
     end;
   end;
 
@@ -328,31 +358,6 @@ begin
   // Undefined behaviour
 
   Result := False;
-end;
-
-procedure TTrack.CreatePattern;
-var
-  lPattern: TPattern;
-begin
-  // TODO Sort procedure on FPosition
-  lPattern := TPattern.Create(ObjectID);
-  lPattern.Text := 'Patt_' + IntToStr(FPatternList.Count);
-
-  FPatternList.Add(lPattern);
-  FSelectedPattern := lPattern;
-end;
-
-procedure TTrack.RemovePattern;
-begin
-  // Should remove currently selected (not neccessary playing) pattern
-  if Assigned(SelectedPattern) then
-  begin
-    if SelectedPattern <> PlayingPattern then
-    begin;
-      FPatternList.Remove(SelectedPattern);
-      SelectedPattern := TPattern(FPatternList.First);
-    end;
-  end;
 end;
 
 procedure TTrack.Assign(Source: TPersistent);
@@ -435,45 +440,69 @@ end;
 
 procedure TCreatePatternCommand.DoExecute;
 var
+  lMidiPattern: TMidiPattern;
+  lWavePattern: TWavePattern;
   lPattern: TPattern;
   lSourceType: string;
+
+  procedure InitializePattern(APattern: TPattern);
+  begin
+    APattern.Position := Position;
+    APattern.ObjectOwnerID := ObjectOwner;
+
+    FTrack.PatternList.Add(APattern);
+
+    FOldObjectID := APattern.ObjectID;
+    FTrack.SelectedPattern := APattern;
+
+    APattern.BeginUpdate;
+    APattern.Initialize;
+    APattern.EndUpdate;
+  end;
+
 begin
   DBLog('start TCreatePatternCommand.DoExecute');
 
   FTrack.BeginUpdate;
 
   // creat model pattern
-  lPattern := TPattern.Create(ObjectOwner, MAPPED);
-  if Assigned(lPattern) then
-  begin
-    lSourceType := PeekFileType(SourceLocation);
-    if SameText(lSourceType, 'TPATTERN') then
+  case PeekFileType(SourceLocation) of
+    fsWave:
     begin
-      lPattern.LoadFromFile(SourceLocation);
-    end
-    else if SameText(lSourceType, '') then
-    begin
-      lPattern.WavePattern.SampleFileName := SourceLocation;
-      lPattern.PatternName := PatternName;
+      lWavePattern := TWavePattern.Create(ObjectOwner, MAPPED);
+      lWavePattern.WaveFileName := SourceLocation;
+      lWavePattern.PatternName := PatternName;
+
+      InitializePattern(lWavePattern);
     end;
+    fsMIDI:
+    begin;
+      lMidiPattern := TMidiPattern.Create(ObjectOwner, MAPPED);
+      lMidiPattern.LoadFromFile(SourceLocation);
 
-    lPattern.Position := Position;
-    lPattern.ObjectOwnerID := ObjectOwner;
+      InitializePattern(lMidiPattern);
+    end;
+    fsEmpty:
+      begin
+        case SourceType of
+          fsWave:
+          begin
+            lWavePattern := TWavePattern.Create(ObjectOwner, MAPPED);
+            lWavePattern.WaveFileName := SourceLocation;
+            lWavePattern.PatternName := PatternName;
 
-    FTrack.PatternList.Add(lPattern);
+            InitializePattern(lWavePattern);
+          end;
+          fsMIDI:
+          begin
+            lMidiPattern := TMidiPattern.Create(ObjectOwner, MAPPED);
+            lMidiPattern.PatternName := PatternName;
 
-    FOldObjectID := lPattern.ObjectID;
-
-    FTrack.SelectedPattern := lPattern;
-
-    lPattern.BeginUpdate;
-
-    lPattern.Initialize;
-    lPattern.OkToPlay := True;
-
-    lPattern.EndUpdate;
+            InitializePattern(lMidiPattern);
+          end;
+        end;
+    end;
   end;
-
   FTrack.EndUpdate;
 
   DBLog('end TCreatePatternCommand.DoExecute');
@@ -497,8 +526,7 @@ begin
       begin
         FTrack.Playing := False;
         FTrack.PlayingPattern := nil;
-        lPattern.OkToPlay := False;
-        lPattern.WavePattern.UnLoadSample;
+        lPattern.Finalize;
       end;
 
       FTrack.PatternList.Remove(FTrack.PatternList[i]);

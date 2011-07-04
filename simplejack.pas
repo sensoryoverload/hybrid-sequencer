@@ -25,15 +25,16 @@ interface
 
 uses
   Classes, Sysutils, Lresources, Forms, LCLProc, Controls, Graphics, Dialogs,
-  StdCtrls, jack, midiport, jacktypes, ExtCtrls, Math, sndfile, waveform, Spin,
+  StdCtrls, jack, midiport, jacktypes, ExtCtrls, Math, sndfile, wave, Spin,
   ContNrs, transport, FileCtrl, PairSplitter, Utils, ComCtrls, GlobalConst,
   Menus, ActnList, dialcontrol, bpm, SoundTouchObject,
   Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg,
   TypInfo, FileUtil, global_command, LCLType, LCLIntf,
-  ShellCtrls, Grids, TrackGUI, waveformgui, global, track, pattern,
-  audiostructure, midigui, patterngui, mapmonitor, syncobjs, eventlog,
+  ShellCtrls, Grids, TrackGUI, wavegui, global, track, pattern,
+  audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
-  ringbuffer, optionsgui;
+  ringbuffer, optionsgui, wavepatterncontrolgui, midipatterncontrolgui,
+  wavepatterngui, midipatterngui, patterngui;
 
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
@@ -112,6 +113,8 @@ type
     MainMenu1: TMainMenu;
     HelpMenu: TMenuItem;
     MenuItem3: TMenuItem;
+    miCreateTrack: TMenuItem;
+    pupScrollBox: TPopupMenu;
     SaveDialog1: TSaveDialog;
     SavePattern: TMenuItem;
     MenuItem4: TMenuItem;
@@ -172,6 +175,7 @@ type
     procedure LoadSessionClick(Sender: TObject);
     procedure MenuItem1Click(Sender: TObject);
     procedure MenuItem2Click(Sender: TObject);
+    procedure miCreateTrackClick(Sender: TObject);
     procedure SavePatternClick(Sender: TObject);
     procedure MenuItem4Click(Sender: TObject);
     procedure OptionMenuClick(Sender: TObject);
@@ -211,6 +215,9 @@ type
     FLowPriorityInterval: Integer;
     FMediumPriorityInterval: Integer;
     FHighPriorityInterval: Integer;
+    FWavePatternControlGUI: TWavePatternControlGUI;
+    FMidiPatternControlGUI: TMidiPatternControlGUI;
+    FNoJackMode: Boolean;
 
     procedure ReleaseTrack(Data: PtrInt);
     function TrackExists(AObjectID: string): Boolean;
@@ -239,9 +246,11 @@ type
 
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
+    function GetObjectOwnerID: string; virtual;
+    procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     property MappingMonitor: TfmMappingMonitor read FMappingMonitor write FMappingMonitor;
-    property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
   end;
 
 var
@@ -270,7 +279,6 @@ var
   attack_in_ms: Single;
   release_coef: Single;
   release_in_ms: Single;
-  CB_TimeBuffer: psingle;
   FShowMapping: Boolean;
 
   FCriticalSection: TCriticalSection;
@@ -314,7 +322,7 @@ begin
 	calc_note_frqs(jack_default_audio_sample_t(nframes));
 end;
 
-function process_midi_buffer(APattern: TPattern; AMidiOutBuf: pointer; AFrames: Integer; ATrack: TTrack): Integer;
+function process_midi_buffer(AMidiPattern: TMidiPattern; AMidiOutBuf: pointer; AFrames: Integer; ATrack: TTrack): Integer;
 var
   buffer: ^byte;
   lFrameOffsetLow: Integer;
@@ -325,17 +333,17 @@ var
 begin
 
   // Only process when not in state change
-  if APattern.MidiPattern.Enabled and (APattern.MidiPattern.MidiDataList.Count > 0) then
+  if AMidiPattern.Enabled and (AMidiPattern.MidiDataList.Count > 0) then
   begin
-    lFrameOffsetLow := ((APattern.MidiPattern.RealCursorPosition div AFrames) * AFrames);
-    lFrameOffsetHigh := ((APattern.MidiPattern.RealCursorPosition div AFrames) * AFrames) + AFrames;
+    lFrameOffsetLow := ((AMidiPattern.RealCursorPosition div AFrames) * AFrames);
+    lFrameOffsetHigh := ((AMidiPattern.RealCursorPosition div AFrames) * AFrames) + AFrames;
 
-    while (APattern.MidiPattern.MidiDataList.CurrentMidiData.Location < lFrameOffsetHigh) and
-      (not APattern.MidiPattern.MidiDataList.Eof) do
+    while (AMidiPattern.MidiDataList.CurrentMidiData.Location < lFrameOffsetHigh) and
+      (not AMidiPattern.MidiDataList.Eof) do
     begin
-      lMidiData := APattern.MidiPattern.MidiDataList.CurrentMidiData;
+      lMidiData := AMidiPattern.MidiDataList.CurrentMidiData;
 
-      if APattern.MidiPattern.RealCursorPosition > lMidiData.Location then
+      if AMidiPattern.RealCursorPosition > lMidiData.Location then
       begin
         lRelativeLocation := 0
       end
@@ -350,13 +358,13 @@ begin
         case lMidiData.DataType of
           mtNoteOn:
           begin
-  			    buffer[0] := $90 + APattern.MidiChannel;	{ note on }
+  			    buffer[0] := $90 + AMidiPattern.MidiChannel;	{ note on }
   			    buffer[1] := lMidiData.DataValue1;
             buffer[2] := lMidiData.DataValue2;		{ velocity }
           end;
           mtNoteOff:
           begin
-    				buffer[0] := $80 + APattern.MidiChannel;;	{ note off }
+    				buffer[0] := $80 + AMidiPattern.MidiChannel;;	{ note off }
     				buffer[1] := lMidiData.DataValue1;
     				buffer[2] := 0;		{ velocity }
           end;
@@ -371,7 +379,7 @@ begin
         ATrack.DevValue := 'jackmidi buffer allocation failed';
       end;
 
-      APattern.MidiPattern.MidiDataList.Next;
+      AMidiPattern.MidiDataList.Next;
     end;
   end;
 
@@ -518,32 +526,15 @@ begin
      // Increment cursor regardless if audible or not
     if Assigned(lTrack.PlayingPattern) then
     begin
-      {if lTrack.PlayingPattern.WavePattern.RealBPM = 0 then
-        lTrack.PlayingPattern.WavePattern.RealBPM := 120;}
-
-//      BPMscale := GAudioStruct.BPM * lTrack.PlayingPattern.WavePattern.DivideByRealBPM_Multiplier;
-      BPMscale := GAudioStruct.BPM / lTrack.PlayingPattern.WavePattern.RealBPM;
-      if BPMscale > 16 then
-        BPMscale := 16
-      else if BPMscale < 0.1 then
-        BPMscale := 0.1;
-
-      if Assigned(lTrack.PlayingPattern.WavePattern) then
-      begin
-        lTrack.PlayingPattern.WavePattern.psBeginLocation:= 0;
-      end;
-
-      // Reset buffer at beginning of callback
-      if Assigned(lTrack.PlayingPattern.MidiPattern) then
-      begin
-        lTrack.PlayingPattern.MidiPattern.MidiBuffer.Reset;
-        lTrack.PlayingPattern.MidiPattern.BPMScale := GlobalBPMscale;
-      end;
+      lTrack.PlayingPattern.ProcessInit;
 
       if lTrack.Playing then
       begin
         // Send midi pattern to jack buffer
-        process_midi_buffer(lTrack.PlayingPattern, midi_out_buf, nframes, lTrack);
+        if lTrack.PlayingPattern is TMidiPattern then
+        begin
+          process_midi_buffer(TMidiPattern(lTrack.PlayingPattern), midi_out_buf, nframes, lTrack);
+        end;
       end;
     end;
 
@@ -563,13 +554,21 @@ begin
               lTrack.PlayingPattern.Playing := False;
             end;
             lTrack.PlayingPattern := lTrack.ScheduledPattern;
-            lTrack.PlayingPattern.WavePattern.TimeStretch.Flush;
 
-            if lTrack.PlayingPattern.MidiPattern.MidiDataList.Count > 0 then
+            if lTrack.PlayingPattern is TWavePattern then
+            begin;
+              TWavePattern(lTrack.PlayingPattern).TimeStretch.Flush;
+
+            end;
+
+            if lTrack.PlayingPattern is TMidiPattern then
             begin
-              lTrack.PlayingPattern.MidiPattern.MidiDataList.First;
-              lTrack.PlayingPattern.MidiPattern.MidiDataCursor :=
-                TMidiData( lTrack.PlayingPattern.MidiPattern.MidiDataList.Items[0] );
+              if TMidiPattern(lTrack.PlayingPattern).MidiDataList.Count > 0 then
+              begin
+                TMidiPattern(lTrack.PlayingPattern).MidiDataList.First;
+                TMidiPattern(lTrack.PlayingPattern).MidiDataCursor :=
+                  TMidiData( TMidiPattern(lTrack.PlayingPattern).MidiDataList.Items[0] );
+              end;
             end;
 
             lTrack.PlayingPattern.Playing := True;
@@ -585,151 +584,10 @@ begin
 
           if lPlayingPattern.OkToPlay then
           begin
-            lPlayingPattern.WavePattern.WorkBuffer[i] := 0;
 
-            if i = 0 then
-            begin
-              lPlayingPattern.WavePattern.psLastScaleValue := lPlayingPattern.WavePattern.CursorRamp;
-            end;
 
-            // Synchronize with global quantize track
-            if (lPlayingPattern.WavePattern.CursorReal >= lPlayingPattern.WavePattern.LoopEnd.Location) or lPlayingPattern.SyncQuantize then
-            begin
-              lPlayingPattern.SyncQuantize := False;
-              lPlayingPattern.WavePattern.CursorReal := lPlayingPattern.WavePattern.LoopStart.Location;
-            end;
 
-            if (lPlayingPattern.MidiPattern.CursorAdder >= lPlayingPattern.MidiPattern.LoopEnd) or lPlayingPattern.SyncQuantize then
-            begin
-              lPlayingPattern.SyncQuantize := False;
-              lPlayingPattern.MidiPattern.CursorAdder := lPlayingPattern.MidiPattern.LoopStart;
-
-              if lPlayingPattern.MidiPattern.MidiDataList.Count > 0 then
-              begin
-                lPlayingPattern.MidiPattern.MidiDataList.First;
-                lPlayingPattern.MidiPattern.MidiDataCursor := TMidiData( lPlayingPattern.MidiPattern.MidiDataList.Items[0] );
-              end;
-            end;
-
-            // Fetch frame data packet containing warp factor and virtual location in wave data
-            if i = 0 then
-            begin
-              lPlayingPattern.WavePattern.StartingSliceIndex := lPlayingPattern.WavePattern.StartVirtualLocation(lPlayingPattern.WavePattern.CursorReal);
-            end;
-            lPlayingPattern.WavePattern.VirtualLocation(lPlayingPattern.WavePattern.StartingSliceIndex, lPlayingPattern.WavePattern.CursorReal, lFramePacket);
-            lPlayingPattern.WavePattern.CursorAdder := lFramePacket.Location;
-            lPlayingPattern.WavePattern.CursorRamp := lFramePacket.Ramp * BPMscale;
-
-            if lPlayingPattern.WavePattern.PitchAlgorithm = paPitched then
-              lPlayingPattern.WavePattern.CursorRamp := lPlayingPattern.Pitch;
-
-            // Put sound in buffer, interpolate with Hermite4 function
-            lBuffer := TChannel(lPlayingPattern.WavePattern.Wave.ChannelList[0]).Buffer;
-
-            lPlayingPattern.WavePattern.frac_pos := Frac(lPlayingPattern.WavePattern.CursorAdder);
-            buf_offset := (Trunc(lPlayingPattern.WavePattern.CursorAdder) * lPlayingPattern.WavePattern.Wave.ChannelCount);
-
-            if buf_offset <= 0 then
-              lPlayingPattern.WavePattern.xm1 := 0
-            else
-              lPlayingPattern.WavePattern.xm1 := lBuffer[buf_offset - 1];
-
-            lPlayingPattern.WavePattern.x0 := lBuffer[buf_offset];
-            lPlayingPattern.WavePattern.x1 := lBuffer[buf_offset + 1];
-            lPlayingPattern.WavePattern.x2 := lBuffer[buf_offset + 2];
-            lPlayingPattern.WavePattern.WorkBuffer[i] :=
-              hermite4(
-                lPlayingPattern.WavePattern.frac_pos,
-                lPlayingPattern.WavePattern.xm1,
-                lPlayingPattern.WavePattern.x0,
-                lPlayingPattern.WavePattern.x1,
-                lPlayingPattern.WavePattern.x2);
-
-            if lTrack.Active then
-            begin
-              // Scale buffer up to now when the scaling-factor has changed or
-              // the end of the buffer has been reached.
-              if lPlayingPattern.WavePattern.PitchAlgorithm <> paNone then
-              begin
-                if (lPlayingPattern.WavePattern.CursorRamp <> lPlayingPattern.WavePattern.psLastScaleValue) or (i = (nframes - 1)) then
-                begin
-                  lPlayingPattern.WavePattern.psEndLocation := i;
-                  lPlayingPattern.WavePattern.CalculatedPitch := lPlayingPattern.Pitch * lPlayingPattern.WavePattern.DivideByCursorRamp_Multiplier;
-                  if lPlayingPattern.WavePattern.CalculatedPitch < 0.062 then lPlayingPattern.WavePattern.CalculatedPitch := 0.062;
-                  if lPlayingPattern.WavePattern.CalculatedPitch > 16 then lPlayingPattern.WavePattern.CalculatedPitch := 16;
-
-                  // Frames to process this window
-                  lFrames := (lPlayingPattern.WavePattern.psEndLocation - lPlayingPattern.WavePattern.psBeginLocation) + 1;
-
-                  for k := 0 to Pred(lFrames) do
-                    CB_TimeBuffer[k] := lPlayingPattern.WavePattern.WorkBuffer[lPlayingPattern.WavePattern.psBeginLocation + k];
-
-                  case lPlayingPattern.WavePattern.PitchAlgorithm of
-                    paST:
-                    begin
-                      lPlayingPattern.WavePattern.TimeStretch.Pitch := lPlayingPattern.WavePattern.CalculatedPitch;
-                      lPlayingPattern.WavePattern.TimeStretch.PutSamples(CB_TimeBuffer, lFrames);
-                      lPlayingPattern.WavePattern.TimeStretch.ReceiveSamples(CB_TimeBuffer, lFrames);
-                    end;
-                    paMultiST:
-                    begin
-                      lPlayingPattern.WavePattern.WSOLA.Pitch := lPlayingPattern.WavePattern.CalculatedPitch;
-                      lPlayingPattern.WavePattern.WSOLA.Process(CB_TimeBuffer, CB_TimeBuffer, lFrames);
-                    end;
-                    paRubberband:
-                    begin
-                      rubberband_set_pitch_scale(lPlayingPattern.WavePattern.TimePitchScale, lPlayingPattern.WavePattern.CalculatedPitch);
-                      rubberband_process(lPlayingPattern.WavePattern.TimePitchScale, @CB_TimeBuffer, lFrames, 0);
-                      rubberband_retrieve(lPlayingPattern.WavePattern.TimePitchScale, @CB_TimeBuffer, lFrames);
-                    end;
-                  end;
-
-                  for k := 0 to Pred(lFrames) do
-                    lPlayingPattern.WavePattern.BufferData2[lPlayingPattern.WavePattern.psBeginLocation + k] := CB_TimeBuffer[k];
-
-                  // Remember last change
-                  lPlayingPattern.WavePattern.psBeginLocation:= i;
-                  lPlayingPattern.WavePattern.psLastScaleValue:= lPlayingPattern.WavePattern.CursorRamp;
-                end;
-              end
-              else
-              begin
-                lPlayingPattern.WavePattern.BufferData2[i] := lPlayingPattern.WavePattern.WorkBuffer[i];
-              end;
-            end;
-
-// debug; clear waveform buffer to listen to midi plugin
-lPlayingPattern.WavePattern.BufferData2[i] := 0;
-
-            // Fill MidiBuffer with midi data if found
-            if not lPlayingPattern.MidiPattern.Updating then
-            begin
-              if lPlayingPattern.MidiPattern.MidiDataList.Count > 0 then
-              begin
-                while (lPlayingPattern.MidiPattern.CursorAdder >= lPlayingPattern.MidiPattern.MidiDataCursor.Location) do
-                begin
-                  // Put event in buffer
-                  lPlayingPattern.MidiPattern.MidiBuffer.WriteEvent(lPlayingPattern.MidiPattern.MidiDataCursor, i);
-
-                  if Assigned(lPlayingPattern.MidiPattern.MidiDataCursor.Next) then
-                  begin
-                    lPlayingPattern.MidiPattern.MidiDataCursor :=
-                      lPlayingPattern.MidiPattern.MidiDataCursor.Next
-                  end
-                  else
-                  begin
-                    break;
-                  end;
-                end;
-              end;
-            end;
-
-            // Advance cursors for midi and tsPattern
-            lPlayingPattern.WavePattern.RealCursorPosition := Round(lPlayingPattern.WavePattern.CursorReal);
-            lPlayingPattern.WavePattern.CursorReal := lPlayingPattern.WavePattern.CursorReal + BPMscale;
-
-            lPlayingPattern.MidiPattern.RealCursorPosition := Round(lPlayingPattern.MidiPattern.CursorAdder);
-            lPlayingPattern.MidiPattern.CursorAdder := lPlayingPattern.MidiPattern.CursorAdder + GlobalBPMscale;
+            lPlayingPattern.Process(lTrack.OutputBuffer, i, nframes);
           end;
         end;
       end;
@@ -756,9 +614,11 @@ lPlayingPattern.WavePattern.BufferData2[i] := 0;
             { TODO Not switched on
               lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input[0], nframes);
             }
-
-            lPlayingPattern.SampleBankEngine.Process(lPlayingPattern.MidiPattern,
-              lTrack.OutputBuffer, nframes);
+            if lPlayingPattern is TMidiPattern then
+            begin
+              TMidiPattern(lPlayingPattern).SampleBankEngine.Process( TMidiPattern(lPlayingPattern).MidiBuffer,
+                lTrack.OutputBuffer, nframes);
+            end;
 
             // 1. Execute per pattern plugins
 {            lPlayingPattern.PluginProcessor.Execute(nframes, lPlayingPattern.WavePattern.BufferData2);
@@ -1107,6 +967,11 @@ begin
   Application.Terminate;
 end;
 
+procedure TMainApp.miCreateTrackClick(Sender: TObject);
+begin
+  CreateTrack('', 2);
+end;
+
 procedure TMainApp.SavePatternClick(Sender: TObject);
 begin
 
@@ -1196,7 +1061,7 @@ procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
 var
   i, j: Integer;
   lTrack: TTrack;
-  lPatternGUI: TPatternGUI;
+ // lPatternGUI: TWavePatternGUI;
 begin
 
   try
@@ -1224,7 +1089,7 @@ begin
 
     for i := 0 to Pred(MainApp.Tracks.Count) do
     begin
-      lTrack := TTrack(TTrackGUI(MainApp.Tracks[i]).ModelObject);
+      lTrack := TTrackGUI(MainApp.Tracks[i]).Track;
 
       if Assigned(lTrack) then
       begin
@@ -1234,14 +1099,14 @@ begin
 
         for j := 0 to Pred(TTrackGUI(MainApp.Tracks[i]).PatternListGUI.Count) do
         begin
-          lPatternGUI := TPatternGUI(TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j]);
+//          lPatternGUI := TWavePatternGUI(TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j]);
 
-          if Assigned(lPatternGUI) and Assigned(lTrack.PlayingPattern) then
+//          if Assigned(lPatternGUI) and Assigned(lTrack.PlayingPattern) then
           begin
-            if lPatternGUI.ObjectID = lTrack.PlayingPattern.ObjectID then
+//            if lPatternGUI.ObjectID = lTrack.PlayingPattern.ObjectID then
             begin
-              lPatternGUI.CursorPosition := lTrack.PlayingPattern.MidiPattern.RealCursorPosition;
-              lPatternGUI.CacheIsDirty := True;
+{              lPatternGUI.CursorPosition := lTrack.PlayingPattern.RealCursorPosition;
+              lPatternGUI.CacheIsDirty := True;}
             end;
           end;
         end;
@@ -1250,12 +1115,12 @@ begin
       TTrackGUI(MainApp.Tracks[i]).Invalidate;
     end;
 
-    if Assigned(GSettings.SelectedPatternGUI) then
+{    if Assigned(GSettings.SelectedPatternGUI) then
     begin
-      TPatternGUI(GSettings.SelectedPatternGUI).PatternControls.MidiGridGUI.Invalidate;
-      TPatternGUI(GSettings.SelectedPatternGUI).PatternControls.WaveFormGUI.Invalidate;
+      TWavePatternGUI(GSettings.SelectedPatternGUI).PatternControls.MidiGridGUI.Invalidate;
+      TWavePatternGUI(GSettings.SelectedPatternGUI).PatternControls.WaveFormGUI.Invalidate;
     end;
-
+ }
     Inc(FLowPriorityInterval);
     if FLowPriorityInterval > 10 then
       FLowPriorityInterval := 0;
@@ -1280,17 +1145,19 @@ var
 begin
   ScreenUpdater.Enabled := False;
 
-  sleep(100);
-  jack_transport_stop(client);
+  if not FNoJackMode then
+  begin
+    sleep(100);
+    jack_transport_stop(client);
 
-  sleep(100);
-  jack_deactivate(client);
+    sleep(100);
+    jack_deactivate(client);
 
-  sleep(100);
-	jack_client_close(client);
+    sleep(100);
+	  jack_client_close(client);
 
-  sleep(100);
-
+    sleep(100);
+  end;
   if Assigned(GAudioStruct) then
   begin
     GAudioStruct.Detach(MainApp);
@@ -1317,7 +1184,8 @@ begin
   if Assigned(GAudioStruct) then
     GAudioStruct.Free;
 
-  FreeMem(CB_TimeBuffer);
+  FWavePatternControlGUI.Free;
+  FMidiPatternControlGUI.Free;
 End;
 
 procedure TMainApp.Formcreate(Sender: Tobject);
@@ -1327,7 +1195,7 @@ var
   input_ports: ppchar;
   output_ports: ppchar;
 begin
-  Getmem(CB_TimeBuffer, 144100);
+  FNoJackMode := FindCmdLineSwitch('nojack', ['/', '-'], True);
 
   MainApp.DoubleBuffered := True;
   Sbtracks.DoubleBuffered := True;
@@ -1336,26 +1204,83 @@ begin
 
   LoadTreeDirectory;
 
-  client := jack_client_open('loopbox', JackNullOption, nil);
-	if not assigned(client) then
+  FWavePatternControlGUI := TWavePatternControlGUI.Create(nil);
+  FMidiPatternControlGUI := TMidiPatternControlGUI.Create(nil);
+
+  if not FNoJackMode then
   begin
-    DBLog('Error creating jack client!');
-    Halt(1);
+    client := jack_client_open('loopbox', JackNullOption, nil);
+	  if not assigned(client) then
+    begin
+      DBLog('Error creating jack client!');
+      Halt(1);
+    end;
+
+	  midi_input_port := jack_port_register (client, 'midi_in', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsInput), 0);
+	  midi_output_port := jack_port_register (client, 'midi_out', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
+	  audio_input_port := jack_port_register (client, 'audio_in', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
+	  audio_output_port_left := jack_port_register (client, 'audio_out_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
+	  audio_output_port_right := jack_port_register (client, 'audio_out_right', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
+
+	  calc_note_frqs(jack_get_sample_rate (client));
+
+    DBLog('Samplerate: ' + IntToStr(Round(jack_get_sample_rate (client))));
+
+    samplerate:= jack_get_sample_rate (client);
+    jack_on_shutdown(client, @jack_shutdown, nil);
+	  jack_set_sample_rate_callback(client, @srate, nil);
+	  writeln(format('jack_set_process_callback %d', [jack_set_process_callback(client, @process, nil)]));
+
+	  if jack_activate(client) = 1 then
+    begin
+		  DBLog('cannot activate client');
+      halt(1);
+    end;
+
+    writeln('start autoconnect');
+    input_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsOutput)));
+    if not Assigned(input_ports) then
+    begin
+      writeln('no physical capture ports.');
+    end
+    else
+    begin
+      {if jack_connect(client, input_ports[0], jack_port_name(audio_input_port)) <> 0 then
+      begin
+        writeln('cannot connect input ports');
+      end;}
+    end;
+
+    output_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsInput)));
+    if not Assigned(output_ports) then
+    begin
+      writeln('no physical playback ports.');
+    end
+    else
+    begin
+      if jack_connect(client, jack_port_name(audio_output_port_left), output_ports[0]) <> 0 then
+      begin
+        writeln('cannot connect output ports');
+      end;
+      if jack_connect(client, jack_port_name(audio_output_port_right), output_ports[1]) <> 0 then
+      begin
+        writeln('cannot connect output ports');
+      end;
+    end;
+    writeln('end autoconnect');
+
+    jack_transport_start(client);
+
+    GSettings.SampleRate := samplerate;
+    GSettings.Frames := jack_get_buffer_size(client);
+  end
+  else
+  begin
+    GSettings.SampleRate := 44100;
+    GSettings.Frames := 512;
   end;
 
-	midi_input_port := jack_port_register (client, 'midi_in', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsInput), 0);
-	midi_output_port := jack_port_register (client, 'midi_out', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
-	audio_input_port := jack_port_register (client, 'audio_in', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
-	audio_output_port_left := jack_port_register (client, 'audio_out_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
-	audio_output_port_right := jack_port_register (client, 'audio_out_right', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
 
-	calc_note_frqs(jack_get_sample_rate (client));
-
-  DBLog('Samplerate: ' + IntToStr(Round(jack_get_sample_rate (client))));
-
-  samplerate:= jack_get_sample_rate (client);
-  GSettings.SampleRate := samplerate;
-  GSettings.Frames := jack_get_buffer_size(client);
   GAudioStruct := TAudioStructure.Create('{D6DDECB0-BA12-4448-BBAE-3A96EEC90BFB}', MAPPED);
   GAudioStruct.MainSampleRate := samplerate;
   GAudioStruct.BPM:= 120;
@@ -1365,55 +1290,12 @@ begin
   attack_coef := power(0.01, 1.0/( attack_in_ms * GAudioStruct.MainSampleRate * 0.001));
   release_coef := power(0.01, 1.0/( release_in_ms * GAudioStruct.MainSampleRate * 0.001));
 
-	writeln(format('jack_set_process_callback %d', [jack_set_process_callback(client, @process, nil)]));
 
-  jack_on_shutdown(client, @jack_shutdown, nil);
-
-	jack_set_sample_rate_callback(client, @srate, nil);
 
   note := 0;
   ramp := 0;
   FOutputWaveform:= False;
   
-	if jack_activate(client) = 1 then
-  begin
-		DBLog('cannot activate client');
-    halt(1);
-  end;
-
-  writeln('start autoconnect');
-  input_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsOutput)));
-  if not Assigned(input_ports) then
-  begin
-    writeln('no physical capture ports.');
-  end
-  else
-  begin
-    {if jack_connect(client, input_ports[0], jack_port_name(audio_input_port)) <> 0 then
-    begin
-      writeln('cannot connect input ports');
-    end;}
-  end;
-
-  output_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsInput)));
-  if not Assigned(output_ports) then
-  begin
-    writeln('no physical playback ports.');
-  end
-  else
-  begin
-    if jack_connect(client, jack_port_name(audio_output_port_left), output_ports[0]) <> 0 then
-    begin
-      writeln('cannot connect output ports');
-    end;
-    if jack_connect(client, jack_port_name(audio_output_port_right), output_ports[1]) <> 0 then
-    begin
-      writeln('cannot connect output ports');
-    end;
-  end;
-  writeln('end autoconnect');
-
-  jack_transport_start(client);
 
   Getmem(buffer_allocate2, 200000 * SizeOf(jack_default_audio_sample_t));
 
@@ -1436,7 +1318,6 @@ begin
   end;
 
   GAudioStruct.Attach(MainApp);
-  MainApp.ObjectID := GAudioStruct.ObjectID;
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 
@@ -1501,7 +1382,7 @@ end;
 }
 procedure TMainApp.TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
 var
-  lPatternGUI: TPatternGUI;
+  lPatternGUI: TWavePatternGUI;
   lPattern: TPattern;
   lTrackGUI: TTrackGUI;
   lTrack: TTrack;
@@ -1509,9 +1390,9 @@ var
   lSavePatternCommand: TSavePatternCommand;
   lSavePatternDialog: TSaveDialog;
 begin
-  if Source is TPatternGUI then
+  if Source is TWavePatternGUI then
   begin
-    lPattern := TPatternGUI(Source).Model;
+    lPattern := TWavePatternGUI(Source).WavePattern;
     if Assigned(lPattern) then
     begin
       {
@@ -1535,14 +1416,14 @@ begin
   end
   else if Source is TTrackGUI then
   begin
-    lTrack := TTrack(TTrackGUI(Source).ModelObject);
+    lTrack := TTrackGUI(Source).Track;
   end;
 end;
 
 procedure TMainApp.TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 begin
-  if Source is TPatternGUI then
+  if Source is TWavePatternGUI then
   begin
     Accept := True;
   end
@@ -1632,6 +1513,11 @@ end;
 procedure TMainApp.DoTracksRefreshEvent(TrackObject: TObject);
 var
   lPatternGUI: TPatternGUI;
+  lPattern: TPattern;
+  lWavePatternGUI: TWavePatternGUI;
+  lMidiPatternGUI: TMidiPatternGUI;
+  lWavePatternControlGUI: TWavePatternControlGUI;
+  lMidiPatternControlGUI: TMidiPatternControlGUI;
   lTrackGUI: TTrackGUI;
   lTrackIndex: Integer;
 begin
@@ -1646,47 +1532,55 @@ begin
         TTrackGUI(Tracks[lTrackIndex]).Selected := (TrackObject = Tracks[lTrackIndex]);
     end;
 
-
     if GSettings.OldSelectedTrackGUI <> GSettings.SelectedTrackGUI then
     begin
-      writeln(format('%d, %d', [Integer(GSettings.OldSelectedTrackGUI), Integer(GSettings.SelectedTrackGUI)]));
       GSettings.OldSelectedTrackGUI := GSettings.SelectedTrackGUI;
-
-      lTrackGUI := TTrackGUI(GSettings.SelectedTrackGUI);
-      if Assigned(lTrackGUI) then
-      begin
-        writeln('Assigned(lTrackGUI)');
-        lPatternGUI := lTrackGUI.SelectedPattern;
-        if Assigned(lPatternGUI) then
-        begin
-          writeln('Assigned(lPatternGUI)');
-          lPatternGUI.PatternControls.Parent := nil;
-          lPatternGUI.PatternControls.Parent := tsPattern;
-        end
-        else
-        begin
-          if Assigned(lTrackGUI.PatternListGUI) then
-          begin
-            if lTrackGUI.PatternListGUI.Count > 0 then
-            begin
-            end;
-          end;
-        end;
-      end;
     end;
   end
-  else if TrackObject is TPatternGUI then
+  else if TrackObject is TWavePatternGUI then
   begin
     if GSettings.OldSelectedPatternGUI <> GSettings.SelectedPatternGUI then
     begin
-      GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
-
-      lPatternGUI := TPatternGUI(GSettings.SelectedPatternGUI);
-      if Assigned(lPatternGUI) then
+      if Assigned(GSettings.OldSelectedPatternGUI) then
       begin
-        lPatternGUI.PatternControls.Parent := nil;
-        lPatternGUI.PatternControls.Parent := tsPattern;
+        if GSettings.OldSelectedPatternGUI is TMidiPatternControlGUI then
+        begin
+          FMidiPatternControlGUI.Parent := nil;
+        end;
       end;
+
+      FWavePatternControlGUI.Disconnect;
+      FWavePatternControlGUI.WavePattern :=
+        TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+      FWavePatternControlGUI.Parent := nil;
+      FWavePatternControlGUI.Parent := tsPattern;
+      FWavePatternControlGUI.Align := alClient;
+      FWavePatternControlGUI.Connect;
+
+      GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
+    end;
+  end
+  else if TrackObject is TMidiPatternGUI then
+  begin
+    if GSettings.OldSelectedPatternGUI <> GSettings.SelectedPatternGUI then
+    begin
+      if Assigned(GSettings.OldSelectedPatternGUI) then
+      begin
+        if GSettings.OldSelectedPatternGUI is TWavePatternControlGUI then
+        begin
+          FWavePatternControlGUI.Parent := nil;
+        end;
+      end;
+
+      FMidiPatternControlGUI.Disconnect;
+      FMidiPatternControlGUI.MidiPattern :=
+        TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+      FMidiPatternControlGUI.Align := alClient;
+      FMidiPatternControlGUI.Parent := nil;
+      FMidiPatternControlGUI.Parent := tsPattern;
+      FMidiPatternControlGUI.Connect;
+
+      GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
     end;
   end;
 end;
@@ -1830,9 +1724,24 @@ var
 begin
   lCreateTrack := TCreateTrackCommand.Create(GAudioStruct.ObjectID);
   try
-    lCreateTrack.SourceType := fsWave;
-    lCreateTrack.SourceLocation := AFileLocation;
-    lCreateTrack.PatternName := ExtractFileNameWithoutExt(AFileLocation);
+    case ATrackType of
+      0:
+      begin
+        lCreateTrack.SourceType := fsWave;
+        lCreateTrack.SourceLocation := AFileLocation;
+        lCreateTrack.PatternName := ExtractFileNameWithoutExt(AFileLocation);
+      end;
+      1:
+      begin
+        lCreateTrack.SourceType := fsMIDI;
+        lCreateTrack.SourceLocation := AFileLocation;
+        lCreateTrack.PatternName := ExtractFileNameWithoutExt(AFileLocation);
+      end;
+      2:
+      begin
+        lCreateTrack.SourceType := fsEmpty;
+      end;
+    end;
 
     GCommandQueue.PushCommand(lCreateTrack);
   except
@@ -1851,28 +1760,30 @@ begin
   lTrackGUI := TTrackGUI(Data);
   lTrackGUI.Parent := nil;
   Tracks.Remove(lTrackGUI);
-  //lTrackGUI.Free;
 end;
 
 procedure TMainApp.CreateTrackGUI(AObjectID: string);
 var
   lTrackGUI: TTrackGUI;
+  lTrack: TTrack;
   lTrackTotalWidth: Integer;
   lTrackIndex: Integer;
 begin
   DBLog('start TMainApp.CreateTrackGUI: ' + AObjectID);
 
+  lTrack := TTrack(GObjectMapper.GetModelObject(AObjectID));
+
   // Create track with remote ObjectID
   lTrackGUI := TTrackGUI.Create(nil);
   lTrackGUI.Parent := MainApp.Sbtracks;
-  lTrackGUI.Height := MainApp.Height;
+  lTrackGUI.Height := Sbtracks.Height;
   lTrackGUI.OnUpdateTrackControls := @UpdateTrackControls;
   lTrackGUI.OnTracksRefreshGUI := @DoTracksRefreshEvent;
 
-  lTrackGUI.SetObjectID(AObjectID);
-  lTrackGUI.ObjectOwnerID := Self.ObjectID;
-  lTrackGUI.ModelObject := GObjectMapper.GetModelObject(AObjectID);
+  lTrackGUI.Track := lTrack;
   Tracks.Add(lTrackGUI);
+
+  lTrack.Attach(lTrackGUI);
 
   // Calculate x, y for track inside sbTracks
   lTrackTotalWidth := 0;
@@ -1892,10 +1803,6 @@ begin
     if Tracks.Items[lTrackIndex] <> lTrackGUI then
       TTrackGUI(Tracks.Items[lTrackIndex]).Selected:= False;
   end;
-
-  TTrack(lTrackGUI.ModelObject).Attach(lTrackGUI);
-
-  MainApp.Sbtracks.Invalidate;
 
   DBLog('end TMainApp.CreateTrackGUI ' + lTrackGUI.ObjectID);
 end;
@@ -2091,6 +1998,16 @@ end;
 procedure TMainApp.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
+end;
+
+function TMainApp.GetObjectOwnerID: string;
+begin
+  Result := FObjectOwnerID;
+end;
+
+procedure TMainApp.SetObjectOwnerID(const AObjectOwnerID: string);
+begin
+  FObjectOwnerID := AObjectOwnerID;
 end;
 
 { TMIDIThread }
