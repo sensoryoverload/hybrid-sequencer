@@ -219,6 +219,7 @@ type
     FMidiPatternControlGUI: TMidiPatternControlGUI;
     FNoJackMode: Boolean;
 
+    procedure CustomExceptionHandler(Sender: TObject; E: Exception);
     procedure ReleaseTrack(Data: PtrInt);
     function TrackExists(AObjectID: string): Boolean;
     function IndexOfTrack(AObjectId: string): Integer;
@@ -287,6 +288,64 @@ implementation
 
 uses
   fx, librubberband;
+
+procedure DumpCallStack;
+var
+  I: Longint;
+  prevbp: Pointer;
+  CallerFrame,
+  CallerAddress,
+  bp: Pointer;
+  Report: string;
+const
+  MaxDepth = 20;
+begin
+  Report := '';
+  bp := get_frame;
+  // This trick skip SendCallstack item
+  // bp:= get_caller_frame(get_frame);
+  try
+    prevbp := bp - 1;
+    I := 0;
+    while bp > prevbp do begin
+       CallerAddress := get_caller_addr(bp);
+       CallerFrame := get_caller_frame(bp);
+       if (CallerAddress = nil) then
+         Break;
+       Report := Report + BackTraceStrFunc(CallerAddress) + LineEnding;
+       Inc(I);
+       if (I >= MaxDepth) or (CallerFrame = nil) then
+         Break;
+       prevbp := bp;
+       bp := CallerFrame;
+     end;
+   except
+     { prevent endless dump if an exception occured }
+   end;
+  ShowMessage(Report);
+end;
+
+procedure DumpExceptionCallStack(E: Exception);
+var
+  I: Integer;
+  Frames: PPointer;
+  Report: string;
+begin
+  Report := 'Program exception! ' + LineEnding +
+    'Stacktrace:' + LineEnding + LineEnding;
+  if E <> nil then begin
+    Report := Report + 'Exception class: ' + E.ClassName + LineEnding +
+    'Message: ' + E.Message + LineEnding;
+  end;
+  Report := Report + BackTraceStrFunc(ExceptAddr);
+  Frames := ExceptFrames;
+  for I := 0 to ExceptFrameCount - 1 do
+    Report := Report + LineEnding + BackTraceStrFunc(Frames[I]);
+  ShowMessage(Report);
+  Halt; // End of program execution
+end;
+
+
 
 function compareByLocation(Item1 : Pointer; Item2 : Pointer) : Integer;
 var
@@ -538,6 +597,8 @@ begin
       end;
     end;
 
+    //GLogger.PushMessage('Logging - ' + IntToStr(Random(1000)));
+
     for i := 0 to Pred(nframes) do
     begin
 
@@ -546,7 +607,6 @@ begin
         // Synchronize section
         if (GAudioStruct.MainSyncCounter + i) mod GAudioStruct.MainSyncModula = 0 then
         begin
-
           if Assigned(lTrack.ScheduledPattern) then
           begin
             if Assigned(lTrack.PlayingPattern) then
@@ -558,10 +618,8 @@ begin
             if lTrack.PlayingPattern is TWavePattern then
             begin;
               TWavePattern(lTrack.PlayingPattern).TimeStretch.Flush;
-
-            end;
-
-            if lTrack.PlayingPattern is TMidiPattern then
+            end
+            else if lTrack.PlayingPattern is TMidiPattern then
             begin
               if TMidiPattern(lTrack.PlayingPattern).MidiDataList.Count > 0 then
               begin
@@ -584,10 +642,8 @@ begin
 
           if lPlayingPattern.OkToPlay then
           begin
-
-
-
             lPlayingPattern.Process(lTrack.OutputBuffer, i, nframes);
+            lPlayingPattern.ProcessAdvance;
           end;
         end;
       end;
@@ -650,6 +706,7 @@ begin
 
     for i := 0 to Pred(nframes) do
     begin
+      // TODO Test denormals?
       TempLevel := Abs(lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier);
       if TempLevel > lTrack.Level then
         lTrack.Level := (attack_coef * (lTrack.Level - TempLevel)) + TempLevel
@@ -701,6 +758,12 @@ begin
   inherited Destroy;
 end;
 
+procedure TMainApp.CustomExceptionHandler(Sender: TObject; E: Exception);
+begin
+  DumpExceptionCallStack(E);
+  DumpCallStack;
+  Halt; // End of program execution
+end;
 
 procedure TMainApp.acStopExecute(Sender: TObject);
 var
@@ -1195,6 +1258,8 @@ var
   input_ports: ppchar;
   output_ports: ppchar;
 begin
+  Application.OnException := @CustomExceptionHandler;
+
   FNoJackMode := FindCmdLineSwitch('nojack', ['/', '-'], True);
 
   MainApp.DoubleBuffered := True;

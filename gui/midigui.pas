@@ -1449,6 +1449,7 @@ end;
 
 procedure TMidigridOverview.DeleteNoteGUI(AObjectID: string);
 var
+  lMidiNote: TMidiNote;
   lMidiNoteOverview: TMidiNoteOverview;
   lIndex: Integer;
 begin

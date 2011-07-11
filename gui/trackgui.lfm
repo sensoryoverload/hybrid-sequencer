@@ -9,8 +9,8 @@ object TrackGUI: TTrackGUI
   ClientWidth = 104
   PopupMenu = pmTrack
   TabOrder = 0
-  DesignLeft = 784
-  DesignTop = 106
+  DesignLeft = 788
+  DesignTop = 110
   object pnlTrackControls: TPanel
     Left = 0
     Height = 307
@@ -197,11 +197,11 @@ object TrackGUI: TTrackGUI
       OnExecute = acDeleteTrackExecute
     end
     object acCreateWavePattern: TAction
-      Caption = 'acCreateWavePattern'
+      Caption = 'Create audio pattern'
       OnExecute = acCreateWavePatternExecute
     end
     object acCreateMidiPattern: TAction
-      Caption = 'acCreateMidiPattern'
+      Caption = 'Create midi pattern'
       OnExecute = acCreateMidiPatternExecute
     end
   end

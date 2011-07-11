@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, Sysutils, jacktypes, Graphics, Process, FileUtil, dbugintf, ringbuffer,
-  contnrs, flqueue, math;
+  contnrs, flqueue, math, Dialogs;
 
 Type
   TTreeFolderData = class
@@ -129,6 +129,9 @@ procedure DBLog(AFormat: string; AMessage: single);
 procedure DBLog(AFormat: string; AMessage: integer);
 
 function hermite4(frac_pos, xm1, x0, x1, x2: single): single; inline;
+
+procedure DumpExceptionCallStack(E: Exception);
+
 
 var
   FLogging: Boolean;
@@ -536,6 +539,26 @@ begin
   begin
     GNoteToFreq[x] := (a / 32) * Power(2, (x / 12));
   end
+end;
+
+procedure DumpExceptionCallStack(E: Exception);
+var
+  I: Integer;
+  Frames: PPointer;
+  Report: string;
+begin
+  Report := 'Program exception! ' + LineEnding +
+    'Stacktrace:' + LineEnding + LineEnding;
+  if E <> nil then begin
+    Report := Report + 'Exception class: ' + E.ClassName + LineEnding +
+    'Message: ' + E.Message + LineEnding;
+  end;
+  Report := Report + BackTraceStrFunc(ExceptAddr);
+  Frames := ExceptFrames;
+  for I := 0 to ExceptFrameCount - 1 do
+    Report := Report + LineEnding + BackTraceStrFunc(Frames[I]);
+  ShowMessage(Report);
+  Halt; // End of program execution
 end;
 
 initialization

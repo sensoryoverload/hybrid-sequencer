@@ -544,6 +544,8 @@ type
     FNoteOnOffset: Integer;
     FLength: single;
 
+    FIdle: Boolean;
+
     // Start the NOTE OFF phase of a note; handle note release ADSR etc
     FStopVoice: Boolean;
 
@@ -560,6 +562,7 @@ type
 
     function RunningNote: Integer;
     property Running: Boolean read FRunning write FRunning;
+    property Idle: Boolean read FIdle write FIdle;
     property Note: Integer read FNote write FNote;
     property InternalBuffer: PSingle read FInternalBuffer;
   published
@@ -1894,6 +1897,14 @@ var
 begin
   AMidiBuffer.Seek(0);
 
+  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+  begin
+    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+
+    // Idle trigger flag; are voices which do nothing and should not be played
+    lVoice.Idle := True;
+  end;
+
   if AMidiBuffer.Count > 0 then
   begin
     for lMidiBufferIndex := 0 to Pred(AMidiBuffer.Count) do
@@ -1960,7 +1971,10 @@ begin
   begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-    lVoice.Process(ABuffer, AFrames);
+    if not lVoice.Idle then
+    begin
+      lVoice.Process(ABuffer, AFrames);
+    end;
   end;
 
   // Mix all voices into buffer
@@ -1968,12 +1982,15 @@ begin
   begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-    for lBufferIndex := 0 to Pred(Frames) do
+    if not lVoice.Idle then
     begin
-      {lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
-      lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
-      ABuffer[lBufferIndex] := lSampleAdd - lSampleMul;}
-      ABuffer[lBufferIndex] := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
+      for lBufferIndex := 0 to Pred(Frames) do
+      begin
+        {lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
+        lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
+        ABuffer[lBufferIndex] := lSampleAdd - lSampleMul;}
+        ABuffer[lBufferIndex] := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
+      end;
     end;
   end;
 
@@ -2237,6 +2254,7 @@ procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer; 
   end;
 
 begin
+  FIdle := False;
   FRunning := True;
   FSamplePosition := 0;
 

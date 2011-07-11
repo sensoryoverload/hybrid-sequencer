@@ -437,7 +437,7 @@ var
   lViewIntf: IObserver;
 begin
   DBLog('start DiffLists');
-  try
+  {try    }
     if Assigned(AModelList) and Assigned(AViewList) and
       Assigned(ACreateProc) and Assigned(ADestroyProc) then
     begin
@@ -492,12 +492,14 @@ begin
       end;
     end;
 
-  except
+  {except
     on e: exception do
     begin
-      DBLog('DiffLists error: ' + e.Message);
+      DumpExceptionCallStack(e);
+      //DBLog('DiffLists error: ' + e.Message);
+      //raise;
     end;
-  end;
+  end;     }
   DBLog('end DiffLists');
 end;
 

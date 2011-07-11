@@ -26,8 +26,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, ExtCtrls, globalconst,
-  dialcontrol, utils, contnrs, LCLType, Controls, Graphics, StdCtrls, ComCtrls,
-  Spin, sampler, global_command;
+  dialcontrol, uEKnob, uESelector, utils, contnrs, LCLType, Controls, Graphics,
+  StdCtrls, ComCtrls, Spin, sampler, global_command;
 
 type
 
@@ -105,6 +105,7 @@ type
     spnBaseNote: TSpinEdit;
     spnLowNote: TSpinEdit;
     spnHighNote: TSpinEdit;
+    uEKnob1: TuEKnob;
     procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
@@ -248,9 +249,6 @@ procedure TSampleView.SetEnabled(const AValue: Boolean);
 var
   lIndex: Integer;
 begin
-  if FEnabled = AValue then exit;
-  FEnabled := AValue;
-
   for lIndex := 0 to Pred(ComponentCount) do
   begin
     if Components[lIndex] is TDialControl then
@@ -375,6 +373,8 @@ end;
 procedure TSampleView.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TSampleView.Update');
+
+  if Enabled then;
 
   dcLowpassCutoff.Value := TSample(Subject).Filter.Frequency;
   cbCutoffModSource.ItemIndex := Integer(TSample(Subject).Filter.FreqModSource);

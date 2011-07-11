@@ -144,7 +144,7 @@ begin
     FSampleBank := MidiPattern.SampleBank;
     FSampleBank.Attach(FSampleBankGUI);
     FSampleBankGUI.Bank := FSampleBank;
-    FSampleBankGUI.Connect;
+    //FSampleBankGUI.Connect;
 
     FMidiPattern.Attach(FMidiPatternGUI);
     FMidiPatternGUI.MidiPattern := FMidiPattern;
@@ -160,6 +160,8 @@ procedure TMidiPatternControlGUI.Disconnect;
 begin
   if Assigned(MidiPattern) then
   begin
+    FMidiPattern.Detach(FMidigridOverview);
+
     FMidiPattern.Detach(FMidiPatternGUI);
 
     FSampleBank.Detach(FSampleBankGUI);

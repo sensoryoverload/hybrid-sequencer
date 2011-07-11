@@ -302,27 +302,26 @@ begin
 
   DBLog('KICK.WAV loading');
 
-
-
   DBLog('end TMidiGrid.Create');
 end;
 
 destructor TMidiPattern.Destroy;
 begin
-  if Assigned(FNoteList) then
-    FNoteList.Free;
+  FSample.UnloadSample; // TODO Should be done by TSample class itself
+  FSample.Free;
 
-  if Assigned(FMidiDataList) then
-    FMidiDataList.Free;
+  FSampleBankEngine.Free;
+
+  FSampleBank.Free;
 
   if Assigned(FMidiBuffer) then
     FMidiBuffer.Free;
 
-  FSampleBankEngine.Free;
+  if Assigned(FMidiDataList) then
+    FMidiDataList.Free;
 
-  FSample.UnloadSample; // TODO Should be done by TSample class itself
-  FSample.Free;
-  FSampleBank.Free;
+  if Assigned(FNoteList) then
+    FNoteList.Free;
 
   inherited Destroy;
 end;
@@ -330,6 +329,8 @@ end;
 procedure TMidiPattern.Initialize;
 begin
   BeginUpdate;
+
+  Inherited;
 
   EndUpdate;
 end;
@@ -377,7 +378,11 @@ procedure TMidiPattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCou
 var
   i: Integer;
 begin
-{  for i := 0 to Pred(AFrames) do
+  if AFrameIndex mod 200 = 0 then
+  begin
+    GLogger.PushMessage('Logging - ' + IntToStr(Random(1000)));
+  end;
+  {  for i := 0 to Pred(AFrames) do
   begin
     FCursorAdder := FCursorAdder + FBPMScale;
   end;     }

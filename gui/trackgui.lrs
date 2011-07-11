@@ -4,7 +4,7 @@ LazarusResources.Add('TTrackGUI','FORMDATA',[
   'TPF0'#9'TTrackGUI'#8'TrackGUI'#4'Left'#2#0#6'Height'#3#155#2#3'Top'#2#0#5'Wi'
   +'dth'#2'h'#5'Align'#7#8'alCustom'#7'Anchors'#11#5'akTop'#0#12'ClientHeight'#3
   +#155#2#11'ClientWidth'#2'h'#9'PopupMenu'#7#7'pmTrack'#8'TabOrder'#2#0#10'Des'
-  +'ignLeft'#3#16#3#9'DesignTop'#2'j'#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2
+  +'ignLeft'#3#20#3#9'DesignTop'#2'n'#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2
   +#0#6'Height'#3'3'#1#3'Top'#3'h'#1#5'Width'#2'h'#5'Align'#7#8'alBottom'#10'Be'
   +'velInner'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3'/'#1
   +#11'ClientWidth'#2'd'#5'Color'#7#9'clBtnFace'#11'ParentColor'#8#9'PopupMenu'
@@ -54,11 +54,11 @@ LazarusResources.Add('TTrackGUI','FORMDATA',[
   +'eleteTrack'#6'Action'#7#13'acDeleteTrack'#7'OnClick'#7#18'miDeleteTrackClic'
   +'k'#0#0#0#11'TActionList'#11'ActionList1'#4'left'#2'"'#3'top'#3#201#0#0#7'TA'
   +'ction'#13'acDeleteTrack'#7'Caption'#6#12'Delete track'#9'OnExecute'#7#20'ac'
-  +'DeleteTrackExecute'#0#0#7'TAction'#19'acCreateWavePattern'#7'Caption'#6#19
-  +'acCreateWavePattern'#9'OnExecute'#7#26'acCreateWavePatternExecute'#0#0#7'TA'
-  +'ction'#19'acCreateMidiPattern'#7'Caption'#6#19'acCreateMidiPattern'#9'OnExe'
-  +'cute'#7#26'acCreateMidiPatternExecute'#0#0#0#10'TPopupMenu'#14'pupPatternLi'
-  +'st'#4'left'#2'&'#3'top'#2'M'#0#9'TMenuItem'#19'miCreateWavePattern'#6'Actio'
-  +'n'#7#19'acCreateWavePattern'#0#0#9'TMenuItem'#19'miCreateMidiPattern'#6'Act'
-  +'ion'#7#19'acCreateMidiPattern'#0#0#0#0
+  +'DeleteTrackExecute'#0#0#7'TAction'#19'acCreateWavePattern'#7'Caption'#6#20
+  +'Create audio pattern'#9'OnExecute'#7#26'acCreateWavePatternExecute'#0#0#7'T'
+  +'Action'#19'acCreateMidiPattern'#7'Caption'#6#19'Create midi pattern'#9'OnEx'
+  +'ecute'#7#26'acCreateMidiPatternExecute'#0#0#0#10'TPopupMenu'#14'pupPatternL'
+  +'ist'#4'left'#2'&'#3'top'#2'M'#0#9'TMenuItem'#19'miCreateWavePattern'#6'Acti'
+  +'on'#7#19'acCreateWavePattern'#0#0#9'TMenuItem'#19'miCreateMidiPattern'#6'Ac'
+  +'tion'#7#19'acCreateMidiPattern'#0#0#0#0
 ]);
