@@ -35,7 +35,7 @@ type
 
   TWavePatternGUI = class(TPatternGUI)
   private
-    FWavePattern: TWavePattern;
+    FModel: TWavePattern;
 
     bmp: TBitmap;
     FCursorPosition: Integer;
@@ -54,16 +54,20 @@ type
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
     procedure DragDrop(Source: TObject; X, Y: Integer); override;
+
+    function GetModel: THybridPersistentModel; override;
+    procedure SetModel(AModel: THybridPersistentModel); override;
+
     property CursorPosition: Integer read FCursorPosition write FCursorPosition;
     property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
-    property WavePattern: TWavePattern read FWavePattern write FWavePattern;
+//    property Model: TWavePattern read FWavePattern write FWavePattern;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState;
                     var Accept: Boolean); override;
-    procedure DoEndDrag(Sender, Target: TObject; X, Y: Integer);
+    procedure MyEndDrag(Sender, Target: TObject; X, Y: Integer);
     function GetDragImages: TDragImageList; override;
   end;
 
@@ -86,7 +90,7 @@ begin
   Height := 15;
   RecalculateSynchronize;
 
-  OnEndDrag := @DoEndDrag;
+  OnEndDrag := @MyEndDrag;
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 end;
@@ -269,6 +273,16 @@ begin
   DBLog('end TPatternGUI.DragDrop');
 end;
 
+function TWavePatternGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TWavePatternGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TWavePattern(AModel);
+end;
+
 
 procedure TWavePatternGUI.DragOver(Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
@@ -279,7 +293,7 @@ begin
 end;
 
 // Pattern has moved location inside or outside of track
-procedure TWavePatternGUI.DoEndDrag(Sender, Target: TObject; X, Y: Integer);
+procedure TWavePatternGUI.MyEndDrag(Sender, Target: TObject; X, Y: Integer);
 var
   P:Tpoint;
   C: TControl;
@@ -318,11 +332,11 @@ procedure TWavePatternGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TPatternGUI.Update');
 
-  Position := FWavePattern.Position;
-  PatternLength := FWavePattern.LoopEnd.Location;  //todo Use global patternlength
+  Position := FModel.Position;
+  PatternLength := FModel.LoopEnd.Location;  //todo Use global patternlength
 //  PatternControls.RealBPM := Model.WavePattern.RealBPM;
 //  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
-  writeln(inttostr(PatternLength));
+
   DBLog('end TPatternGUI.Update');
 end;
 
@@ -332,7 +346,6 @@ procedure TWavePatternGUI.Connect;
 begin
   DBLog('start TWavePatternGUI.Connect');
 
-  FWavePattern.Attach(Self);
 
   DBLog('end TWavePatternGUI.Connect');
 end;
@@ -341,7 +354,6 @@ procedure TWavePatternGUI.Disconnect;
 begin
   DBLog('start TWavePatternGUI.Disconnect');
 
-  FWavePattern.Detach(Self);
 
   DBLog('end TWavePatternGUI.Disconnect');
 end;

@@ -34,12 +34,12 @@ type
 
   THybridAction = class(TCustomAction)
   private
-    FScript: TStrings;
+    FScript: TStringList;
     FGUID: string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property Script: TStrings read FScript write FScript;
+    property Script: TStringList read FScript write FScript;
     property GUID: string read FGUID write FGUID;
   end;
 
@@ -51,7 +51,7 @@ constructor THybridAction.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FScript := TStrings.Create;
+  FScript := TStringList.Create;
 end;
 
 destructor THybridAction.Destroy;

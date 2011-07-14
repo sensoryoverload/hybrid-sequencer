@@ -138,6 +138,7 @@ type
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
+    procedure Finalize; override;
     function IndexOfTrack(AObjectID: string): Integer;
 
     property Active: Boolean read FActive write FActive;
@@ -194,6 +195,11 @@ end;
 procedure TAudioStructure.Initialize;
 begin
   Notify;
+end;
+
+procedure TAudioStructure.Finalize;
+begin
+  //
 end;
 
 function TAudioStructure.IndexOfTrack(AObjectID: string): Integer;

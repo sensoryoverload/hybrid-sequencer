@@ -63,6 +63,7 @@ type
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
+    procedure Finalize; override;
     procedure ApplyToAll(AApplyProc: TApplyProc);
     function Execute(AFrames: Integer): PSingle;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
@@ -87,7 +88,9 @@ type
   TScriptPlugin = class(TPluginNode)
   private
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
+  public
     destructor Destroy; override;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TLADSPAPlugin }
@@ -307,6 +310,11 @@ begin
   Notify;
 end;
 
+procedure TPluginNode.Finalize;
+begin
+  //
+end;
+
 function TPluginNode.Execute(AFrames: Integer): PSingle;
 var
   lChildIndex: Integer;
@@ -417,6 +425,12 @@ destructor TScriptPlugin.Destroy;
 begin
 
   inherited Destroy;
+end;
+
+procedure TScriptPlugin.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle;
+  AFrames: Integer);
+begin
+  //
 end;
 
 end.

@@ -78,6 +78,7 @@ type
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
+    procedure Finalize; override;
     function ClearSample: Boolean;
     procedure Assign(Source: TPersistent); override;
     property SelectedPattern: TPattern read FSelectedPattern write FSelectedPattern;
@@ -304,6 +305,11 @@ begin
   Notify;
 
   DBLog('end TWaveFormTrack.Initialize');
+end;
+
+procedure TTrack.Finalize;
+begin
+  //
 end;
 
 constructor TTrack.Create(AObjectOwner: string; AMapped: Boolean = True);

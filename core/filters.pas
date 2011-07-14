@@ -72,6 +72,7 @@ type
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     procedure Initialize; override;
+    procedure Finalize; override;
   published
     property Frequency: Single read FFrequency write FFrequency; // 0..20000
     property Resonance: Single read FResonance write FResonance; // 0..1 ?
@@ -122,8 +123,8 @@ type
     t, t2, x, f, k, p, r, y1, y2, y3, y4, oldx, oldy1, oldy2, oldy3,  divbysamplerate: Single;
     _kd: Single;
   public
-    constructor Create(AFrames: Integer);
-    function Process(I: Single): Single;
+    constructor Create(AFrames: Integer); override;
+    function Process(const I: Single): Single; override;
     procedure Initialize; override;
   end;
 
@@ -191,7 +192,7 @@ begin
   divbysamplerate := 1 / SampleRate;
 end;
 
-function TLP24DB.Process(I: Single): Single;
+function TLP24DB.Process(const I: Single): Single;
 begin
   if Frequency > 20000 then Frequency := 20000;
   if Frequency < 20 then Frequency := 20;
@@ -239,6 +240,11 @@ begin
   Active := True;
 
   Notify;
+end;
+
+procedure TFilter.Finalize;
+begin
+  //
 end;
 
 initialization

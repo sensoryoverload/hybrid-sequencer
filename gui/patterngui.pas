@@ -34,8 +34,7 @@ type
 
   TPatternGUI = class(TPersistentCustomControl)
   private
-    FPattern: TPattern;
-
+    {FModel: TPattern;  }
     FPatternColor: TColor;
 
     FPosition: Integer; // Vertical position in the patterngrid
@@ -61,7 +60,9 @@ type
     procedure RecalculateSynchronize;
     procedure Connect; override;
     procedure Disconnect; override;
-    property Pattern: TPattern read FPattern write FPattern;
+    {function GetModel: THybridPersistentModel; reintroduce; override;
+    procedure SetModel(AModel: THybridPersistentModel); reintroduce; override;}
+
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property Position: Integer read FPosition write SetPosition;
     property PatternColor: TColor read FPatternColor write SetPatternColor;
@@ -131,8 +132,8 @@ procedure TPatternGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TPatternGUI.Update');
 
-  Position := Pattern.Position;
-  PatternLength := Pattern.LoopEnd;  //todo Use global patternlength
+  Position := TPattern(Subject).Position;
+  PatternLength := TPattern(Subject).LoopEnd;  //todo Use global patternlength
 //  PatternControls.RealBPM := Model.WavePattern.RealBPM;
 //  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
   writeln(inttostr(PatternLength));
@@ -158,6 +159,16 @@ begin
 
   DBLog('end TPatternGUI.Disconnect');
 end;
+
+{function TPatternGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TPatternGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TPattern(AModel);
+end;}
 
 initialization
   RegisterClass(TPatternGUI);

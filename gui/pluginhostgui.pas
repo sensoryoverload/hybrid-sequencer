@@ -72,7 +72,7 @@ type
     FObjectID: string;
     FModelObject: TObject;
     FObjectOwner: TObject;
-    FModel: TPluginProcessor;
+    FModel: THybridPersistentModel;
 
     FNodeListGUI: TObjectList;
     FConnectionListGUI: TObjectList;
@@ -89,21 +89,23 @@ type
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
     procedure Connect; virtual;
+    procedure Disconnect; virtual;
     procedure CreateNodeGUI(AObjectID: string);
     procedure DeleteNodeGUI(AObjectID: string);
     procedure CreateConnectionGUI(AObjectID: string);
     procedure DeleteConnectionGUI(AObjectID: string);
     procedure DoConnection(AObjectID: string; AParameter: string);
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property Model: TPluginProcessor read FModel write FModel;
+    property Model: THybridPersistentModel read FModel write FModel;
     property NodeListGUI: TObjectList read FNodeListGUI write FNodeListGUI;
     property ConnectionListGUI: TObjectList read FConnectionListGUI write FConnectionListGUI;
-    property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
     property AudioOutGUI: TPluginNodeGUI read FAudioOutGUI write FAudioOutGUI;
     property AudioInGUI: TPluginNodeGUI read FAudioInGUI write FAudioInGUI;
@@ -349,15 +351,20 @@ end;
 
 procedure TPluginProcessorGUI.Connect;
 begin
-  ModelObject := GObjectMapper.GetModelObject(ObjectID);
+  Model := GObjectMapper.GetModelObject(ObjectID);
 
-  TPluginProcessor(ModelObject).AudioIn.Attach(FAudioInGUI);
+  TPluginProcessor(Model).AudioIn.Attach(FAudioInGUI);
   FAudioInGUI.ObjectID := TPluginProcessor(Model).AudioIn.ObjectID;
   FAudioInGUI.PluginName := TPluginProcessor(Model).AudioIn.PluginName;
 
-  TPluginProcessor(ModelObject).AudioOut.Attach(FAudioOutGUI);
+  TPluginProcessor(Model).AudioOut.Attach(FAudioOutGUI);
   FAudioOutGUI.ObjectID := TPluginProcessor(Model).AudioOut.ObjectID;
   FAudioOutGUI.PluginName := TPluginProcessor(Model).AudioOut.PluginName;
+end;
+
+procedure TPluginProcessorGUI.Disconnect;
+begin
+  //
 end;
 
 procedure TPluginProcessorGUI.CreateNodeGUI(AObjectID: string);
@@ -373,7 +380,7 @@ begin
     lPluginNodeGUI := TPluginNodeGUI.Create(Self);
     lPluginNodeGUI.ObjectID := AObjectID;
     lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
-    lPluginNodeGUI.ModelObject := lPluginNode;
+    lPluginNodeGUI.Model := lPluginNode;
     lPluginNodeGUI.PluginName := lPluginNode.PluginName;
     lPluginNodeGUI.XLocation := lPluginNode.XLocation;
     lPluginNodeGUI.YLocation := lPluginNode.YLocation;
@@ -420,7 +427,7 @@ begin
     lInterConnectGUI := TInterConnectGUI.Create(Self.ObjectID);
     lInterConnectGUI.ObjectID := AObjectID;
     lInterConnectGUI.ObjectOwnerID := Self.ObjectID;
-    lInterConnectGUI.ModelObject := lInterConnect;
+    lInterConnectGUI.Model := lInterConnect;
     lInterConnectGUI.FromPluginNode := lInterConnect.FromPluginNode;
     lInterConnectGUI.ToPluginNode := lInterConnect.ToPluginNode;
 
@@ -491,6 +498,16 @@ begin
 
     FBusyConnecting := False;
   end;
+end;
+
+function TPluginProcessorGUI.GetModel: THybridPersistentModel;
+begin
+  Result := FModel;
+end;
+
+procedure TPluginProcessorGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := AModel;
 end;
 
 function TPluginProcessorGUI.GetObjectID: string;

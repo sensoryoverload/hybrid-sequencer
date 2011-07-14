@@ -29,13 +29,13 @@ type
 
 implementation
 
-uses global;
+uses global, utils;
 
 { TBaseEngine }
 
 constructor TBaseEngine.Create(AFrames: Integer);
 begin
-  writeln(Format('Creating class: %s', [Self.ClassName]));
+  DBLog(Format('Creating class: %s', [Self.ClassName]));
 
   FFrames := AFrames;
 
@@ -48,7 +48,7 @@ end;
 }
 procedure TBaseEngine.Initialize;
 begin
-  writeln(Format('Initializing class: %s', [Self.ClassName]));
+  DBLog(Format('Initializing class: %s', [Self.ClassName]));
 
   FSamplerate := GSettings.SampleRate;
   FFrames := GSettings.Frames;

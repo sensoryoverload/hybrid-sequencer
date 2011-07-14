@@ -1,7 +1,7 @@
 object MainApp: TMainApp
-  Left = 177
+  Left = 181
   Height = 679
-  Top = 98
+  Top = 117
   Width = 1095
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
@@ -26,14 +26,14 @@ object MainApp: TMainApp
     Width = 1095
     Align = alTop
     Caption = 'pnlTop'
-    ClientHeight = 336
-    ClientWidth = 1091
+    ClientHeight = 340
+    ClientWidth = 1095
     TabOrder = 0
     object sbTracks: TScrollBox
       Left = 263
-      Height = 334
+      Height = 338
       Top = 1
-      Width = 827
+      Width = 831
       HorzScrollBar.Page = 621
       VertScrollBar.Page = 507
       Align = alClient
@@ -46,29 +46,29 @@ object MainApp: TMainApp
     end
     object gbTrackDetail: TGroupBox
       Left = 1
-      Height = 334
+      Height = 338
       Top = 1
       Width = 254
       Align = alLeft
       Caption = 'Track'
-      ClientHeight = 323
+      ClientHeight = 327
       ClientWidth = 250
       TabOrder = 1
       object pnlFileManager: TPanel
         Left = 0
-        Height = 242
+        Height = 246
         Top = 27
         Width = 250
         Align = alClient
         Anchors = [akTop, akLeft, akRight]
-        ClientHeight = 238
-        ClientWidth = 246
+        ClientHeight = 246
+        ClientWidth = 250
         TabOrder = 0
         object TreeView1: TTreeView
           Left = 1
-          Height = 236
+          Height = 244
           Top = 1
-          Width = 244
+          Width = 248
           Align = alClient
           BorderStyle = bsNone
           DefaultItemHeight = 16
@@ -141,11 +141,11 @@ object MainApp: TMainApp
       object pnlTransport: TPanel
         Left = 0
         Height = 54
-        Top = 269
+        Top = 273
         Width = 250
         Align = alBottom
-        ClientHeight = 50
-        ClientWidth = 246
+        ClientHeight = 54
+        ClientWidth = 250
         TabOrder = 2
         object gbMasterTempo: TGroupBox
           Left = 4
@@ -230,7 +230,7 @@ object MainApp: TMainApp
     end
     object LeftSplitter: TCollapseSplitter
       Left = 255
-      Height = 334
+      Height = 338
       Top = 1
       Width = 8
       OnDblClick = LeftSplitterDblClick

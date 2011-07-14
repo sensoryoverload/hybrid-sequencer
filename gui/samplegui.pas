@@ -113,13 +113,13 @@ type
     { private declarations }
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
+    FModel: TSample;
     FObjectOwner: TObject;
     FSelectedBankObjectID: string;
     FEnabled: Boolean;
 
     FKeyboard: TSampleKeyboardControl;
-    procedure SetEnabled(const AValue: Boolean);
+    procedure SetEnableControls(const AValue: Boolean);
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -132,11 +132,13 @@ type
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
-    property Enabled: Boolean read FEnabled write SetEnabled;
+    property EnableControls: Boolean read FEnabled write SetEnableControls;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ModelObject: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
+    property Model: THybridPersistentModel read GetModel write SetModel;
   end;
 
   { TSampleSelectControl }
@@ -245,7 +247,7 @@ begin
   end;
 end;
 
-procedure TSampleView.SetEnabled(const AValue: Boolean);
+procedure TSampleView.SetEnableControls(const AValue: Boolean);
 var
   lIndex: Integer;
 begin
@@ -253,7 +255,7 @@ begin
   begin
     if Components[lIndex] is TDialControl then
     begin
-      TDialControl(Components[lIndex]).Enabled := FEnabled;
+//      TDialControl(Components[lIndex]).Enabled := FEnabled;
     end;
   end;
 end;
@@ -463,6 +465,16 @@ begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
+function TSampleView.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TSampleView.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TSample(AModel);
+end;
+
 { TSampleSelectControl }
 
 procedure TSampleSelectControl.SetCaption(const AValue: string);
@@ -479,7 +491,7 @@ begin
 
   if Assigned(FSampleView) then
   begin
-    FSampleView.Update(THybridPersistentModel(FSampleView.ModelObject));
+    FSampleView.Update(THybridPersistentModel(FSampleView.Model));
   end;
 
   writeln('end TSampleSelectControl.Update');

@@ -60,6 +60,7 @@ type
     procedure SetRelease(const AValue: single);
   public
     procedure Initialize; override;
+    procedure Finalize; override;
   published
     property Attack: single read FAttack write SetAttack;
     property Decay: single read FDecay write SetDecay;
@@ -218,6 +219,7 @@ type
   public
     function WaveformName:String;
     procedure Initialize; override;
+    procedure Finalize; override;
     property WaveForm: TOscWaveform read FWaveForm write SetWaveForm;
     property StartPhase: dword read FStartPhase write SetStartPhase;
     property Pitch: Single read FPitch write SetPitch;
@@ -307,6 +309,7 @@ type
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
+    procedure Finalize; override;
     function LoadSample(AFileName: string): boolean;
     property PitchScaleFactor: Single read FPitchScaleFactor;
 
@@ -362,6 +365,7 @@ type
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
+    procedure Finalize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
     procedure Assign(Source:TPersistent); override;
     property Selected: Boolean read FSelected write FSelected;
@@ -553,7 +557,7 @@ type
   protected
     function GetSourceAmountPtr(AModSource: TModSource): PSingle;
   public
-    constructor Create(AFrames: Integer);
+    constructor Create(AFrames: Integer); override;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Process(AInputBuffer: PSingle; AFrames: Integer);
@@ -589,7 +593,7 @@ type
     function GetMidiEvent: TMidiData;
     procedure SetSample(const AValue: TSample);
   public
-    constructor Create(AFrames: Integer);
+    constructor Create(AFrames: Integer); override;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
@@ -607,7 +611,7 @@ type
 
     procedure SetSampleBank(const AValue: TSampleBank);
   public
-    constructor Create(AFrames: Integer);
+    constructor Create(AFrames: Integer); override;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
@@ -1197,6 +1201,11 @@ begin
   Notify;
 end;
 
+procedure TOscillator.Finalize;
+begin
+  //
+end;
+
 { TAmplifierEngine }
 
 procedure TAmplifierEngine.SetAmplifier(const AValue: TAmplifier);
@@ -1460,6 +1469,11 @@ begin
 
 end;
 
+procedure TSample.Finalize;
+begin
+  //
+end;
+
 function TSample.LoadSample(AFileName: string): boolean;
 var
   lFilename: pchar;
@@ -1472,7 +1486,6 @@ var
   SamplesRead: Integer;
   lValue: single;
 begin
-  writeln('start TSample.LoadSample');
   DBLog('start TSample.LoadSample');
 
   FWave := GSampleStreamProvider.LoadSample(AFileName);
@@ -1518,6 +1531,11 @@ end;
 procedure TSampleBank.Initialize;
 begin
   Notify;
+end;
+
+procedure TSampleBank.Finalize;
+begin
+  //
 end;
 
 {
@@ -1736,6 +1754,11 @@ begin
   Notify;
 end;
 
+procedure TEnvelope.Finalize;
+begin
+  //
+end;
+
 { TLFO }
 
 procedure TLFO.Initialize;
@@ -1843,11 +1866,11 @@ begin
   FSample := AValue;
 
   // Set default number of voices for sample
-  writeln(Format('Number of voices %d', [FSample.VoiceCount]));
+  DBLog(Format('Number of voices %d', [FSample.VoiceCount]));
 
   for lVoiceIndex := 0 to Pred(FSample.VoiceCount) do
   begin
-    writeln(Format('voice %d', [lVoiceIndex]));
+    DBLog(Format('voice %d', [lVoiceIndex]));
     lSampleVoice := TSampleVoiceEngine.Create(Frames);
     lSampleVoice.Sample := FSample;
 
@@ -1855,7 +1878,7 @@ begin
 
     FSampleVoiceEngineList.Add(lSampleVoice);
 
-    writeln(Format('Add SampleVoiceEngine for %s, count %d',
+    DBLog(Format('Add SampleVoiceEngine for %s, count %d',
       [lSampleVoice.Sample.SampleName, FSampleVoiceEngineList.Count]));
   end;
 end;
@@ -1902,7 +1925,7 @@ begin
     lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
     // Idle trigger flag; are voices which do nothing and should not be played
-    lVoice.Idle := True;
+    lVoice.Idle := not lVoice.Running;
   end;
 
   if AMidiBuffer.Count > 0 then
@@ -2129,7 +2152,8 @@ begin
             FInternalBuffer[i] := 0;
           end;
 
-          lSample := FInternalBuffer[i];
+          //lSample := FInternalBuffer[i];
+          lSample := 0;
 
           // ADSR Amplifier
           FAmpEnvelopeEngine.Process;

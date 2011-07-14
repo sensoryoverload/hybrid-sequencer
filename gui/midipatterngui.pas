@@ -35,7 +35,7 @@ type
 
   TMidiPatternGUI = class(TPatternGUI)
   private
-    FMidiPattern: TMidiPattern;
+    FModel: TMidiPattern;
 
     bmp: TBitmap;
     FCursorPosition: Integer;
@@ -54,16 +54,20 @@ type
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
     procedure DragDrop(Source: TObject; X, Y: Integer); override;
-    property MidiPattern: TMidiPattern read FMidiPattern write FMidiPattern;
+
+    function GetModel: THybridPersistentModel; override;
+    procedure SetModel(AModel: THybridPersistentModel); override;
+
     property CursorPosition: Integer read FCursorPosition write FCursorPosition;
     property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
+    property Model: THybridPersistentModel read GetModel write SetModel;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState;
                     var Accept: Boolean); override;
-    procedure DoEndDrag(Sender, Target: TObject; X, Y: Integer);
+    procedure MyEndDrag(Sender, Target: TObject; X, Y: Integer);
     function GetDragImages: TDragImageList; override;
   end;
 
@@ -86,7 +90,7 @@ begin
   Height := 15;
   RecalculateSynchronize;
 
-  OnEndDrag := @DoEndDrag;
+  OnEndDrag := @MyEndDrag;
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 end;
@@ -246,6 +250,16 @@ begin
   DBLog('end TPatternGUI.DragDrop');
 end;
 
+function TMidiPatternGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TMidiPatternGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TMidiPattern(AModel);
+end;
+
 
 procedure TMidiPatternGUI.DragOver(Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
@@ -256,7 +270,7 @@ begin
 end;
 
 // Pattern has moved location inside or outside of track
-procedure TMidiPatternGUI.DoEndDrag(Sender, Target: TObject; X, Y: Integer);
+procedure TMidiPatternGUI.MyEndDrag(Sender, Target: TObject; X, Y: Integer);
 var
   P:Tpoint;
   C: TControl;
@@ -295,11 +309,11 @@ procedure TMidiPatternGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TPatternGUI.Update');
 
-  Position := MidiPattern.Position;
-  PatternLength := MidiPattern.LoopEnd;  //todo Use global patternlength
+  Position := TMidiPattern(Subject).Position;
+  PatternLength := TMidiPattern(Subject).LoopEnd;  //todo Use global patternlength
 //  PatternControls.RealBPM := Model.WavePattern.RealBPM;
 //  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
-  writeln(inttostr(PatternLength));
+
   DBLog('end TPatternGUI.Update');
 end;
 
@@ -309,7 +323,6 @@ procedure TMidiPatternGUI.Connect;
 begin
   DBLog('start TPatternGUI.Connect');
 
-  MidiPattern.Attach(Self);
 
   DBLog('end TPatternGUI.Connect');
 end;
@@ -318,7 +331,6 @@ procedure TMidiPatternGUI.Disconnect;
 begin
   DBLog('start TPatternGUI.Disconnect');
 
-  MidiPattern.Detach(Self);
 
   DBLog('end TPatternGUI.Disconnect');
 end;

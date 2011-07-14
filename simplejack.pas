@@ -218,6 +218,7 @@ type
     FWavePatternControlGUI: TWavePatternControlGUI;
     FMidiPatternControlGUI: TMidiPatternControlGUI;
     FNoJackMode: Boolean;
+    FModel: TAudioStructure;
 
     procedure CustomExceptionHandler(Sender: TObject; E: Exception);
     procedure ReleaseTrack(Data: PtrInt);
@@ -244,7 +245,8 @@ type
   public
     { public Declarations }
     procedure Update(Subject: THybridPersistentModel); reintroduce;
-
+    procedure Connect;
+    procedure Disconnect;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -252,6 +254,9 @@ type
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     property MappingMonitor: TfmMappingMonitor read FMappingMonitor write FMappingMonitor;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
+    property Model: THybridPersistentModel read GetModel write SetModel;
   end;
 
 var
@@ -342,7 +347,6 @@ begin
   for I := 0 to ExceptFrameCount - 1 do
     Report := Report + LineEnding + BackTraceStrFunc(Frames[I]);
   ShowMessage(Report);
-  Halt; // End of program execution
 end;
 
 
@@ -760,9 +764,9 @@ end;
 
 procedure TMainApp.CustomExceptionHandler(Sender: TObject; E: Exception);
 begin
-  DumpExceptionCallStack(E);
-  DumpCallStack;
-  Halt; // End of program execution
+  {DumpExceptionCallStack(E);}
+  {DumpCallStack;}
+  {Halt; // End of program execution   }
 end;
 
 procedure TMainApp.acStopExecute(Sender: TObject);
@@ -1294,7 +1298,7 @@ begin
     samplerate:= jack_get_sample_rate (client);
     jack_on_shutdown(client, @jack_shutdown, nil);
 	  jack_set_sample_rate_callback(client, @srate, nil);
-	  writeln(format('jack_set_process_callback %d', [jack_set_process_callback(client, @process, nil)]));
+	  DBLog(format('jack_set_process_callback %d', [jack_set_process_callback(client, @process, nil)]));
 
 	  if jack_activate(client) = 1 then
     begin
@@ -1302,7 +1306,7 @@ begin
       halt(1);
     end;
 
-    writeln('start autoconnect');
+    DBLog('start autoconnect');
     input_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsOutput)));
     if not Assigned(input_ports) then
     begin
@@ -1319,20 +1323,20 @@ begin
     output_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsInput)));
     if not Assigned(output_ports) then
     begin
-      writeln('no physical playback ports.');
+      DBLog('no physical playback ports.');
     end
     else
     begin
       if jack_connect(client, jack_port_name(audio_output_port_left), output_ports[0]) <> 0 then
       begin
-        writeln('cannot connect output ports');
+        DBLog('cannot connect output ports');
       end;
       if jack_connect(client, jack_port_name(audio_output_port_right), output_ports[1]) <> 0 then
       begin
-        writeln('cannot connect output ports');
+        DBLog('cannot connect output ports');
       end;
     end;
-    writeln('end autoconnect');
+    DBLog('end autoconnect');
 
     jack_transport_start(client);
 
@@ -1348,19 +1352,16 @@ begin
 
   GAudioStruct := TAudioStructure.Create('{D6DDECB0-BA12-4448-BBAE-3A96EEC90BFB}', MAPPED);
   GAudioStruct.MainSampleRate := samplerate;
-  GAudioStruct.BPM:= 120;
+  GAudioStruct.BPM := 120;
 
   attack_in_ms := 20;
   release_in_ms := 1000;
   attack_coef := power(0.01, 1.0/( attack_in_ms * GAudioStruct.MainSampleRate * 0.001));
   release_coef := power(0.01, 1.0/( release_in_ms * GAudioStruct.MainSampleRate * 0.001));
 
-
-
   note := 0;
   ramp := 0;
   FOutputWaveform:= False;
-  
 
   Getmem(buffer_allocate2, 200000 * SizeOf(jack_default_audio_sample_t));
 
@@ -1457,7 +1458,7 @@ var
 begin
   if Source is TWavePatternGUI then
   begin
-    lPattern := TWavePatternGUI(Source).WavePattern;
+    lPattern := TWavePattern(TWavePatternGUI(Source).Model);
     if Assigned(lPattern) then
     begin
       {
@@ -1579,6 +1580,8 @@ procedure TMainApp.DoTracksRefreshEvent(TrackObject: TObject);
 var
   lPatternGUI: TPatternGUI;
   lPattern: TPattern;
+  lWavePattern: TWavePattern;
+  lMidiPattern: TMidiPattern;
   lWavePatternGUI: TWavePatternGUI;
   lMidiPatternGUI: TMidiPatternGUI;
   lWavePatternControlGUI: TWavePatternControlGUI;
@@ -1606,21 +1609,37 @@ begin
   begin
     if GSettings.OldSelectedPatternGUI <> GSettings.SelectedPatternGUI then
     begin
+      // Detach if old pattern is visible
       if Assigned(GSettings.OldSelectedPatternGUI) then
       begin
-        if GSettings.OldSelectedPatternGUI is TMidiPatternControlGUI then
+        if GSettings.OldSelectedPatternGUI is TMidiPatternGUI then
         begin
+          // Last selected pattern of different type;
+          // - detach
+          // - set parent to new pattern type
+          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lMidiPattern.Detach(FMidiPatternControlGUI);
+
           FMidiPatternControlGUI.Parent := nil;
+          FWavePatternControlGUI.Align := alClient;
+          FWavePatternControlGUI.Parent := tsPattern;
+        end
+        else
+        begin
+          // Last selected pattern of same type; just detach
+          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lWavePattern.Detach(FWavePatternControlGUI);
         end;
+      end
+      else
+      begin
+        FWavePatternControlGUI.Align := alClient;
+        FWavePatternControlGUI.Parent := tsPattern;
       end;
 
-      FWavePatternControlGUI.Disconnect;
-      FWavePatternControlGUI.WavePattern :=
-        TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-      FWavePatternControlGUI.Parent := nil;
-      FWavePatternControlGUI.Parent := tsPattern;
-      FWavePatternControlGUI.Align := alClient;
-      FWavePatternControlGUI.Connect;
+      // Attach new pattern
+      lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+      lWavePattern.Attach(FWavePatternControlGUI);
 
       GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
     end;
@@ -1629,21 +1648,37 @@ begin
   begin
     if GSettings.OldSelectedPatternGUI <> GSettings.SelectedPatternGUI then
     begin
+      // Detach if old pattern is visible
       if Assigned(GSettings.OldSelectedPatternGUI) then
       begin
-        if GSettings.OldSelectedPatternGUI is TWavePatternControlGUI then
+        if GSettings.OldSelectedPatternGUI is TWavePatternGUI then
         begin
+          // Last selected pattern of different type;
+          // - detach
+          // - set parent to new pattern type
+          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lWavePattern.Detach(FWavePatternControlGUI);
+
           FWavePatternControlGUI.Parent := nil;
+          FMidiPatternControlGUI.Align := alClient;
+          FMidiPatternControlGUI.Parent := tsPattern;
+        end
+        else
+        begin
+          // Last selected pattern of same type; just detach
+          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lMidiPattern.Detach(FMidiPatternControlGUI);
         end;
+      end
+      else
+      begin
+        FMidiPatternControlGUI.Align := alClient;
+        FMidiPatternControlGUI.Parent := tsPattern;
       end;
 
-      FMidiPatternControlGUI.Disconnect;
-      FMidiPatternControlGUI.MidiPattern :=
-        TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-      FMidiPatternControlGUI.Align := alClient;
-      FMidiPatternControlGUI.Parent := nil;
-      FMidiPatternControlGUI.Parent := tsPattern;
-      FMidiPatternControlGUI.Connect;
+      // Attach new pattern
+      lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+      lMidiPattern.Attach(FMidiPatternControlGUI);
 
       GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
     end;
@@ -2055,6 +2090,16 @@ begin
   DialControl1.Value := GAudioStruct.BPM;
 end;
 
+procedure TMainApp.Connect;
+begin
+  //
+end;
+
+procedure TMainApp.Disconnect;
+begin
+  //
+end;
+
 function TMainApp.GetObjectID: string;
 begin
   Result := FObjectID;
@@ -2073,6 +2118,16 @@ end;
 procedure TMainApp.SetObjectOwnerID(const AObjectOwnerID: string);
 begin
   FObjectOwnerID := AObjectOwnerID;
+end;
+
+function TMainApp.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TMainApp.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TAudioStructure(AModel);
 end;
 
 { TMIDIThread }

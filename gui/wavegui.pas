@@ -130,7 +130,7 @@ type
     FReadCount: Integer;
     FSampleFileName: string;
     FTransientThreshold: Integer;
-    FWavePattern: TWavePattern;
+    FModel: TWavePattern;
     FBitmap: TBitmap;
     FCacheIsDirty: Boolean;
     FOldCursorPosition: Integer;
@@ -156,6 +156,10 @@ type
     function LoopMarkerAt(Location: Integer; AMargin: Single): TLoopMarkerGUI;
     function NextSlice: TMarkerGUI;
     function GetSliceAt(Location: Integer; AMargin: Single): TMarkerGUI;
+
+    function GetModel: THybridPersistentModel; override;
+    procedure SetModel(AModel: THybridPersistentModel); override;
+
     property Data: PJack_default_audio_sample_t read FData write FData;
     property DecimatedData: PJack_default_audio_sample_t read FDecimatedData write FDecimatedData;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -172,7 +176,7 @@ type
     property SampleFileName: string read FSampleFileName write FSampleFileName;
     property TransientThreshold: Integer read FTransientThreshold write SetTransientThreshold;
     property BarLength: Integer read FBarLength write FBarLength;
-    property WavePattern: TWavePattern read FWavePattern write FWavePattern;
+    property Model: THybridPersistentModel read GetModel write SetModel;
     property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
     property Pitch: Single read FPitch write SetPitch default 1;
     property Pitched: Boolean read FPitched write FPitched default False;
@@ -363,18 +367,18 @@ procedure TWaveGUI.Connect;
 begin
   writeln('start TWaveFormGUI.Connect');
 
-  WavePattern.LoopStart.Attach(FLoopStart);
-  WavePattern.LoopEnd.Attach(FLoopEnd);
-  WavePattern.LoopLength.Attach(FLoopLength);
+  FModel.LoopStart.Attach(FLoopStart);
+  FModel.LoopEnd.Attach(FLoopEnd);
+  FModel.LoopLength.Attach(FLoopLength);
 
   writeln('end TWaveFormGUI.Connect');
 end;
 
 procedure TWaveGUI.Disconnect;
 begin
-  WavePattern.LoopStart.Detach(FLoopStart);
-  WavePattern.LoopEnd.Detach(FLoopEnd);
-  WavePattern.LoopLength.Detach(FLoopLength);
+  FModel.LoopStart.Detach(FLoopStart);
+  FModel.LoopEnd.Detach(FLoopEnd);
+  FModel.LoopLength.Detach(FLoopLength);
 end;
 
 procedure TWaveGUI.EraseBackground(DC: HDC);
@@ -410,7 +414,7 @@ var
   TimeMarkerLocation: Integer;
   lClipRect: TRect;
 begin
-  if not Assigned(WavePattern) then exit;
+  if not Assigned(FModel) then exit;
 
   if FCacheIsDirty then
   begin
@@ -428,7 +432,7 @@ begin
     FBitmap.Canvas.Clipping := False;
     FBitmap.Canvas.Rectangle(0, 0, Width, TrackHeight);
 
-    if (TChannel(WavePattern.Wave.ChannelList[0]).Buffer <> nil) and (WavePattern.Wave.Frames > 0) then
+    if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and (FModel.Wave.Frames > 0) then
     begin
       // Bound parameters
       FOffset := GSettings.CursorPosition;
@@ -454,15 +458,15 @@ begin
         FBitmap.Canvas.Brush.Color:= clWhite;
       end;
 
-      ChannelHeight := FBitmap.Height div WavePattern.Wave.ChannelCount;
-      for ChannelLoop := 0 to Pred(WavePattern.Wave.ChannelCount) do
+      ChannelHeight := FBitmap.Height div FModel.Wave.ChannelCount;
+      for ChannelLoop := 0 to Pred(FModel.Wave.ChannelCount) do
       begin
         FBitmap.Canvas.Pen.Color := clBlack;
         FBitmap.Canvas.Line(0, ChannelHeight * ChannelLoop, Width, ChannelHeight * ChannelLoop);
 
         // First point
         ChannelScreenOffset := ChannelLoop * ChannelHeight + ChannelHeight shr 1;
-        ChannelZeroLine := ChannelHeight div WavePattern.Wave.ChannelCount;
+        ChannelZeroLine := ChannelHeight div FModel.Wave.ChannelCount;
         FBitmap.Canvas.Pen.Color := clBlue;
         FBitmap.Canvas.Pen.Width := 1;
         FBitmap.Canvas.MoveTo(0, ChannelScreenOffset);
@@ -490,10 +494,10 @@ begin
                 if FZoomFactorToData > 50 then
                 begin
                   // Subsampling sample values when zoomed in
-                  DataValue := WavePattern.DecimatedData[Round(PositionInData1 * WavePattern.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                  DataValue := FModel.DecimatedData[Round(PositionInData1 * FModel.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
                   for SubSampleLoop := Round(PositionInData1) to Round(PositionInData2) - 1 do
                   begin
-                    DataValue := WavePattern.DecimatedData[(SubSampleLoop * WavePattern.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                    DataValue := FModel.DecimatedData[(SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
                     if DataValue < MinValue then MinValue := DataValue;
                     if DataValue > MaxValue then MaxValue := DataValue;
                   end;
@@ -503,8 +507,8 @@ begin
                 else
                 begin
                   // Pixelview
-                  DataValue := WavePattern.DecimatedData[(Round(PositionInData1) * WavePattern.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
-                  if PositionInData1 < WavePattern.Wave.ReadCount then
+                  DataValue := FModel.DecimatedData[(Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                  if PositionInData1 < FModel.Wave.ReadCount then
                   begin
                     FBitmap.Canvas.LineTo(ScreenLoop, Round(DataValue * FZoomFactorY * ChannelZeroLine) + ChannelScreenOffset);
                   end;
@@ -581,7 +585,7 @@ begin
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  SliceX := Round((WavePattern.RealCursorPosition) * FZoomFactorToScreen - FOffset);
+  SliceX := Round((FModel.RealCursorPosition) * FZoomFactorToScreen - FOffset);
   if FOldCursorPosition <> SliceX then
   begin
     Canvas.Pen.Color := clBlack;
@@ -964,11 +968,21 @@ begin
   end;
 end;
 
+function TWaveGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TWaveGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TWavePattern(AModel);
+end;
+
 function TWaveGUI.LoopMarkerAt(Location: Integer; AMargin: Single): TLoopMarkerGUI;
 begin
-  LoopStart.Location := WavePattern.LoopStart.Location;
-  LoopEnd.Location := WavePattern.LoopEnd.Location;
-  LoopLength.Location := WavePattern.LoopLength.Location;
+  LoopStart.Location := FModel.LoopStart.Location;
+  LoopEnd.Location := FModel.LoopEnd.Location;
+  LoopLength.Location := FModel.LoopLength.Location;
 
   Result := nil;
 

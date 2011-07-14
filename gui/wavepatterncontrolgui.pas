@@ -46,14 +46,13 @@ type
     procedure tbThresholdChange(Sender: TObject);
   private
     { private declarations }
+    FModel: TWavePattern;
     FWavePatternGUI: TWaveGUI;
 
     FObjectOwnerID: string;
     FObjectID: string;
     FModelObject: TObject;
     FObjectOwner: TObject;
-
-    FWavePattern: TWavePattern;
 
     FPitched: Boolean;
     FPitch: Single;
@@ -62,7 +61,7 @@ type
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy;
+    destructor Destroy; override;
 
     procedure Connect;
     procedure Disconnect;
@@ -75,15 +74,17 @@ type
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
 
     property ObjectID: string read GetObjectID write SetObjectID;
-    property WavePattern: TWavePattern read FWavePattern write FWavePattern;
     property WavePatternGUI: TWaveGUI read FWavePatternGUI write FWavePatternGUI;
 
     property Pitch: Single read FPitch write SetPitch default 1;
     property Pitched: Boolean read FPitched write FPitched default False;
     property RealBPM: Single read FRealBPM write FRealBPM default 120;
 
-    property ModelObject: TObject read FModelObject write FModelObject;
+//    property Model: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
+    property Model: THybridPersistentModel read GetModel write SetModel;
   end;
 
 implementation
@@ -94,14 +95,10 @@ uses utils, global_command, global;
 
 procedure TWavePatternControlGUI.Connect;
 begin
-  if Assigned(FWavePattern) then
+  if Assigned(FModel) then
   begin
-    FWavePatternGUI.WavePattern := FWavePattern;
-
-    FWavePattern.Attach(Self);
-    FWavePattern.Attach(FWavePatternGUI);
-
-    FWavePatternGUI.Connect;
+    FModel.Attach(Self);
+    FModel.Attach(FWavePatternGUI);
 
 //    FWavePatternGUI.ZoomFactorX := 5;
 //    FWavePatternGUI.ZoomFactorY := 1;
@@ -111,12 +108,10 @@ end;
 procedure TWavePatternControlGUI.Disconnect;
 begin
   DBLog(Format('Disconnect waveform (%s)', [FWavePatternGUI.ObjectID]));
-  if Assigned(FWavePattern) then
+  if Assigned(FModel) then
   begin
-    FWavePatternGUI.Disconnect;
-
-    FWavePattern.Detach(FWavePatternGUI);
-    FWavePattern.Detach(Self);
+    FModel.Detach(FWavePatternGUI);
+    FModel.Detach(Self);
   end;
 end;
 
@@ -148,6 +143,16 @@ procedure TWavePatternControlGUI.SetObjectOwnerID(const AObjectOwnerID: string
   );
 begin
   FObjectOwnerID := AObjectOwnerID;
+end;
+
+function TWavePatternControlGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TWavePatternControlGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TWavePattern(AModel);
 end;
 
 procedure TWavePatternControlGUI.spnBeatsPerMinuteChange(Sender: TObject);
@@ -248,6 +253,8 @@ end;
 destructor TWavePatternControlGUI.Destroy;
 begin
   FWavePatternGUI.Free;
+
+  inherited Destroy;
 end;
 
 initialization

@@ -74,8 +74,8 @@ type
     destructor Destroy; override;
     procedure AddMapping(AObject: TObject);
     procedure DeleteMapping(AGUID: string);
-    procedure SetModelObjectID(AObject: TObject; AObjectID: string);
-    function GetModelObject(AGUID: string): TObject;
+    procedure SetModelObjectID(AObject: THybridPersistentModel; AObjectID: string);
+    function GetModelObject(AGUID: string): THybridPersistentModel;
 
     property Maps: TObjectList read FMaps write FMaps;
   end;
@@ -205,7 +205,7 @@ begin
   FMaps.Add(AObject);
 end;
 
-procedure TObjectMapper.SetModelObjectID(AObject: TObject; AObjectID: string);
+procedure TObjectMapper.SetModelObjectID(AObject: THybridPersistentModel; AObjectID: string);
 var
   lIndex: Integer;
 begin
@@ -231,7 +231,7 @@ begin
   end;
 end;
 
-function TObjectMapper.GetModelObject(AGUID: string): TObject;
+function TObjectMapper.GetModelObject(AGUID: string): THybridPersistentModel;
 var
   lIndex: Integer;
 begin
@@ -247,7 +247,7 @@ begin
     begin
       if THybridPersistentModel(FMaps[lIndex]).ObjectID = AGUID then
       begin
-        Result := FMaps[lIndex];
+        Result := THybridPersistentModel(FMaps[lIndex]);
         break;
       end;
     end;

@@ -26,7 +26,6 @@ type
     procedure cbMidiChannelChange(Sender: TObject);
   private
     { private declarations }
-    FMidiPattern: TMidiPattern;
     FMidiPatternGUI: TMidiPatternGUI;
     FMidigridOverview: TMidigridOverview;
 
@@ -38,12 +37,12 @@ type
 
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
+    FModel: TMidiPattern;
     FObjectOwner: TObject;
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy;
+    destructor Destroy; override;
     procedure Connect;
     procedure Disconnect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
@@ -52,16 +51,15 @@ type
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
+
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
-
     property ObjectID: string read GetObjectID write SetObjectID;
-    property MidiPattern: TMidiPattern read FMidiPattern write FMidiPattern;
     property MidiPatternGUI: TMidiPatternGUI read FMidiPatternGUI write FMidiPatternGUI;
-
     property RootNote: Integer read FRootNote write FRootNote default 0;
     property MidiChannel: Integer read FMidiChannel write FMidiChannel;
-
-    property ModelObject: TObject read FModelObject write FModelObject;
+    property Model: THybridPersistentModel read GetModel write SetModel;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
   end;
 
@@ -135,36 +133,36 @@ begin
   FMidiPatternGUI.Free;
   FSampleBankGUI.Free;
   FMidigridOverview.Free;
+
+  inherited Destroy;
 end;
 
 procedure TMidiPatternControlGUI.Connect;
 begin
-  if Assigned(MidiPattern) then
+  if Assigned(FModel) then
   begin
-    FSampleBank := MidiPattern.SampleBank;
-    FSampleBank.Attach(FSampleBankGUI);
-    FSampleBankGUI.Bank := FSampleBank;
-    //FSampleBankGUI.Connect;
+    FSampleBank := FModel.SampleBank;
 
-    FMidiPattern.Attach(FMidiPatternGUI);
-    FMidiPatternGUI.MidiPattern := FMidiPattern;
+    FModel.Attach(FMidiPatternGUI);
+
+    FModel.Attach(FMidigridOverview);
+
+    FSampleBank.Attach(FSampleBankGUI);
 
     FMidiPatternGUI.ZoomFactorX := 1000;
     FMidiPatternGUI.ZoomFactorY := 1000;
-
-    FMidiPattern.Attach(FMidigridOverview);
   end;
 end;
 
 procedure TMidiPatternControlGUI.Disconnect;
 begin
-  if Assigned(MidiPattern) then
+  if Assigned(FModel) then
   begin
-    FMidiPattern.Detach(FMidigridOverview);
-
-    FMidiPattern.Detach(FMidiPatternGUI);
-
     FSampleBank.Detach(FSampleBankGUI);
+
+    FModel.Detach(FMidigridOverview);
+
+    FModel.Detach(FMidiPatternGUI);
   end;
 end;
 
@@ -201,6 +199,16 @@ begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
+function TMidiPatternControlGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TMidiPatternControlGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TMidiPattern(AModel);
+end;
+
 procedure TMidiPatternControlGUI.cbQuantizeChange(Sender: TObject);
 var
   lQuantizeSettingCommand: TQuantizeSettingCommand;
@@ -225,7 +233,7 @@ begin
     end;
   end;
 
-  lQuantizeSettingCommand := TQuantizeSettingCommand.Create(MidiPattern.ObjectID);
+  lQuantizeSettingCommand := TQuantizeSettingCommand.Create(FObjectID);
   try
     lQuantizeSettingCommand.QuantizeSetting := cbQuantize.ItemIndex;
 

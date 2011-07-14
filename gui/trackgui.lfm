@@ -9,8 +9,8 @@ object TrackGUI: TTrackGUI
   ClientWidth = 104
   PopupMenu = pmTrack
   TabOrder = 0
-  DesignLeft = 788
-  DesignTop = 110
+  DesignLeft = 792
+  DesignTop = 129
   object pnlTrackControls: TPanel
     Left = 0
     Height = 307
@@ -19,8 +19,8 @@ object TrackGUI: TTrackGUI
     Align = alBottom
     BevelInner = bvLowered
     BevelOuter = bvNone
-    ClientHeight = 303
-    ClientWidth = 100
+    ClientHeight = 307
+    ClientWidth = 104
     Color = clBtnFace
     ParentColor = False
     PopupMenu = pmTrack

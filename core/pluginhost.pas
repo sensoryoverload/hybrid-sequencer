@@ -56,6 +56,7 @@ type
     function GetIsReady: Boolean;
   public
     procedure Initialize; override;
+    procedure Finalize; override;
     property IsReady: Boolean read GetIsReady;
   published
     // Connection outputs audio or midi to pluginnode input (parent)
@@ -649,6 +650,11 @@ end;
 procedure TInterConnect.Initialize;
 begin
   Notify;
+end;
+
+procedure TInterConnect.Finalize;
+begin
+  //
 end;
 
 end.

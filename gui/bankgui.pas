@@ -45,7 +45,7 @@ type
       State: TDragState; var Accept: Boolean);
   private
     { private declarations }
-    FBank: TSampleBank;
+    FModel: TSampleBank;
     FSampleListGUI: TObjectList;
     FObjectOwnerID: string;
     FObjectID: string;
@@ -61,12 +61,14 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Connect;
+    procedure Disconnect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
     function GetObjectOwnerID: string;
     procedure SetObjectOwnerID(const AValue: string);
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
-    property Bank: TSampleBank read FBank write FBank;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
     property SampleListGUI: TObjectList read FSampleListGUI write FSampleListGUI;
     property ObjectID: string read GetObjectID write SetObjectID;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
@@ -146,7 +148,13 @@ end;
 
 procedure TBankView.Connect;
 begin
-  Bank := TSampleBank(GObjectMapper.GetModelObject(ObjectID));
+  //
+end;
+
+procedure TBankView.Disconnect;
+begin
+  lbSampleSelector.Clear;
+  FSampleListGUI.Clear;
 end;
 
 
@@ -158,6 +166,16 @@ end;
 procedure TBankView.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
+end;
+
+function TBankView.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TBankView.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TSampleBank(AModel);
 end;
 
 procedure TBankView.sbSamplesDragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -303,6 +321,7 @@ begin
       lbSampleSelector.Items.Delete(lbSampleSelector.Items.IndexOfObject(lSampleSelectControl));
 
       FSampleListGUI.Remove(lSampleSelectControl);
+      break;
     end;
   end;
 

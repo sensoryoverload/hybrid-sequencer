@@ -95,6 +95,7 @@ type
     FObjectOwnerID: string;
     FObjectOwner: TObject;
     FClickLocationY: Integer;
+    FModel: TTrack;
 
     procedure SetSelected(const AValue: Boolean);
     procedure CreatePatternGUI(AObjectID: string);
@@ -104,6 +105,8 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure Connect;
+    procedure Disconnect;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -120,6 +123,9 @@ type
     property SelectedPattern: TPatternGUI read FSelectedPattern write FSelectedPattern;
     property Track: TTrack read FTrack write FTrack;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
+    property Model: THybridPersistentModel read GetModel write SetModel;
   end;
 
 
@@ -213,6 +219,16 @@ begin
   DBLog('end TTrack.Update');
 end;
 
+procedure TTrackGUI.Connect;
+begin
+  //
+end;
+
+procedure TTrackGUI.Disconnect;
+begin
+  //
+end;
+
 function TTrackGUI.GetObjectID: string;
 begin
   Result := FObjectID;
@@ -233,28 +249,24 @@ begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
+function TTrackGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TTrackGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TTrack(AModel);
+end;
+
 procedure TTrackGUI.CreatePatternGUI(AObjectID: string);
 var
   lPatternGUI: TPatternGUI;
   lWavePatternGUI: TWavePatternGUI;
+  lWavePattern: TWavePattern;
   lMidiPatternGUI: TMidiPatternGUI;
+  lMidiPattern: TMidiPattern;
   lPattern: TPattern;
-
-  procedure InitializePattern(APatternGUI: TPatternGUI);
-  begin
-    APatternGUI.ObjectID := AObjectID;
-    APatternGUI.ModelObject := lPattern;
-    APatternGUI.ObjectOwnerID := Self.ObjectID;
-    APatternGUI.Position := lPattern.Position;
-    APatternGUI.Text := lPattern.PatternName;
-    APatternGUI.OnTracksRefreshGUI := OnTracksRefreshGUI;
-    APatternGUI.Parent := nil;
-    APatternGUI.Parent := pnlPatterns;
-
-    APatternGUI.Connect;
-
-    PatternListGUI.Add(APatternGUI);
-  end;
 
 begin
   DBLog('start TTrack.CreatePatternGUI' + AObjectID);
@@ -265,15 +277,33 @@ begin
   begin
     if lPattern.ClassType = 'TWavePattern' then
     begin
-      lWavePatternGUI := TWavePatternGUI.Create(Self);
-      lWavePatternGUI.WavePattern := TWavePattern(lPattern);
-      InitializePattern(lWavePatternGUI);
+      lWavePattern := TWavePattern(GObjectMapper.GetModelObject(AObjectID));
+      if Assigned(lWavePattern) then
+      begin
+        lWavePatternGUI := TWavePatternGUI.Create(Self);
+        lWavePattern.Attach(lWavePatternGUI);
+        lWavePatternGUI.Position := lPattern.Position;
+        lWavePatternGUI.Text := lPattern.PatternName;
+        lWavePatternGUI.OnTracksRefreshGUI := OnTracksRefreshGUI;
+        lWavePatternGUI.Parent := nil;
+        lWavePatternGUI.Parent := pnlPatterns;
+        PatternListGUI.Add(lWavePatternGUI);
+      end;
     end
     else if lPattern.ClassType = 'TMidiPattern' then
     begin
-      lMidiPatternGUI := TMidiPatternGUI.Create(Self);
-        lMidiPatternGUI.MidiPattern := TMidiPattern(lPattern);
-      InitializePattern(lMidiPatternGUI);
+      lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(AObjectID));
+      if Assigned(lMidiPattern) then
+      begin
+        lMidiPatternGUI := TMidiPatternGUI.Create(Self);
+        lMidiPattern.Attach(lMidiPatternGUI);
+        lMidiPatternGUI.Position := lPattern.Position;
+        lMidiPatternGUI.Text := lPattern.PatternName;
+        lMidiPatternGUI.OnTracksRefreshGUI := OnTracksRefreshGUI;
+        lMidiPatternGUI.Parent := nil;
+        lMidiPatternGUI.Parent := pnlPatterns;
+        PatternListGUI.Add(lMidiPatternGUI);
+      end;
     end;
   end;
   DBLog('end TTrack.CreatePatternGUI');
@@ -293,7 +323,7 @@ begin
     if lPatternGUI.ObjectID = AObjectID then
     begin
       try
-        lPatternGUI.Disconnect;
+        //lPatternGUI.Disconnect;
       except
         on e:exception do
         begin

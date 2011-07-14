@@ -73,7 +73,7 @@ type
       Stuff to create, load, save, etc sampler stuff....
     }
     property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
-    property ModelObject: TObject read FModelObject write FModelObject;
+    property Model: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
     property BankListGUI: TObjectList read FBankListGUI write FBankListGUI;
     property SelectedBank: TSampleBank read FSelectedBank write FSelectedBank;
@@ -400,7 +400,7 @@ begin
                 for lSampleIndex := 0 to Pred(FBankView.SampleListGUI.Count) do
                 begin
                   //TSample(FBankView.Bank.SampleList[lSampleIndex]).Detach(FBankView.SampleListGUI[lSampleIndex]);
-                  //TSampleSelectControl(FBankView.SampleListGUI[lSampleIndex]).ModelObject;
+                  //TSampleSelectControl(FBankView.SampleListGUI[lSampleIndex]).Model;
                 end;
 
                 GAudioStruct.OldSelectedBank.Detach(FBankView);

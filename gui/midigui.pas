@@ -59,6 +59,8 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    procedure Connect; override;
+    procedure Disconnect; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
     property Note: Integer read FNote write FNote;
     property NoteLocation: Integer read FNoteLocation write FNoteLocation;
@@ -93,6 +95,7 @@ type
   private
     FObjectID: string;
     FObjectOwnerID: string;
+    FModel: TMidiPattern;
 
     { GUI }
     FLocationOffset: Integer;
@@ -127,7 +130,6 @@ type
     FOldQuantizedLocation: Integer;
 
     FZoomingMode: Boolean;
-    FMidiPattern: TMidiPattern;
     FBitmap: TBitmap;
     FBitmapIsDirty: Boolean;
 
@@ -174,6 +176,8 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure Connect;
+    procedure Disconnect;
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
     function GetObjectID: string;
@@ -187,7 +191,6 @@ type
     property LocationOffset: Integer read FLocationOffset write FLocationOffset;
     property NoteOffset: Integer read FNoteOffset write FNoteOffset;
     property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
-    property MidiPattern: TMidiPattern read FMidiPattern write FMidiPattern;
     property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -209,6 +212,8 @@ type
     procedure DeleteNoteGUI(AObjectID: string);
     function NoteByObjectID(AObjectID: string): TMidiNoteGUI;
     procedure NoteListByRect(AObjectIDList: TStringList; ARect: TRect);
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
   end;
 
   TMidigridOverview = class;
@@ -254,6 +259,7 @@ type
     FZoomingRight: Boolean;
 
     FZoomCallback: TZoomCallback;
+    FModel: TMidiPattern;
 
     function CalculateTotalWidth: Integer;
     function ConvertNoteToScreen(ANote: Integer): Integer;
@@ -266,7 +272,12 @@ type
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
     procedure EraseBackground(DC: HDC); override;
+    function GetModel: THybridPersistentModel; override;
+    procedure SetModel(AModel: THybridPersistentModel); override;
+
+
     property ZoomCallback: TZoomCallback write FZoomCallback;
+    property Model: THybridPersistentModel read GetModel write SetModel;
   protected
     procedure Paint; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -290,7 +301,18 @@ end;
 
 destructor TMidiNoteGUI.Destroy;
 begin
+
   inherited Destroy;
+end;
+
+procedure TMidiNoteGUI.Connect;
+begin
+  inherited Connect;
+end;
+
+procedure TMidiNoteGUI.Disconnect;
+begin
+  inherited Disconnect;
 end;
 
 procedure TMidiNoteGUI.Update(Subject: THybridPersistentModel);
@@ -573,7 +595,7 @@ begin
   FRealCursorPosition:= FLoopStart;
   FRubberBandMode := False;
 
-  FNoteListGUI := TObjectList.Create(True);
+  FNoteListGUI := TObjectList.Create(False);
   ZoomFactorX := 1000;
   ZoomFactorY := 1000;
 
@@ -612,7 +634,7 @@ var
   lMidiNoteKey: TKey;
 
 begin
-  if not Assigned(MidiPattern) then exit;
+  if not Assigned(FModel) then exit;
 
   if FBitmapIsDirty then
   begin
@@ -805,7 +827,7 @@ begin
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  x := Round((MidiPattern.RealCursorPosition * FZoomFactorToScreenX) / 220 + FLocationOffset + FNoteInfoWidth);
+  x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) / 220 + FLocationOffset + FNoteInfoWidth);
   if FOldCursorPosition <> x then
   begin
     if x >= FNoteInfoWidth then
@@ -858,6 +880,16 @@ begin
   DBLog('end TMidiGridGUI.Update');
 end;
 
+procedure TMidiPatternGUI.Connect;
+begin
+  //
+end;
+
+procedure TMidiPatternGUI.Disconnect;
+begin
+  FNoteListGUI.Clear;
+end;
+
 procedure TMidiPatternGUI.CreateNoteGUI(AObjectID: string);
 var
   lMidiNote: TMidiNote;
@@ -869,7 +901,7 @@ begin
   lMidiNoteGUI := TMidiNoteGUI.Create;
   lMidiNoteGUI.ObjectID := AObjectID;
   lMidiNoteGUI.ObjectOwnerID := Self.ObjectID;
-  lMidiNoteGUI.ModelObject := lMidiNote;
+  lMidiNoteGUI.Model := lMidiNote;
   lMidiNoteGUI.Note := lMidiNote.Note;
   lMidiNoteGUI.NoteLocation := lMidiNote.NoteLocation;
   lMidiNoteGUI.NoteLength := lMidiNote.NoteLength;
@@ -884,6 +916,7 @@ end;
 procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
 var
   lMidiNoteGUI: TMidiNoteGUI;
+  lMidiNote: TMidiNote;
   lIndex: Integer;
 begin
   DBLog('start TMidiGridGUI.DeleteNoteGUI');
@@ -894,8 +927,13 @@ begin
 
     if lMidiNoteGUI.ObjectID = AObjectID then
     begin
-      FNoteListGUI.Remove(lMidiNoteGUI);
-      break;
+      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
+      if Assigned(lMidiNote) then
+      begin
+        lMidiNote.Detach(lMidiNoteGUI);
+        FNoteListGUI.Remove(lMidiNoteGUI);
+        break;
+      end;
     end;
   end;
 
@@ -962,6 +1000,16 @@ begin
       end;
     end;
   end;
+end;
+
+function TMidiPatternGUI.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TMidiPatternGUI.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TMidiPattern(AModel);
 end;
 
 {
@@ -1268,6 +1316,16 @@ begin
   inherited EraseBackground(DC);
 end;
 
+function TMidigridOverview.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TMidigridOverview.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TMidiPattern(AModel);
+end;
+
 procedure TMidigridOverview.Paint;
 var
   lIndex: Integer;
@@ -1436,7 +1494,7 @@ begin
   lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
   lMidiNoteOverview.ObjectID := AObjectID;
   lMidiNoteOverview.ObjectOwnerID := Self.ObjectID;
-  lMidiNoteOverview.ModelObject := lMidiNote;
+  lMidiNoteOverview.Model := lMidiNote;
   lMidiNoteOverview.Note := lMidiNote.Note;
   lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
   lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;

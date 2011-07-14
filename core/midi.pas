@@ -184,6 +184,7 @@ type
     constructor Create(AObjectOwner: string; AMapped: Boolean);
     destructor Destroy; override;
     procedure Initialize; override;
+    procedure Finalize; override;
     procedure Assign(Source: TPersistent); override;
     property MidiNoteStart: TMidiData read FMidiNoteStart write FMidiNoteStart;
     property MidiNoteEnd: TMidiData read FMidiNoteEnd write FMidiNoteEnd;
@@ -378,10 +379,6 @@ procedure TMidiPattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCou
 var
   i: Integer;
 begin
-  if AFrameIndex mod 200 = 0 then
-  begin
-    GLogger.PushMessage('Logging - ' + IntToStr(Random(1000)));
-  end;
   {  for i := 0 to Pred(AFrames) do
   begin
     FCursorAdder := FCursorAdder + FBPMScale;
@@ -534,6 +531,11 @@ begin
   BeginUpdate;
 
   EndUpdate;
+end;
+
+procedure TMidiNote.Finalize;
+begin
+  //
 end;
 
 procedure TMidiNote.Assign(Source: TPersistent);

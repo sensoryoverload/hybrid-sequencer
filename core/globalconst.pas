@@ -123,12 +123,17 @@ type
 
   IObserver = interface['{38AEACE2-2EFB-4EA3-A540-23BD70D4FEF8}']
     procedure Update(Subject: THybridPersistentModel);
+    procedure Connect;
+    procedure Disconnect;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     property ObjectID: string read GetObjectID write SetObjectID;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
+    property Model: THybridPersistentModel read GetModel write SetModel;
   end;
 
   ISubject = interface['{7F0461A3-E078-49F3-B9A4-9FB7840F86DA}']
@@ -144,7 +149,7 @@ type
   private
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
+    FModel: THybridPersistentModel;
     FObjectOwner: TObject;
     function GetObjectID: string;
     procedure SetObjectID(const AValue: string);
@@ -152,10 +157,10 @@ type
     constructor Create(AObjectOwner: string);
     destructor Destroy; override;
     procedure Connect; virtual;
+    procedure Disconnect; virtual;
     procedure Assign(Source: TPersistent); override;
-    property ModelObject: TObject read FModelObject write FModelObject;
+    property Model: THybridPersistentModel read FModel write FModel;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
-  //published
     property ObjectID: string read GetObjectID write SetObjectID;
     property ObjectOwnerID: string read FObjectOwnerID write FObjectOwnerID;
   end;
@@ -207,6 +212,10 @@ type
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     procedure Update(Subject: THybridPersistentModel); virtual;
+    function GetModel: THybridPersistentModel; virtual;
+    procedure SetModel(AModel: THybridPersistentModel); virtual;
+    procedure Connect; override;
+    procedure Disconnect; override;
   end;
 
   THybridPersistentClass = class of THybridPersistent;
@@ -218,9 +227,10 @@ type
   private
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
+    FModel: THybridPersistentModel;
     FObjectOwner: TObject;
   public
+    destructor Destroy; override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
@@ -230,8 +240,10 @@ type
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ModelObject: TObject read FModelObject write FModelObject;
+    property Model: THybridPersistentModel read FModel write FModel;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
+    function GetModel: THybridPersistentModel; virtual;
+    procedure SetModel(AModel: THybridPersistentModel); virtual;
   end;
 
   { TPersistentGraphicControl }
@@ -240,9 +252,10 @@ type
   private
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
+    FModel: THybridPersistentModel;
     FObjectOwner: TObject;
   public
+    destructor Destroy; override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
@@ -252,8 +265,10 @@ type
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ModelObject: TObject read FModelObject write FModelObject;
+    property Model: THybridPersistentModel read FModel write FModel;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
   end;
 
   { TPersistentScrollBox }
@@ -262,19 +277,23 @@ type
   private
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
+    FModel: THybridPersistentModel;
     FObjectOwner: TObject;
   public
+    destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
     procedure Connect; virtual;
+    procedure Disconnect; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ModelObject: TObject read FModelObject write FModelObject;
+    property Model: THybridPersistentModel read FModel write FModel;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
   end;
 
   { TPersistentFrame }
@@ -283,19 +302,23 @@ type
   private
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
+    FModel: THybridPersistentModel;
     FObjectOwner: TObject;
   public
+    destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
     procedure Connect; virtual;
+    procedure Disconnect; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property ModelObject: TObject read FModelObject write FModelObject;
+    property Model: THybridPersistentModel read FModel write FModel;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
+    function GetModel: THybridPersistentModel;
+    procedure SetModel(AModel: THybridPersistentModel);
   end;
 
   TPersistentObjectList = class(TObjectList)
@@ -326,6 +349,7 @@ type
   public
     constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType);
     procedure Initialize; override;
+    procedure Finalize; override;
   published
     property DataType: TLoopMarkerType read FDataType write FDataType;
     property Location: Integer read FLocation write FLocation;
@@ -346,6 +370,7 @@ type
     FLocked: Boolean;            // Locks OrigLocation and makes marker warpable
   public
     procedure Initialize; override;
+    procedure Finalize; override;
     property NextSlice: TMarker read FNextSlice write FNextSlice;
     property PrevSlice: TMarker read FPrevSlice write FPrevSlice;
   published
@@ -603,7 +628,12 @@ end;
 
 procedure THybridPersistent.Connect;
 begin
-  ModelObject := GObjectMapper.GetModelObject(ObjectID);
+  Model := GObjectMapper.GetModelObject(ObjectID);
+end;
+
+procedure THybridPersistent.Disconnect;
+begin
+  //
 end;
 
 procedure THybridPersistent.Assign(Source: TPersistent);
@@ -612,6 +642,16 @@ begin
 end;
 
 { TPersistentCustomControl }
+
+destructor TPersistentCustomControl.Destroy;
+begin
+  if Assigned(FModel) then
+  begin
+    FModel.Detach(Self);
+  end;
+
+  inherited Destroy;
+end;
 
 procedure TPersistentCustomControl.Connect;
 begin
@@ -649,7 +689,27 @@ begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
+function TPersistentCustomControl.GetModel: THybridPersistentModel;
+begin
+  Result := FModel;
+end;
+
+procedure TPersistentCustomControl.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := AModel;
+end;
+
 { TPersistentScrollBox }
+
+destructor TPersistentScrollBox.Destroy;
+begin
+  if Assigned(FModel) then
+  begin
+    FModel.Detach(Self);
+  end;
+
+  inherited Destroy;
+end;
 
 procedure TPersistentScrollBox.Update(Subject: THybridPersistentModel);
 begin
@@ -658,7 +718,12 @@ end;
 
 procedure TPersistentScrollBox.Connect;
 begin
-  ModelObject := GObjectMapper.GetModelObject(ObjectID);
+  Model := GObjectMapper.GetModelObject(ObjectID);
+end;
+
+procedure TPersistentScrollBox.Disconnect;
+begin
+  // Virtual base method
 end;
 
 function TPersistentScrollBox.GetObjectID: string;
@@ -679,6 +744,16 @@ end;
 procedure TPersistentScrollBox.SetObjectOwnerID(const AObjectOwnerID: string);
 begin
   FObjectOwnerID := AObjectOwnerID;
+end;
+
+function TPersistentScrollBox.GetModel: THybridPersistentModel;
+begin
+  Result := FModel;
+end;
+
+procedure TPersistentScrollBox.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := AModel;
 end;
 
 { TWaveData }
@@ -748,8 +823,11 @@ begin
   DBLog('start THybridPersistentModel.Attach');
 
   FObservers.Add(AObserver);
+  AObserver.Model := Self;
   AObserver.ObjectID := FObjectID;
   AObserver.ObjectOwnerID := FObjectOwnerID;
+
+  AObserver.Connect;
 
   Notify;
 
@@ -776,8 +854,12 @@ procedure THybridPersistentModel.Detach(AObserver: IObserver);
 begin
   DBLog(Format('start THybridPersistentModel.Detach (%s)', [Self.ClassName]));
 
+  { not sure if this would break existing code, it shoudn't..
+  AObserver.Model := nil;
   AObserver.ObjectID := '';
-  AObserver.ObjectOwnerID := '';
+  AObserver.ObjectOwnerID := '';}
+  AObserver.Disconnect;
+
   FObservers.Remove(AObserver);
 
   DBLog('end THybridPersistentModel.Detach');
@@ -1146,6 +1228,11 @@ end;
 
 destructor THybridPersistentView.Destroy;
 begin
+  if Assigned(FModel) then
+  begin
+    FModel.Detach(Self);
+  end;
+
   inherited Destroy;
 end;
 
@@ -1164,6 +1251,26 @@ begin
   FObjectID := Subject.ObjectID;
 end;
 
+function THybridPersistentView.GetModel: THybridPersistentModel;
+begin
+  Result := FModel;
+end;
+
+procedure THybridPersistentView.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := AModel;
+end;
+
+procedure THybridPersistentView.Connect;
+begin
+  // Virtual base method
+end;
+
+procedure THybridPersistentView.Disconnect;
+begin
+  // Virtual base method
+end;
+
 { TLoopMarker }
 
 constructor TLoopMarker.Create(AObjectOwner: string; ADataType: TLoopMarkerType);
@@ -1178,7 +1285,22 @@ begin
   Notify;
 end;
 
+procedure TLoopMarker.Finalize;
+begin
+  //
+end;
+
 { TPersistentPanel }
+
+destructor TPersistentFrame.Destroy;
+begin
+  if Assigned(FModel) then
+  begin
+    FModel.Detach(Self);
+  end;
+
+  inherited Destroy;
+end;
 
 procedure TPersistentFrame.Update(Subject: THybridPersistentModel);
 begin
@@ -1187,7 +1309,12 @@ end;
 
 procedure TPersistentFrame.Connect;
 begin
-  ModelObject := GObjectMapper.GetModelObject(ObjectID);
+  Model := GObjectMapper.GetModelObject(ObjectID);
+end;
+
+procedure TPersistentFrame.Disconnect;
+begin
+  // Virtual base method
 end;
 
 function TPersistentFrame.GetObjectID: string;
@@ -1210,6 +1337,16 @@ begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
+function TPersistentFrame.GetModel: THybridPersistentModel;
+begin
+  Result := FModel;
+end;
+
+procedure TPersistentFrame.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := AModel;
+end;
+
 
 { TMarker }
 
@@ -1218,7 +1355,22 @@ begin
   Notify;
 end;
 
+procedure TMarker.Finalize;
+begin
+  //
+end;
+
 { TPersistentGraphicControl }
+
+destructor TPersistentGraphicControl.Destroy;
+begin
+  if Assigned(FModel) then
+  begin
+    FModel.Detach(Self);
+  end;
+
+  inherited Destroy;
+end;
 
 procedure TPersistentGraphicControl.Connect;
 begin
@@ -1254,6 +1406,16 @@ procedure TPersistentGraphicControl.SetObjectOwnerID(
   const AObjectOwnerID: string);
 begin
   FObjectOwnerID := AObjectOwnerID;
+end;
+
+function TPersistentGraphicControl.GetModel: THybridPersistentModel;
+begin
+  Result := FModel;
+end;
+
+procedure TPersistentGraphicControl.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := AModel;
 end;
 
 end.

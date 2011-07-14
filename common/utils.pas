@@ -562,6 +562,8 @@ begin
 end;
 
 initialization
+  FLogging := FindCmdLineSwitch('logging', ['/', '-'], True);
+
   GLogger := TLogMessageThread.Create(False);
 
   CalculateNoteToFreqTable;
