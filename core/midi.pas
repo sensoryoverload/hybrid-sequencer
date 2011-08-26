@@ -216,8 +216,6 @@ type
     FRealCursorPosition: Integer;
     FCursorAdder: Single;
     FMidiDataCursor: TMidiData;
-    FMidiDataLoopStart: TMidiData; // deprecate ?!
-    FMidiDataLoopEnd: TMidiData; // deprecate ?!
     FBPMScale: Single;
 
     FMidiBuffer: TMidiBuffer;
@@ -404,7 +402,7 @@ begin
       while CursorAdder >= MidiDataCursor.Location do
       begin
         // Put event in buffer
-        MidiBuffer.WriteEvent(MidiDataCursor, i);
+        MidiBuffer.WriteEvent(MidiDataCursor, i);  // TODO i ? uninitialized
 
         if Assigned(MidiDataCursor.Next) then
         begin

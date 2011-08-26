@@ -70,7 +70,6 @@ type
 
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
     FObjectOwner: TObject;
     FModel: THybridPersistentModel;
 
@@ -220,8 +219,6 @@ begin
 end;
 
 procedure TPluginProcessorGUI.Update(Subject: THybridPersistentModel);
-var
-  i: Integer;
 begin
   DBLog('start TPluginProcessorGUI.Update');
 

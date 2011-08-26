@@ -48,7 +48,6 @@ type
 
   TInterConnect = class(THybridPersistentModel)
   private
-    FReady: Boolean;
     FToPluginNode: string;
     FToPluginNodePort: string;
     FFromPluginNode: string;
@@ -161,10 +160,6 @@ implementation
 procedure TPluginProcessor.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
   lPluginNode: TPluginNode;
-  lScriptPlugin: TScriptPlugin;
-  lLADSPAPlugin: TLADSPAPlugin;
-  lInternalPlugin: TInternalPlugin;
-  lPluginExternal: TPluginExternal;
   lInterConnect: TInterConnect;
 begin
   DBLog('start TPluginProcessor.DoCreateInstance');
@@ -185,23 +180,9 @@ begin
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
   end
-  else if AClassName = 'TInternalPlugin' then
-  begin
-    lPluginNode := TInternalPlugin.Create(ObjectID, MAPPED);
-    lPluginNode.ObjectOwnerID := ObjectID;
-    NodeList.Add(lPluginNode);
-    AObject := lPluginNode;
-  end
   else if AClassName = 'TPluginExternal' then
   begin
     lPluginNode := TPluginExternal.Create(ObjectID);
-    lPluginNode.ObjectOwnerID := ObjectID;
-    NodeList.Add(lPluginNode);
-    AObject := lPluginNode;
-  end
-  else if AClassName = 'TPluginNode' then
-  begin
-    lPluginNode := TPluginNode.Create(ObjectID, MAPPED);
     lPluginNode.ObjectOwnerID := ObjectID;
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
@@ -268,7 +249,6 @@ end;
 procedure TPluginProcessor.Initialize;
 var
   lNodeIndex: Integer;
-  lChildIndex: Integer;
 begin
   BeginUpdate;
 
@@ -353,7 +333,6 @@ end;
 procedure TPluginProcessor.RemoveNode(ANode, AParentNode: TPluginNode);
 var
   lChildIndex: Integer;
-  lInterConnect: TInterConnect;
 begin
   DBLog('start TPluginProcessor.RemoveNode');
 

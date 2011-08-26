@@ -375,6 +375,7 @@ begin
     if Assigned(lOldSelectedSample) then
     begin
       // Release last sample connection
+      FSampleView.EnableControls := False;
       lOldSelectedSample.Detach(FSampleView);
     end;
   end;
@@ -388,6 +389,7 @@ begin
 
     // Attach new view
     lNewSelectedSample.Attach(FSampleView);
+    FSampleView.EnableControls := True;
 
     FOldSelectedSample := lNewSelectedSample.ObjectID;
   end;

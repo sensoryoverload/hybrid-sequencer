@@ -50,7 +50,6 @@ Type
     FInternalValue: Single;
 
     FAngle: Single;
-    FOldAngle: Single;
 
     FRange: Single;
     FLowest: Single;
@@ -70,7 +69,7 @@ Type
 
     FValueVisible: Boolean;
 
-    procedure CalcInternals(X, Y: Longint);
+    procedure CalcInternals;
     procedure SetHighest(const AValue: Single);
     procedure SetLowest(const AValue: Single);
     function GetValue: Single;
@@ -248,7 +247,6 @@ Type
 
   TTimeControl = class(TPanel)
   private
-    FValue: Integer;
     FBar: Integer;
     FBeat: Integer;
     FFrac: Integer;
@@ -481,7 +479,7 @@ begin
   Result := lPoint;
 end;
 
-procedure TDialControl.CalcInternals(X, Y: Longint);
+procedure TDialControl.CalcInternals;
 begin
   if FRange = 0 then
     FRange := 0.001;
@@ -547,8 +545,6 @@ begin
 end;
 
 constructor TDialControl.Create(AOwner: TComponent);
-var
-  i: Integer;
 begin
   inherited Create(AOwner);
 
@@ -576,8 +572,6 @@ begin
 end;
 
 destructor TDialControl.Destroy;
-var
-  i: Integer;
 begin
   inherited Destroy;
 end;
@@ -663,7 +657,7 @@ begin
 
     FStartingInternalValue := FInternalValue;
 
-    CalcInternals(X, FY);
+    CalcInternals;
 
     Paint;
 
@@ -692,7 +686,7 @@ begin
 
   if FDialMoving then
   begin
-    CalcInternals(X, FY);
+    CalcInternals;
 
     Paint;
   end
@@ -875,7 +869,7 @@ end;
 
 procedure TToggleControl.EraseBackground(DC: HDC);
 begin
-  //inherited EraseBackground(DC);
+  inherited EraseBackground(DC);
 end;
 
 procedure TToggleControl.Paint;

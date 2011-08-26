@@ -966,7 +966,7 @@ end;
 
 procedure TWavePattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
 var
-  i, j, k : integer;
+  i, k : integer;
 begin
   WorkBuffer[AFrameIndex] := 0;
 

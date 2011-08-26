@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, ExtCtrls, globalconst,
-  dialcontrol, uEKnob, uESelector, utils, contnrs, LCLType, Controls, Graphics,
+  dialcontrol, utils, contnrs, LCLType, Controls, Graphics,
   StdCtrls, ComCtrls, Spin, sampler, global_command;
 
 type
@@ -105,7 +105,6 @@ type
     spnBaseNote: TSpinEdit;
     spnLowNote: TSpinEdit;
     spnHighNote: TSpinEdit;
-    uEKnob1: TuEKnob;
     procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
@@ -251,12 +250,23 @@ procedure TSampleView.SetEnableControls(const AValue: Boolean);
 var
   lIndex: Integer;
 begin
+  FEnabled := AValue;
+
   for lIndex := 0 to Pred(ComponentCount) do
   begin
     if Components[lIndex] is TDialControl then
     begin
-//      TDialControl(Components[lIndex]).Enabled := FEnabled;
+      TDialControl(Components[lIndex]).Enabled := FEnabled;
+    end
+    else if Components[lIndex] is TComboBox then
+    begin
+      TComboBox(Components[lIndex]).ReadOnly := not FEnabled;
+    end
+    else if Components[lIndex] is TSpinEdit then
+    begin
+      TSpinEdit(Components[lIndex]).ReadOnly := not FEnabled;
     end;
+    TControl(Components[lIndex]).Invalidate;
   end;
 end;
 
@@ -362,6 +372,8 @@ begin
   FillWaveSelectionComboBox(cbLFO3WaveSelector, spLFO3_Waveform);
 
   SetupDialControl(dcGlobalLevel, spGlobal_Level, 0.01, 1, 0.5);
+
+  EnableControls := False;
 end;
 
 destructor TSampleView.Destroy;
@@ -376,7 +388,7 @@ procedure TSampleView.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TSampleView.Update');
 
-  if Enabled then;
+  EnableControls := Enabled;
 
   dcLowpassCutoff.Value := TSample(Subject).Filter.Frequency;
   cbCutoffModSource.ItemIndex := Integer(TSample(Subject).Filter.FreqModSource);

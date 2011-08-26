@@ -170,7 +170,6 @@ end;
 
 procedure TLoadPatternCommand.DoExecute;
 var
-  i: Integer;
   xdoc: TXMLDocument;
   RootNode: TDOMNode;
 begin
@@ -192,8 +191,6 @@ begin
 end;
 
 procedure TLoadPatternCommand.DoRollback;
-var
-  i: Integer;
 begin
   FPattern.BeginUpdate;
 

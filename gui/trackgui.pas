@@ -199,8 +199,6 @@ begin
 end;
 
 procedure TTrackGUI.Update(Subject: THybridPersistentModel);
-var
-  i: Integer;
 begin
   // Retrieve state
   DBLog('start TTrack.Update');
@@ -261,7 +259,6 @@ end;
 
 procedure TTrackGUI.CreatePatternGUI(AObjectID: string);
 var
-  lPatternGUI: TPatternGUI;
   lWavePatternGUI: TWavePatternGUI;
   lWavePattern: TWavePattern;
   lMidiPatternGUI: TMidiPatternGUI;

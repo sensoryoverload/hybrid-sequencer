@@ -240,14 +240,10 @@ begin
 end;
 
 procedure TMidiPatternGUI.DragDrop(Source: TObject; X, Y: Integer);
-var
-  lTreeView: TTreeView;
+{var
+  lTreeView: TTreeView;}
 begin
-  DBLog('start TPatternGUI.DragDrop ' + ObjectID);
-
   inherited DragDrop(Source, X, Y);
-
-  DBLog('end TPatternGUI.DragDrop');
 end;
 
 function TMidiPatternGUI.GetModel: THybridPersistentModel;

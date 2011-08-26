@@ -407,12 +407,9 @@ var
   MaxValue: Single;
   MinValue: Single;
   SubSampleLoop: Integer;
-  RedrawRect: TRect;
-  Ramp: Single;
   TimeMarker: Integer;
   TimeMarkerSpacing: Integer;
   TimeMarkerLocation: Integer;
-  lClipRect: TRect;
 begin
   if not Assigned(FModel) then exit;
 

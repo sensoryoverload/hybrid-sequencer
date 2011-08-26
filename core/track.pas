@@ -448,8 +448,6 @@ procedure TCreatePatternCommand.DoExecute;
 var
   lMidiPattern: TMidiPattern;
   lWavePattern: TWavePattern;
-  lPattern: TPattern;
-  lSourceType: string;
 
   procedure InitializePattern(APattern: TPattern);
   begin

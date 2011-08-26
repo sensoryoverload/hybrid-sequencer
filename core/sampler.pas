@@ -239,7 +239,6 @@ type
     FInc: dword;
     FOscillator: TOscillator;
     FLevel: single; // Last process value store
-    FWaveform: TOscWaveform;
 
     procedure SetOscillator(const AValue: TOscillator);
     procedure CalculateWaveform;
@@ -292,13 +291,7 @@ type
     FSelected: Boolean;
 
     { Internal variables}
-    FBufferData: PSingle;
-    FBufferDataSize: Integer;
     FWave: TWaveFile;
-    FPatternLength: Integer;
-    FSampleInfo: SF_INFO;
-    FSampleHandle: PSndFile;
-    lData: PSingle;
 
     FSampleName: string;
 
@@ -582,11 +575,7 @@ type
     FMidiDataList: TMidiDataList;
     FLastMidiDataIndex: Integer;
     FInternalMidiIndex: Integer;
-    FMidiStartIndex: Integer;
     FMidiEndIndex: Integer;
-
-    FFrameOffsetLow: Integer;
-    FFrameOffsetHigh: Integer;
 
     FOldRealCursorPosition: Integer;
 
@@ -607,7 +596,6 @@ type
   private
     FSampleBank: TSampleBank;
     FSampleEngineList: TObjectList;
-    FMidiDataList: TMidiDataList;
 
     procedure SetSampleBank(const AValue: TSampleBank);
   public
@@ -1087,7 +1075,7 @@ end;
 
 procedure TOscillatorEngine.CalculateWaveform;
 var
-  i, lIndex: Integer;
+  i: Integer;
 begin
   for i:= 0 to 256 do
   begin
@@ -1180,8 +1168,6 @@ begin
 end;
 
 procedure TOscillator.SetWaveForm(const Value: TOscWaveForm);
-var
-  i: integer;
 begin
   FWaveForm := Value;
 end;
@@ -1475,23 +1461,20 @@ begin
 end;
 
 function TSample.LoadSample(AFileName: string): boolean;
-var
-  lFilename: pchar;
-  lChannelIndex: Integer;
-  lChannelSize: Integer;
-  lChannelItems: Integer;
-  lBufferIndex: Integer;
-  lBuffer: PSingle;
-  i, j: Integer;
-  SamplesRead: Integer;
-  lValue: single;
 begin
   DBLog('start TSample.LoadSample');
 
-  FWave := GSampleStreamProvider.LoadSample(AFileName);
+  Result := True;
 
-  FSampleName := AFileName;
-  FSampleLocation := ExtractFileName(AFileName);
+  try
+    FWave := GSampleStreamProvider.LoadSample(AFileName);
+
+    FSampleName := AFileName;
+    FSampleLocation := ExtractFileName(AFileName);
+  except
+    Result := False;
+    raise;
+  end;
 
   DBLog(Format('FWave.ChannelList.Count %d', [FWave.ChannelList.Count]));
 
@@ -1543,12 +1526,6 @@ end;
 }
 procedure TSampleBank.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
-  buffer: ^byte;
-  lFrameOffsetLow: Integer;
-  lFrameOffsetHigh: Integer;
-  lRelativeLocation: Integer;
-  lIndex: Integer;
-  lMidiData: TMidiData;
   lSampleIndex: Integer;
 begin
 
@@ -1665,7 +1642,6 @@ procedure TCreateSampleCommand.DoRollback;
 var
   lSample: TSample;
   lSampleIndex: Integer;
-  lBank: TSampleBank;
 begin
   DBLog('start TCreateSampleCommand.DoRollback');
 
@@ -1912,8 +1888,8 @@ var
   lVoiceIndex: Integer;
   lVoice: TSampleVoiceEngine;
   lBufferIndex: Integer;
-  lSampleAdd: Single;
-  lSampleMul: Single;
+  {lSampleAdd: Single;
+  lSampleMul: Single; }
 
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
@@ -2084,8 +2060,8 @@ begin
 end;
 
 procedure TSampleVoiceEngine.Initialize;
-var
-  lBufferIndex: Integer;
+{var
+  lBufferIndex: Integer;}
 begin
   inherited Initialize;
 

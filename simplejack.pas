@@ -391,7 +391,6 @@ var
   lFrameOffsetLow: Integer;
   lFrameOffsetHigh: Integer;
   lRelativeLocation: Integer;
-  lIndex: Integer;
   lMidiData: TMidiData;
 begin
 
@@ -456,30 +455,21 @@ end;
 
 function process(nframes: jack_nframes_t; arg:pointer): longint; cdecl;
 var
-  i, j, k : integer;
+  i, j : integer;
   midi_in_buf : pointer;
   midi_out_buf : pointer;
   output_left : ^jack_default_audio_sample_t;
   output_right : ^jack_default_audio_sample_t;
   input : ^jack_default_audio_sample_t;
-  midi_event: TMidiEvent;
 	in_event : jack_midi_event_t;
   event_index : jack_nframes_t;
   event_count : jack_nframes_t;
   transport_state : jack_transport_state_t;
   lTrack: TTrack;
   TempLevel: jack_default_audio_sample_t;
-  BPMscale: Single;
   GlobalBPMscale: Single;
-  lFrames: Longint;
   lPlayingPattern: TPattern;
-  lAudioPlaying: Boolean;
-  lBuffer: PSingle;
-  lFramePacket: TFrameData;
-  lStartingSliceIndex: Integer;
 
-
-  buf_offset: integer;
   buffer_size: Integer;
 begin
   if not GAudioStruct.Active then
@@ -831,9 +821,9 @@ begin
 end;
 
 procedure TMainApp.btnCompileClick(Sender: TObject);
-var
+{var
   lLine: Integer;
-  lMessage: string;
+  lMessage: string;}
 begin
   DBLog('start Compile');
 
@@ -944,8 +934,6 @@ begin
 end;
 
 procedure TMainApp.FormShow(Sender: TObject);
-var
-  i: Integer;
 begin
   if not Assigned(MIDIThread) then
   begin
@@ -1182,12 +1170,12 @@ begin
       TTrackGUI(MainApp.Tracks[i]).Invalidate;
     end;
 
-{    if Assigned(GSettings.SelectedPatternGUI) then
+    if Assigned(GSettings.SelectedPatternGUI) then
     begin
-      TWavePatternGUI(GSettings.SelectedPatternGUI).PatternControls.MidiGridGUI.Invalidate;
-      TWavePatternGUI(GSettings.SelectedPatternGUI).PatternControls.WaveFormGUI.Invalidate;
+      TMidiPatternGUI(GSettings.SelectedPatternGUI).Invalidate;
+      TWavePatternGUI(GSettings.SelectedPatternGUI).Invalidate;
     end;
- }
+
     Inc(FLowPriorityInterval);
     if FLowPriorityInterval > 10 then
       FLowPriorityInterval := 0;
@@ -1257,8 +1245,6 @@ End;
 
 procedure TMainApp.Formcreate(Sender: Tobject);
 var
-  input_port: jack_port_t;
-  output_port: jack_port_t;
   input_ports: ppchar;
   output_ports: ppchar;
 begin
@@ -1448,11 +1434,8 @@ end;
 }
 procedure TMainApp.TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
 var
-  lPatternGUI: TWavePatternGUI;
   lPattern: TPattern;
-  lTrackGUI: TTrackGUI;
   lTrack: TTrack;
-  lNode: TTreeNode;
   lSavePatternCommand: TSavePatternCommand;
   lSavePatternDialog: TSaveDialog;
 begin
@@ -1578,15 +1561,8 @@ end;
 
 procedure TMainApp.DoTracksRefreshEvent(TrackObject: TObject);
 var
-  lPatternGUI: TPatternGUI;
-  lPattern: TPattern;
   lWavePattern: TWavePattern;
   lMidiPattern: TMidiPattern;
-  lWavePatternGUI: TWavePatternGUI;
-  lMidiPatternGUI: TMidiPatternGUI;
-  lWavePatternControlGUI: TWavePatternControlGUI;
-  lMidiPatternControlGUI: TMidiPatternControlGUI;
-  lTrackGUI: TTrackGUI;
   lTrackIndex: Integer;
 begin
   if TrackObject is TTrackGUI then

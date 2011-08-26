@@ -140,8 +140,6 @@ var
 
 implementation
 
-var
-  FPushPullBoolean: Integer;
 
 { THybridLogger }
 

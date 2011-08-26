@@ -2,12 +2,12 @@
 
 LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   'TPF0'#22'TWavePatternControlGUI'#21'WavePatternControlGUI'#4'Left'#2#0#6'Hei'
-  +'ght'#3#7#1#3'Top'#2#0#5'Width'#3#190#3#12'ClientHeight'#3#7#1#11'ClientWidt'
-  +'h'#3#190#3#8'TabOrder'#2#0#10'DesignLeft'#2'^'#9'DesignTop'#3#157#0#0#9'TGr'
-  +'oupBox'#20'gbAudioTrackSettings'#4'Left'#2#0#6'Height'#3#7#1#3'Top'#2#0#5'W'
-  +'idth'#3'{'#1#5'Align'#7#6'alLeft'#7'Caption'#6#8'Settings'#12'ClientHeight'
-  +#3#250#0#11'ClientWidth'#3'w'#1#8'TabOrder'#2#0#0#6'TLabel'#11'lblRootNote'#4
-  +'Left'#2#7#6'Height'#2#12#3'Top'#2'5'#5'Width'#2'-'#7'Caption'#6#9'Root note'
+  +'ght'#3#17#1#3'Top'#2#0#5'Width'#3';'#4#12'ClientHeight'#3#17#1#11'ClientWid'
+  +'th'#3';'#4#8'TabOrder'#2#0#10'DesignLeft'#2'F'#9'DesignTop'#2'/'#0#9'TGroup'
+  +'Box'#20'gbAudioTrackSettings'#4'Left'#2#0#6'Height'#3#17#1#3'Top'#2#0#5'Wid'
+  +'th'#3'{'#1#5'Align'#7#6'alLeft'#7'Caption'#6#8'Settings'#12'ClientHeight'#3
+  +#4#1#11'ClientWidth'#3'w'#1#8'TabOrder'#2#0#0#6'TLabel'#11'lblRootNote'#4'Le'
+  +'ft'#2#7#6'Height'#2#12#3'Top'#2'5'#5'Width'#2'-'#7'Caption'#6#9'Root note'
   +#11'ParentColor'#8#0#0#6'TLabel'#6'Label1'#4'Left'#2#7#6'Height'#2#12#3'Top'
   +#2'I'#5'Width'#2'+'#7'Caption'#6#9'Orig. BPM'#11'ParentColor'#8#0#0#6'TLabel'
   +#10'lblLoopEnd'#4'Left'#3#176#0#6'Height'#2#12#3'Top'#2#26#5'Width'#2'*'#7'C'

@@ -1,8 +1,9 @@
 object MainApp: TMainApp
-  Left = 181
+  Left = 193
   Height = 679
-  Top = 117
+  Top = 178
   Width = 1095
+  ActiveControl = pnlTop
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
   ClientHeight = 679

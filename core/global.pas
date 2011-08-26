@@ -89,7 +89,6 @@ type
     FOldSelectedTrackGUI: TObject;
     FSelectedPatternGUI: TObject;
     FOldSelectedPatternGUI: TObject;
-    FLastPath: string;
     FEditMode: Byte;
     FModifier: TShiftState;
     FFrames: Integer;
@@ -255,7 +254,7 @@ begin
 
   if Result = nil then
   begin
-    DBLog('Model not found! %s', AGUID);
+    writeln('Model not found! %s', AGUID);
   end;
 end;
 
@@ -344,10 +343,7 @@ var
   lChannelItems: Integer;
   lBufferIndex: Integer;
   lBuffer: PSingle;
-  i, j: Integer;
-  SamplesRead: Integer;
   lSampleHandle: PSndFile;
-  lValue: single;
   lSampleInfo: SF_INFO;
 begin
   Result := False;

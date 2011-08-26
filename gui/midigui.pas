@@ -57,7 +57,7 @@ type
     FSelected: Boolean;
     function QuantizeLocation(ALocation: Integer): Integer;
   public
-    constructor Create;
+    constructor Create(AObjectOwner: string);
     destructor Destroy; override;
     procedure Connect; override;
     procedure Disconnect; override;
@@ -265,8 +265,8 @@ type
     function ConvertNoteToScreen(ANote: Integer): Integer;
     function ConvertScreenToTime(AX: Integer): Integer;
     function ConvertTimeToScreen(ATime: Integer): Integer;
-    procedure CreateNoteGUI(AObjectID: string);
-    procedure DeleteNoteGUI(AObjectID: string);
+    procedure CreateOverviewNoteGUI(AObjectID: string);
+    procedure DeleteOverviewNoteGUI(AObjectID: string);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -274,8 +274,8 @@ type
     procedure EraseBackground(DC: HDC); override;
     function GetModel: THybridPersistentModel; override;
     procedure SetModel(AModel: THybridPersistentModel); override;
-
-
+    procedure Connect; override;
+    procedure Disconnect; override;
     property ZoomCallback: TZoomCallback write FZoomCallback;
     property Model: THybridPersistentModel read GetModel write SetModel;
   protected
@@ -293,8 +293,10 @@ uses
 
 { TMidiNoteGUI }
 
-constructor TMidiNoteGUI.Create;
+constructor TMidiNoteGUI.Create(AObjectOwner: string);
 begin
+  inherited Create(AObjectOwner);
+
   FOriginalNoteLength:= 0;
   FSelected:= False;
 end;
@@ -595,7 +597,7 @@ begin
   FRealCursorPosition:= FLoopStart;
   FRubberBandMode := False;
 
-  FNoteListGUI := TObjectList.Create(False);
+  FNoteListGUI := TObjectList.Create(True);
   ZoomFactorX := 1000;
   ZoomFactorY := 1000;
 
@@ -820,6 +822,9 @@ begin
         end;
       end;
       FBitmap.Canvas.Line(30, 0, 30, FBitmap.Height);
+
+      FBitmap.Canvas.TextOut(5, 5, Format('Model count: %d View count %d',
+        [FModel.NoteList.Count, FNoteListGUI.Count]));
     end;
     FBitmapIsDirty := False;
   end;
@@ -834,8 +839,6 @@ begin
     begin
       Canvas.Pen.Color := clBlack;
       Canvas.Line(x, 0, x, Height);
-    //  Canvas.TextOut(0, 0, Format('RealCursorPosition %d, lTimeSpacing %d, FZoomFactorX %f',[x, lTimeSpacing, FZoomFactorX]));
-    //  Canvas.TextOut(0, 20, Format('FNoteHighlightLocation %d, FNoteHighlightNote %d, FZoomFactorToScreenX %s',[FNoteHighlightLocation, FNoteHighlightNote, floattostr(FZoomFactorToScreenX)]));
     end;
 
     FOldCursorPosition := x;
@@ -871,8 +874,14 @@ begin
   DiffLists(
     TMidiPattern(Subject).NoteList,
     FNoteListGUI,
-    @CreateNoteGUI,
-    @DeleteNoteGUI);
+    @Self.CreateNoteGUI,
+    @Self.DeleteNoteGUI);
+
+  if TMidiPattern(Subject).NoteList.Count <> FNoteListGUI.Count then
+  begin
+    writeln(Format('Error Model.Count %d <=> View.Count %d',
+      [TMidiPattern(Subject).NoteList.Count, FNoteListGUI.Count]));
+  end;
 
   FBitmapIsDirty := True;
   Invalidate;
@@ -882,12 +891,29 @@ end;
 
 procedure TMidiPatternGUI.Connect;
 begin
-  //
+  //FModel := TMidiPattern(GObjectMapper.GetModelObject(Self.ObjectID));
 end;
 
 procedure TMidiPatternGUI.Disconnect;
+var
+  lMidiNoteGUI: TMidiNoteGUI;
+  lMidiNote: TMidiNote;
+  lIndex: Integer;
 begin
-  FNoteListGUI.Clear;
+  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
+  begin
+    lMidiNoteGUI := TMidiNoteGUI(FNoteListGUI[lIndex]);
+
+    if Assigned(lMidiNoteGUI) then
+    begin
+      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(lMidiNoteGUI.ObjectID));
+      if Assigned(lMidiNote) then
+      begin
+        lMidiNote.Detach(lMidiNoteGUI);
+        FNoteListGUI.Remove(lMidiNoteGUI);
+      end;
+    end;
+  end;
 end;
 
 procedure TMidiPatternGUI.CreateNoteGUI(AObjectID: string);
@@ -898,17 +924,17 @@ begin
   DBLog('start TMidiGridGUI.CreateNoteGUI');
 
   lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
-  lMidiNoteGUI := TMidiNoteGUI.Create;
-  lMidiNoteGUI.ObjectID := AObjectID;
-  lMidiNoteGUI.ObjectOwnerID := Self.ObjectID;
-  lMidiNoteGUI.Model := lMidiNote;
-  lMidiNoteGUI.Note := lMidiNote.Note;
-  lMidiNoteGUI.NoteLocation := lMidiNote.NoteLocation;
-  lMidiNoteGUI.NoteLength := lMidiNote.NoteLength;
-  lMidiNoteGUI.MidiGridGUI := Self;
+  if Assigned(lMidiNote) then
+  begin
+    lMidiNoteGUI := TMidiNoteGUI.Create(Self.ObjectID);
+    lMidiNoteGUI.Note := lMidiNote.Note;
+    lMidiNoteGUI.NoteLocation := lMidiNote.NoteLocation;
+    lMidiNoteGUI.NoteLength := lMidiNote.NoteLength;
+    lMidiNoteGUI.MidiGridGUI := Self;
 
-  FNoteListGUI.Add(lMidiNoteGUI);
-  lMidiNote.Attach(lMidiNoteGUI);
+    FNoteListGUI.Add(lMidiNoteGUI);
+    lMidiNote.Attach(lMidiNoteGUI);
+  end;
 
   DBLog('end TMidiGridGUI.CreateNoteGUI');
 end;
@@ -1168,6 +1194,9 @@ begin
   end
   else
   begin
+{   hmmm....why is this code f**king up pattern switching/ lost notes, etc...??
+
+
     if FRubberBandMode then
     begin
       if (FRubberBandSelect.BottomRight.X <> X) or
@@ -1188,7 +1217,7 @@ begin
         end;
       end;
     end;
-
+    }
     if FZoomingMode then
     begin
       FLocationOffset:= FOldLocationOffset + (X - FOldX);
@@ -1217,6 +1246,7 @@ var
   lCreateNoteCommand: TCreateNotesCommand;
   lDeleteNoteCommand: TDeleteNotesCommand;
 begin
+  writeln(Format('NoteListGUI.Count %d', [FNoteListGUI.Count]));
   if Assigned(FDraggedNote) then
   begin
     lDeleteNoteCommand := TDeleteNotesCommand.Create(Self.ObjectID);
@@ -1246,6 +1276,7 @@ begin
     end;
   end;
   inherited DblClick;
+  writeln(Format('NoteListGUI.Count %d', [FNoteListGUI.Count]));
 end;
 
 function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
@@ -1300,8 +1331,8 @@ begin
   DiffLists(
     TMidiPattern(Subject).NoteList,
     FNoteListGUI,
-    @CreateNoteGUI,
-    @DeleteNoteGUI);
+    @Self.CreateOverviewNoteGUI,
+    @Self.DeleteOverviewNoteGUI);
 
   // Determine total width of a notes
   FTotalWidth := CalculateTotalWidth;
@@ -1324,6 +1355,16 @@ end;
 procedure TMidigridOverview.SetModel(AModel: THybridPersistentModel);
 begin
   FModel := TMidiPattern(AModel);
+end;
+
+procedure TMidigridOverview.Connect;
+begin
+  FModel := TMidiPattern(GObjectMapper.GetModelObject(Self.ObjectID));
+end;
+
+procedure TMidigridOverview.Disconnect;
+begin
+  //
 end;
 
 procedure TMidigridOverview.Paint;
@@ -1483,7 +1524,7 @@ begin
   inherited MouseMove(Shift, X, Y);
 end;
 
-procedure TMidigridOverview.CreateNoteGUI(AObjectID: string);
+procedure TMidigridOverview.CreateOverviewNoteGUI(AObjectID: string);
 var
   lMidiNote: TMidiNote;
   lMidiNoteOverview: TMidiNoteOverview;
@@ -1491,21 +1532,24 @@ begin
   DBLog('start TMidigridOverview.CreateNoteGUI');
 
   lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
-  lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
-  lMidiNoteOverview.ObjectID := AObjectID;
-  lMidiNoteOverview.ObjectOwnerID := Self.ObjectID;
-  lMidiNoteOverview.Model := lMidiNote;
-  lMidiNoteOverview.Note := lMidiNote.Note;
-  lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
-  lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;
+  if Assigned(lMidiNote) then
+  begin
+    lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
+    //lMidiNoteOverview.ObjectID := AObjectID;
+    //lMidiNoteOverview.ObjectOwnerID := Self.ObjectID;
+    //lMidiNoteOverview.Model := lMidiNote;
+    lMidiNoteOverview.Note := lMidiNote.Note;
+    lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
+    lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;
 
-  FNoteListGUI.Add(lMidiNoteOverview);
-  lMidiNote.Attach(lMidiNoteOverview);
+    FNoteListGUI.Add(lMidiNoteOverview);
+    lMidiNote.Attach(lMidiNoteOverview);
+  end;
 
   DBLog('end TMidigridOverview.CreateNoteGUI');
 end;
 
-procedure TMidigridOverview.DeleteNoteGUI(AObjectID: string);
+procedure TMidigridOverview.DeleteOverviewNoteGUI(AObjectID: string);
 var
   lMidiNote: TMidiNote;
   lMidiNoteOverview: TMidiNoteOverview;
@@ -1519,8 +1563,13 @@ begin
 
     if lMidiNoteOverview.ObjectID = AObjectID then
     begin
-      FNoteListGUI.Remove(lMidiNoteOverview);
-      break;
+      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
+      if Assigned(lMidiNote) then
+      begin
+        lMidiNote.Detach(lMidiNoteOverview);
+        FNoteListGUI.Remove(lMidiNoteOverview);
+        break;
+      end;
     end;
   end;
 

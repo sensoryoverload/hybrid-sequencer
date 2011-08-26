@@ -296,9 +296,6 @@ begin
 end;
 
 procedure TPluginNode.DoCreateInstance(var AObject: TObject; AClassName: string);
-var
-  lChildNode: TPluginNode;
-  lPluginProcessor: TPluginProcessor;
 begin
   DBLog('start TPluginNode.DoCreateInstance');
 

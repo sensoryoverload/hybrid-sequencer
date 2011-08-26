@@ -530,7 +530,6 @@ end;
 
 function PeekFileType(AFileName: string): TFileSourceTypes;
 var
-  i: Integer;
   xdoc: TXMLDocument;
   RootNode: TDOMNode;
   lProperties: TDOMNode;

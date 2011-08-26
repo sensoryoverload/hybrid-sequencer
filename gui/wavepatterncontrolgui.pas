@@ -51,7 +51,6 @@ type
 
     FObjectOwnerID: string;
     FObjectID: string;
-    FModelObject: TObject;
     FObjectOwner: TObject;
 
     FPitched: Boolean;

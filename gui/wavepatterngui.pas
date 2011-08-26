@@ -244,8 +244,6 @@ var
   lTreeView: TTreeView;
   lDropWave: TPatternDropWaveCommand;
 begin
-  DBLog('start TPatternGUI.DragDrop ' + ObjectID);
-
   inherited DragDrop(Source, X, Y);
 
   if Source is TTreeView then
@@ -269,8 +267,6 @@ begin
   FCacheIsDirty := True;
 
   Invalidate;
-
-  DBLog('end TPatternGUI.DragDrop');
 end;
 
 function TWavePatternGUI.GetModel: THybridPersistentModel;
