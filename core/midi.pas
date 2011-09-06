@@ -311,7 +311,10 @@ begin
 
   FSampleBankEngine.Free;
 
-  FSampleBank.Free;
+  if Assigned(FSampleBank) then
+  begin
+    FSampleBank.Free;
+  end;
 
   if Assigned(FMidiBuffer) then
     FMidiBuffer.Free;

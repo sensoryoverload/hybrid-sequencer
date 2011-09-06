@@ -96,7 +96,7 @@ procedure TWavePatternControlGUI.Connect;
 begin
   if Assigned(FModel) then
   begin
-    FModel.Attach(Self);
+    //FModel.Attach(Self);
     FModel.Attach(FWavePatternGUI);
 
 //    FWavePatternGUI.ZoomFactorX := 5;
@@ -110,7 +110,7 @@ begin
   if Assigned(FModel) then
   begin
     FModel.Detach(FWavePatternGUI);
-    FModel.Detach(Self);
+    //FModel.Detach(Self);
   end;
 end;
 

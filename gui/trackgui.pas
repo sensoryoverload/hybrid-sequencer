@@ -97,6 +97,7 @@ type
     FClickLocationY: Integer;
     FModel: TTrack;
 
+    procedure ReleasePattern(Data: PtrInt);
     procedure SetSelected(const AValue: Boolean);
     procedure CreatePatternGUI(AObjectID: string);
     procedure DeletePatternGUI(AObjectID: string);
@@ -212,7 +213,12 @@ begin
   tcOn.SwitchedOn := TTrack(Subject).Active;
   vcLevel.Position := TTrack(Subject).Volume;
 
-  Invalidate;
+  if Assigned(OnTracksRefreshGUI) then
+  begin
+    OnTracksRefreshGUI(nil);
+  end;
+
+  //Invalidate;
 
   DBLog('end TTrack.Update');
 end;
@@ -306,9 +312,22 @@ begin
   DBLog('end TTrack.CreatePatternGUI');
 end;
 
+procedure TTrackGUI.ReleasePattern(Data: PtrInt);
+var
+  lPatternGUI: TPatternGUI;
+begin
+  GSettings.SelectedPatternGUI := nil;
+
+  lPatternGUI := TPatternGUI(Data);
+  lPatternGUI.Parent := nil;
+  PatternListGUI.Remove(lPatternGUI);
+end;
+
 procedure TTrackGUI.DeletePatternGUI(AObjectID: string);
 var
   lPatternGUI: TPatternGUI;
+  lWavePatternGUI: TWavePatternGUI;
+  lMidiPatternGUI: TMidiPatternGUI;
   lIndex: Integer;
 begin
   // update track gui
@@ -319,7 +338,10 @@ begin
     lPatternGUI := TPatternGUI(PatternListGUI[lIndex]);
     if lPatternGUI.ObjectID = AObjectID then
     begin
-      try
+      Application.QueueAsyncCall(@ReleasePattern, PtrInt(TMidiPatternGUI(lPatternGUI)));
+      //PatternListGUI.Remove(TMidiPatternGUI(lPatternGUI));
+
+      {try
         //lPatternGUI.Disconnect;
       except
         on e:exception do
@@ -327,7 +349,8 @@ begin
           DBLog('DEBUG: ' + e.message);
         end;
       end;
-      PatternListGUI.Remove(lPatternGUI);
+
+      PatternListGUI.Remove(lPatternGUI);  }
     end;
   end;
 end;

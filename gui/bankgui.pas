@@ -297,8 +297,6 @@ begin
     end;
   end;
 
-  Invalidate;
-
   DBLog('end TBankView.CreateSampleGUI');
 end;
 
@@ -324,8 +322,6 @@ begin
       break;
     end;
   end;
-
-  Invalidate;
 
   DBLog('end TBankView.DeleteSampleGUI');
 end;

@@ -957,9 +957,9 @@ begin
       if Assigned(lMidiNote) then
       begin
         lMidiNote.Detach(lMidiNoteGUI);
-        FNoteListGUI.Remove(lMidiNoteGUI);
-        break;
       end;
+      FNoteListGUI.Remove(lMidiNoteGUI);
+      break;
     end;
   end;
 
@@ -1567,9 +1567,9 @@ begin
       if Assigned(lMidiNote) then
       begin
         lMidiNote.Detach(lMidiNoteOverview);
-        FNoteListGUI.Remove(lMidiNoteOverview);
-        break;
       end;
+      FNoteListGUI.Remove(lMidiNoteOverview);
+      break;
     end;
   end;
 

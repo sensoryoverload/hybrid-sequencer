@@ -1501,12 +1501,16 @@ constructor TSampleBank.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   inherited Create(AObjectOwner, AMapped);
 
-  FSampleList := TObjectList.create(True);
+  FSampleList := TObjectList.create(False);
 end;
 
 destructor TSampleBank.Destroy;
 begin
-  FSampleList.Free;
+  if Assigned(FSampleList) then
+  begin
+    FSampleList.Clear;
+    FSampleList.Free;
+  end;
 
   inherited Destroy;
 end;

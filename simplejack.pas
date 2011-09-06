@@ -1565,7 +1565,15 @@ var
   lMidiPattern: TMidiPattern;
   lTrackIndex: Integer;
 begin
-  if TrackObject is TTrackGUI then
+  if not Assigned(TrackObject) then
+  begin
+    // TODO Should be more intelligence in here...
+    FMidiPatternControlGUI.Parent := nil;
+    FWavePatternControlGUI.Parent := nil;
+    GSettings.OldSelectedPatternGUI := nil;
+    GSettings.SelectedPatternGUI := nil;
+  end
+  else if TrackObject is TTrackGUI then
   begin;
     GSettings.SelectedTrackGUI := TrackObject;
     for lTrackIndex := 0 to Pred(Tracks.Count) do
@@ -1599,23 +1607,38 @@ begin
           FMidiPatternControlGUI.Parent := nil;
           FWavePatternControlGUI.Align := alClient;
           FWavePatternControlGUI.Parent := tsPattern;
+
+          // Attach new pattern
+          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lWavePattern.Attach(FWavePatternControlGUI);
         end
         else
         begin
           // Last selected pattern of same type; just detach
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
           lWavePattern.Detach(FWavePatternControlGUI);
+
+          // Attach new pattern
+          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lWavePattern.Attach(FWavePatternControlGUI);
         end;
       end
       else
       begin
-        FWavePatternControlGUI.Align := alClient;
-        FWavePatternControlGUI.Parent := tsPattern;
-      end;
+        if Assigned(GSettings.SelectedPatternGUI) then
+        begin
+          FWavePatternControlGUI.Align := alClient;
+          FWavePatternControlGUI.Parent := tsPattern;
 
-      // Attach new pattern
-      lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-      lWavePattern.Attach(FWavePatternControlGUI);
+          // Attach new pattern
+          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lWavePattern.Attach(FWavePatternControlGUI);
+        end
+        else
+        begin
+          FWavePatternControlGUI.Parent := nil;
+        end;
+      end;
 
       GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
     end;
@@ -1638,23 +1661,35 @@ begin
           FWavePatternControlGUI.Parent := nil;
           FMidiPatternControlGUI.Align := alClient;
           FMidiPatternControlGUI.Parent := tsPattern;
+
+          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lMidiPattern.Attach(FMidiPatternControlGUI);
         end
         else
         begin
           // Last selected pattern of same type; just detach
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
           lMidiPattern.Detach(FMidiPatternControlGUI);
+
+          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lMidiPattern.Attach(FMidiPatternControlGUI);
         end;
       end
       else
       begin
-        FMidiPatternControlGUI.Align := alClient;
-        FMidiPatternControlGUI.Parent := tsPattern;
-      end;
+        if Assigned(GSettings.SelectedPatternGUI) then
+        begin
+          FMidiPatternControlGUI.Align := alClient;
+          FMidiPatternControlGUI.Parent := tsPattern;
 
-      // Attach new pattern
-      lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-      lMidiPattern.Attach(FMidiPatternControlGUI);
+          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lMidiPattern.Attach(FMidiPatternControlGUI);
+        end
+        else
+        begin
+          FMidiPatternControlGUI.Parent := nil;
+        end;
+      end;
 
       GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
     end;
@@ -1833,6 +1868,9 @@ procedure TMainApp.ReleaseTrack(Data: PtrInt);
 var
   lTrackGUI: TTrackGUI;
 begin
+
+  //also like this but for patterns
+
   lTrackGUI := TTrackGUI(Data);
   lTrackGUI.Parent := nil;
   Tracks.Remove(lTrackGUI);
@@ -1897,7 +1935,7 @@ begin
     if lTrackGUI.ObjectID = AObjectID then
     begin
       GSettings.SelectedPatternGUI := nil;
-
+  //release pattern with this code in TrackGUI
      Application.QueueAsyncCall(@ReleaseTrack, PtrInt(lTrackGUI));
      {lTrackGUI.Parent := nil;
      Tracks.Extract(lTrackGUI);

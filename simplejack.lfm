@@ -1,7 +1,7 @@
 object MainApp: TMainApp
-  Left = 193
+  Left = 183
   Height = 679
-  Top = 178
+  Top = 95
   Width = 1095
   ActiveControl = pnlTop
   AllowDropFiles = True
@@ -161,17 +161,17 @@ object MainApp: TMainApp
           TabOrder = 0
           object rbMidiSync: TRadioButton
             Left = 1
-            Height = 22
+            Height = 24
             Top = -2
-            Width = 72
+            Width = 74
             Caption = 'MidiSync Slave'
             TabOrder = 0
           end
           object rbMaster: TRadioButton
             Left = 1
-            Height = 22
+            Height = 24
             Top = 11
-            Width = 47
+            Width = 49
             Caption = 'Master'
             Checked = True
             TabOrder = 1
@@ -265,8 +265,8 @@ object MainApp: TMainApp
     end
     object tsMonitor: TTabSheet
       Caption = 'Monitor'
-      ClientHeight = 324
-      ClientWidth = 1042
+      ClientHeight = 326
+      ClientWidth = 1046
       object Splitter5: TSplitter
         Left = 0
         Height = 326

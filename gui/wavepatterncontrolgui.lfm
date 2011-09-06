@@ -60,9 +60,9 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object cbPitched: TCheckBox
       Left = 6
-      Height = 22
+      Height = 24
       Top = 27
-      Width = 48
+      Width = 50
       Caption = 'Warp'
       OnChange = cbPitchedChange
       TabOrder = 0

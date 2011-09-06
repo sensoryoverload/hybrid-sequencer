@@ -15,8 +15,8 @@ LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   +'ft'#3#176#0#6'Height'#2#12#3'Top'#2#1#5'Width'#2'/'#7'Caption'#6#10'Loop st'
   +'art'#11'ParentColor'#8#0#0#6'TLabel'#13'lblLoopLength'#4'Left'#3#176#0#6'He'
   +'ight'#2#12#3'Top'#2'2'#5'Width'#2'5'#7'Caption'#6#11'Loop length'#11'Parent'
-  +'Color'#8#0#0#9'TCheckBox'#9'cbPitched'#4'Left'#2#6#6'Height'#2#22#3'Top'#2
-  +#27#5'Width'#2'0'#7'Caption'#6#4'Warp'#8'OnChange'#7#15'cbPitchedChange'#8'T'
+  +'Color'#8#0#0#9'TCheckBox'#9'cbPitched'#4'Left'#2#6#6'Height'#2#24#3'Top'#2
+  +#27#5'Width'#2'2'#7'Caption'#6#4'Warp'#8'OnChange'#7#15'cbPitchedChange'#8'T'
   +'abOrder'#2#0#0#0#9'TSpinEdit'#11'spnRootNote'#4'Left'#2'B'#6'Height'#2#21#3
   +'Top'#2'0'#5'Width'#2'@'#8'TabOrder'#2#1#5'Value'#2#1#0#0#14'TFloatSpinEdit'
   +#17'spnBeatsPerMinute'#4'Left'#2'A'#6'Height'#2#22#3'Top'#2'F'#5'Width'#2'8'

@@ -1227,10 +1227,10 @@ end;
 
 destructor THybridPersistentView.Destroy;
 begin
-  if Assigned(FModel) then
+  {if Assigned(FModel) then
   begin
     FModel.Detach(Self);
-  end;
+  end;}
 
   inherited Destroy;
 end;
