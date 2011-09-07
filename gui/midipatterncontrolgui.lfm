@@ -7,8 +7,8 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
   ClientHeight = 441
   ClientWidth = 779
   TabOrder = 0
-  DesignLeft = 869
-  DesignTop = 401
+  DesignLeft = 500
+  DesignTop = 358
   object pnlMidiGrid: TPanel
     Left = 0
     Height = 216

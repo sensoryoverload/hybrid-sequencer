@@ -114,7 +114,7 @@ begin
   FSampleListGUI := TObjectList.Create;
 
   FSampleView := TSampleView.Create(nil);
-  FSampleView.Enabled := False;
+  FSampleView.Enabled := True;
   FSampleView.Parent := Self;
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);

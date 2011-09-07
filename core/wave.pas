@@ -132,7 +132,7 @@ type
     FPatternLength: Integer;
     FBPMscale: single;
 
-    FDiskWriterThread: TDiskWriterThread;
+//    FDiskWriterThread: TDiskWriterThread;
     FDiskReaderThread: TDiskReaderThread;
     MultiWSOLA: TMultiWSOLA;
     FTimePitchScale: RubberbandState;
@@ -207,7 +207,7 @@ type
     property CursorReal: Single read FCursorReal write FCursorReal default 1.0;
     property CursorRamp: Single read FCursorRamp write SetCursorRamp default 1.0;
     property BufferFrames: Integer read FBufferFrames write FBufferFrames;
-    property DiskWriterThread: TDiskWriterThread read FDiskWriterThread;
+//    property DiskWriterThread: TDiskWriterThread read FDiskWriterThread;
     property DiskReaderThread: TDiskReaderThread read FDiskReaderThread;
   published
     property SliceList: TObjectList read FSliceList write FSliceList;
@@ -498,7 +498,7 @@ begin
 
   Getmem(FWorkBuffer, 88200);
 
-  FDiskWriterThread := TDiskWriterThread.Create(False);
+//  FDiskWriterThread := TDiskWriterThread.Create(False);
 //  FDiskWriterThread.FreeOnTerminate := True;
 //  FDiskReaderThread := TDiskReaderThread.Create(False);
 //FDiskReaderThread.FreeOnTerminate := True;
@@ -536,8 +536,8 @@ begin
     FLoopEnd.Free;
   if Assigned(FLoopLength) then
     FLoopLength.Free;
-  if Assigned(FDiskWriterThread) then
-    FDiskWriterThread.Free;
+{  if Assigned(FDiskWriterThread) then
+    FDiskWriterThread.Free;}
 //  if Assigned(FDiskReaderThread) then
 //    FDiskReaderThread.Free;
   FreeMem(CB_TimeBuffer);

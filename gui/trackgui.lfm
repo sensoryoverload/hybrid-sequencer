@@ -9,8 +9,8 @@ object TrackGUI: TTrackGUI
   ClientWidth = 104
   PopupMenu = pmTrack
   TabOrder = 0
-  DesignLeft = 800
-  DesignTop = 107
+  DesignLeft = 801
+  DesignTop = 132
   object pnlTrackControls: TPanel
     Left = 0
     Height = 307

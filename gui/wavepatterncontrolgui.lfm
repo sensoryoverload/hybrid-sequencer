@@ -6,8 +6,8 @@ object WavePatternControlGUI: TWavePatternControlGUI
   ClientHeight = 273
   ClientWidth = 1083
   TabOrder = 0
-  DesignLeft = 70
-  DesignTop = 47
+  DesignLeft = 510
+  DesignTop = 200
   object gbAudioTrackSettings: TGroupBox
     Left = 0
     Height = 273

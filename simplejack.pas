@@ -1568,13 +1568,14 @@ begin
   if not Assigned(TrackObject) then
   begin
     // TODO Should be more intelligence in here...
+
     FMidiPatternControlGUI.Parent := nil;
     FWavePatternControlGUI.Parent := nil;
     GSettings.OldSelectedPatternGUI := nil;
     GSettings.SelectedPatternGUI := nil;
   end
   else if TrackObject is TTrackGUI then
-  begin;
+  begin
     GSettings.SelectedTrackGUI := TrackObject;
     for lTrackIndex := 0 to Pred(Tracks.Count) do
     begin
@@ -1874,6 +1875,8 @@ begin
   lTrackGUI := TTrackGUI(Data);
   lTrackGUI.Parent := nil;
   Tracks.Remove(lTrackGUI);
+
+  DoTracksRefreshEvent(nil);
 end;
 
 procedure TMainApp.CreateTrackGUI(AObjectID: string);
@@ -1935,11 +1938,8 @@ begin
     if lTrackGUI.ObjectID = AObjectID then
     begin
       GSettings.SelectedPatternGUI := nil;
-  //release pattern with this code in TrackGUI
-     Application.QueueAsyncCall(@ReleaseTrack, PtrInt(lTrackGUI));
-     {lTrackGUI.Parent := nil;
-     Tracks.Extract(lTrackGUI);
-     lTrackGUI.Free;}
+
+      Application.QueueAsyncCall(@ReleaseTrack, PtrInt(lTrackGUI));
     end;
   end;
 

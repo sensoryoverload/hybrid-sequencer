@@ -373,7 +373,7 @@ begin
 
   SetupDialControl(dcGlobalLevel, spGlobal_Level, 0.01, 1, 0.5);
 
-  EnableControls := False;
+  SetEnableControls(False);
 end;
 
 destructor TSampleView.Destroy;
@@ -387,8 +387,6 @@ end;
 procedure TSampleView.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TSampleView.Update');
-
-  EnableControls := Enabled;
 
   dcLowpassCutoff.Value := TSample(Subject).Filter.Frequency;
   cbCutoffModSource.ItemIndex := Integer(TSample(Subject).Filter.FreqModSource);
@@ -438,6 +436,8 @@ begin
   cbLFO3WaveSelector.ItemIndex := Integer(TSample(Subject).LFO3.ModSource);
 
   dcGlobalLevel.Value := TSample(Subject).GlobalLevel;
+
+  SetEnableControls(FEnabled);
 
   DBLog('end TSampleView.Update');
 end;

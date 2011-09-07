@@ -853,11 +853,11 @@ procedure THybridPersistentModel.Detach(AObserver: IObserver);
 begin
   DBLog(Format('start THybridPersistentModel.Detach (%s)', [Self.ClassName]));
 
-  { not sure if this would break existing code, it shoudn't..
+  { not sure if this would break existing code, it shoudn't.. }
+  AObserver.Disconnect;
   AObserver.Model := nil;
   AObserver.ObjectID := '';
-  AObserver.ObjectOwnerID := '';}
-  AObserver.Disconnect;
+  AObserver.ObjectOwnerID := '';{}
 
   FObservers.Remove(AObserver);
 

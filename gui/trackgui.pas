@@ -339,18 +339,6 @@ begin
     if lPatternGUI.ObjectID = AObjectID then
     begin
       Application.QueueAsyncCall(@ReleasePattern, PtrInt(TMidiPatternGUI(lPatternGUI)));
-      //PatternListGUI.Remove(TMidiPatternGUI(lPatternGUI));
-
-      {try
-        //lPatternGUI.Disconnect;
-      except
-        on e:exception do
-        begin
-          DBLog('DEBUG: ' + e.message);
-        end;
-      end;
-
-      PatternListGUI.Remove(lPatternGUI);  }
     end;
   end;
 end;

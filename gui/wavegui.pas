@@ -1027,13 +1027,10 @@ end;
 
 procedure TWaveGUI.DeleteMarkerGUI(AObjectID: string);
 var
-  lMarker: TMarker;
   lMarkerGUI: TMarkerGUI;
   lIndex: Integer;
 begin
   DBLog('start TWaveFormGUI.DeleteMarkerGUI : ' + AObjectID);
-
-  lMarker := TMarker(GObjectMapper.GetModelObject(AObjectID));
 
   for lIndex := Pred(FSliceListGUI.Count) downto 0 do
   begin
@@ -1041,7 +1038,6 @@ begin
 
     if lMarkerGUI.ObjectID = AObjectID then
     begin
-      lMarker.Detach(lMarkerGUI);
       FSliceListGUI.Remove(lMarkerGUI);
       break;
     end;

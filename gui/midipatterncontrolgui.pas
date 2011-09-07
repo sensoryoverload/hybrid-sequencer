@@ -141,8 +141,6 @@ procedure TMidiPatternControlGUI.Connect;
 begin
   if Assigned(FModel) then
   begin
-    writeln(Format('Connect NoteList.Count %d', [FMidiPatternGUI.NoteListGUI.Count]));
-
     FSampleBank := FModel.SampleBank;
 
     FModel.Attach(FMidiPatternGUI);
@@ -150,8 +148,6 @@ begin
     FModel.Attach(FMidigridOverview);
 
     FSampleBank.Attach(FSampleBankGUI);
-
-    writeln(Format('Connect NoteList.Count %d', [FMidiPatternGUI.NoteListGUI.Count]));
 
     FMidiPatternGUI.ZoomFactorX := 1000;
     FMidiPatternGUI.ZoomFactorY := 1000;
@@ -162,13 +158,11 @@ procedure TMidiPatternControlGUI.Disconnect;
 begin
   if Assigned(FModel) then
   begin
-    writeln(Format('Disconnect NoteList.Count %d', [FMidiPatternGUI.NoteListGUI.Count]));
     FSampleBank.Detach(FSampleBankGUI);
 
     FModel.Detach(FMidigridOverview);
 
     FModel.Detach(FMidiPatternGUI);
-    writeln(Format('Disconnect NoteList.Count %d', [FMidiPatternGUI.NoteListGUI.Count]));
   end;
 end;
 

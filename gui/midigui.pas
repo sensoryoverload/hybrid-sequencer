@@ -877,12 +877,6 @@ begin
     @Self.CreateNoteGUI,
     @Self.DeleteNoteGUI);
 
-  if TMidiPattern(Subject).NoteList.Count <> FNoteListGUI.Count then
-  begin
-    writeln(Format('Error Model.Count %d <=> View.Count %d',
-      [TMidiPattern(Subject).NoteList.Count, FNoteListGUI.Count]));
-  end;
-
   FBitmapIsDirty := True;
   Invalidate;
 

@@ -96,7 +96,6 @@ procedure TWavePatternControlGUI.Connect;
 begin
   if Assigned(FModel) then
   begin
-    //FModel.Attach(Self);
     FModel.Attach(FWavePatternGUI);
 
 //    FWavePatternGUI.ZoomFactorX := 5;
@@ -110,7 +109,6 @@ begin
   if Assigned(FModel) then
   begin
     FModel.Detach(FWavePatternGUI);
-    //FModel.Detach(Self);
   end;
 end;
 
@@ -200,6 +198,8 @@ procedure TWavePatternControlGUI.tbThresholdChange(Sender: TObject);
 var
   lChangeThresholdCommand: TChangeThresHoldCommand;
 begin
+{ disable as it would produce idle commands needing countless undo's
+
   lChangeThresholdCommand := TChangeThresHoldCommand.Create(FObjectID);
   try
     lChangeThresholdCommand.Threshold := tbThreshold.Position;
@@ -207,7 +207,7 @@ begin
     GCommandQueue.PushCommand(lChangeThresholdCommand);
   except
     lChangeThresholdCommand.Free;
-  end;
+  end;}
   { Put in command object
       GAudioStruct.SelectedTrack.SelectedPattern.WaveForm.TransientThreshold:=
         Round((100 * tbThreshold.Position) / tbThreshold.Max);

@@ -291,7 +291,6 @@ begin
   if Assigned(CommandQueue) then
   begin
     try
-      //GCommandQueue.PushCommand(lSavePatternCommand);
       CommandQueue.Push(AObject);
 
       ExecuteCommandQueue;
