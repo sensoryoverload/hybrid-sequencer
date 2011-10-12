@@ -2,14 +2,15 @@ unit filters;
 
 {$mode objfpc}{$H+}
 
-{$fputype SSE}
+//{$fputype SSE}
 
 interface
 
 uses
   Classes, SysUtils, globalconst, baseengine;
 
-const divby6 = 1 / 6;
+const
+  divby6 = 1 / 6;
 
 type
   TModSource = (
@@ -96,7 +97,7 @@ type
     procedure SetFilter(const AValue: TFilter);
   public
     // Descendant should use Initialize to change coeffecients, pre-calculations, etc
-    function Process(const I: Single): Single; virtual; abstract;
+    function Process(I: Single): Single; virtual; abstract;
     property Frequency: Single read FFrequency write FFrequency; // 0..20000
     property Resonance: Single read FResonance write FResonance; // 0..1 ?
     property Filter: TFilter read FFilter write SetFilter;
@@ -124,7 +125,7 @@ type
     _kd: Single;
   public
     constructor Create(AFrames: Integer); override;
-    function Process(const I: Single): Single; override;
+    function Process(I: Single): Single; override;
     procedure Initialize; override;
   end;
 
@@ -192,10 +193,14 @@ begin
   divbysamplerate := 1 / SampleRate;
 end;
 
-function TLP24DB.Process(const I: Single): Single;
+function TLP24DB.Process(I: Single): Single;
 begin
+  // Keep between valid range!
+  if i > 1 then i := 1;
+  if i < -1 then i := -1;
   if Frequency > 20000 then Frequency := 20000;
-  if Frequency < 20 then Frequency := 20;
+  if Frequency < 30 then Frequency := 30;
+
   f := (Frequency + Frequency) * divbysamplerate;
   p := f * (1.8 - 0.8 * f);
   k := p + p - 1.0;

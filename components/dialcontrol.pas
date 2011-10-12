@@ -26,11 +26,14 @@ interface
 
 uses
   Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, Math, Spin,
-  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources;
+  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources, BGRABitmap, BGRABitmapTypes;
 
 const
   M_PI = 3.14159265358979323846;
-
+  KNOB_IMAGE_COUNT = 64;
+  KNOB_SCALE_STEP_TO_ANGLE = KNOB_IMAGE_COUNT / 300;
+  KNOBSTYLE1 = 'BlackKnob';
+  KNOBSTYLE2 = 'SimpleKnob';
 
 Type
   PPSingle = ^PSingle;
@@ -44,7 +47,6 @@ Type
   TDialControl = class(TCustomControl, IFeedBack)
   private
     FDialMoving: Boolean;
-
     FStartingInternalValue: Single;
     FOldInternalValue: Single;
     FInternalValue: Single;
@@ -57,6 +59,10 @@ Type
     FOldY: Integer;
     FY: Integer;
 
+    FTimer: TTimer;
+    FTimerCounter: Integer;
+    FWheelOffset: Integer;
+
     FCaption: string;
 
     FScaleInternalValueToExternalValue: Single;
@@ -66,14 +72,14 @@ Type
     FOnEndChange: TNotifyEvent;
     FOnStartChange: TNotifyEvent;
     FEnabled: Boolean;
-
     FValueVisible: Boolean;
 
-    procedure CalcInternals;
+    procedure CalcInternals(AOffset: Integer);
     procedure SetHighest(const AValue: Single);
     procedure SetLowest(const AValue: Single);
     function GetValue: Single;
     procedure SetValue(const AValue: Single);
+    procedure WheelTimer(Sender: TObject);
   protected
     procedure Initialize;
   public
@@ -97,6 +103,8 @@ Type
     property Color;
   protected
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+    function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
+    function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
   end;
 
   { TButtonControl }
@@ -423,6 +431,9 @@ Type
 
 procedure Register;
 
+var
+  GImageList: TList;
+
 implementation
 
 procedure Register;
@@ -479,12 +490,12 @@ begin
   Result := lPoint;
 end;
 
-procedure TDialControl.CalcInternals;
+procedure TDialControl.CalcInternals(AOffset: Integer);
 begin
   if FRange = 0 then
     FRange := 0.001;
 
-  FInternalValue := FStartingInternalValue + (FOldY - FY);
+  FInternalValue := FStartingInternalValue + AOffset;
   if FInternalValue < 0 then FInternalValue := 0;
   if FInternalValue > 300 then FInternalValue := 300;
 
@@ -538,6 +549,22 @@ begin
   end;
 end;
 
+procedure TDialControl.WheelTimer(Sender: TObject);
+begin
+  if FTimerCounter > 0 then
+  begin
+    Dec(FTimerCounter);
+
+    if FTimerCounter = 0 then
+    begin
+      if Assigned(FOnEndChange) then
+        FOnEndChange(Self);
+
+      FWheelOffset := 0;
+    end;
+  end;
+end;
+
 procedure TDialControl.Initialize;
 begin
   FScaleInternalValueToExternalValue := FRange / 300;
@@ -568,11 +595,20 @@ begin
 
   DoubleBuffered:= False;
 
-  FDialMoving:= False;
+  FDialMoving := False;
+
+  FWheelOffset := 0;
+  FTimerCounter := 0;
+  FTimer := TTimer.Create(nil);
+  FTimer.Interval := 100;
+  FTimer.OnTimer := @WheelTimer;
+  FTimer.Enabled := True;
 end;
 
 destructor TDialControl.Destroy;
 begin
+  FTimer.Free;
+
   inherited Destroy;
 end;
 
@@ -584,58 +620,39 @@ end;
 
 procedure TDialControl.Paint;
 var
-  Bitmap: TBitmap;
   lPos: Integer;
   lStr: string;
-  lPoint: TPoint;
+  lStep: Integer;
+  lBGRABitmap: TBGRABitmap;
 begin
-  Bitmap := TBitmap.Create;
+  lBGRABitmap := TBGRABitmap.Create(32, 32);
   try
-    // Initializes the Bitmap Size
-    Bitmap.Height := Height;
-    Bitmap.Width := Width;
-
-    Bitmap.Canvas.AntialiasingMode:= amOn;
-    Bitmap.Canvas.Font.Size:= 6;
-    Bitmap.Canvas.Font.Color := clBlack;
-
-    // Draws the background
-    Bitmap.Canvas.Brush.Color := clBtnFace;
-    Bitmap.Canvas.FillRect(0, 0, Width, Height);
-
-    if FEnabled then
+    lStep := Round(FInternalValue * KNOB_SCALE_STEP_TO_ANGLE);
+    if lStep > 63 then
     begin
-      Bitmap.Canvas.Pen.Color := clBlack;
-      Bitmap.Canvas.Font.Color := Bitmap.Canvas.Font.Color;
-    end
-    else
-    begin
-      Bitmap.Canvas.Pen.Color := clGray;
-      Bitmap.Canvas.Font.Color := Bitmap.Canvas.Pen.Color;
+      lStep := 63;
     end;
 
-    Bitmap.Canvas.Pen.Width := 3;
+    // Create copy of original knob image
+    lBGRABitmap.PutImage(0, 0, TBGRABitmap(GImageList[lStep]), dmDrawWithTransparency);
 
-    FAngle := FInternalValue;
+    // Copy to native canvas
+    Canvas.Clear;
+    lBGRABitmap.Draw(Canvas, 2, 7, False);
 
-    lPoint := LineFromAngle(18, 21, FAngle - 60, 8);
-    Bitmap.Canvas.Line(18, 21, lPoint.X, lPoint.Y);
-
-    Bitmap.Canvas.Arc(8, 10, 28, 30, -880, 4640);
-
-    lPos := 18 - (Bitmap.Canvas.TextWidth(FCaption) div 2);
-    Bitmap.Canvas.TextOut(lPos, 1, FCaption);
+    // Alter knob ie add caption, numbers, etc
+    lPos := 18 - (Canvas.TextWidth(FCaption) div 2);
+    Canvas.TextOut(lPos, 1, FCaption);
 
     if FValueVisible then
     begin
       lStr := IntToStr(Round(Value));
-      lPos := 18 - (Bitmap.Canvas.TextWidth(lStr) div 2);
-      Bitmap.Canvas.TextOut(lPos, 31, lStr);
+      lPos := 18 - (Canvas.TextWidth(lStr) div 2);
+      Canvas.TextOut(lPos, 33, lStr);
     end;
 
-    Canvas.Draw(0, 0, Bitmap);
   finally
-    Bitmap.Free;
+    lBGRABitmap.Free;
   end;
 
   inherited Paint;
@@ -648,7 +665,6 @@ begin
 
   if FEnabled then
   begin
-
     if Assigned(FOnStartChange) then
       FOnStartChange(Self);
 
@@ -657,7 +673,7 @@ begin
 
     FStartingInternalValue := FInternalValue;
 
-    CalcInternals;
+    CalcInternals(FOldY - FY);
 
     Paint;
 
@@ -686,10 +702,59 @@ begin
 
   if FDialMoving then
   begin
-    CalcInternals;
+    CalcInternals(FOldY - FY);
 
     Paint;
   end
+end;
+
+function TDialControl.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
+  ): Boolean;
+begin
+  if FEnabled then
+  begin
+    if FTimerCounter = 0 then
+    begin
+      if Assigned(FOnStartChange) then
+        FOnStartChange(Self);
+
+      FStartingInternalValue := FInternalValue;
+    end;
+    FTimerCounter := 10;
+
+    Dec(FWheelOffset, 20);
+
+    CalcInternals(FWheelOffset);
+
+    Paint;
+  end;
+
+  Result := inherited DoMouseWheelDown(Shift, MousePos);
+end;
+
+function TDialControl.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
+  ): Boolean;
+begin
+  if FEnabled then
+  begin
+    if FTimerCounter = 0 then
+    begin
+      if Assigned(FOnStartChange) then
+        FOnStartChange(Self);
+
+      FStartingInternalValue := FInternalValue;
+    end;
+
+    FTimerCounter := 10;
+
+    Inc(FWheelOffset, 20);
+
+    CalcInternals(FWheelOffset);
+
+    Paint;
+  end;
+
+  Result := inherited DoMouseWheelUp(Shift, MousePos);
 end;
 
 procedure TDialControl.UpdateControl;
@@ -1219,8 +1284,43 @@ begin
   inherited MouseMove(Shift, X, Y);
 end;
 
+procedure UnloadKnobImages;
+var
+  lIndex: Integer;
+begin
+  for lIndex := 0 to Pred(GImageList.Count) do
+  begin
+    TBGRABitmap(GImageList[lIndex]).Free;
+  end;
+  GImageList.Free;
+end;
+
+procedure LoadKnobImages;
+var
+  lIndex: Integer;
+  lImage: TBGRABitmap;
+  lImageLocation: string;
+begin
+  GImageList := TList.Create;
+
+  for lIndex := 0 to 63 do
+  begin
+    lImageLocation := '../knobs/' + KNOBSTYLE2 + '-' + IntToStr(lIndex) + '.png';
+    if FileExists(lImageLocation) then
+    begin
+      lImage := TBGRABitmap.Create(lImageLocation);
+
+      GImageList.Add(lImage);
+    end;
+  end;
+end;
+
 initialization
-  //{$I hybrid.lrs}
+
+  LoadKnobImages;
+
+finalization
+
+  UnloadKnobImages;
 
 end.
-

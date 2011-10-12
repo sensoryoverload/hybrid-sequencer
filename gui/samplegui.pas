@@ -250,23 +250,17 @@ procedure TSampleView.SetEnableControls(const AValue: Boolean);
 var
   lIndex: Integer;
 begin
-  FEnabled := AValue;
-
-  for lIndex := 0 to Pred(ComponentCount) do
+  if FEnabled <> AValue then
   begin
-    if Components[lIndex] is TDialControl then
+    FEnabled := AValue;
+
+    for lIndex := 0 to Pred(ComponentCount) do
     begin
-      TDialControl(Components[lIndex]).Enabled := FEnabled;
-    end
-    else if Components[lIndex] is TComboBox then
-    begin
-      TComboBox(Components[lIndex]).ReadOnly := not FEnabled;
-    end
-    else if Components[lIndex] is TSpinEdit then
-    begin
-      TSpinEdit(Components[lIndex]).ReadOnly := not FEnabled;
+      if Components[lIndex] is TDialControl then
+      begin
+        TDialControl(Components[lIndex]).Enabled := FEnabled;
+      end;
     end;
-    TControl(Components[lIndex]).Invalidate;
   end;
 end;
 

@@ -25,7 +25,7 @@ uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
  jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils,
  globalconst, SoundTouchObject, contnrs, global_command, ShellCtrls,
- global, math, pattern, sampler;
+ global, math, pattern, sampler, pluginportmapper;
 
 const
   MAX_LATENCY = 20000;

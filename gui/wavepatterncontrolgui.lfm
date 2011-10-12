@@ -22,7 +22,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 7
       Height = 12
       Top = 53
-      Width = 45
+      Width = 46
       Caption = 'Root note'
       ParentColor = False
     end
@@ -30,7 +30,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 7
       Height = 12
       Top = 73
-      Width = 43
+      Width = 44
       Caption = 'Orig. BPM'
       ParentColor = False
     end
@@ -38,7 +38,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 176
       Height = 12
       Top = 26
-      Width = 42
+      Width = 43
       Caption = 'Loop end'
       ParentColor = False
     end
@@ -54,7 +54,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 176
       Height = 12
       Top = 50
-      Width = 53
+      Width = 55
       Caption = 'Loop length'
       ParentColor = False
     end
@@ -93,15 +93,15 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Height = 21
       Top = -3
       Width = 80
-      EditLabel.AnchorSideLeft.Control = edtFilename
       EditLabel.AnchorSideTop.Control = edtFilename
       EditLabel.AnchorSideTop.Side = asrCenter
       EditLabel.AnchorSideRight.Control = edtFilename
       EditLabel.AnchorSideBottom.Control = edtFilename
-      EditLabel.Left = 24
+      EditLabel.AnchorSideBottom.Side = asrBottom
+      EditLabel.Left = 23
       EditLabel.Height = 12
       EditLabel.Top = 1
-      EditLabel.Width = 39
+      EditLabel.Width = 40
       EditLabel.Caption = 'Filename'
       EditLabel.ParentColor = False
       LabelPosition = lpLeft

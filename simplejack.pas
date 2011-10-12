@@ -34,7 +34,7 @@ uses
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
   ringbuffer, optionsgui, wavepatterncontrolgui, midipatterncontrolgui,
-  wavepatterngui, midipatterngui, patterngui;
+  wavepatterngui, midipatterngui, patterngui, imagedial;
 
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
@@ -1116,7 +1116,8 @@ procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
 var
   i, j: Integer;
   lTrack: TTrack;
- // lPatternGUI: TWavePatternGUI;
+  lMidiPatternGUI: TMidiPatternGUI;
+  lWavePatternGUI: TWavePatternGUI;
 begin
 
   try
@@ -1152,16 +1153,29 @@ begin
         TTrackGUI(MainApp.Tracks[i]).vcLevel.LevelRight := lTrack.Level;
         TTrackGUI(MainApp.Tracks[i]).vcLevel.Invalidate;
 
-        for j := 0 to Pred(TTrackGUI(MainApp.Tracks[i]).PatternListGUI.Count) do
+        if Assigned(lTrack.PlayingPattern) then
         begin
-//          lPatternGUI := TWavePatternGUI(TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j]);
-
-//          if Assigned(lPatternGUI) and Assigned(lTrack.PlayingPattern) then
+          for j := 0 to Pred(TTrackGUI(MainApp.Tracks[i]).PatternListGUI.Count) do
           begin
-//            if lPatternGUI.ObjectID = lTrack.PlayingPattern.ObjectID then
+            if TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j] is TMidiPatternGUI then
             begin
-{              lPatternGUI.CursorPosition := lTrack.PlayingPattern.RealCursorPosition;
-              lPatternGUI.CacheIsDirty := True;}
+              lMidiPatternGUI := TMidiPatternGUI(TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j]);
+
+              if lMidiPatternGUI.ObjectID = lTrack.PlayingPattern.ObjectID then
+              begin
+                lMidiPatternGUI.CursorPosition := TMidiPattern(lTrack.PlayingPattern).RealCursorPosition;
+                lMidiPatternGUI.CacheIsDirty := True;
+              end;
+            end
+            else if TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j] is TWavePatternGUI then
+            begin
+              lWavePatternGUI := TWavePatternGUI(TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j]);
+
+              if lWavePatternGUI.ObjectID = lTrack.PlayingPattern.ObjectID then
+              begin
+                lWavePatternGUI.CursorPosition := TWavePattern(lTrack.PlayingPattern).RealCursorPosition;
+                lWavePatternGUI.CacheIsDirty := True;
+              end;
             end;
           end;
         end;
@@ -1172,8 +1186,14 @@ begin
 
     if Assigned(GSettings.SelectedPatternGUI) then
     begin
-      TMidiPatternGUI(GSettings.SelectedPatternGUI).Invalidate;
-      TWavePatternGUI(GSettings.SelectedPatternGUI).Invalidate;
+      if GSettings.SelectedPatternGUI is TMidiPatternGUI then
+      begin
+        FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
+      end
+      else if GSettings.SelectedPatternGUI is TWavePatternGUI then
+      begin
+        FWavePatternControlGUI.WavePatternGUI.Invalidate;
+      end;
     end;
 
     Inc(FLowPriorityInterval);
@@ -1986,7 +2006,7 @@ begin
     RootNode.Data := TreeFolderData;
 
     // Add FileTree
-    AddSubFolders('/home/robbert/dev/hybrid-sequencer/bin/'{PathDelim}, RootNode);
+    AddSubFolders(ExtractFilePath(Application.ExeName), RootNode);
 
     // Add plugins
     lFilterNode := TreeView1.Items.Add(RootNode, 'Plugins');

@@ -58,7 +58,7 @@ object SampleView: TSampleView
       Left = 4
       Height = 12
       Top = 0
-      Width = 25
+      Width = 26
       Caption = 'Osc 1'
       Font.Style = [fsBold]
       ParentColor = False
@@ -77,7 +77,7 @@ object SampleView: TSampleView
       Left = 134
       Height = 12
       Top = 0
-      Width = 54
+      Width = 57
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -87,7 +87,7 @@ object SampleView: TSampleView
       Left = 4
       Height = 12
       Top = 42
-      Width = 25
+      Width = 26
       Caption = 'Osc 2'
       Font.Style = [fsBold]
       ParentColor = False
@@ -128,7 +128,7 @@ object SampleView: TSampleView
       Left = 124
       Height = 12
       Top = 41
-      Width = 54
+      Width = 57
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -151,7 +151,7 @@ object SampleView: TSampleView
       Left = 4
       Height = 12
       Top = 80
-      Width = 25
+      Width = 26
       Caption = 'Osc 3'
       Font.Style = [fsBold]
       ParentColor = False
@@ -192,7 +192,7 @@ object SampleView: TSampleView
       Left = 124
       Height = 12
       Top = 79
-      Width = 54
+      Width = 57
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -300,7 +300,7 @@ object SampleView: TSampleView
       Left = 44
       Height = 12
       Top = -1
-      Width = 54
+      Width = 57
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -345,7 +345,7 @@ object SampleView: TSampleView
       Left = 44
       Height = 12
       Top = 41
-      Width = 54
+      Width = 57
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -522,7 +522,7 @@ object SampleView: TSampleView
       Left = 7
       Height = 12
       Top = 0
-      Width = 25
+      Width = 27
       Caption = 'Filter'
       Font.Style = [fsBold]
       ParentColor = False
@@ -629,7 +629,7 @@ object SampleView: TSampleView
       Left = 40
       Height = 12
       Top = 0
-      Width = 23
+      Width = 25
       Caption = 'LFO1'
       Font.Style = [fsBold]
       ParentColor = False
@@ -639,7 +639,7 @@ object SampleView: TSampleView
       Left = 40
       Height = 12
       Top = 42
-      Width = 23
+      Width = 25
       Caption = 'LFO2'
       Font.Style = [fsBold]
       ParentColor = False
@@ -649,7 +649,7 @@ object SampleView: TSampleView
       Left = 40
       Height = 12
       Top = 80
-      Width = 23
+      Width = 25
       Caption = 'LFO3'
       Font.Style = [fsBold]
       ParentColor = False
@@ -691,7 +691,7 @@ object SampleView: TSampleView
       Left = 7
       Height = 12
       Top = 40
-      Width = 41
+      Width = 42
       Caption = 'Low note'
       ParentColor = False
     end
@@ -707,7 +707,7 @@ object SampleView: TSampleView
       Left = 7
       Height = 12
       Top = 60
-      Width = 42
+      Width = 44
       Caption = 'High note'
       ParentColor = False
     end
@@ -715,7 +715,7 @@ object SampleView: TSampleView
       Left = 7
       Height = 12
       Top = 80
-      Width = 43
+      Width = 44
       Caption = 'Base note'
       ParentColor = False
     end

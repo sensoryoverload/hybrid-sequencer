@@ -76,7 +76,7 @@ LazarusResources.Add('TMainApp','FORMDATA',[
   +'tsPattern'#5'Align'#7#8'alClient'#8'TabIndex'#2#1#8'TabOrder'#2#2#11'TabPos'
   +'ition'#7#6'tpLeft'#0#9'TTabSheet'#7'tsTrack'#7'Caption'#6#5'Track'#0#0#9'TT'
   +'abSheet'#9'tsPattern'#7'Caption'#6#7'Pattern'#0#0#9'TTabSheet'#9'tsMonitor'
-  +#7'Caption'#6#7'Monitor'#12'ClientHeight'#3'F'#1#11'ClientWidth'#3#22#4#0#9
+  +#7'Caption'#6#7'Monitor'#12'ClientHeight'#3'F'#1#11'ClientWidth'#3#21#4#0#9
   +'TSplitter'#9'Splitter5'#4'Left'#2#0#6'Height'#3'F'#1#3'Top'#2#0#5'Width'#2#5
   +#0#0#0#0#9'TMainMenu'#9'MainMenu1'#4'left'#3'+'#2#3'top'#3#131#0#0#9'TMenuIt'
   +'em'#11'ControlMenu'#7'Caption'#6#7'Control'#0#9'TMenuItem'#10'OptionMenu'#7

@@ -1,8 +1,8 @@
 { This is an automatically generated lazarus resource file }
 
 LazarusResources.Add('TfmOptions','FORMDATA',[
-  'TPF0'#10'TfmOptions'#9'fmOptions'#4'Left'#3#243#0#6'Height'#3#241#0#3'Top'#3
-  +#145#0#5'Width'#3'C'#1#7'Caption'#6#7'Options'#12'ClientHeight'#3#241#0#11'C'
+  'TPF0'#10'TfmOptions'#9'fmOptions'#4'Left'#3#249#1#6'Height'#3#241#0#3'Top'#3
+  +#182#0#5'Width'#3'C'#1#7'Caption'#6#7'Options'#12'ClientHeight'#3#241#0#11'C'
   +'lientWidth'#3'C'#1#12'OnCloseQuery'#7#14'FormCloseQuery'#8'OnCreate'#7#10'F'
   +'ormCreate'#9'OnDestroy'#7#11'FormDestroy'#6'OnShow'#7#8'FormShow'#10'LCLVer'
   +'sion'#6#6'0.9.31'#0#6'TPanel'#6'Panel1'#4'Left'#2#0#6'Height'#2'2'#3'Top'#3
@@ -16,13 +16,16 @@ LazarusResources.Add('TfmOptions','FORMDATA',[
   +'upBox'#9'GroupBox1'#4'Left'#2#0#6'Height'#3#191#0#3'Top'#2#0#5'Width'#3'C'#1
   +#5'Align'#7#8'alClient'#7'Caption'#6#9'Locations'#12'ClientHeight'#3#178#0#11
   +'ClientWidth'#3'?'#1#8'TabOrder'#2#1#0#12'TLabeledEdit'#19'edtCurrentSampleM'
-  +'ap'#4'Left'#2'D'#6'Height'#2#21#3'Top'#2#10#5'Width'#3#238#0#7'Anchors'#11#5
-  +'akTop'#6'akLeft'#7'akRight'#0' EditLabel.AnchorSideLeft.Control'#7#19'edtCu'
-  +'rrentSampleMap'#31'EditLabel.AnchorSideTop.Control'#7#19'edtCurrentSampleMa'
-  +'p'#28'EditLabel.AnchorSideTop.Side'#7#9'asrCenter!EditLabel.AnchorSideRight'
-  +'.Control'#7#19'edtCurrentSampleMap"EditLabel.AnchorSideBottom.Control'#7#19
-  +'edtCurrentSampleMap'#14'EditLabel.Left'#2#11#16'EditLabel.Height'#2#12#13'E'
-  +'ditLabel.Top'#2#14#15'EditLabel.Width'#2'6'#17'EditLabel.Caption'#6#10'Samp'
-  +'le map'#21'EditLabel.ParentColor'#8#13'LabelPosition'#7#6'lpLeft'#8'TabOrde'
-  +'r'#2#0#0#0#0#0
+  +'ap'#4'Left'#2'<'#6'Height'#2#21#3'Top'#2#10#5'Width'#3#222#0#7'Anchors'#11#5
+  +'akTop'#6'akLeft'#7'akRight'#0#31'EditLabel.AnchorSideTop.Control'#7#19'edtC'
+  +'urrentSampleMap'#28'EditLabel.AnchorSideTop.Side'#7#9'asrCenter!EditLabel.A'
+  +'nchorSideRight.Control'#7#19'edtCurrentSampleMap"EditLabel.AnchorSideBottom'
+  +'.Control'#7#19'edtCurrentSampleMap'#31'EditLabel.AnchorSideBottom.Side'#7#9
+  +'asrBottom'#14'EditLabel.Left'#2#3#16'EditLabel.Height'#2#12#13'EditLabel.To'
+  +'p'#2#14#15'EditLabel.Width'#2'6'#17'EditLabel.Caption'#6#10'Sample map'#21
+  +'EditLabel.ParentColor'#8#13'LabelPosition'#7#6'lpLeft'#8'TabOrder'#2#0#0#0#7
+  +'TButton'#15'btnSelectFolder'#4'Left'#3#29#1#6'Height'#2#25#3'Top'#2#8#5'Wid'
+  +'th'#2#25#7'Caption'#6#3'...'#7'OnClick'#7#20'btnSelectFolderClick'#8'TabOrd'
+  +'er'#2#1#0#0#0#22'TSelectDirectoryDialog'#22'SelectDirectoryDialog1'#4'left'
+  +#3#227#0#3'top'#2'G'#0#0#0
 ]);

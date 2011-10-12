@@ -27,16 +27,25 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, ExtCtrls, globalconst,
   sampler, samplegui, Controls, Contnrs, global, utils, Graphics, LCLType,
-  StdCtrls, DBGrids, Grids;
+  StdCtrls, DBGrids, Grids, Menus, ActnList;
 
 type
 
   { TBankView }
 
   TBankView = class(TFrame, IObserver)
+    actDeleteSample: TAction;
+    actNewSample: TAction;
+    alSampleSelect: TActionList;
     gbSampleSelect: TGroupBox;
     lbSampleSelector: TListBox;
+    miNewSample: TMenuItem;
+    miDeleteSample: TMenuItem;
+    pmSampleSelect: TPopupMenu;
+    procedure actDeleteSampleExecute(Sender: TObject);
+    procedure actNewSampleExecute(Sender: TObject);
     procedure lbSampleSelectorClick(Sender: TObject);
+    procedure lbSampleSelectorDblClick(Sender: TObject);
     procedure lbSampleSelectorDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure lbSampleSelectorDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -114,8 +123,10 @@ begin
   FSampleListGUI := TObjectList.Create;
 
   FSampleView := TSampleView.Create(nil);
-  FSampleView.Enabled := True;
+  FSampleView.Enabled := False;
+  FSampleView.EnableControls := False;
   FSampleView.Parent := Self;
+
 
   ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 end;
@@ -264,6 +275,33 @@ begin
   end;
 end;
 
+procedure TBankView.actNewSampleExecute(Sender: TObject);
+var
+  lCreateSampleCommand: TCreateSampleCommand;
+begin
+  // Get tbank object
+  lCreateSampleCommand := TCreateSampleCommand.Create(ObjectID);
+  try
+    lCreateSampleCommand.SampleLocation := '';
+
+    GCommandQueue.PushCommand(lCreateSampleCommand);
+  except
+    lCreateSampleCommand.Free;
+  end;
+end;
+
+procedure TBankView.actDeleteSampleExecute(Sender: TObject);
+begin
+  // Delete sample
+end;
+
+procedure TBankView.lbSampleSelectorDblClick(Sender: TObject);
+begin
+  // Create new sample if click on empty slot
+
+  // Delete sample if clicked on sample => dialog Yes/Cancel
+end;
+
 procedure TBankView.sbSamplesDragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 begin
@@ -371,7 +409,6 @@ begin
     if Assigned(lOldSelectedSample) then
     begin
       // Release last sample connection
-      FSampleView.EnableControls := False;
       lOldSelectedSample.Detach(FSampleView);
     end;
   end;
@@ -385,12 +422,18 @@ begin
 
     // Attach new view
     lNewSelectedSample.Attach(FSampleView);
-    FSampleView.EnableControls := True;
-
+    if not FSampleView.Enabled then
+    begin
+      FSampleView.EnableControls := True;
+      FSampleView.Enabled := True;
+    end;
     FOldSelectedSample := lNewSelectedSample.ObjectID;
+  end
+  else
+  begin
+    FSampleView.EnableControls := False;
+    FSampleView.Enabled := False;
   end;
-
-  Invalidate;
 
   DBLog('end TBankView.DoChangeSelectedSample');
 end;

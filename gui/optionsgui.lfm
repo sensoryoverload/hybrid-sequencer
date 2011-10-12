@@ -1,7 +1,7 @@
 object fmOptions: TfmOptions
-  Left = 243
+  Left = 505
   Height = 241
-  Top = 145
+  Top = 182
   Width = 323
   Caption = 'Options'
   ClientHeight = 241
@@ -54,17 +54,17 @@ object fmOptions: TfmOptions
     ClientWidth = 319
     TabOrder = 1
     object edtCurrentSampleMap: TLabeledEdit
-      Left = 68
+      Left = 60
       Height = 21
       Top = 10
-      Width = 238
+      Width = 222
       Anchors = [akTop, akLeft, akRight]
-      EditLabel.AnchorSideLeft.Control = edtCurrentSampleMap
       EditLabel.AnchorSideTop.Control = edtCurrentSampleMap
       EditLabel.AnchorSideTop.Side = asrCenter
       EditLabel.AnchorSideRight.Control = edtCurrentSampleMap
       EditLabel.AnchorSideBottom.Control = edtCurrentSampleMap
-      EditLabel.Left = 11
+      EditLabel.AnchorSideBottom.Side = asrBottom
+      EditLabel.Left = 3
       EditLabel.Height = 12
       EditLabel.Top = 14
       EditLabel.Width = 54
@@ -73,5 +73,18 @@ object fmOptions: TfmOptions
       LabelPosition = lpLeft
       TabOrder = 0
     end
+    object btnSelectFolder: TButton
+      Left = 285
+      Height = 25
+      Top = 8
+      Width = 25
+      Caption = '...'
+      OnClick = btnSelectFolderClick
+      TabOrder = 1
+    end
+  end
+  object SelectDirectoryDialog1: TSelectDirectoryDialog
+    left = 227
+    top = 71
   end
 end

@@ -1626,7 +1626,14 @@ begin
     FSampleBank.BeginUpdate;
 
     lSample := TSample.Create(FSampleBank.ObjectID);
-    lSample.LoadSample(SampleLocation);
+    if SampleLocation <> '' then
+    begin
+      lSample.LoadSample(SampleLocation);
+    end
+    else
+    begin
+      lSample.SampleLocation := '- new -';
+    end;
 
     FOldObjectID := lSample.ObjectID;
 
@@ -2204,7 +2211,7 @@ begin
             // Filter
             if FFilterEngine.Filter.Active then
             begin
-              FFilterEngine.Frequency := FFilterEngine.Filter.Frequency{ * (FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
+              FFilterEngine.Frequency := FFilterEngine.Filter.Frequency * log_approx(FFilterEnvelopeEngine.Level){(FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
               FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
               lSample := FFilterEngine.Process(lSample);
             end;
@@ -2219,7 +2226,7 @@ begin
               lSample := DENORMAL_KILLER;
             end;
 
-            // FX
+            // FX Overdrive/Distortion
           end;
 
           FInternalBuffer[i] := lSample;

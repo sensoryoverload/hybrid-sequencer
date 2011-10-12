@@ -823,8 +823,6 @@ begin
       end;
       FBitmap.Canvas.Line(30, 0, 30, FBitmap.Height);
 
-      FBitmap.Canvas.TextOut(5, 5, Format('Model count: %d View count %d',
-        [FModel.NoteList.Count, FNoteListGUI.Count]));
     end;
     FBitmapIsDirty := False;
   end;
@@ -1240,7 +1238,6 @@ var
   lCreateNoteCommand: TCreateNotesCommand;
   lDeleteNoteCommand: TDeleteNotesCommand;
 begin
-  writeln(Format('NoteListGUI.Count %d', [FNoteListGUI.Count]));
   if Assigned(FDraggedNote) then
   begin
     lDeleteNoteCommand := TDeleteNotesCommand.Create(Self.ObjectID);
@@ -1270,7 +1267,6 @@ begin
     end;
   end;
   inherited DblClick;
-  writeln(Format('NoteListGUI.Count %d', [FNoteListGUI.Count]));
 end;
 
 function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint

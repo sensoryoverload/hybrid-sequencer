@@ -25,13 +25,38 @@ object BankView: TBankView
       Top = 0
       Width = 87
       Align = alClient
+      BorderStyle = bsNone
       ItemHeight = 0
       OnClick = lbSampleSelectorClick
+      OnDblClick = lbSampleSelectorDblClick
       OnDragDrop = lbSampleSelectorDragDrop
       OnDragOver = lbSampleSelectorDragOver
-      ScrollWidth = 85
+      PopupMenu = pmSampleSelect
+      ScrollWidth = 87
       TabOrder = 0
       TopIndex = -1
+    end
+  end
+  object pmSampleSelect: TPopupMenu
+    left = 276
+    top = 55
+    object miNewSample: TMenuItem
+      Action = actNewSample
+    end
+    object miDeleteSample: TMenuItem
+      Action = actDeleteSample
+    end
+  end
+  object alSampleSelect: TActionList
+    left = 369
+    top = 55
+    object actNewSample: TAction
+      Caption = 'New'
+      OnExecute = actNewSampleExecute
+    end
+    object actDeleteSample: TAction
+      Caption = 'Delete'
+      OnExecute = actDeleteSampleExecute
     end
   end
 end

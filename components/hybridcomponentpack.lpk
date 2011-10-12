@@ -7,7 +7,7 @@
     <CompilerOptions>
       <Version Value="10"/>
       <SearchPaths>
-        <OtherUnitFiles Value="bgrabitmap4.6/bgrabitmap"/>
+        <OtherUnitFiles Value="../library"/>
         <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <Parsing>
@@ -15,6 +15,12 @@
           <UseAnsiStrings Value="False"/>
         </SyntaxOptions>
       </Parsing>
+      <Linking>
+        <Debugging>
+          <GenerateDebugInfo Value="True"/>
+          <DebugInfoType Value="dsAuto"/>
+        </Debugging>
+      </Linking>
       <Other>
         <CompilerMessages>
           <UseMsgFile Value="True"/>

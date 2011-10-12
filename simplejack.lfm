@@ -266,7 +266,7 @@ object MainApp: TMainApp
     object tsMonitor: TTabSheet
       Caption = 'Monitor'
       ClientHeight = 326
-      ClientWidth = 1046
+      ClientWidth = 1045
       object Splitter5: TSplitter
         Left = 0
         Height = 326
