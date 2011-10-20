@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, LCLIntf, LMessages, Controls, Forms, jacktypes, ContNrs,
-  typinfo, variants, Laz_XMLStreaming, DOM, XMLWrite, XMLRead;
+  typinfo, variants, {Laz_XMLStreaming, }DOM, XMLWrite, XMLRead;
 
 const
   MAX_LATENCY = 20000;

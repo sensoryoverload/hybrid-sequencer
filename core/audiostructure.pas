@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, globalconst, ContNrs, sampler, track, global_command,
-  utils, global, midi;
+  utils, global, midi, midicontrolmap;
 
 type
   TAudioStructure = class;
@@ -117,6 +117,7 @@ type
   private
     FTrack: TObjectList;
     FActive: Boolean;
+    FMidiMapping: TMidiControlMap;
     //FModelThread: TModelThread;
 
     FMainSyncCounter: Integer;

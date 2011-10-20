@@ -262,7 +262,7 @@ begin
   while FCommandQueue.Count > 0 do
   begin
     try
-      lCommand:= TCommand(FCommandQueue.Pop);
+      lCommand := TCommand(FCommandQueue.Pop);
       lCommand.Initialize;
       lCommand.Execute;
 

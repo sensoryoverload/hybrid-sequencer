@@ -28,13 +28,12 @@ uses
   StdCtrls, jack, midiport, jacktypes, ExtCtrls, Math, sndfile, wave, Spin,
   ContNrs, transport, FileCtrl, PairSplitter, Utils, ComCtrls, GlobalConst,
   Menus, ActnList, dialcontrol, bpm, SoundTouchObject,
-  Laz_XMLStreaming, Laz_DOM, Laz_XMLCfg,
   TypInfo, FileUtil, global_command, LCLType, LCLIntf,
   ShellCtrls, Grids, TrackGUI, wavegui, global, track, pattern,
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
   ringbuffer, optionsgui, wavepatterncontrolgui, midipatterncontrolgui,
-  wavepatterngui, midipatterngui, patterngui, imagedial;
+  wavepatterngui, midipatterngui, patterngui;
 
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
@@ -514,7 +513,6 @@ begin
     output_right[i] := 0;
 
     // Detect MIDI-events per sample
-    // Implement Midi-mapping right here!
 		if (in_event.time = i) and (event_index < event_count) then
     begin
 			if in_event.buffer^ and $f0 = $90 then
@@ -531,8 +529,6 @@ begin
       end
 			else if in_event.buffer^ and $f0 = $F8 then
       begin
-				// pgPattern clock
-
         // Calculate average bpm
         GAudioStruct.BPM := (GAudioStruct.BPM + ((samplerate / 24) / (lastsyncposition - sync_counter)) * 60) / 2;
       end
@@ -553,12 +549,8 @@ begin
         Push midi messages directly to the midithread to handle recording of notes,
         midi controller mapping, etc
       }
-      if in_event.buffer^ and $f0 = $B0 then
-      begin
-        //GLogger.PushMessage(Format('midi at: %d', [in_event.time]));
-        MIDIThread.PushMidiMessage(in_event);
-      end;
-      
+      MIDIThread.PushMidiMessage(in_event);
+
       if note <> 0 then
         last_note := note;
         
@@ -2175,6 +2167,10 @@ begin
   while jack_ringbuffer_read_space(FRingBuffer) > 0 do
   begin
     writeln(Format('MidiEvent.Buffer %d', [PopMidiMessage.Time]));
+
+    // 1. Extract Midi event
+    PopMidiMessage.;
+    // 2.
   end;
 end;
 
