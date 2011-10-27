@@ -3,7 +3,7 @@
 LazarusResources.Add('TMainApp','FORMDATA',[
   'TPF0'#8'TMainApp'#7'MainApp'#4'Left'#3#183#0#6'Height'#3#167#2#3'Top'#2'_'#5
   +'Width'#3'G'#4#13'ActiveControl'#7#6'pnlTop'#14'AllowDropFiles'#9#7'Caption'
-  +#6#11'Hybrid 2009'#12'ClientHeight'#3#148#2#11'ClientWidth'#3'G'#4#11'Font.H'
+  +#6#11'Hybrid 2009'#12'ClientHeight'#3#167#2#11'ClientWidth'#3'G'#4#11'Font.H'
   +'eight'#2#7#10'KeyPreview'#9#4'Menu'#7#9'MainMenu1'#8'OnCreate'#7#10'FormCre'
   +'ate'#9'OnDestroy'#7#11'FormDestroy'#11'OnDropFiles'#7#13'FormDropFiles'#9'O'
   +'nKeyDown'#7#11'FormKeyDown'#10'OnKeyPress'#7#12'FormKeyPress'#7'OnKeyUp'#7#9
@@ -72,11 +72,11 @@ LazarusResources.Add('TMainApp','FORMDATA',[
   +#14'BottomSplitter'#6'Cursor'#7#8'crVSplit'#4'Left'#2#0#6'Height'#2#9#3'Top'
   +#3'T'#1#5'Width'#3'G'#4#5'Align'#7#5'alTop'#10'OnDblClick'#7#22'BottomSplitt'
   +'erDblClick'#12'ResizeAnchor'#7#5'akTop'#0#0#12'TPageControl'#9'pcPattern'#4
-  +'Left'#2#0#6'Height'#3'7'#1#3'Top'#3']'#1#5'Width'#3'G'#4#10'ActivePage'#7#9
+  +'Left'#2#0#6'Height'#3'J'#1#3'Top'#3']'#1#5'Width'#3'G'#4#10'ActivePage'#7#9
   +'tsPattern'#5'Align'#7#8'alClient'#8'TabIndex'#2#1#8'TabOrder'#2#2#11'TabPos'
   +'ition'#7#6'tpLeft'#0#9'TTabSheet'#7'tsTrack'#7'Caption'#6#5'Track'#0#0#9'TT'
   +'abSheet'#9'tsPattern'#7'Caption'#6#7'Pattern'#0#0#9'TTabSheet'#9'tsMonitor'
-  +#7'Caption'#6#7'Monitor'#12'ClientHeight'#3'3'#1#11'ClientWidth'#3#19#4#0#9
+  +#7'Caption'#6#7'Monitor'#12'ClientHeight'#3'F'#1#11'ClientWidth'#3#19#4#0#9
   +'TSplitter'#9'Splitter5'#4'Left'#2#0#6'Height'#3'F'#1#3'Top'#2#0#5'Width'#2#5
   +#0#0#0#0#9'TMainMenu'#9'MainMenu1'#4'left'#3'+'#2#3'top'#3#131#0#0#9'TMenuIt'
   +'em'#11'ControlMenu'#7'Caption'#6#7'Control'#0#9'TMenuItem'#10'OptionMenu'#7

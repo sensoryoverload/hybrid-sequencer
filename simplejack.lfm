@@ -6,7 +6,7 @@ object MainApp: TMainApp
   ActiveControl = pnlTop
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 660
+  ClientHeight = 679
   ClientWidth = 1095
   Font.Height = 7
   KeyPreview = True
@@ -249,7 +249,7 @@ object MainApp: TMainApp
   end
   object pcPattern: TPageControl
     Left = 0
-    Height = 311
+    Height = 330
     Top = 349
     Width = 1095
     ActivePage = tsPattern
@@ -265,7 +265,7 @@ object MainApp: TMainApp
     end
     object tsMonitor: TTabSheet
       Caption = 'Monitor'
-      ClientHeight = 307
+      ClientHeight = 326
       ClientWidth = 1043
       object Splitter5: TSplitter
         Left = 0

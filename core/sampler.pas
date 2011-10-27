@@ -287,6 +287,8 @@ type
     FLFO3: TOscillator;
 
     FKey: Integer;
+    FLowNote: Integer;
+    FHighNote: Integer;
     FVoiceCount: Integer; // The number of voice instances there should be
     FSelected: Boolean;
 
@@ -337,12 +339,16 @@ type
     property GlobalLevel: Single read FGlobalLevel write FGlobalLevel;
 
     property Key: Integer read FKey write FKey;
+    property LowNote: Integer read FLowNote write FLowNote;
+    property HighNote: Integer read FHighNote write FHighNote;
     property VoiceCount: Integer read FVoiceCount write FVoiceCount;
     property Selected: Boolean read FSelected write FSelected;
 
     property SampleName: string read FSampleName write FSampleName;
     property SampleLocation: string read FSampleLocation write FSampleLocation;
   end;
+
+  TSampleBankEngine = class;
 
   { TSampleBank }
 
@@ -353,6 +359,7 @@ type
     FSampleList: TObjectList; // type TSampleEngine
     FSelected: Boolean;
     FSelectedSample: TSample;
+    FEngine: TSampleBankEngine;
     procedure AssignBank(Source: TSampleBank);
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
@@ -361,6 +368,7 @@ type
     procedure Finalize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
     procedure Assign(Source:TPersistent); override;
+    property Engine: TSampleBankEngine read FEngine write FEngine;
     property Selected: Boolean read FSelected write FSelected;
     property SelectedSample: TSample read FSelectedSample write FSelectedSample;
   published
@@ -439,7 +447,10 @@ type
     spLFO3_Rate,
     spLFO3_Waveform,
 
-    spGlobal_Level
+    spGlobal_Level,
+    spLow_Note,
+    spHigh_Note,
+    spBase_Note
   );
 
   { TSampleParameterCommand }
@@ -603,6 +614,7 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+    procedure RefreshEngine;
 
     property SampleBank: TSampleBank read FSampleBank write SetSampleBank;
   end;
@@ -840,7 +852,21 @@ begin
       FOldValue := FSample.GlobalLevel;
       FSample.GlobalLevel := FValue;
     end;
-
+    spLow_Note:
+    begin
+      FOldValue := FSample.LowNote;
+      FSample.LowNote := FValue;
+    end;
+    spHigh_Note:
+    begin
+      FOldValue := FSample.HighNote;
+      FSample.HighNote := FValue;
+    end;
+    spBase_Note:
+    begin
+      FOldValue := FSample.Key;
+      FSample.Key := FValue;
+    end;
   end;
 
   FSample.EndUpdate;
@@ -1028,6 +1054,18 @@ begin
     spGlobal_Level:
     begin
       FSample.GlobalLevel := FOldValue;
+    end;
+    spLow_Note:
+    begin
+      FSample.LowNote := FOldValue;
+    end;
+    spHigh_Note:
+    begin
+      FSample.HighNote := FOldValue;
+    end;
+    spBase_Note:
+    begin
+      FSample.Key := FOldValue;
     end;
   end;
 
@@ -1453,6 +1491,10 @@ begin
   FLFO3.Initialize;
   FLFO3.Pitch := 0;
 
+  // Globals
+  FLowNote := 0;
+  FHighNote := 127;
+  FKey := 48;
 end;
 
 procedure TSample.Finalize;
@@ -1618,6 +1660,7 @@ end;
 procedure TCreateSampleCommand.DoExecute;
 var
   lSample: TSample;
+  lSampleBankEngine: TSampleBankEngine;
 begin
   DBLog('start TCreateSampleCommand.DoExecute');
 
@@ -1634,10 +1677,13 @@ begin
     begin
       lSample.SampleLocation := '- new -';
     end;
+    lSample.Initialize;
 
     FOldObjectID := lSample.ObjectID;
 
     FSampleBank.SampleList.Add(lSample);
+
+    FSampleBank.Engine.RefreshEngine;
 
     DBLog('Add sample to samplelist: %s', lSample.ObjectID);
 
@@ -1946,22 +1992,25 @@ begin
         {
           Are there any empty voice slots to receive NOTE ON's?
         }
-        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+        if (lMidiEvent.DataValue1 >= FSample.Lownote) and
+          (lMidiEvent.DataValue1 <= FSample.HighNote) then
         begin
-          lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+          for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+          begin
+            lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
 
-          if lVoice.Running and (lMidiEvent.DataValue1 = lVoice.Note) then
-          begin
-            // Retrigger note when te same note value
-            lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length);
-            break;
-          end
-          else
-          if not lVoice.Running then
-          begin
-            // Start note at location 'RelativeOffset'
-            lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length);
-            break;
+            if lVoice.Running and (lMidiEvent.DataValue1 = lVoice.Note) then
+            begin
+              // Retrigger note when te same note value
+              lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length);
+              break;
+            end
+            else if not lVoice.Running then
+            begin
+              // Start note at location 'RelativeOffset'
+              lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length);
+              break;
+            end;
           end;
         end;
       end
@@ -2110,143 +2159,153 @@ var
   i: Integer;
   lSample, lSampleA, lSampleB, lSampleC: single;
   lChannel: TChannel;
+  lHasSample: Boolean;
 begin
   try
-  if Assigned(FSample.Wave.ChannelList) then
-  begin
-    if FSample.Wave.ChannelCount > 0 then
+    lHasSample := False;
+
+    if Assigned(FSample.Wave) then
     begin
-      // Hmm still in MONO (TODO)
-      lChannel := TChannel(FSample.Wave.ChannelList[0]);
-
-      if Assigned(lChannel) then
+      if Assigned(FSample.Wave.ChannelList) then
       begin
-
-        for i := FNoteOnOffset to Pred(AFrames) do
+        if FSample.Wave.ChannelCount > 0 then
         begin
-          if FLength <= 0 then
+          // Hmm still in MONO (TODO)
+          lChannel := TChannel(FSample.Wave.ChannelList[0]);
+          if Assigned(lChannel) then
           begin
-            NoteOff;
+            lHasSample := True;
           end;
-
-          // Calculate synth voice here
-          if (Round(FSamplePosition) >= 0) and (Round(FSamplePosition) < FSample.Wave.Frames) then
-          begin
-            FInternalBuffer[i] := TChannel(FSample.Wave.ChannelList[0]).Buffer[Round(FSamplePosition)];
-          end
-          else
-          begin
-            FInternalBuffer[i] := 0;
-          end;
-
-          //lSample := FInternalBuffer[i];
-          lSample := 0;
-
-          // ADSR Amplifier
-          FAmpEnvelopeEngine.Process;
-
-          if FAmpEnvelopeEngine.State = esEnd then
-          begin
-            FRunning := False;
-          end
-          else
-          begin
-
-            // Waveform input in Envelope follower
-//            FEnvelopeFollower.Process(FInternalBuffer[i]);
-
-            // LFO's
-            if FLFO1Engine.Oscillator.Active and (FLFO1Engine.Oscillator.Level > DENORMAL_KILLER) then
-            begin
-              FLFO1Engine.Process;
-            end;
-            if FLFO2Engine.Oscillator.Active and (FLFO2Engine.Oscillator.Level > DENORMAL_KILLER) then
-            begin
-              FLFO2Engine.Process;
-            end;
-            if FLFO3Engine.Oscillator.Active and (FLFO3Engine.Oscillator.Level > DENORMAL_KILLER) then
-            begin
-              FLFO3Engine.Process;
-            end;
-
-            // ADSR Pitch
-            FPitchEnvelopeEngine.Process;
-            FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;
-
-            // Pitch
-
-            // Oscillatorbank
-            if FOsc1Engine.Oscillator.Active and (FOsc1Engine.Oscillator.Level > DENORMAL_KILLER) then
-            begin
-              lSampleA := FOsc1Engine.Process * log_approx(FOsc1Engine.Oscillator.Level);
-            end
-            else
-            begin
-              lSampleA := DENORMAL_KILLER;
-            end;
-            if FOsc2Engine.Oscillator.Active and (FOsc2Engine.Oscillator.Level > DENORMAL_KILLER) then
-            begin
-              lSampleB := FOsc2Engine.Process * log_approx(FOsc2Engine.Oscillator.Level);
-            end
-            else
-            begin
-              lSampleB := DENORMAL_KILLER;
-            end;
-            if FOsc3Engine.Oscillator.Active and (FOsc3Engine.Oscillator.Level > DENORMAL_KILLER) then
-            begin
-              lSampleC := FOsc3Engine.Process * log_approx(FOsc3Engine.Oscillator.Level);
-            end
-            else
-            begin
-              lSampleC := DENORMAL_KILLER;
-            end;
-            {lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
-            lSample := lSample  + lSampleC - (lSample  * lSampleC);}
-
-            lSample := lSample + lSampleA + lSampleB + lSampleC;
-
-            // ADSR Filter
-            FFilterEnvelopeEngine.Process;
-
-            // Filter
-            if FFilterEngine.Filter.Active then
-            begin
-              FFilterEngine.Frequency := FFilterEngine.Filter.Frequency * log_approx(FFilterEnvelopeEngine.Level){(FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
-              FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
-              lSample := FFilterEngine.Process(lSample);
-            end;
-
-            // Amplifier
-            if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
-            begin
-              lSample := lSample * log_approx(FAmpEnvelopeEngine.Level);
-            end
-            else
-            begin
-              lSample := DENORMAL_KILLER;
-            end;
-
-            // FX Overdrive/Distortion
-          end;
-
-          FInternalBuffer[i] := lSample;
-
-          {TODO PitchSemiTone should be replaced with a pitchscale factor}
-          if (FSamplePosition + FSample.PitchScaleFactor) < FSample.Wave.Frames then
-          begin
-            FSamplePosition := FSamplePosition + FSample.PitchScaleFactor;
-          end;
-
-          // Virtual note of when FLength <= 0
-          FLength := FLength - GAudioStruct.BPMAdder;
         end;
-
-        // Next iteration, start from the beginning
-        FNoteOnOffset := 0;
       end;
     end;
-  end;
 
+    for i := FNoteOnOffset to Pred(AFrames) do
+    begin
+      if FLength <= 0 then
+      begin
+        NoteOff;
+      end;
+
+      // Calculate synth voice here
+      if lHasSample then
+      begin
+        if (Round(FSamplePosition) >= 0) and (Round(FSamplePosition) < FSample.Wave.Frames) then
+        begin
+          FInternalBuffer[i] := TChannel(FSample.Wave.ChannelList[0]).Buffer[Round(FSamplePosition)];
+        end
+        else
+        begin
+          FInternalBuffer[i] := 0;
+        end;
+      end;
+      //lSample := FInternalBuffer[i];
+      lSample := 0;
+
+      // ADSR Amplifier
+      FAmpEnvelopeEngine.Process;
+
+      if FAmpEnvelopeEngine.State = esEnd then
+      begin
+        FRunning := False;
+      end
+      else
+      begin
+
+        // Waveform input in Envelope follower
+//            FEnvelopeFollower.Process(FInternalBuffer[i]);
+
+        // LFO's
+        if FLFO1Engine.Oscillator.Active and (FLFO1Engine.Oscillator.Level > DENORMAL_KILLER) then
+        begin
+          FLFO1Engine.Process;
+        end;
+        if FLFO2Engine.Oscillator.Active and (FLFO2Engine.Oscillator.Level > DENORMAL_KILLER) then
+        begin
+          FLFO2Engine.Process;
+        end;
+        if FLFO3Engine.Oscillator.Active and (FLFO3Engine.Oscillator.Level > DENORMAL_KILLER) then
+        begin
+          FLFO3Engine.Process;
+        end;
+
+        // ADSR Pitch
+        FPitchEnvelopeEngine.Process;
+        FPitchEnvelopeLevel := FPitchEnvelopeEngine.Level;
+
+        // Pitch
+
+        // Oscillatorbank
+        if FOsc1Engine.Oscillator.Active and (FOsc1Engine.Oscillator.Level > DENORMAL_KILLER) then
+        begin
+          lSampleA := FOsc1Engine.Process * log_approx(FOsc1Engine.Oscillator.Level);
+        end
+        else
+        begin
+          lSampleA := DENORMAL_KILLER;
+        end;
+        if FOsc2Engine.Oscillator.Active and (FOsc2Engine.Oscillator.Level > DENORMAL_KILLER) then
+        begin
+          lSampleB := FOsc2Engine.Process * log_approx(FOsc2Engine.Oscillator.Level);
+        end
+        else
+        begin
+          lSampleB := DENORMAL_KILLER;
+        end;
+        if FOsc3Engine.Oscillator.Active and (FOsc3Engine.Oscillator.Level > DENORMAL_KILLER) then
+        begin
+          lSampleC := FOsc3Engine.Process * log_approx(FOsc3Engine.Oscillator.Level);
+        end
+        else
+        begin
+          lSampleC := DENORMAL_KILLER;
+        end;
+        {lSample := lSampleA + lSampleB - (lSampleA * lSampleB);
+        lSample := lSample  + lSampleC - (lSample  * lSampleC);}
+
+        lSample := lSample + lSampleA + lSampleB + lSampleC;
+
+        // ADSR Filter
+        FFilterEnvelopeEngine.Process;
+
+        // Filter
+        if FFilterEngine.Filter.Active then
+        begin
+          FFilterEngine.Frequency := FFilterEngine.Filter.Frequency * log_approx(FFilterEnvelopeEngine.Level){(FFilterEngine.Modifier^ * FFilterEngine.ModAmount)};
+          FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
+          lSample := FFilterEngine.Process(lSample);
+        end;
+
+        // Amplifier
+        if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
+        begin
+          lSample := lSample * log_approx(FAmpEnvelopeEngine.Level);
+        end
+        else
+        begin
+          lSample := DENORMAL_KILLER;
+        end;
+
+        // FX Overdrive/Distortion
+      end;
+
+      FInternalBuffer[i] := lSample;
+
+      {TODO PitchSemiTone should be replaced with a pitchscale factor}
+      if lHasSample then
+      begin
+        if (FSamplePosition + FSample.PitchScaleFactor) < FSample.Wave.Frames then
+        begin
+          FSamplePosition := FSamplePosition + FSample.PitchScaleFactor;
+        end;
+      end;
+
+      // Virtual note of when FLength <= 0
+      FLength := FLength - GAudioStruct.BPMAdder;
+    end;
+
+    // Next iteration, start from the beginning
+    FNoteOnOffset := 0;
   finally
   end;
 end;
@@ -2309,6 +2368,59 @@ end;
 
 { TSampleBankEngine }
 
+procedure TSampleBankEngine.RefreshEngine;
+var
+  lSampleEngineIndex: Integer;
+  lSampleIndex: Integer;
+  lSampleEngine: TSampleEngine;
+  lFound: Boolean;
+begin
+  // Destroy running sample engines not in samplebank anymore
+  for lSampleEngineIndex := Pred(FSampleEngineList.Count) downto 0 do
+  begin
+    lFound := False;
+
+    for lSampleIndex := 0 to Pred(FSampleBank.SampleList.Count) do
+    begin
+      if TSample(FSampleBank.SampleList[lSampleIndex]).ObjectID =
+        TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Sample.ObjectID then
+      begin
+        lFound := True;
+        break;
+      end;
+    end;
+
+    if not lFound then
+    begin
+      FSampleEngineList[lSampleEngineIndex].Free;
+    end;
+  end;
+
+  // Now create the sample-engines for new samples
+  for lSampleIndex := 0 to Pred(FSampleBank.SampleList.Count) do
+  begin
+    lFound := False;
+
+    for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
+    begin
+      if TSample(FSampleBank.SampleList[lSampleIndex]).ObjectID =
+        TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Sample.ObjectID then
+      begin
+        lFound := True;
+        break;
+      end;
+    end;
+
+    if not lFound then
+    begin
+      lSampleEngine := TSampleEngine.Create(Frames);
+      lSampleEngine.Sample := TSample(FSampleBank.SampleList[lSampleIndex]);
+
+      FSampleEngineList.Add(lSampleEngine);
+    end;
+  end;
+end;
+
 procedure TSampleBankEngine.SetSampleBank(const AValue: TSampleBank);
 var
   lSampleEngineIndex: Integer;
@@ -2316,6 +2428,10 @@ var
 begin
   FSampleBank := AValue;
 
+  FSampleBank.Engine := Self;
+
+  RefreshEngine;
+  {
   // Destroy running sample engines
   for lSampleEngineIndex := Pred(FSampleEngineList.Count) downto 0 do
   begin
@@ -2329,7 +2445,7 @@ begin
     lSampleEngine.Sample := TSample(FSampleBank.SampleList[lSampleEngineIndex]);
 
     FSampleEngineList.Add(lSampleEngine);
-  end;
+  end; }
 end;
 
 constructor TSampleBankEngine.Create(AFrames: Integer);

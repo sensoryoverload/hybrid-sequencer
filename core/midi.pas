@@ -380,10 +380,6 @@ procedure TMidiPattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCou
 var
   i: Integer;
 begin
-  {  for i := 0 to Pred(AFrames) do
-  begin
-    FCursorAdder := FCursorAdder + FBPMScale;
-  end;     }
 
   if (CursorAdder >= LoopEnd) or SyncQuantize then
   begin
@@ -405,7 +401,7 @@ begin
       while CursorAdder >= MidiDataCursor.Location do
       begin
         // Put event in buffer
-        MidiBuffer.WriteEvent(MidiDataCursor, i);  // TODO i ? uninitialized
+        MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
 
         if Assigned(MidiDataCursor.Next) then
         begin

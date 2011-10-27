@@ -16,7 +16,7 @@ object SampleView: TSampleView
     Width = 273
     Align = alLeft
     Caption = 'Oscillators'
-    ClientHeight = 121
+    ClientHeight = 119
     ClientWidth = 269
     TabOrder = 0
     object dcOsc1Pitch: TDialControl
@@ -47,7 +47,7 @@ object SampleView: TSampleView
     end
     object cbOsc1WaveSelector: TComboBox
       Left = 3
-      Height = 25
+      Height = 27
       Top = 12
       Width = 75
       ItemHeight = 0
@@ -56,9 +56,9 @@ object SampleView: TSampleView
     end
     object lblOSC1: TLabel
       Left = 4
-      Height = 12
+      Height = 14
       Top = 0
-      Width = 26
+      Width = 28
       Caption = 'Osc 1'
       Font.Style = [fsBold]
       ParentColor = False
@@ -66,7 +66,7 @@ object SampleView: TSampleView
     end
     object cbOsc1ModSource: TComboBox
       Left = 121
-      Height = 25
+      Height = 27
       Top = 12
       Width = 72
       ItemHeight = 0
@@ -75,9 +75,9 @@ object SampleView: TSampleView
     end
     object lblOSC1ModAmount: TLabel
       Left = 134
-      Height = 12
+      Height = 14
       Top = 0
-      Width = 57
+      Width = 60
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -85,9 +85,9 @@ object SampleView: TSampleView
     end
     object lblOSC2: TLabel
       Left = 4
-      Height = 12
+      Height = 14
       Top = 42
-      Width = 26
+      Width = 28
       Caption = 'Osc 2'
       Font.Style = [fsBold]
       ParentColor = False
@@ -95,7 +95,7 @@ object SampleView: TSampleView
     end
     object cbOsc2WaveSelector: TComboBox
       Left = 3
-      Height = 25
+      Height = 27
       Top = 54
       Width = 75
       ItemHeight = 0
@@ -117,7 +117,7 @@ object SampleView: TSampleView
     end
     object cbOsc2ModSource: TComboBox
       Left = 121
-      Height = 25
+      Height = 27
       Top = 54
       Width = 72
       ItemHeight = 0
@@ -126,9 +126,9 @@ object SampleView: TSampleView
     end
     object lblOSC2ModAmount: TLabel
       Left = 124
-      Height = 12
+      Height = 14
       Top = 41
-      Width = 57
+      Width = 60
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -149,9 +149,9 @@ object SampleView: TSampleView
     end
     object lblOSC3: TLabel
       Left = 4
-      Height = 12
+      Height = 14
       Top = 80
-      Width = 26
+      Width = 28
       Caption = 'Osc 3'
       Font.Style = [fsBold]
       ParentColor = False
@@ -159,7 +159,7 @@ object SampleView: TSampleView
     end
     object cbOsc3WaveSelector: TComboBox
       Left = 3
-      Height = 25
+      Height = 27
       Top = 92
       Width = 75
       ItemHeight = 0
@@ -181,7 +181,7 @@ object SampleView: TSampleView
     end
     object cbOsc3ModSource: TComboBox
       Left = 121
-      Height = 25
+      Height = 27
       Top = 92
       Width = 72
       ItemHeight = 0
@@ -190,9 +190,9 @@ object SampleView: TSampleView
     end
     object lblOSC3ModAmount: TLabel
       Left = 124
-      Height = 12
+      Height = 14
       Top = 79
-      Width = 57
+      Width = 60
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -258,7 +258,7 @@ object SampleView: TSampleView
     Width = 154
     Align = alLeft
     Caption = 'Filter'
-    ClientHeight = 121
+    ClientHeight = 119
     ClientWidth = 150
     TabOrder = 1
     object dcLowpassCutoff: TDialControl
@@ -289,7 +289,7 @@ object SampleView: TSampleView
     end
     object cbCutoffModSource: TComboBox
       Left = 41
-      Height = 25
+      Height = 27
       Top = 12
       Width = 72
       ItemHeight = 0
@@ -298,9 +298,9 @@ object SampleView: TSampleView
     end
     object lblOSC2ModAmount1: TLabel
       Left = 44
-      Height = 12
+      Height = 14
       Top = -1
-      Width = 57
+      Width = 60
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -321,7 +321,7 @@ object SampleView: TSampleView
     end
     object cbResoModSource: TComboBox
       Left = 41
-      Height = 25
+      Height = 27
       Top = 54
       Width = 72
       ItemHeight = 0
@@ -343,9 +343,9 @@ object SampleView: TSampleView
     end
     object lblOSC2ModAmount2: TLabel
       Left = 44
-      Height = 12
+      Height = 14
       Top = 41
-      Width = 57
+      Width = 60
       Caption = 'Mod Source'
       Font.Style = [fsBold]
       ParentColor = False
@@ -359,7 +359,7 @@ object SampleView: TSampleView
     Width = 185
     Align = alLeft
     Caption = 'Envelopes'
-    ClientHeight = 121
+    ClientHeight = 119
     ClientWidth = 181
     TabOrder = 2
     object dcFilterEnvelopeAttack: TDialControl
@@ -520,9 +520,9 @@ object SampleView: TSampleView
     end
     object lblFilter: TLabel
       Left = 7
-      Height = 12
+      Height = 14
       Top = 0
-      Width = 27
+      Width = 29
       Caption = 'Filter'
       Font.Style = [fsBold]
       ParentColor = False
@@ -530,9 +530,9 @@ object SampleView: TSampleView
     end
     object lblAmp: TLabel
       Left = 6
-      Height = 12
+      Height = 14
       Top = 42
-      Width = 22
+      Width = 24
       Caption = 'Amp'
       Font.Style = [fsBold]
       ParentColor = False
@@ -540,9 +540,9 @@ object SampleView: TSampleView
     end
     object lblPitch: TLabel
       Left = 7
-      Height = 12
+      Height = 14
       Top = 80
-      Width = 25
+      Width = 27
       Caption = 'Pitch'
       Font.Style = [fsBold]
       ParentColor = False
@@ -556,7 +556,7 @@ object SampleView: TSampleView
     Width = 111
     Align = alLeft
     Caption = 'LFO'
-    ClientHeight = 121
+    ClientHeight = 119
     ClientWidth = 107
     TabOrder = 3
     object dcLFO1Rate: TDialControl
@@ -600,7 +600,7 @@ object SampleView: TSampleView
     end
     object cbLFO1WaveSelector: TComboBox
       Left = 38
-      Height = 25
+      Height = 27
       Top = 12
       Width = 65
       ItemHeight = 0
@@ -609,7 +609,7 @@ object SampleView: TSampleView
     end
     object cbLFO2WaveSelector: TComboBox
       Left = 38
-      Height = 25
+      Height = 27
       Top = 54
       Width = 65
       ItemHeight = 0
@@ -618,7 +618,7 @@ object SampleView: TSampleView
     end
     object cbLFO3WaveSelector: TComboBox
       Left = 38
-      Height = 25
+      Height = 27
       Top = 92
       Width = 65
       ItemHeight = 0
@@ -627,9 +627,9 @@ object SampleView: TSampleView
     end
     object lblLFO1: TLabel
       Left = 40
-      Height = 12
+      Height = 14
       Top = 0
-      Width = 25
+      Width = 27
       Caption = 'LFO1'
       Font.Style = [fsBold]
       ParentColor = False
@@ -637,9 +637,9 @@ object SampleView: TSampleView
     end
     object lblLFO2: TLabel
       Left = 40
-      Height = 12
+      Height = 14
       Top = 42
-      Width = 25
+      Width = 27
       Caption = 'LFO2'
       Font.Style = [fsBold]
       ParentColor = False
@@ -647,9 +647,9 @@ object SampleView: TSampleView
     end
     object lblLFO3: TLabel
       Left = 40
-      Height = 12
+      Height = 14
       Top = 80
-      Width = 25
+      Width = 27
       Caption = 'LFO3'
       Font.Style = [fsBold]
       ParentColor = False
@@ -663,7 +663,7 @@ object SampleView: TSampleView
     Width = 232
     Align = alClient
     Caption = 'Global'
-    ClientHeight = 121
+    ClientHeight = 119
     ClientWidth = 228
     TabOrder = 4
     object dcGlobalLevel: TDialControl
@@ -679,52 +679,55 @@ object SampleView: TSampleView
       ValueVisible = False
       Color = clNone
     end
-    object spnLowNote: TSpinEdit
-      Left = 53
-      Height = 21
-      Top = 35
-      Width = 50
-      MaxValue = 127
-      TabOrder = 1
-    end
     object lblLowNote: TLabel
-      Left = 7
-      Height = 12
-      Top = 40
-      Width = 42
+      Left = 51
+      Height = 14
+      Top = -2
+      Width = 45
       Caption = 'Low note'
       ParentColor = False
     end
-    object spnHighNote: TSpinEdit
-      Left = 53
-      Height = 21
-      Top = 55
-      Width = 50
-      MaxValue = 127
-      TabOrder = 2
-    end
     object lblHighNote: TLabel
-      Left = 7
-      Height = 12
-      Top = 60
-      Width = 44
+      Left = 53
+      Height = 14
+      Top = 40
+      Width = 48
       Caption = 'High note'
       ParentColor = False
     end
     object lblBaseNote: TLabel
-      Left = 7
-      Height = 12
-      Top = 80
-      Width = 44
+      Left = 127
+      Height = 14
+      Top = -1
+      Width = 49
       Caption = 'Base note'
       ParentColor = False
     end
-    object spnBaseNote: TSpinEdit
-      Left = 53
-      Height = 21
-      Top = 75
-      Width = 50
-      MaxValue = 127
+    object cbLowNote: TComboBox
+      Left = 51
+      Height = 27
+      Top = 12
+      Width = 55
+      ItemHeight = 0
+      Style = csDropDownList
+      TabOrder = 1
+    end
+    object cbHighNote: TComboBox
+      Left = 51
+      Height = 27
+      Top = 54
+      Width = 56
+      ItemHeight = 0
+      Style = csDropDownList
+      TabOrder = 2
+    end
+    object cbBaseNote: TComboBox
+      Left = 127
+      Height = 27
+      Top = 12
+      Width = 53
+      ItemHeight = 0
+      Style = csDropDownList
       TabOrder = 3
     end
   end

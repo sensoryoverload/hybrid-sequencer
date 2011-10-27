@@ -41,6 +41,9 @@ type
 
   TSampleView = class(TFrame, IObserver)
     cbCutoffModSource: TComboBox;
+    cbLowNote: TComboBox;
+    cbHighNote: TComboBox;
+    cbBaseNote: TComboBox;
     cbResoModSource: TComboBox;
     cbOsc1WaveSelector: TComboBox;
     cbOsc1ModSource: TComboBox;
@@ -102,9 +105,6 @@ type
     lblOSC2ModAmount: TLabel;
     lblOSC3: TLabel;
     lblOSC3ModAmount: TLabel;
-    spnBaseNote: TSpinEdit;
-    spnLowNote: TSpinEdit;
-    spnHighNote: TSpinEdit;
     procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
@@ -290,6 +290,18 @@ constructor TSampleView.Create(AOwner: TComponent);
     AComboBox.OnChange := @DoSelectionChange;
   end;
 
+  procedure FillNoteComboBox(AComboBox: TComboBox; ASampleParamter: TSampleParameter);
+  var
+    lIndex: Integer;
+  begin
+    for lIndex := 0 to 127 do
+    begin
+      AComboBox.Items.Add(IntToStr(lIndex));
+    end;
+    AComboBox.Tag := Integer(ASampleParamter);
+    AComboBox.OnChange := @DoSelectionChange;
+  end;
+
   procedure SetupDialControl(ADialControl: TDialControl; ASampleParamter: TSampleParameter;
     ALowest: Single; AHighest: Single; ADefaultValue: Single);
   begin
@@ -367,6 +379,10 @@ begin
 
   SetupDialControl(dcGlobalLevel, spGlobal_Level, 0.01, 1, 0.5);
 
+  FillNoteComboBox(cbLowNote, spLow_Note);
+  FillNoteComboBox(cbHighNote, spHigh_Note);
+  FillNoteComboBox(cbBaseNote, spBase_Note);
+
   SetEnableControls(False);
 end;
 
@@ -430,6 +446,9 @@ begin
   cbLFO3WaveSelector.ItemIndex := Integer(TSample(Subject).LFO3.ModSource);
 
   dcGlobalLevel.Value := TSample(Subject).GlobalLevel;
+  cbLowNote.ItemIndex := TSample(Subject).LowNote;
+  cbHighNote.ItemIndex := TSample(Subject).HighNote;
+  cbBaseNote.ItemIndex := TSample(Subject).Key;
 
   SetEnableControls(FEnabled);
 

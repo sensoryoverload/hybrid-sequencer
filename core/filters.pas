@@ -2,7 +2,7 @@ unit filters;
 
 {$mode objfpc}{$H+}
 
-//{$fputype SSE}
+{$fputype SSE}
 
 interface
 
@@ -92,14 +92,10 @@ type
   private
     FFilter: TFilter;
     FLevel: Single;
-    FFrequency: Single;
-    FResonance: Single;
     procedure SetFilter(const AValue: TFilter);
   public
     // Descendant should use Initialize to change coeffecients, pre-calculations, etc
     function Process(I: Single): Single; virtual; abstract;
-    property Frequency: Single read FFrequency write FFrequency; // 0..20000
-    property Resonance: Single read FResonance write FResonance; // 0..1 ?
     property Filter: TFilter read FFilter write SetFilter;
     property Level: Single read FLevel;
   end;
@@ -119,14 +115,21 @@ type
 
   TLP24DB = class(TBaseFilterTypeEngine)
   private
+    FFrequency: Single;
+    FResonance: Single;
     //FFilter: TBaseFilter;
     //FLevel: single;
-    t, t2, x, f, k, p, r, y1, y2, y3, y4, oldx, oldy1, oldy2, oldy3,  divbysamplerate: Single;
+    t, t2, t3, x, f, k, p, r, y1, y2, y3, y4, oldx, oldy1, oldy2, oldy3,  divbysamplerate: Single;
     _kd: Single;
+    procedure SetFrequency(AValue: Single);
+    procedure SetResonance(AValue: Single);
+    procedure Calc;
   public
     constructor Create(AFrames: Integer); override;
     function Process(I: Single): Single; override;
     procedure Initialize; override;
+    property Frequency: Single read FFrequency write SetFrequency; // 0..20000
+    property Resonance: Single read FResonance write SetResonance; // 0..1 ?
   end;
 
 implementation
@@ -157,6 +160,36 @@ begin
   FFilter := AValue;
 
   Initialize;
+end;
+
+procedure TLP24DB.SetFrequency(AValue: Single);
+begin
+  if FFrequency = AValue then Exit;
+  FFrequency := AValue;
+
+  Calc;
+end;
+
+procedure TLP24DB.SetResonance(AValue: Single);
+begin
+  if FResonance = AValue then Exit;
+  FResonance := AValue;
+
+  Calc;
+end;
+
+procedure TLP24DB.Calc;
+begin
+  if Frequency > 20000 then Frequency := 20000;
+  if Frequency < 30 then Frequency := 30;
+
+  f := (Frequency + Frequency) * divbysamplerate;
+  p := f * (1.8 - 0.8 * f);
+  k := p + p - 1.0;
+  t := (1.0 - p) * 1.386249;
+  t2 := 12.0 + t * t;
+  t3 := 6.0 * t;
+  r := Resonance * (t2 + t3) / (t2 - t3);
 end;
 
 constructor TLP24DB.Create(AFrames: Integer);
@@ -198,15 +231,7 @@ begin
   // Keep between valid range!
   if i > 1 then i := 1;
   if i < -1 then i := -1;
-  if Frequency > 20000 then Frequency := 20000;
-  if Frequency < 30 then Frequency := 30;
 
-  f := (Frequency + Frequency) * divbysamplerate;
-  p := f * (1.8 - 0.8 * f);
-  k := p + p - 1.0;
-  t := (1.0 - p) * 1.386249;
-  t2 := 12.0 + t * t;
-  r := Resonance * (t2 + 6.0 * t) / (t2 - 6.0 * t);
   x := I - r * y4;
   y1:= x  * p + oldx * p - k * y1;
   y2:= y1 * p + oldy1 * p - k * y2;

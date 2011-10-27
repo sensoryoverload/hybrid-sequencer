@@ -2169,7 +2169,7 @@ begin
     writeln(Format('MidiEvent.Buffer %d', [PopMidiMessage.Time]));
 
     // 1. Extract Midi event
-    PopMidiMessage.;
+//    PopMidiMessage.;
     // 2.
   end;
 end;
