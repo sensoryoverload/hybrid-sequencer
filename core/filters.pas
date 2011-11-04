@@ -7,7 +7,7 @@ unit filters;
 interface
 
 uses
-  Classes, SysUtils, globalconst, baseengine;
+  Classes, SysUtils, globalconst, baseengine, audioutils;
 
 const
   divby6 = 1 / 6;
@@ -63,24 +63,25 @@ type
     FResonance: Single;
     FFreqModSource: TModSource;
     FFreqModAmount: Single;
-    FResoModSource: TModSource;
-    FResoModAMount: Single;
+    FEnvelopeAmount: Single;
     FFilterType: TEnumFilterTypes;
     FActive: Boolean;
+    FSmoothCutoff: TParamSmooth;
     procedure SetActive(const AValue: Boolean);
     procedure SetFilterType(const AValue: TEnumFilterTypes);
+    procedure SetFrequency(AValue: Single);
   protected
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    destructor Destroy;
     procedure Initialize; override;
     procedure Finalize; override;
   published
-    property Frequency: Single read FFrequency write FFrequency; // 0..20000
+    property Frequency: Single read FFrequency write SetFrequency; // 0..1
     property Resonance: Single read FResonance write FResonance; // 0..1 ?
     property FreqModSource: TModSource read FFreqModSource write FFreqModSource;
     property FreqModAmount: single read FFreqModAmount write FFreqModAmount;
-    property ResoModSource: TModSource read FResoModSource write FResoModSource;
-    property ResoModAmount: single read FResoModAmount write FResoModAmount;
+    property EnvelopeAmount: single read FEnvelopeAmount write FEnvelopeAmount;
     property FilterType: TEnumFilterTypes read FFilterType write SetFilterType;
     property Active: Boolean read FActive write SetActive;
   end;
@@ -117,6 +118,7 @@ type
   private
     FFrequency: Single;
     FResonance: Single;
+    FSmoothCutoff: TParamSmooth;
     //FFilter: TBaseFilter;
     //FLevel: single;
     t, t2, t3, x, f, k, p, r, y1, y2, y3, y4, oldx, oldy1, oldy2, oldy3,  divbysamplerate: Single;
@@ -126,9 +128,10 @@ type
     procedure Calc;
   public
     constructor Create(AFrames: Integer); override;
+    destructor Destroy;
     function Process(I: Single): Single; override;
     procedure Initialize; override;
-    property Frequency: Single read FFrequency write SetFrequency; // 0..20000
+    property Frequency: Single read FFrequency write SetFrequency; // 0..1
     property Resonance: Single read FResonance write SetResonance; // 0..1 ?
   end;
 
@@ -164,8 +167,10 @@ end;
 
 procedure TLP24DB.SetFrequency(AValue: Single);
 begin
-  if FFrequency = AValue then Exit;
+  {if FFrequency = AValue then Exit;}
   FFrequency := AValue;
+
+  FFrequency := FSmoothCutoff.Process(FFrequency);
 
   Calc;
 end;
@@ -180,10 +185,12 @@ end;
 
 procedure TLP24DB.Calc;
 begin
-  if Frequency > 20000 then Frequency := 20000;
-  if Frequency < 30 then Frequency := 30;
+  if FFrequency > 0.99 then FFrequency := 0.99;
+  if FFrequency < 0.001 then FFrequency := 0.001;
+  if FResonance > 0.99 then FResonance := 0.99;
+  if FResonance < 0.0 then FResonance := 0.0;
 
-  f := (Frequency + Frequency) * divbysamplerate;
+  f := Frequency;  //(Frequency + Frequency) * divbysamplerate;
   p := f * (1.8 - 0.8 * f);
   k := p + p - 1.0;
   t := (1.0 - p) * 1.386249;
@@ -196,6 +203,8 @@ constructor TLP24DB.Create(AFrames: Integer);
 begin
   inherited Create(AFrames);
 
+  FSmoothCutoff := TParamSmooth.Create;
+
   y1 := 0;
   y2 := 0;
   y3 := 0;
@@ -205,6 +214,11 @@ begin
   oldy2 := 0;
   oldy3 := 0;
   _kd := 1E-20;
+end;
+
+destructor TLP24DB.Destroy;
+begin
+  FSmoothCutoff.Free;
 end;
 
 
@@ -229,8 +243,8 @@ end;
 function TLP24DB.Process(I: Single): Single;
 begin
   // Keep between valid range!
-  if i > 1 then i := 1;
-  if i < -1 then i := -1;
+  if i > 0.999 then i := 0.999;
+  if i < -0.999 then i := -0.999;
 
   x := I - r * y4;
   y1:= x  * p + oldx * p - k * y1;
@@ -239,9 +253,9 @@ begin
   y4:= y3 * p + oldy3 * p - k * y4;
   y4 := y4 - ((y4 * y4 * y4) * divby6);
   oldx := x;
-  oldy1 := y1 +_kd;
-  oldy2 := y2 +_kd;
-  oldy3 := y3 +_kd;
+  oldy1 := y1 {+_kd};
+  oldy2 := y2 {+_kd};
+  oldy3 := y3 {+_kd};
   Result := y4;
 end;
 
@@ -249,6 +263,12 @@ procedure TFilter.SetFilterType(const AValue: TEnumFilterTypes);
 begin
   if FFilterType = AValue then exit;
   FFilterType := AValue;
+end;
+
+procedure TFilter.SetFrequency(AValue: Single);
+begin
+  {if FFrequency = AValue then Exit; }
+  FFrequency := AValue;
 end;
 
 procedure TFilter.SetActive(const AValue: Boolean);
@@ -261,8 +281,13 @@ constructor TFilter.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   inherited Create(AObjectOwner, AMapped);
 
-  Resonance := 0.5;
-  Frequency := 1000;
+  Resonance := 0;
+  Frequency := 1;
+end;
+
+destructor TFilter.Destroy;
+begin
+  FSmoothCutoff.Free;
 end;
 
 procedure TFilter.Initialize;

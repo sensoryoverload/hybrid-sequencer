@@ -45,14 +45,14 @@ type
     FScheduled: Boolean;
     FSelected: Boolean;
     FPatternLength: Longint;
-    FOnTracksRefreshGUI: TTracksRefreshGUIEvent;
+    FPatternRefreshGUI: TPatternRefreshGUIEvent;
 
     procedure SetPatternColor(const AValue: TColor);
     procedure SetPosition(const AValue: Integer);
     procedure SetText(const AValue: string);
 
   protected
-    procedure DoTrackRefreshGUI;
+    procedure DoPatternRefreshGUI;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -72,7 +72,7 @@ type
     property Scheduled: Boolean read FScheduled write FScheduled default False;
     property Selected: Boolean read FSelected write FSelected;
     property PatternLength: Longint read FPatternLength write FPatternLength;
-    property OnTracksRefreshGUI: TTracksRefreshGUIEvent read FOnTracksRefreshGUI write FOnTracksRefreshGUI;
+    property OnPatternRefreshGUI: TPatternRefreshGUIEvent read FPatternRefreshGUI write FPatternRefreshGUI;
   end;
 
 
@@ -99,10 +99,10 @@ begin
   FText := AValue;
 end;
 
-procedure TPatternGUI.DoTrackRefreshGUI;
+procedure TPatternGUI.DoPatternRefreshGUI;
 begin
-  if Assigned(FOnTracksRefreshGUI) then
-    FOnTracksRefreshGUI(Self);
+  if Assigned(FPatternRefreshGUI) then
+    FPatternRefreshGUI(Self);
 end;
 
 constructor TPatternGUI.Create(AOwner: TComponent);

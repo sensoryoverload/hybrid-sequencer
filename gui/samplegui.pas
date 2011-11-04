@@ -44,7 +44,6 @@ type
     cbLowNote: TComboBox;
     cbHighNote: TComboBox;
     cbBaseNote: TComboBox;
-    cbResoModSource: TComboBox;
     cbOsc1WaveSelector: TComboBox;
     cbOsc1ModSource: TComboBox;
     cbLFO1WaveSelector: TComboBox;
@@ -55,7 +54,7 @@ type
     cbOsc3ModSource: TComboBox;
     cbLFO3WaveSelector: TComboBox;
     dcCutoffModAmount: TDialControl;
-    dcResoModAmount: TDialControl;
+    dcEnvModAmount: TDialControl;
     dcPitchEnvelopeAttack: TDialControl;
     dcPitchEnvelopeDecay: TDialControl;
     dcPitchEnvelopeRelease: TDialControl;
@@ -81,6 +80,8 @@ type
     dcLFO1Rate: TDialControl;
     dcLFO2Rate: TDialControl;
     dcLFO3Rate: TDialControl;
+    dcSaturateDrivePreFilter: TDialControl;
+    dcSaturateDrivePostFilter: TDialControl;
     gbLFO: TGroupBox;
     lblBaseNote: TLabel;
     lblLowNote: TLabel;
@@ -89,7 +90,6 @@ type
     lblLFO1: TLabel;
     lblLFO2: TLabel;
     lblLFO3: TLabel;
-    lblOSC2ModAmount2: TLabel;
     lblPitch: TLabel;
     lblAmp: TLabel;
     lblFilter: TLabel;
@@ -328,13 +328,12 @@ begin
   }
 
   // Filter
-  SetupDialControl(dcLowpassCutoff, spFilter_Cutoff, 20, 20000, 20000);
+  SetupDialControl(dcLowpassCutoff, spFilter_Cutoff, 0.01, 0.99, 1);
   FillModSourceComboBox(cbCutoffModSource, spFilter_Cutoff_ModSource);
-  SetupDialControl(dcCutoffModAmount, spFilter_Cutoff_ModAmount, 0, 1, 0);
+  SetupDialControl(dcCutoffModAmount, spFilter_Cutoff_ModAmount, 0, 0.3, 0);
 
   SetupDialControl(dcResonance, spFilter_Resonance, 0, 1, 0);
-  FillModSourceComboBox(cbResoModSource, spFilter_Resonance_ModSource);
-  SetupDialControl(dcResoModAmount, spFilter_Resonance_ModAmount, 0, 1, 0);
+  SetupDialControl(dcEnvModAmount, spFilter_Envelope_Amount, 0, 0.3, 0);
 
   // Oscillators
   SetupDialControl(dcOsc1Pitch, spOSC1_Pitch, -24, 24, 0);
@@ -355,26 +354,27 @@ begin
   SetupDialControl(dcOsc3ModAmount, spOSC3_ModAmount, 0, 1, 0);
   SetupDialControl(dcOSC3Level, spOSC3_Level, 0, 1, 0);
 
-  SetupDialControl(dcAmpEnvelopeAttack, spAmplifierEnv_Attack, 0.01, 5, 0.01);
-  SetupDialControl(dcAmpEnvelopeDecay, spAmplifierEnv_Decay, 0.01, 5, 0.5);
-  SetupDialControl(dcAmpEnvelopeSustain, spAmplifierEnv_Sustain, 0, 1, 0);
-  SetupDialControl(dcAmpEnvelopeRelease, spAmplifierEnv_Release, 0.01, 5, 0.2);
+  // Envelopes
+  SetupDialControl(dcAmpEnvelopeAttack, spAmplifierEnv_Attack, 0.01, 1, 0.01);
+  SetupDialControl(dcAmpEnvelopeDecay, spAmplifierEnv_Decay, 0.01, 1, 0.5);
+  SetupDialControl(dcAmpEnvelopeSustain, spAmplifierEnv_Sustain, 0.01, 1, 0.01);
+  SetupDialControl(dcAmpEnvelopeRelease, spAmplifierEnv_Release, 0.01, 1, 0.01);
 
-  SetupDialControl(dcFilterEnvelopeAttack, spFilterEnv_Attack, 0.01, 5, 0.01);
-  SetupDialControl(dcFilterEnvelopeDecay, spFilterEnv_Decay, 0.01, 5, 0.5);
-  SetupDialControl(dcFilterEnvelopeSustain, spFilterEnv_Sustain, 0, 1, 0);
-  SetupDialControl(dcFilterEnvelopeRelease, spFilterEnv_Release, 0.01, 5, 0.2);
+  SetupDialControl(dcFilterEnvelopeAttack, spFilterEnv_Attack, 0.01, 1, 0.01);
+  SetupDialControl(dcFilterEnvelopeDecay, spFilterEnv_Decay, 0.01, 1, 0.5);
+  SetupDialControl(dcFilterEnvelopeSustain, spFilterEnv_Sustain, 0.01, 1, 0.01);
+  SetupDialControl(dcFilterEnvelopeRelease, spFilterEnv_Release, 0.01, 1, 0.01);
 
-  SetupDialControl(dcPitchEnvelopeAttack, spPitchEnv_Attack, 0.01, 5, 0.01);
-  SetupDialControl(dcPitchEnvelopeDecay, spPitchEnv_Decay, 0.01, 5, 0.5);
-  SetupDialControl(dcPitchEnvelopeSustain, spPitchEnv_Sustain, 0, 1, 0);
-  SetupDialControl(dcPitchEnvelopeRelease, spPitchEnv_Release, 0.01, 5, 0.2);
+  SetupDialControl(dcPitchEnvelopeAttack, spPitchEnv_Attack, 0.01, 1, 0.01);
+  SetupDialControl(dcPitchEnvelopeDecay, spPitchEnv_Decay, 0.01, 1, 0.5);
+  SetupDialControl(dcPitchEnvelopeSustain, spPitchEnv_Sustain, 0.01, 1, 0.01);
+  SetupDialControl(dcPitchEnvelopeRelease, spPitchEnv_Release, 0.01, 1, 0.01);
 
-  SetupDialControl(dcLFO1Rate, spLFO1_Rate, 0.05, 1000, 10);
+  SetupDialControl(dcLFO1Rate, spLFO1_Rate, 0, 1, 0.3);
   FillWaveSelectionComboBox(cbLFO1WaveSelector, spLFO1_Waveform);
-  SetupDialControl(dcLFO2Rate, spLFO2_Rate, 0.05, 1000, 10);
+  SetupDialControl(dcLFO2Rate, spLFO2_Rate, 0, 1, 0.3);
   FillWaveSelectionComboBox(cbLFO2WaveSelector, spLFO2_Waveform);
-  SetupDialControl(dcLFO3Rate, spLFO3_Rate, 0.05, 1000, 10);
+  SetupDialControl(dcLFO3Rate, spLFO3_Rate, 0, 1, 0.3);
   FillWaveSelectionComboBox(cbLFO3WaveSelector, spLFO3_Waveform);
 
   SetupDialControl(dcGlobalLevel, spGlobal_Level, 0.01, 1, 0.5);
@@ -382,6 +382,9 @@ begin
   FillNoteComboBox(cbLowNote, spLow_Note);
   FillNoteComboBox(cbHighNote, spHigh_Note);
   FillNoteComboBox(cbBaseNote, spBase_Note);
+
+  SetupDialControl(dcSaturateDrivePreFilter, spSaturateDrivePreFilter, 1, 15, 1);
+  SetupDialControl(dcSaturateDrivePostFilter, spSaturateDrivePostFilter, 1, 15, 1);
 
   SetEnableControls(False);
 end;
@@ -402,8 +405,7 @@ begin
   cbCutoffModSource.ItemIndex := Integer(TSample(Subject).Filter.FreqModSource);
   dcCutoffModAmount.Value := TSample(Subject).Filter.FreqModAmount;
   dcResonance.Value := TSample(Subject).Filter.Resonance;
-  cbResoModSource.ItemIndex := Integer(TSample(Subject).Filter.ResoModSource);
-  dcResoModAmount.Value := TSample(Subject).Filter.ResoModAmount;
+  dcEnvModAmount.Value := TSample(Subject).Filter.EnvelopeAmount;
 
   dcOsc1Pitch.Value := TSample(Subject).Osc1.Pitch;
   cbOsc1WaveSelector.ItemIndex := Integer(TSample(Subject).Osc1.WaveForm);
@@ -439,16 +441,19 @@ begin
   dcPitchEnvelopeRelease.Value := TSample(Subject).PitchEnvelope.Release;
 
   dcLFO1Rate.Value := TSample(Subject).LFO1.Pitch;
-  cbLFO1WaveSelector.ItemIndex := Integer(TSample(Subject).LFO1.ModSource);
+  cbLFO1WaveSelector.ItemIndex := Integer(TSample(Subject).LFO1.WaveForm);
   dcLFO2Rate.Value := TSample(Subject).LFO2.Pitch;
-  cbLFO2WaveSelector.ItemIndex := Integer(TSample(Subject).LFO2.ModSource);
+  cbLFO2WaveSelector.ItemIndex := Integer(TSample(Subject).LFO2.WaveForm);
   dcLFO3Rate.Value := TSample(Subject).LFO3.Pitch;
-  cbLFO3WaveSelector.ItemIndex := Integer(TSample(Subject).LFO3.ModSource);
+  cbLFO3WaveSelector.ItemIndex := Integer(TSample(Subject).LFO3.WaveForm);
 
   dcGlobalLevel.Value := TSample(Subject).GlobalLevel;
   cbLowNote.ItemIndex := TSample(Subject).LowNote;
   cbHighNote.ItemIndex := TSample(Subject).HighNote;
   cbBaseNote.ItemIndex := TSample(Subject).Key;
+
+  dcSaturateDrivePreFilter.Value := TSample(Subject).SaturateDrivePreFilter;
+  dcSaturateDrivePostFilter.Value := TSample(Subject).SaturateDrivePostFilter;
 
   SetEnableControls(FEnabled);
 

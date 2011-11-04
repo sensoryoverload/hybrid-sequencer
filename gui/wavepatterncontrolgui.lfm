@@ -6,7 +6,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
   ClientHeight = 273
   ClientWidth = 1083
   TabOrder = 0
-  DesignLeft = 510
+  DesignLeft = 195
   DesignTop = 200
   object gbAudioTrackSettings: TGroupBox
     Left = 0
@@ -15,46 +15,46 @@ object WavePatternControlGUI: TWavePatternControlGUI
     Width = 379
     Align = alLeft
     Caption = 'Settings'
-    ClientHeight = 260
+    ClientHeight = 258
     ClientWidth = 375
     TabOrder = 0
     object lblRootNote: TLabel
       Left = 7
-      Height = 12
+      Height = 14
       Top = 53
-      Width = 46
+      Width = 48
       Caption = 'Root note'
       ParentColor = False
     end
     object Label1: TLabel
       Left = 7
-      Height = 12
+      Height = 14
       Top = 73
-      Width = 44
+      Width = 49
       Caption = 'Orig. BPM'
       ParentColor = False
     end
     object lblLoopEnd: TLabel
       Left = 176
-      Height = 12
+      Height = 14
       Top = 26
-      Width = 43
+      Width = 45
       Caption = 'Loop end'
       ParentColor = False
     end
     object lblLoopStart: TLabel
       Left = 176
-      Height = 12
+      Height = 14
       Top = 1
-      Width = 47
+      Width = 50
       Caption = 'Loop start'
       ParentColor = False
     end
     object lblLoopLength: TLabel
       Left = 176
-      Height = 12
+      Height = 14
       Top = 50
-      Width = 55
+      Width = 58
       Caption = 'Loop length'
       ParentColor = False
     end
@@ -62,14 +62,14 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 6
       Height = 24
       Top = 27
-      Width = 50
+      Width = 52
       Caption = 'Warp'
       OnChange = cbPitchedChange
       TabOrder = 0
     end
     object spnRootNote: TSpinEdit
       Left = 66
-      Height = 21
+      Height = 23
       Top = 48
       Width = 64
       TabOrder = 1
@@ -90,7 +90,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object edtFilename: TLabeledEdit
       Left = 66
-      Height = 21
+      Height = 23
       Top = -3
       Width = 80
       EditLabel.AnchorSideTop.Control = edtFilename
@@ -98,10 +98,10 @@ object WavePatternControlGUI: TWavePatternControlGUI
       EditLabel.AnchorSideRight.Control = edtFilename
       EditLabel.AnchorSideBottom.Control = edtFilename
       EditLabel.AnchorSideBottom.Side = asrBottom
-      EditLabel.Left = 23
-      EditLabel.Height = 12
+      EditLabel.Left = 17
+      EditLabel.Height = 14
       EditLabel.Top = 1
-      EditLabel.Width = 40
+      EditLabel.Width = 46
       EditLabel.Caption = 'Filename'
       EditLabel.ParentColor = False
       LabelPosition = lpLeft
@@ -110,7 +110,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopEndBar: TValueControl
       Left = 244
-      Height = 21
+      Height = 23
       Hint = 'Bar'
       Top = 21
       Width = 50
@@ -119,7 +119,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopEndBeat: TValueControl
       Left = 294
-      Height = 21
+      Height = 23
       Hint = 'Beat'
       Top = 21
       Width = 30
@@ -130,7 +130,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopEndFrac: TValueControl
       Left = 325
-      Height = 21
+      Height = 23
       Hint = 'Fraction'
       Top = 21
       Width = 48
@@ -140,7 +140,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopStartBar: TValueControl
       Left = 244
-      Height = 21
+      Height = 23
       Hint = 'Bar'
       Top = -4
       Width = 50
@@ -149,7 +149,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopStartBeat: TValueControl
       Left = 294
-      Height = 21
+      Height = 23
       Hint = 'Beat'
       Top = -4
       Width = 30
@@ -160,7 +160,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopStartFrac: TValueControl
       Left = 325
-      Height = 21
+      Height = 23
       Hint = 'Fraction'
       Top = -4
       Width = 48
@@ -170,7 +170,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopLengthBar: TValueControl
       Left = 244
-      Height = 21
+      Height = 23
       Hint = 'Bar'
       Top = 45
       Width = 50
@@ -179,7 +179,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopLengthBeat: TValueControl
       Left = 294
-      Height = 21
+      Height = 23
       Hint = 'Beat'
       Top = 45
       Width = 30
@@ -190,7 +190,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object vcLoopLengthFrac: TValueControl
       Left = 325
-      Height = 21
+      Height = 23
       Hint = 'Fraction'
       Top = 45
       Width = 48
@@ -209,7 +209,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object tbThreshold: TTrackBar
       Left = 270
-      Height = 40
+      Height = 42
       Top = 85
       Width = 100
       Max = 100
@@ -229,7 +229,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object TrackBar1: TTrackBar
       Left = 136
-      Height = 40
+      Height = 42
       Top = 113
       Width = 226
       Max = 1000
@@ -241,7 +241,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object spnPitchValue: TFloatSpinEditControl
       Left = 62
-      Height = 21
+      Height = 23
       Top = 24
       Width = 50
       Increment = 0.1

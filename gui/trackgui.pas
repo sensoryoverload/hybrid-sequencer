@@ -45,10 +45,7 @@ type
     ComboBox1: TComboBox;
     cbOutput: TComboBox;
     DialControl1: TDialControl;
-    dcLowFreq: TDialControl;
     dcLowLevel: TDialControl;
-    dcHighFreq: TDialControl;
-    dcMidFreq: TDialControl;
     dcMidLevel: TDialControl;
     dcHighLevel: TDialControl;
     miCreateMidiPattern: TMenuItem;
@@ -86,6 +83,7 @@ type
     FShuffleOldPos: TPoint;
     FShuffling: Boolean;
     FOnTracksRefreshGUI: TTracksRefreshGUIEvent;
+    FOnPatternRefreshGUI: TPatternRefreshGUIEvent;
     FPatternListGUI: TObjectList;
     FObjectID: string;
     FOnUpdateTrackControls: TNotifyEvent;
@@ -116,6 +114,7 @@ type
     property ObjectID: string read GetObjectID write SetObjectID;
     property Selected: Boolean read FSelected write SetSelected;
     property OnTracksRefreshGUI: TTracksRefreshGUIEvent read FOnTracksRefreshGUI write FOnTracksRefreshGUI;
+    property OnPatternRefreshGUI: TPatternRefreshGUIEvent read FOnPatternRefreshGUI write FOnPatternRefreshGUI;
     property IsShuffling: Boolean read FShuffling write FShuffling;
     property Shuffle: TShuffle read FShuffle write FShuffle;
     property OnUpdateTrackControls: TNotifyEvent read FOnUpdateTrackControls write FOnUpdateTrackControls;
@@ -213,10 +212,10 @@ begin
   tcOn.SwitchedOn := TTrack(Subject).Active;
   vcLevel.Position := TTrack(Subject).Volume;
 
-  if Assigned(OnTracksRefreshGUI) then
+  {if Assigned(OnTracksRefreshGUI) then
   begin
     OnTracksRefreshGUI(nil);
-  end;
+  end; }
 
   //Invalidate;
 
@@ -287,7 +286,7 @@ begin
         lWavePattern.Attach(lWavePatternGUI);
         lWavePatternGUI.Position := lPattern.Position;
         lWavePatternGUI.Text := lPattern.PatternName;
-        lWavePatternGUI.OnTracksRefreshGUI := OnTracksRefreshGUI;
+        lWavePatternGUI.OnPatternRefreshGUI := OnPatternRefreshGUI;
         lWavePatternGUI.Parent := nil;
         lWavePatternGUI.Parent := pnlPatterns;
         PatternListGUI.Add(lWavePatternGUI);
@@ -302,7 +301,7 @@ begin
         lMidiPattern.Attach(lMidiPatternGUI);
         lMidiPatternGUI.Position := lPattern.Position;
         lMidiPatternGUI.Text := lPattern.PatternName;
-        lMidiPatternGUI.OnTracksRefreshGUI := OnTracksRefreshGUI;
+        lMidiPatternGUI.OnPatternRefreshGUI := OnPatternRefreshGUI;
         lMidiPatternGUI.Parent := nil;
         lMidiPatternGUI.Parent := pnlPatterns;
         PatternListGUI.Add(lMidiPatternGUI);

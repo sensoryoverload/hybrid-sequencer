@@ -74,7 +74,7 @@ object SampleView: TSampleView
       TabOrder = 3
     end
     object lblOSC1ModAmount: TLabel
-      Left = 134
+      Left = 124
       Height = 14
       Top = 0
       Width = 60
@@ -255,11 +255,11 @@ object SampleView: TSampleView
     Left = 569
     Height = 134
     Top = 0
-    Width = 154
+    Width = 116
     Align = alLeft
     Caption = 'Filter'
     ClientHeight = 119
-    ClientWidth = 150
+    ClientWidth = 112
     TabOrder = 1
     object dcLowpassCutoff: TDialControl
       Left = 4
@@ -267,7 +267,7 @@ object SampleView: TSampleView
       Top = -2
       Width = 36
       Value = 0
-      Caption = 'Lowpass'
+      Caption = 'Cutoff'
       Lowest = 20
       Highest = 20000
       Enabled = True
@@ -275,12 +275,12 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcResonance: TDialControl
-      Left = 4
+      Left = 41
       Height = 40
-      Top = 41
+      Top = -2
       Width = 36
       Value = 0
-      Caption = 'Resonance'
+      Caption = 'Reso'
       Lowest = 0
       Highest = 100
       Enabled = True
@@ -288,18 +288,18 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbCutoffModSource: TComboBox
-      Left = 41
+      Left = 6
       Height = 27
-      Top = 12
+      Top = 53
       Width = 72
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 2
     end
     object lblOSC2ModAmount1: TLabel
-      Left = 44
+      Left = 9
       Height = 14
-      Top = -1
+      Top = 40
       Width = 60
       Caption = 'Mod Source'
       Font.Style = [fsBold]
@@ -307,49 +307,42 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object dcCutoffModAmount: TDialControl
-      Left = 112
+      Left = 77
       Height = 40
-      Top = 0
-      Width = 36
-      Value = 0
-      Caption = 'ModLevel'
-      Lowest = 0
-      Highest = 1
-      Enabled = True
-      ValueVisible = False
-      Color = clNone
-    end
-    object cbResoModSource: TComboBox
-      Left = 41
-      Height = 27
-      Top = 54
-      Width = 72
-      ItemHeight = 0
-      Style = csDropDownList
-      TabOrder = 4
-    end
-    object dcResoModAmount: TDialControl
-      Left = 112
-      Height = 40
-      Top = 40
-      Width = 36
-      Value = 0
-      Caption = 'ModLevel'
-      Lowest = 0
-      Highest = 1
-      Enabled = True
-      ValueVisible = False
-      Color = clNone
-    end
-    object lblOSC2ModAmount2: TLabel
-      Left = 44
-      Height = 14
       Top = 41
-      Width = 60
-      Caption = 'Mod Source'
-      Font.Style = [fsBold]
-      ParentColor = False
-      ParentFont = False
+      Width = 36
+      Value = 0
+      Caption = 'ModLevel'
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = False
+      Color = clNone
+    end
+    object dcEnvModAmount: TDialControl
+      Left = 77
+      Height = 40
+      Top = -2
+      Width = 36
+      Value = 0
+      Caption = 'Envelope'
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = False
+      Color = clNone
+    end
+    object dcSaturateDrivePreFilter: TDialControl
+      Left = 4
+      Height = 40
+      Top = 80
+      Width = 36
+      Value = 0
+      Caption = 'Saturate'
+      Lowest = 1
+      Highest = 25
+      Enabled = True
+      ValueVisible = False
     end
   end
   object gbEnvelopes: TGroupBox
@@ -567,7 +560,7 @@ object SampleView: TSampleView
       Value = 0
       Caption = 'Rate'
       Lowest = 0.05000000074505
-      Highest = 2000
+      Highest = 1000
       Enabled = True
       ValueVisible = True
       Color = clBtnFace
@@ -580,7 +573,7 @@ object SampleView: TSampleView
       Value = 0
       Caption = 'Rate'
       Lowest = 0.05000000074505
-      Highest = 2000
+      Highest = 4000
       Enabled = True
       ValueVisible = True
       Color = clBtnFace
@@ -593,7 +586,7 @@ object SampleView: TSampleView
       Value = 0
       Caption = 'Rate'
       Lowest = 0.05000000074505
-      Highest = 2000
+      Highest = 4000
       Enabled = True
       ValueVisible = True
       Color = clBtnFace
@@ -657,14 +650,14 @@ object SampleView: TSampleView
     end
   end
   object gbGlobal: TGroupBox
-    Left = 723
+    Left = 685
     Height = 134
     Top = 0
-    Width = 232
+    Width = 270
     Align = alClient
     Caption = 'Global'
     ClientHeight = 119
-    ClientWidth = 228
+    ClientWidth = 266
     TabOrder = 4
     object dcGlobalLevel: TDialControl
       Left = 5
@@ -680,7 +673,7 @@ object SampleView: TSampleView
       Color = clNone
     end
     object lblLowNote: TLabel
-      Left = 51
+      Left = 41
       Height = 14
       Top = -2
       Width = 45
@@ -688,7 +681,7 @@ object SampleView: TSampleView
       ParentColor = False
     end
     object lblHighNote: TLabel
-      Left = 53
+      Left = 43
       Height = 14
       Top = 40
       Width = 48
@@ -696,7 +689,7 @@ object SampleView: TSampleView
       ParentColor = False
     end
     object lblBaseNote: TLabel
-      Left = 127
+      Left = 99
       Height = 14
       Top = -1
       Width = 49
@@ -704,7 +697,7 @@ object SampleView: TSampleView
       ParentColor = False
     end
     object cbLowNote: TComboBox
-      Left = 51
+      Left = 41
       Height = 27
       Top = 12
       Width = 55
@@ -713,7 +706,7 @@ object SampleView: TSampleView
       TabOrder = 1
     end
     object cbHighNote: TComboBox
-      Left = 51
+      Left = 41
       Height = 27
       Top = 54
       Width = 56
@@ -722,13 +715,25 @@ object SampleView: TSampleView
       TabOrder = 2
     end
     object cbBaseNote: TComboBox
-      Left = 127
+      Left = 99
       Height = 27
       Top = 12
       Width = 53
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 3
+    end
+    object dcSaturateDrivePostFilter: TDialControl
+      Left = 4
+      Height = 40
+      Top = 79
+      Width = 36
+      Value = 0
+      Caption = 'Saturate'
+      Lowest = 1
+      Highest = 25
+      Enabled = True
+      ValueVisible = False
     end
   end
 end

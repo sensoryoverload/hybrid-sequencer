@@ -328,7 +328,8 @@ begin
   FBooleanStack:= 1; // Start with off
   FToTrackID := 0; // 0 = master (default)
   FPitched:= False;
-  FVolume := 1;
+  FVolume := 100;
+  FActive := True;
 
   //FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
   //FPluginProcessor.AudioIn.Buffer := FOutputBuffer;

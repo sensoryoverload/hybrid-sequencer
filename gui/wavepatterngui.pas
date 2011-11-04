@@ -104,7 +104,7 @@ end;
 
 procedure TWavePatternGUI.UpdateGUI;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 procedure TWavePatternGUI.RecalculateSynchronize;
@@ -215,7 +215,7 @@ begin
 
     FCacheIsDirty := True;
 
-    DoTrackRefreshGUI;
+    DoPatternRefreshGUI;
   end
   else if Button = mbRight then
   begin

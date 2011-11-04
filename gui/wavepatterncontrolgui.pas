@@ -220,7 +220,7 @@ begin
   begin
     FWavePatternGUI.ZoomFactorX := TrackBar1.Position;
     FWavePatternGUI.CacheIsDirty := True;
-    FWavePatternGUI.Repaint;
+    FWavePatternGUI.Invalidate;
   end;
 end;
 

@@ -15,10 +15,23 @@ const
   LIN_MIN = 0.0000000002;
   LIN_MAX = 9.0;
 
+type
+
+  { TParamSmooth }
+
+  TParamSmooth = class
+  private
+    a, b, z: single;
+  public
+    constructor Create;
+    function Process(AInput: single): single;
+  end;
+
 function lin2db(lin: single): single;
 function db2lin(db: single): single;
 function fast_log2(val:single):single;
 function log_approx(val: single): single; inline;
+function log_approx2(val: single): single; inline;
 
 
 implementation
@@ -102,6 +115,34 @@ var
 begin
   lNormVal := val + 1E-20;
   Result := lNormVal * lNormVal;
+end;
+
+{
+  steep function
+}
+function log_approx2(val: single): single; inline;
+var
+  lNormVal: single;
+begin
+  lNormVal := val + 1E-20;
+  Result := lNormVal * lNormVal * lNormVal;
+end;
+
+{ TParamSmooth }
+
+constructor TParamSmooth.Create;
+begin
+  inherited Create;
+
+  a := 0.99; // Slow tracking
+  b := 1.0 - a;
+  z := 0;
+end;
+
+function TParamSmooth.Process(AInput: single): single;
+begin
+  z := (AInput * b) + (z * a);
+  Result := z;
 end;
 
 initialization

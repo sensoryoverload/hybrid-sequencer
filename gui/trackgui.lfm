@@ -10,7 +10,7 @@ object TrackGUI: TTrackGUI
   PopupMenu = pmTrack
   TabOrder = 0
   DesignLeft = 801
-  DesignTop = 132
+  DesignTop = 107
   object pnlTrackControls: TPanel
     Left = 0
     Height = 307
@@ -33,7 +33,7 @@ object TrackGUI: TTrackGUI
       Height = 14
       Top = 153
       Width = 30
-      SwitchedOn = False
+      SwitchedOn = True
       OnChange = tcOnChange
     end
     object ComboBox1: TComboBox
@@ -90,22 +90,10 @@ object TrackGUI: TTrackGUI
       Enabled = True
       ValueVisible = True
     end
-    object dcLowFreq: TDialControl
-      Left = 64
-      Height = 40
-      Top = 227
-      Width = 36
-      Value = 0
-      Caption = 'Low Freq'
-      Lowest = 0
-      Highest = 1
-      Enabled = True
-      ValueVisible = True
-    end
     object dcLowLevel: TDialControl
-      Left = 64
+      Left = 48
       Height = 40
-      Top = 267
+      Top = 193
       Width = 36
       Value = 0
       Caption = 'Low Level'
@@ -114,35 +102,10 @@ object TrackGUI: TTrackGUI
       Enabled = True
       ValueVisible = True
     end
-    object dcHighFreq: TDialControl
-      Left = 64
-      Height = 40
-      Top = 67
-      Width = 36
-      Value = 0
-      Caption = 'Hi Freq'
-      Lowest = 0
-      Highest = 1
-      OnChange = dcHighFreqChange
-      Enabled = True
-      ValueVisible = True
-    end
-    object dcMidFreq: TDialControl
-      Left = 64
-      Height = 40
-      Top = 147
-      Width = 36
-      Value = 0
-      Caption = 'Mid Freq'
-      Lowest = 0
-      Highest = 1
-      Enabled = True
-      ValueVisible = True
-    end
     object dcMidLevel: TDialControl
-      Left = 64
+      Left = 48
       Height = 40
-      Top = 187
+      Top = 153
       Width = 36
       Value = 0
       Caption = 'Mid Level'
@@ -152,9 +115,9 @@ object TrackGUI: TTrackGUI
       ValueVisible = True
     end
     object dcHighLevel: TDialControl
-      Left = 64
+      Left = 48
       Height = 40
-      Top = 107
+      Top = 113
       Width = 36
       Value = 0
       Caption = 'Hi Level'

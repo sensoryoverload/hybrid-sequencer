@@ -224,6 +224,7 @@ type
     function TrackExists(AObjectID: string): Boolean;
     function IndexOfTrack(AObjectId: string): Integer;
     procedure DoTracksRefreshEvent(TrackObject: TObject);
+    procedure DoPatternRefreshEvent(TrackObject: TObject);
     function ShuffleByObject(TrackObject: TObject): TShuffle;
     procedure UpdateTracks(TrackObject: TTrack);
     procedure DeleteShuffleByObject(TrackObject: TObject);
@@ -471,8 +472,6 @@ var
 
   buffer_size: Integer;
 begin
-  if not GAudioStruct.Active then
-    exit;
 
   buffer_size := nframes * SizeOf(Single);
 
@@ -482,6 +481,17 @@ begin
 	output_left := jack_port_get_buffer(audio_output_port_left, nframes);
 	output_right := jack_port_get_buffer(audio_output_port_right, nframes);
 	input := jack_port_get_buffer(audio_input_port, nframes);
+
+  if not GAudioStruct.Active then
+  begin
+    for i := 0 to Pred(nframes) do
+    begin
+      output_left[i] := 0;
+      output_right[i] := 0;
+    end;
+
+    exit;
+  end;
 
   jack_midi_clear_buffer(midi_out_buf);
 
@@ -1601,6 +1611,23 @@ begin
     begin
       GSettings.OldSelectedTrackGUI := GSettings.SelectedTrackGUI;
     end;
+  end;
+end;
+
+procedure TMainApp.DoPatternRefreshEvent(TrackObject: TObject);
+var
+  lWavePattern: TWavePattern;
+  lMidiPattern: TMidiPattern;
+  lTrackIndex: Integer;
+begin
+  if not Assigned(TrackObject) then
+  begin
+    // TODO Should be more intelligence in here...
+
+    FMidiPatternControlGUI.Parent := nil;
+    FWavePatternControlGUI.Parent := nil;
+    GSettings.OldSelectedPatternGUI := nil;
+    GSettings.SelectedPatternGUI := nil;
   end
   else if TrackObject is TWavePatternGUI then
   begin
@@ -1908,6 +1935,7 @@ begin
   lTrackGUI.Height := Sbtracks.Height;
   lTrackGUI.OnUpdateTrackControls := @UpdateTrackControls;
   lTrackGUI.OnTracksRefreshGUI := @DoTracksRefreshEvent;
+  lTrackGUI.OnPatternRefreshGUI := @DoPatternRefreshEvent;
 
   lTrackGUI.Track := lTrack;
   Tracks.Add(lTrackGUI);

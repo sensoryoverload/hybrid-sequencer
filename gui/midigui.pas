@@ -1155,7 +1155,7 @@ begin
     if FRubberBandMode then
       FRubberBandMode := False;
 
-    Repaint;
+    Invalidate;
   end;
 end;
 

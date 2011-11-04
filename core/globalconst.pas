@@ -331,6 +331,7 @@ type
 
   TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
   TTracksRefreshGUIEvent = procedure(TrackObject: TObject) of object;
+  TPatternRefreshGUIEvent = procedure(TrackObject: TObject) of object;
 
   { TFrameData }
 

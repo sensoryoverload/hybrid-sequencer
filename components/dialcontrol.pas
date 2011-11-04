@@ -502,7 +502,7 @@ begin
   begin;
     FInternalValue := AValue * FScaleExternalValueToInternalValue;
 
-    Repaint;
+    Invalidate;
   end;
 end;
 
@@ -747,7 +747,7 @@ end;
 
 procedure TDialControl.UpdateControl;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 { TTimeControl }
@@ -839,7 +839,7 @@ end;
 
 procedure TValueControl.UpdateControl;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 procedure TValueControl.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
@@ -896,7 +896,7 @@ end;
 procedure TToggleControl.SetSwitchedOn(const AValue: Boolean);
 begin
   FSwitchedOn := AValue;
-  Repaint;
+  Invalidate;
 end;
 
 constructor TToggleControl.Create(AOwner: TComponent);
@@ -967,7 +967,7 @@ end;
 
 procedure TToggleControl.UpdateControl;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 procedure TToggleControl.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
@@ -1024,7 +1024,7 @@ end;
 procedure TVolumeControl.SetPosition(const AValue: Single);
 begin
   FPosition := AValue;
-  Repaint;
+  Invalidate;
 end;
 
 constructor TVolumeControl.Create(AOwner: TComponent);
@@ -1120,12 +1120,12 @@ end;
 
 procedure TVolumeControl.Update;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 procedure TVolumeControl.UpdateControl;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 procedure TVolumeControl.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
@@ -1232,7 +1232,7 @@ end;
 
 procedure TFloatSpinEditControl.UpdateControl;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 procedure TFloatSpinEditControl.MouseDown(Button: TMouseButton;
