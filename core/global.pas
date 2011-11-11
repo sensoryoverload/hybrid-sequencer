@@ -254,7 +254,8 @@ begin
 
   if Result = nil then
   begin
-    writeln('Model not found! %s', AGUID);
+    // Model not found! Could be the topmost node as it has no parent
+    // or it is just missing
   end;
 end;
 

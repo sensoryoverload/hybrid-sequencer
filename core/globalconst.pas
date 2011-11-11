@@ -463,7 +463,7 @@ var
   lViewIntf: IObserver;
 begin
   DBLog('start DiffLists');
-  {try    }
+  {try }
     if Assigned(AModelList) and Assigned(AViewList) and
       Assigned(ACreateProc) and Assigned(ADestroyProc) then
     begin
@@ -522,10 +522,10 @@ begin
     on e: exception do
     begin
       DumpExceptionCallStack(e);
-      //DBLog('DiffLists error: ' + e.Message);
+      DBLog('DiffLists error: ' + e.Message);
       //raise;
     end;
-  end;     }
+  end;}
   DBLog('end DiffLists');
 end;
 
@@ -811,27 +811,25 @@ end;
 
 destructor THybridPersistentModel.Destroy;
 begin
-  GObjectMapper.DeleteMapping(ObjectID);
-
   FObservers.Free;
+
+  GObjectMapper.DeleteMapping(ObjectID);
 
   inherited Destroy;
 end;
 
 procedure THybridPersistentModel.Attach(AObserver: IObserver);
 begin
-  DBLog('start THybridPersistentModel.Attach');
+  DBLog(Format('start %s.Attach', [Self.ClassName]));
 
   FObservers.Add(AObserver);
   AObserver.Model := Self;
-  AObserver.ObjectID := FObjectID;
-  AObserver.ObjectOwnerID := FObjectOwnerID;
-
-  AObserver.Connect;
+  AObserver.ObjectID := Self.ObjectID;
+  AObserver.ObjectOwnerID := Self.ObjectOwnerID;
 
   Notify;
 
-  DBLog('end THybridPersistentModel.Attach');
+  DBLog(Format('end %s.Attach', [Self.ClassName]));
 end;
 
 procedure THybridPersistentModel.BeginUpdate;
@@ -852,24 +850,23 @@ end;
 
 procedure THybridPersistentModel.Detach(AObserver: IObserver);
 begin
-  DBLog(Format('start THybridPersistentModel.Detach (%s)', [Self.ClassName]));
+  DBLog(Format('start %s.Detach', [Self.ClassName]));
 
   { not sure if this would break existing code, it shoudn't.. }
-  AObserver.Disconnect;
-  AObserver.Model := nil;
+  //AObserver.Disconnect;
   AObserver.ObjectID := '';
   AObserver.ObjectOwnerID := '';{}
 
   FObservers.Remove(AObserver);
 
-  DBLog('end THybridPersistentModel.Detach');
+  DBLog(Format('end %s.Detach', [Self.ClassName]));
 end;
 
 procedure THybridPersistentModel.Notify;
 var
   i: Integer;
 begin
-  DBLog('start THybridPersistentModel.Notify');
+  DBLog(Format('start %s.Notify', [Self.ClassName]));
 
   if FObservers <> nil then
   begin
@@ -879,7 +876,7 @@ begin
     end;
   end;
 
-  DBLog('end THybridPersistentModel.Notify');
+  DBLog(Format('end %s.Notify', [Self.ClassName]));
 end;
 
 procedure THybridPersistentModel.Assign(Source: TPersistent);

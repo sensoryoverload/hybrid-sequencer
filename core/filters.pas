@@ -125,11 +125,11 @@ type
     _kd: Single;
     procedure SetFrequency(AValue: Single);
     procedure SetResonance(AValue: Single);
-    procedure Calc;
   public
     constructor Create(AFrames: Integer); override;
     destructor Destroy;
     function Process(I: Single): Single; override;
+    procedure Calc;
     procedure Initialize; override;
     property Frequency: Single read FFrequency write SetFrequency; // 0..1
     property Resonance: Single read FResonance write SetResonance; // 0..1 ?
@@ -167,10 +167,7 @@ end;
 
 procedure TLP24DB.SetFrequency(AValue: Single);
 begin
-  {if FFrequency = AValue then Exit;}
-  FFrequency := AValue;
-
-  FFrequency := FSmoothCutoff.Process(FFrequency);
+  FFrequency := FSmoothCutoff.Process(AValue);
 
   Calc;
 end;
@@ -185,18 +182,22 @@ end;
 
 procedure TLP24DB.Calc;
 begin
+  if ModAmount > 0 then
+  begin
+    FFrequency := FFrequency + Modifier^ * log_approx(ModAmount);
+  end;
+
   if FFrequency > 0.99 then FFrequency := 0.99;
   if FFrequency < 0.001 then FFrequency := 0.001;
-  if FResonance > 0.99 then FResonance := 0.99;
+  if FResonance > 0.95 then FResonance := 0.95;
   if FResonance < 0.0 then FResonance := 0.0;
 
-  f := Frequency;  //(Frequency + Frequency) * divbysamplerate;
-  p := f * (1.8 - 0.8 * f);
+  p := FFrequency * (1.8 - 0.8 * FFrequency);
   k := p + p - 1.0;
   t := (1.0 - p) * 1.386249;
   t2 := 12.0 + t * t;
   t3 := 6.0 * t;
-  r := Resonance * (t2 + t3) / (t2 - t3);
+  r := FResonance * (t2 + t3) / (t2 - t3);
 end;
 
 constructor TLP24DB.Create(AFrames: Integer);
@@ -243,8 +244,8 @@ end;
 function TLP24DB.Process(I: Single): Single;
 begin
   // Keep between valid range!
-  if i > 0.999 then i := 0.999;
-  if i < -0.999 then i := -0.999;
+  if I > 0.999 then I := 0.999;
+  if I < -0.999 then I := -0.999;
 
   x := I - r * y4;
   y1:= x  * p + oldx * p - k * y1;
@@ -253,9 +254,9 @@ begin
   y4:= y3 * p + oldy3 * p - k * y4;
   y4 := y4 - ((y4 * y4 * y4) * divby6);
   oldx := x;
-  oldy1 := y1 {+_kd};
-  oldy2 := y2 {+_kd};
-  oldy3 := y3 {+_kd};
+  oldy1 := y1 +_kd;
+  oldy2 := y2 +_kd;
+  oldy3 := y3 +_kd;
   Result := y4;
 end;
 

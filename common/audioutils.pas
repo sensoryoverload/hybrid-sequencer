@@ -113,8 +113,8 @@ function log_approx(val: single): single; inline;
 var
   lNormVal: single;
 begin
-  lNormVal := val + 1E-20;
-  Result := lNormVal * lNormVal;
+  //lNormVal := val + 1E-20;
+  Result := val * val;
 end;
 
 {
@@ -124,8 +124,8 @@ function log_approx2(val: single): single; inline;
 var
   lNormVal: single;
 begin
-  lNormVal := val + 1E-20;
-  Result := lNormVal * lNormVal * lNormVal;
+  //lNormVal := val + 1E-20;
+  Result := val * val * val;
 end;
 
 { TParamSmooth }

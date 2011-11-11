@@ -1642,7 +1642,11 @@ begin
           // - detach
           // - set parent to new pattern type
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
-          lMidiPattern.Detach(FMidiPatternControlGUI);
+          if Assigned(lMidiPattern) then
+          begin
+            FMidiPatternControlGUI.Disconnect;
+            lMidiPattern.Detach(FMidiPatternControlGUI);
+          end;
 
           FMidiPatternControlGUI.Parent := nil;
           FWavePatternControlGUI.Align := alClient;
@@ -1650,17 +1654,29 @@ begin
 
           // Attach new pattern
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-          lWavePattern.Attach(FWavePatternControlGUI);
+          if Assigned(lWavePattern) then
+          begin
+            lWavePattern.Attach(FWavePatternControlGUI);
+            FWavePatternControlGUI.Connect;
+          end;
         end
         else
         begin
           // Last selected pattern of same type; just detach
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
-          lWavePattern.Detach(FWavePatternControlGUI);
+          if Assigned(lWavePattern) then
+          begin
+            FWavePatternControlGUI.Disconnect;
+            lWavePattern.Detach(FWavePatternControlGUI);
+          end;
 
           // Attach new pattern
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-          lWavePattern.Attach(FWavePatternControlGUI);
+          if Assigned(lWavePattern) then
+          begin
+            lWavePattern.Attach(FWavePatternControlGUI);
+            FWavePatternControlGUI.Connect;
+          end;
         end;
       end
       else
@@ -1672,7 +1688,11 @@ begin
 
           // Attach new pattern
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-          lWavePattern.Attach(FWavePatternControlGUI);
+          if Assigned(lWavePattern) then
+          begin
+            lWavePattern.Attach(FWavePatternControlGUI);
+            FWavePatternControlGUI.Connect;
+          end;
         end
         else
         begin
@@ -1696,23 +1716,39 @@ begin
           // - detach
           // - set parent to new pattern type
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
-          lWavePattern.Detach(FWavePatternControlGUI);
+          if Assigned(lWavePattern) then
+          begin
+            FWavePatternControlGUI.Disconnect;
+            lWavePattern.Detach(FWavePatternControlGUI);
+          end;
 
           FWavePatternControlGUI.Parent := nil;
           FMidiPatternControlGUI.Align := alClient;
           FMidiPatternControlGUI.Parent := tsPattern;
 
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-          lMidiPattern.Attach(FMidiPatternControlGUI);
+          if Assigned(lMidiPattern) then
+          begin
+            lMidiPattern.Attach(FMidiPatternControlGUI);
+            FMidiPatternControlGUI.Connect;
+          end;
         end
         else
         begin
           // Last selected pattern of same type; just detach
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
-          lMidiPattern.Detach(FMidiPatternControlGUI);
+          if Assigned(lMidiPattern) then
+          begin
+            FMidiPatternControlGUI.Disconnect;
+            lMidiPattern.Detach(FMidiPatternControlGUI);
+          end;
 
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-          lMidiPattern.Attach(FMidiPatternControlGUI);
+          if Assigned(lMidiPattern) then
+          begin
+            lMidiPattern.Attach(FMidiPatternControlGUI);
+            FMidiPatternControlGUI.Connect;
+          end;
         end;
       end
       else
@@ -1723,7 +1759,11 @@ begin
           FMidiPatternControlGUI.Parent := tsPattern;
 
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
-          lMidiPattern.Attach(FMidiPatternControlGUI);
+          if Assigned(lMidiPattern) then
+          begin
+            lMidiPattern.Attach(FMidiPatternControlGUI);
+            FMidiPatternControlGUI.Connect;
+          end;
         end
         else
         begin

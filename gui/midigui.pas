@@ -869,6 +869,11 @@ procedure TMidiPatternGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TMidiGridGUI.Update');
 
+  {
+    In this case you should not use this construction
+    The view is not autopopulated from the modelside but
+    disconnected/connected clientside    }
+
   DiffLists(
     TMidiPattern(Subject).NoteList,
     FNoteListGUI,
@@ -876,7 +881,7 @@ begin
     @Self.DeleteNoteGUI);
 
   FBitmapIsDirty := True;
-  Invalidate;
+  //Invalidate;
 
   DBLog('end TMidiGridGUI.Update');
 end;
@@ -943,15 +948,13 @@ begin
   begin
     lMidiNoteGUI := TMidiNoteGUI(FNoteListGUI[lIndex]);
 
-    if lMidiNoteGUI.ObjectID = AObjectID then
+    if Assigned(lMidiNoteGUI) then
     begin
-      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
-      if Assigned(lMidiNote) then
+      if lMidiNoteGUI.ObjectID = AObjectID then
       begin
-        lMidiNote.Detach(lMidiNoteGUI);
+        FNoteListGUI.Remove(lMidiNoteGUI);
+        break;
       end;
-      FNoteListGUI.Remove(lMidiNoteGUI);
-      break;
     end;
   end;
 
@@ -1318,11 +1321,11 @@ procedure TMidigridOverview.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TMidigridOverview.Update');
 
-  DiffLists(
+  {DiffLists(
     TMidiPattern(Subject).NoteList,
     FNoteListGUI,
     @Self.CreateOverviewNoteGUI,
-    @Self.DeleteOverviewNoteGUI);
+    @Self.DeleteOverviewNoteGUI);}
 
   // Determine total width of a notes
   FTotalWidth := CalculateTotalWidth;
@@ -1353,8 +1356,25 @@ begin
 end;
 
 procedure TMidigridOverview.Disconnect;
+var
+  lIndex: Integer;
+  lMidiNoteOverview: TMidiNoteOverview;
+  lMidiNote: TMidiNote;
 begin
-  //
+  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
+  begin
+    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
+
+    if Assigned(lMidiNoteOverview) then
+    begin
+      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(lMidiNoteOverview.ObjectID));
+      if Assigned(lMidiNote) then
+      begin
+        lMidiNote.Detach(lMidiNoteOverview);
+        FNoteListGUI.Remove(lMidiNoteOverview);
+      end;
+    end;
+  end;
 end;
 
 procedure TMidigridOverview.Paint;
@@ -1519,15 +1539,12 @@ var
   lMidiNote: TMidiNote;
   lMidiNoteOverview: TMidiNoteOverview;
 begin
-  DBLog('start TMidigridOverview.CreateNoteGUI');
+  DBLog('start TMidigridOverview.CreateOverviewNoteGUI');
 
   lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
   if Assigned(lMidiNote) then
   begin
     lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
-    //lMidiNoteOverview.ObjectID := AObjectID;
-    //lMidiNoteOverview.ObjectOwnerID := Self.ObjectID;
-    //lMidiNoteOverview.Model := lMidiNote;
     lMidiNoteOverview.Note := lMidiNote.Note;
     lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
     lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;
@@ -1536,7 +1553,7 @@ begin
     lMidiNote.Attach(lMidiNoteOverview);
   end;
 
-  DBLog('end TMidigridOverview.CreateNoteGUI');
+  DBLog('end TMidigridOverview.CreateOverviewNoteGUI');
 end;
 
 procedure TMidigridOverview.DeleteOverviewNoteGUI(AObjectID: string);
@@ -1551,15 +1568,13 @@ begin
   begin
     lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
 
-    if lMidiNoteOverview.ObjectID = AObjectID then
+    if Assigned(lMidiNoteOverview) then
     begin
-      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
-      if Assigned(lMidiNote) then
+      if lMidiNoteOverview.ObjectID = AObjectID then
       begin
-        lMidiNote.Detach(lMidiNoteOverview);
+        FNoteListGUI.Remove(lMidiNoteOverview);
+        break;
       end;
-      FNoteListGUI.Remove(lMidiNoteOverview);
-      break;
     end;
   end;
 

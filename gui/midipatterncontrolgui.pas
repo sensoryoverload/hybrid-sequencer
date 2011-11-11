@@ -158,10 +158,13 @@ procedure TMidiPatternControlGUI.Disconnect;
 begin
   if Assigned(FModel) then
   begin
+    FSampleBankGUI.Disconnect;
     FSampleBank.Detach(FSampleBankGUI);
 
+    FMidigridOverview.Disconnect;
     FModel.Detach(FMidigridOverview);
 
+    FMidiPatternGUI.Disconnect;
     FModel.Detach(FMidiPatternGUI);
   end;
 end;

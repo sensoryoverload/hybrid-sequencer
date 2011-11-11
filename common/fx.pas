@@ -30,7 +30,7 @@ lTrack.FXFilter.Frequency:= Random(22050);
 interface
 
 uses
-  Classes, SysUtils, plugin, midi, global_command;
+  Classes, SysUtils, plugin, midi, global_command, math;
   
 type
 
@@ -117,8 +117,8 @@ type
   function Tanh2_pas1(x:Single):Single;
   function Tanh2_pas2(x:Single):Single;
   function Tanh2(x:Single):Single;  assembler;
+  function saturate(x: single; t: single): single;
 
-  
 implementation
 
 { TDecimateFX }
@@ -384,6 +384,30 @@ begin
   for i := 0 to Pred(AFrames) do
   begin
     ABuffer[i] := ABuffer[i];
+  end;
+end;
+
+function sigmoid(x: single): single;
+begin
+  if (abs(x) < 1) then
+    Result := x * (1.5 - 0.5 * x * x)
+  else
+    if x > 0 then
+      Result := 1
+    else
+      Result := -1;
+end;
+
+function saturate(x: single; t: single): single;
+begin
+  if (abs(x) < t) then
+    Result := x
+  else
+  begin
+    if (x > 0) then
+      Result := t + (1-t) * sigmoid((x - t) / ((1 - t) * 1.5))
+    else
+      Result := -(t + (1-t) * sigmoid((-x - t) / ((1 - t) * 1.5)));
   end;
 end;
 

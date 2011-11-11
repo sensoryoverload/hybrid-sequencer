@@ -20,7 +20,7 @@ object SampleView: TSampleView
     ClientWidth = 269
     TabOrder = 0
     object dcOsc1Pitch: TDialControl
-      Left = 80
+      Left = 64
       Height = 40
       Top = 0
       Width = 36
@@ -33,9 +33,9 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOsc1ModAmount: TDialControl
-      Left = 195
+      Left = 199
       Height = 40
-      Top = 0
+      Top = 1
       Width = 36
       Value = 0
       Caption = 'ModLevel'
@@ -49,7 +49,7 @@ object SampleView: TSampleView
       Left = 3
       Height = 27
       Top = 12
-      Width = 75
+      Width = 62
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 2
@@ -65,16 +65,16 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object cbOsc1ModSource: TComboBox
-      Left = 121
+      Left = 134
       Height = 27
       Top = 12
-      Width = 72
+      Width = 61
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 3
     end
     object lblOSC1ModAmount: TLabel
-      Left = 124
+      Left = 137
       Height = 14
       Top = 0
       Width = 60
@@ -97,13 +97,13 @@ object SampleView: TSampleView
       Left = 3
       Height = 27
       Top = 54
-      Width = 75
+      Width = 62
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 4
     end
     object dcOsc2Pitch: TDialControl
-      Left = 80
+      Left = 64
       Height = 40
       Top = 40
       Width = 36
@@ -116,16 +116,16 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbOsc2ModSource: TComboBox
-      Left = 121
+      Left = 134
       Height = 27
       Top = 54
-      Width = 72
+      Width = 61
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 6
     end
     object lblOSC2ModAmount: TLabel
-      Left = 124
+      Left = 137
       Height = 14
       Top = 41
       Width = 60
@@ -135,9 +135,9 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object dcOsc2ModAmount: TDialControl
-      Left = 195
+      Left = 199
       Height = 40
-      Top = 40
+      Top = 41
       Width = 36
       Value = 0
       Caption = 'ModLevel'
@@ -161,13 +161,13 @@ object SampleView: TSampleView
       Left = 3
       Height = 27
       Top = 92
-      Width = 75
+      Width = 62
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 8
     end
     object dcOsc3Pitch: TDialControl
-      Left = 80
+      Left = 64
       Height = 40
       Top = 80
       Width = 36
@@ -180,16 +180,16 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbOsc3ModSource: TComboBox
-      Left = 121
+      Left = 134
       Height = 27
       Top = 92
-      Width = 72
+      Width = 61
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 10
     end
     object lblOSC3ModAmount: TLabel
-      Left = 124
+      Left = 137
       Height = 14
       Top = 79
       Width = 60
@@ -199,9 +199,9 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object dcOsc3ModAmount: TDialControl
-      Left = 195
+      Left = 199
       Height = 40
-      Top = 80
+      Top = 81
       Width = 36
       Value = 0
       Caption = 'ModLevel'
@@ -212,9 +212,9 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOSC1Level: TDialControl
-      Left = 230
+      Left = 234
       Height = 40
-      Top = 0
+      Top = 1
       Width = 36
       Value = 0
       Caption = 'Level'
@@ -225,9 +225,9 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOSC3Level: TDialControl
-      Left = 230
+      Left = 234
       Height = 40
-      Top = 80
+      Top = 81
       Width = 36
       Value = 0
       Caption = 'Level'
@@ -238,9 +238,9 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcOSC2Level: TDialControl
-      Left = 230
+      Left = 234
       Height = 40
-      Top = 40
+      Top = 41
       Width = 36
       Value = 0
       Caption = 'Level'
@@ -248,6 +248,45 @@ object SampleView: TSampleView
       Highest = 1
       Enabled = True
       ValueVisible = False
+      Color = clNone
+    end
+    object dcOsc1PW: TDialControl
+      Left = 97
+      Height = 40
+      Top = 0
+      Width = 36
+      Value = 0
+      Caption = 'PW'
+      Lowest = 0
+      Highest = 100
+      Enabled = True
+      ValueVisible = True
+      Color = clNone
+    end
+    object dcOsc2PW: TDialControl
+      Left = 97
+      Height = 40
+      Top = 40
+      Width = 36
+      Value = 0
+      Caption = 'PW'
+      Lowest = 0
+      Highest = 100
+      Enabled = True
+      ValueVisible = True
+      Color = clNone
+    end
+    object dcOsc3PW: TDialControl
+      Left = 97
+      Height = 40
+      Top = 79
+      Width = 36
+      Value = 0
+      Caption = 'PW'
+      Lowest = 0
+      Highest = 100
+      Enabled = True
+      ValueVisible = True
       Color = clNone
     end
   end
@@ -291,7 +330,7 @@ object SampleView: TSampleView
       Left = 6
       Height = 27
       Top = 53
-      Width = 72
+      Width = 60
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 2
@@ -343,6 +382,17 @@ object SampleView: TSampleView
       Highest = 25
       Enabled = True
       ValueVisible = False
+    end
+    object tcFilterSwith: TToggleControl
+      Left = 81
+      Height = 14
+      Top = 97
+      Width = 24
+      SwitchedOn = True
+      CaptionOn = 'ON'
+      CaptionOff = 'OFF'
+      OnChange = tcFilterSwithChange
+      Color = clLime
     end
   end
   object gbEnvelopes: TGroupBox
@@ -595,7 +645,7 @@ object SampleView: TSampleView
       Left = 38
       Height = 27
       Top = 12
-      Width = 65
+      Width = 56
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 3
@@ -604,7 +654,7 @@ object SampleView: TSampleView
       Left = 38
       Height = 27
       Top = 54
-      Width = 65
+      Width = 56
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 4
@@ -613,7 +663,7 @@ object SampleView: TSampleView
       Left = 38
       Height = 27
       Top = 92
-      Width = 65
+      Width = 56
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 5
@@ -700,7 +750,7 @@ object SampleView: TSampleView
       Left = 41
       Height = 27
       Top = 12
-      Width = 55
+      Width = 47
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 1
@@ -709,7 +759,7 @@ object SampleView: TSampleView
       Left = 41
       Height = 27
       Top = 54
-      Width = 56
+      Width = 46
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 2
@@ -718,7 +768,7 @@ object SampleView: TSampleView
       Left = 99
       Height = 27
       Top = 12
-      Width = 53
+      Width = 46
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 3

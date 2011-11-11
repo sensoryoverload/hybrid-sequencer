@@ -55,6 +55,9 @@ type
     cbLFO3WaveSelector: TComboBox;
     dcCutoffModAmount: TDialControl;
     dcEnvModAmount: TDialControl;
+    dcOsc1PW: TDialControl;
+    dcOsc2PW: TDialControl;
+    dcOsc3PW: TDialControl;
     dcPitchEnvelopeAttack: TDialControl;
     dcPitchEnvelopeDecay: TDialControl;
     dcPitchEnvelopeRelease: TDialControl;
@@ -105,9 +108,11 @@ type
     lblOSC2ModAmount: TLabel;
     lblOSC3: TLabel;
     lblOSC3ModAmount: TLabel;
+    tcFilterSwith: TToggleControl;
     procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
+    procedure tcFilterSwithChange(Sender: TObject);
   private
     { private declarations }
     FObjectOwnerID: string;
@@ -244,6 +249,11 @@ begin
   except
     lGenericCommand.Free;
   end;
+end;
+
+procedure TSampleView.tcFilterSwithChange(Sender: TObject);
+begin
+  //
 end;
 
 procedure TSampleView.SetEnableControls(const AValue: Boolean);
