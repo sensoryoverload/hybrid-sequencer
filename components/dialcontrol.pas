@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, Math, Spin,
-  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources, BGRABitmap, BGRABitmapTypes;
+  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources, BGRABitmap, BGRABitmapTypes{,
+  globalconst};
 
 const
   M_PI = 3.14159265358979323846;
@@ -92,6 +93,7 @@ Type
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
     procedure UpdateControl;
+    property MidiMappingMode: Boolean read FMidiMappingMode write FMidiMappingMode;
   published
     property Value: Single read GetValue write SetValue;
     property Caption: string read FCaption write FCaption;
@@ -948,7 +950,7 @@ begin
     if FSwitchedOn then
       Bitmap.Canvas.Brush.Color := clLime
     else
-      Bitmap.Canvas.Brush.Color := Color;
+      Bitmap.Canvas.Brush.Color := clLtGray;
 
     // Outline color
     Bitmap.Canvas.Pen.Style:= psSolid;
@@ -998,7 +1000,7 @@ end;
 
 function TVolumeControl.GetVolumeMultiplier: Single;
 begin
-  Result:= FPosition / 100;
+  Result:= FPosition * 0.01; { FPosition / 100}
 end;
 
 function TVolumeControl.GetLevelLeft: single;

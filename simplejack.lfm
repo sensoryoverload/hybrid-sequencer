@@ -244,35 +244,32 @@ object MainApp: TMainApp
     Top = 340
     Width = 1095
     Align = alTop
-    OnDblClick = BottomSplitterDblClick
     ResizeAnchor = akTop
   end
-  object pcPattern: TPageControl
+  object pnlBottom: TPanel
     Left = 0
     Height = 330
     Top = 349
     Width = 1095
-    ActivePage = tsPattern
     Align = alClient
-    TabIndex = 1
+    BevelOuter = bvNone
+    ClientHeight = 330
+    ClientWidth = 1095
     TabOrder = 2
-    TabPosition = tpLeft
-    object tsTrack: TTabSheet
-      Caption = 'Track'
+    object pnlVarious: TPanel
+      Left = 0
+      Height = 330
+      Top = 0
+      Width = 170
+      Align = alLeft
+      BevelOuter = bvNone
+      TabOrder = 0
     end
-    object tsPattern: TTabSheet
-      Caption = 'Pattern'
-    end
-    object tsMonitor: TTabSheet
-      Caption = 'Monitor'
-      ClientHeight = 326
-      ClientWidth = 1043
-      object Splitter5: TSplitter
-        Left = 0
-        Height = 326
-        Top = 0
-        Width = 5
-      end
+    object Splitter1: TSplitter
+      Left = 170
+      Height = 330
+      Top = 0
+      Width = 5
     end
   end
   object MainMenu1: TMainMenu

@@ -53,6 +53,7 @@ type
     cbOsc3WaveSelector: TComboBox;
     cbOsc3ModSource: TComboBox;
     cbLFO3WaveSelector: TComboBox;
+    cbFilterType: TComboBox;
     dcCutoffModAmount: TDialControl;
     dcEnvModAmount: TDialControl;
     dcOsc1PW: TDialControl;
@@ -62,7 +63,7 @@ type
     dcPitchEnvelopeDecay: TDialControl;
     dcPitchEnvelopeRelease: TDialControl;
     dcPitchEnvelopeSustain: TDialControl;
-    dcLowpassCutoff: TDialControl;
+    dcLpCutoff: TDialControl;
     dcAmpEnvelopeAttack: TDialControl;
     dcAmpEnvelopeDecay: TDialControl;
     dcAmpEnvelopeRelease: TDialControl;
@@ -73,7 +74,7 @@ type
     dcOsc3ModAmount: TDialControl;
     dcOsc2Pitch: TDialControl;
     dcOsc3Pitch: TDialControl;
-    dcResonance: TDialControl;
+    dcLpResonance: TDialControl;
     dcOSC1Level: TDialControl;
     dcFilterEnvelopeAttack: TDialControl;
     dcFilterEnvelopeDecay: TDialControl;
@@ -111,6 +112,7 @@ type
     tcFilterSwith: TToggleControl;
     procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
+    procedure DoToggleChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
     procedure tcFilterSwithChange(Sender: TObject);
   private
@@ -207,9 +209,28 @@ begin
   lGenericCommand := TSampleParameterCommand.Create(ObjectOwnerID);
   try
     lGenericCommand.Parameter := TSampleParameter(TDialControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TDialControl(Sender).MidiMappingMode;
+    writeln('midilearn mode '+BoolToStr(lGenericCommand.MidiLearn, True));
     lGenericCommand.ObjectID := Self.ObjectID;
     lGenericCommand.Value := TDialControl(Sender).Value;
     lGenericCommand.Persist := False;
+
+    GCommandQueue.PushCommand(lGenericCommand);
+  except
+    lGenericCommand.Free;
+  end;
+end;
+
+procedure TSampleView.DoToggleChange(Sender: TObject);
+var
+  lGenericCommand: TSampleParameterCommand;
+begin
+  lGenericCommand := TSampleParameterCommand.Create(ObjectOwnerID);
+  try
+    lGenericCommand.Parameter := TSampleParameter(TToggleControl(Sender).Tag);
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := not TToggleControl(Sender).SwitchedOn;
+    lGenericCommand.Persist := True;
 
     GCommandQueue.PushCommand(lGenericCommand);
   except
@@ -241,6 +262,8 @@ begin
   lGenericCommand := TSampleParameterCommand.Create(ObjectOwnerID);
   try
     lGenericCommand.Parameter := TSampleParameter(TDialControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TDialControl(Sender).MidiMappingMode;
+    writeln('midilearn mode '+BoolToStr(lGenericCommand.MidiLearn, True));
     lGenericCommand.ObjectID := Self.ObjectID;
     lGenericCommand.Value := TDialControl(Sender).Value;
     lGenericCommand.Persist := True;
@@ -312,6 +335,16 @@ constructor TSampleView.Create(AOwner: TComponent);
     AComboBox.OnChange := @DoSelectionChange;
   end;
 
+  procedure FillFilterTypeComboBox(AComboBox: TComboBox; ASampleParamter: TSampleParameter);
+  begin
+    AComboBox.Items.Add('Lowpass');
+    AComboBox.Items.Add('Highpass');
+    AComboBox.Items.Add('Bandpass');
+    AComboBox.Items.Add('Notch');
+    AComboBox.Tag := Integer(ASampleParamter);
+    AComboBox.OnChange := @DoSelectionChange;
+  end;
+
   procedure SetupDialControl(ADialControl: TDialControl; ASampleParamter: TSampleParameter;
     ALowest: Single; AHighest: Single; ADefaultValue: Single);
   begin
@@ -321,6 +354,14 @@ constructor TSampleView.Create(AOwner: TComponent);
     ADialControl.Lowest := ALowest;
     ADialControl.Highest := AHighest;
     ADialControl.Value := ADefaultValue;
+  end;
+
+  procedure SetupToggleControl(AToggleControl: TToggleControl; ASampleParameter: TSampleParameter;
+    ADefaultValue: Boolean);
+  begin
+    AToggleControl.Tag := Integer(ASampleParameter);
+    AToggleControl.OnChange := @DoToggleChange;
+    AToggleControl.SwitchedOn := ADefaultValue;
   end;
 
 begin
@@ -338,12 +379,15 @@ begin
   }
 
   // Filter
-  SetupDialControl(dcLowpassCutoff, spFilter_Cutoff, 0.01, 0.99, 1);
+  SetupDialControl(dcLpCutoff, spFilter_Cutoff, 0, 1, 1);
   FillModSourceComboBox(cbCutoffModSource, spFilter_Cutoff_ModSource);
   SetupDialControl(dcCutoffModAmount, spFilter_Cutoff_ModAmount, 0, 0.3, 0);
+  SetupToggleControl(tcFilterSwith, spFilter_Active, True);
 
-  SetupDialControl(dcResonance, spFilter_Resonance, 0, 1, 0);
+  SetupDialControl(dcLpResonance, spFilter_Resonance, 0, 1, 0);
   SetupDialControl(dcEnvModAmount, spFilter_Envelope_Amount, 0, 0.3, 0);
+
+  FillFilterTypeComboBox(cbFilterType, spFilter_Type);
 
   // Oscillators
   SetupDialControl(dcOsc1Pitch, spOSC1_Pitch, -24, 24, 0);
@@ -351,18 +395,21 @@ begin
   FillModSourceComboBox(cbOsc1ModSource, spOSC1_ModSource);
   SetupDialControl(dcOsc1ModAmount, spOSC1_ModAmount, 0, 1, 0);
   SetupDialControl(dcOSC1Level, spOSC1_Level, 0, 1, 0.3);
+  SetupDialControl(dcOsc1PW, spOSC1_PulseWidth, 0.01, 1, 1);
 
   SetupDialControl(dcOsc2Pitch, spOSC2_Pitch, -24, 24, 0);
   FillWaveSelectionComboBox(cbOsc2WaveSelector, spOSC2_Waveform);
   FillModSourceComboBox(cbOsc2ModSource, spOSC2_ModSource);
   SetupDialControl(dcOsc2ModAmount, spOSC2_ModAmount, 0, 1, 0);
   SetupDialControl(dcOSC2Level, spOSC2_Level, 0, 1, 0);
+  SetupDialControl(dcOsc2PW, spOSC2_PulseWidth, 0.01, 1, 1);
 
   SetupDialControl(dcOsc3Pitch, spOSC3_Pitch, -24, 24, 0);
   FillWaveSelectionComboBox(cbOsc3WaveSelector, spOSC3_Waveform);
   FillModSourceComboBox(cbOsc3ModSource, spOSC3_ModSource);
   SetupDialControl(dcOsc3ModAmount, spOSC3_ModAmount, 0, 1, 0);
   SetupDialControl(dcOSC3Level, spOSC3_Level, 0, 1, 0);
+  SetupDialControl(dcOsc3PW, spOSC3_PulseWidth, 0.01, 1, 1);
 
   // Envelopes
   SetupDialControl(dcAmpEnvelopeAttack, spAmplifierEnv_Attack, 0.01, 1, 0.01);
@@ -393,8 +440,8 @@ begin
   FillNoteComboBox(cbHighNote, spHigh_Note);
   FillNoteComboBox(cbBaseNote, spBase_Note);
 
-  SetupDialControl(dcSaturateDrivePreFilter, spSaturateDrivePreFilter, 1, 15, 1);
-  SetupDialControl(dcSaturateDrivePostFilter, spSaturateDrivePostFilter, 1, 15, 1);
+  SetupDialControl(dcSaturateDrivePreFilter, spSaturateDrivePreFilter, 1, 25, 1);
+  SetupDialControl(dcSaturateDrivePostFilter, spPostFilterFeedback, 1, 25, 1);
 
   SetEnableControls(False);
 end;
@@ -411,29 +458,34 @@ procedure TSampleView.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TSampleView.Update');
 
-  dcLowpassCutoff.Value := TSample(Subject).Filter.Frequency;
+  dcLpCutoff.Value := TSample(Subject).Filter.Frequency;
+  dcLpResonance.Value := TSample(Subject).Filter.Resonance;
   cbCutoffModSource.ItemIndex := Integer(TSample(Subject).Filter.FreqModSource);
   dcCutoffModAmount.Value := TSample(Subject).Filter.FreqModAmount;
-  dcResonance.Value := TSample(Subject).Filter.Resonance;
   dcEnvModAmount.Value := TSample(Subject).Filter.EnvelopeAmount;
+  tcFilterSwith.SwitchedOn := TSample(Subject).Filter.Active;
+  cbFilterType.ItemIndex := Integer(TSample(Subject).Filter.FilterType);
 
   dcOsc1Pitch.Value := TSample(Subject).Osc1.Pitch;
   cbOsc1WaveSelector.ItemIndex := Integer(TSample(Subject).Osc1.WaveForm);
   cbOsc1ModSource.ItemIndex := Integer(TSample(Subject).Osc1.ModSource);
   dcOsc1ModAmount.Value := TSample(Subject).Osc1.ModAmount;
   dcOSC1Level.Value := TSample(Subject).Osc1.Level;
+  dcOsc1PW.Value := TSample(Subject).Osc1.PulseWidth;
 
   dcOsc2Pitch.Value := TSample(Subject).Osc2.Pitch;
   cbOsc2WaveSelector.ItemIndex := Integer(TSample(Subject).Osc2.WaveForm);
   cbOsc2ModSource.ItemIndex := Integer(TSample(Subject).Osc2.ModSource);
   dcOsc2ModAmount.Value := TSample(Subject).Osc2.ModAmount;
   dcOSC2Level.Value := TSample(Subject).Osc2.Level;
+  dcOsc2PW.Value := TSample(Subject).Osc2.PulseWidth;
 
   dcOsc3Pitch.Value := TSample(Subject).Osc3.Pitch;
   cbOsc3WaveSelector.ItemIndex := Integer(TSample(Subject).Osc3.WaveForm);
   cbOsc3ModSource.ItemIndex := Integer(TSample(Subject).Osc3.ModSource);
   dcOsc3ModAmount.Value := TSample(Subject).Osc3.ModAmount;
   dcOSC3Level.Value := TSample(Subject).Osc3.Level;
+  dcOsc3PW.Value := TSample(Subject).Osc3.PulseWidth;
 
   dcAmpEnvelopeAttack.Value := TSample(Subject).AmpEnvelope.Attack;
   dcAmpEnvelopeDecay.Value := TSample(Subject).AmpEnvelope.Decay;

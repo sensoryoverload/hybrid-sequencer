@@ -117,6 +117,14 @@ type
 
   PPSingle = ^PSingle;
 
+  TCurveType = (ctLinear, ctLogarithmic);
+
+  IMidiControllable = interface
+    function GetLow: single;
+    function GetHigh: single;
+    function GetCurveType: TCurveType;
+  end;
+
   THybridPersistentModel = class;
 
   ISubject = interface;

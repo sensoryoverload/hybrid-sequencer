@@ -31,7 +31,12 @@ interface
 uses
   Classes, SysUtils, ContNrs, global, globalconst, ExtCtrls, utils;
 
+const
+  DIV_BY_128 = 1 / 128;
+
 type
+  TQueueStatus = (qsExecutingCommands, qsWaitForMidiBind, qsFinishedMidiBind);
+
   { TCommand }
 
   TCommand = class(TObject)
@@ -41,6 +46,7 @@ type
     FObjectOwner: string;
     FObjectID: string;
     FPersist: Boolean;
+    FMidiLearn: Boolean;
   protected
     procedure DoExecute; virtual; abstract;
     procedure DoRollback; virtual;
@@ -57,13 +63,41 @@ type
     property ObjectOwner: string read FObjectOwner write FObjectOwner;
     property ObjectID: string read FObjectID write FObjectID;
     property Persist: Boolean read FPersist write FPersist default True;
+    property MidiLearn: Boolean read FMidiLearn write FMidiLearn;
   end;
+
+  TMidiMap = class
+    ObjectID: string;
+    ObjectOwnerID: string;
+    Lowest: single;
+    Highest: single;
+    Parameter: Integer;
+    Scale: single;
+  end;
+
+  PMidiMap = ^TMidiMap;
+
+  { TMidiMappingTable }
+
+  TMidiMappingTable = class(TStringList)
+  public
+    function AddMapping(AMidiCode: string; AObjectId: string;
+      AObjectOwnerId: string; AParameter: Integer;
+      ALow: single; AHigh: single): Boolean;
+    function DeleteMapping(AMidiCode: string): Boolean;
+  end;
+
+  TMidiCallback = procedure(var AStatus: string) of object;
 
   { TCommandQueue }
 
   TCommandQueue = class(TObjectQueue)
   private
     FCommandQueue: TObjectQueue;
+    FQueueStatus: TQueueStatus;
+    FMidiMappingTable: TMidiMappingTable;
+    FCurrentCommand: TCommand;
+    FMidiCallback: TMidiCallback;
   public
     constructor Create;
     destructor Destroy; override;
@@ -71,7 +105,11 @@ type
     procedure ExecuteCommandQueue;
     procedure PushCommand(AObject: TObject);
     function PopCommand: TObject;
+    property CurrentCommand: TCommand read FCurrentCommand write FCurrentCommand;
     property CommandQueue: TObjectQueue read FCommandQueue write FCommandQueue;
+    property QueueStatus: TQueueStatus read FQueueStatus write FQueueStatus;
+    property MidiMappingTable: TMidiMappingTable read FMidiMappingTable write FMidiMappingTable;
+    property MidiCallback: TMidiCallback read FMidiCallback write FMidiCallback;
   end;
 
   { TMidiDataList }
@@ -130,7 +168,36 @@ var
 implementation
 
 uses
-  trackgui, pattern;
+  trackgui, pattern, sampler;
+
+{ TMidiMappingTable }
+
+function TMidiMappingTable.AddMapping(AMidiCode: string; AObjectId: string;
+  AObjectOwnerId: string; AParameter: Integer; ALow: single; AHigh: single): Boolean;
+var
+  lMidiMap: TMidiMap;
+begin
+  lMidiMap := TMidiMap.Create;
+  lMidiMap.ObjectID := AObjectId;
+  lMidiMap.ObjectOwnerID := AObjectOwnerId;
+  lMidiMap.Parameter := AParameter;
+  lMidiMap.Lowest := ALow;
+  lMidiMap.Highest := AHigh;
+  lMidiMap.Scale := (AHigh - ALow) * DIV_BY_128;
+  Self.AddObject(AMidiCode, lMidiMap);
+end;
+
+function TMidiMappingTable.DeleteMapping(AMidiCode: string): Boolean;
+var
+  lIndex: Integer;
+begin
+  lIndex := Self.IndexOf(AMidiCode);
+  if lIndex <> -1 then
+  begin
+    Self.Objects[lIndex].Free;
+    Self.Delete(lIndex);
+  end;
+end;
 
 { TMidiBuffer }
 
@@ -220,6 +287,7 @@ begin
   FObjectIdList := TStringList.Create;
   FMemento := TObjectList.Create(True);
   FPersist := True;
+  FMidiLearn := False;
 end;
 
 destructor TCommand.Destroy;
@@ -244,13 +312,15 @@ end;
 
 constructor TCommandQueue.Create;
 begin
-
   FCommandQueue := TObjectQueue.Create;
+  FMidiMappingTable := TMidiMappingTable.Create;
+  FQueueStatus := qsExecutingCommands;
 end;
 
 destructor TCommandQueue.Destroy;
 begin
   FCommandQueue.Free;
+  FMidiMappingTable.Free;
 
   inherited Destroy;
 end;
@@ -258,27 +328,61 @@ end;
 procedure TCommandQueue.ExecuteCommandQueue;
 var
   lCommand: TCommand;
+  lStatus: string;
 begin
   while FCommandQueue.Count > 0 do
   begin
     try
       lCommand := TCommand(FCommandQueue.Pop);
-      lCommand.Initialize;
-      lCommand.Execute;
 
-      if lCommand.Persist then
+      // In midi-learn mode
+      if lCommand.MidiLearn then
       begin
-        GHistoryQueue.Add(lCommand);
-        Inc(GHistoryIndex);
+
+        // What class is sending the parameter
+        if lCommand is TSampleParameterCommand then
+        begin
+          // Make command visible to others
+          FCurrentCommand := lCommand;
+
+          if Assigned(FMidiCallback) then
+          begin
+            // Get last midicontroller
+            FMidiCallback(lStatus);
+
+            // Bind the two
+            FMidiMappingTable.AddMapping(
+              lStatus,
+              lCommand.FObjectID,
+              lCommand.ObjectOwner,
+              Integer(TSampleParameterCommand(lCommand).Parameter),
+              0,
+              1);
+
+            // Command is not used in mapping mode
+            lCommand.Free;
+          end;
+        end;
       end
       else
       begin
-        lCommand.Free;
+        lCommand.Initialize;
+        lCommand.Execute;
+
+        if lCommand.Persist then
+        begin
+          GHistoryQueue.Add(lCommand);
+          Inc(GHistoryIndex);
+        end
+        else
+        begin
+          lCommand.Free;
+        end;
       end;
+
     except
       on e: exception do
       begin
-        //raise;// Exception.CreateFmt('Failed command execute: %s ', [e.message]);
         DBLog(Format('Failed command execute: %s, command class %s', [e.message, lCommand.ClassName]));
         lCommand.Free;
       end;

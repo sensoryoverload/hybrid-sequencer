@@ -1353,6 +1353,8 @@ end;
 procedure TMidigridOverview.Connect;
 begin
   FModel := TMidiPattern(GObjectMapper.GetModelObject(Self.ObjectID));
+
+  {Create views here from modellist   }
 end;
 
 procedure TMidigridOverview.Disconnect;

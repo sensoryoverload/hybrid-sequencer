@@ -294,32 +294,32 @@ object SampleView: TSampleView
     Left = 569
     Height = 134
     Top = 0
-    Width = 116
+    Width = 133
     Align = alLeft
     Caption = 'Filter'
     ClientHeight = 119
-    ClientWidth = 112
+    ClientWidth = 129
     TabOrder = 1
-    object dcLowpassCutoff: TDialControl
-      Left = 4
+    object dcLpCutoff: TDialControl
+      Left = -2
       Height = 40
       Top = -2
       Width = 36
       Value = 0
-      Caption = 'Cutoff'
+      Caption = 'LP Cutoff'
       Lowest = 20
       Highest = 20000
       Enabled = True
       ValueVisible = False
       Color = clNone
     end
-    object dcResonance: TDialControl
-      Left = 41
+    object dcLpResonance: TDialControl
+      Left = 32
       Height = 40
       Top = -2
       Width = 36
       Value = 0
-      Caption = 'Reso'
+      Caption = 'LP Res'
       Lowest = 0
       Highest = 100
       Enabled = True
@@ -327,18 +327,18 @@ object SampleView: TSampleView
       Color = clNone
     end
     object cbCutoffModSource: TComboBox
-      Left = 6
+      Left = 2
       Height = 27
-      Top = 53
+      Top = 92
       Width = 60
       ItemHeight = 0
       Style = csDropDownList
       TabOrder = 2
     end
     object lblOSC2ModAmount1: TLabel
-      Left = 9
+      Left = 2
       Height = 14
-      Top = 40
+      Top = 80
       Width = 60
       Caption = 'Mod Source'
       Font.Style = [fsBold]
@@ -346,9 +346,9 @@ object SampleView: TSampleView
       ParentFont = False
     end
     object dcCutoffModAmount: TDialControl
-      Left = 77
+      Left = 71
       Height = 40
-      Top = 41
+      Top = 81
       Width = 36
       Value = 0
       Caption = 'ModLevel'
@@ -359,7 +359,7 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcEnvModAmount: TDialControl
-      Left = 77
+      Left = 71
       Height = 40
       Top = -2
       Width = 36
@@ -372,9 +372,9 @@ object SampleView: TSampleView
       Color = clNone
     end
     object dcSaturateDrivePreFilter: TDialControl
-      Left = 4
+      Left = 71
       Height = 40
-      Top = 80
+      Top = 41
       Width = 36
       Value = 0
       Caption = 'Saturate'
@@ -384,15 +384,24 @@ object SampleView: TSampleView
       ValueVisible = False
     end
     object tcFilterSwith: TToggleControl
-      Left = 81
+      Left = 104
       Height = 14
-      Top = 97
-      Width = 24
+      Top = -3
+      Width = 22
       SwitchedOn = True
       CaptionOn = 'ON'
       CaptionOff = 'OFF'
       OnChange = tcFilterSwithChange
       Color = clLime
+    end
+    object cbFilterType: TComboBox
+      Left = 2
+      Height = 27
+      Top = 40
+      Width = 63
+      ItemHeight = 0
+      Style = csDropDownList
+      TabOrder = 7
     end
   end
   object gbEnvelopes: TGroupBox
@@ -700,14 +709,14 @@ object SampleView: TSampleView
     end
   end
   object gbGlobal: TGroupBox
-    Left = 685
+    Left = 702
     Height = 134
     Top = 0
-    Width = 270
+    Width = 253
     Align = alClient
     Caption = 'Global'
     ClientHeight = 119
-    ClientWidth = 266
+    ClientWidth = 249
     TabOrder = 4
     object dcGlobalLevel: TDialControl
       Left = 5

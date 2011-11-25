@@ -215,12 +215,14 @@ type
     FActive: Boolean;
     FMode: TOscMode;
     FLevel: single;
+    FPulseWidth: single;
     procedure SetActive(const AValue: Boolean);
     procedure SetLevel(const AValue: Single);
     procedure SetModAmount(const AValue: Single);
     procedure SetMode(AValue: TOscMode);
     procedure SetModSource(const AValue: TModSource);
     procedure SetPitch(const AValue: Single);
+    procedure SetPulseWidth(AValue: single);
     procedure SetStartPhase(const AValue: dword);
     procedure SetWaveForm(const Value: TOscWaveform);
   public
@@ -235,6 +237,7 @@ type
     property Level: Single read FInternalLevel write SetLevel;
     property Active: Boolean read FActive write SetActive;
     property Mode: TOscMode read FMode write SetMode;
+    property PulseWidth: single read FPulseWidth write SetPulseWidth;
   end;
 
   { TOscillatorEngine }
@@ -246,6 +249,7 @@ type
     FPhase,
     FInc: single;
     FOscillator: TOscillator;
+    FPulseWidth: Integer;
     FSyncOscillator: TOscillatorEngine;
     FLevel: single; // Last process value store
     FDivBySamplerate: single;
@@ -424,24 +428,29 @@ type
     spOSC1_ModSource,
     spOSC1_ModAmount,
     spOSC1_Level,
+    spOSC1_PulseWidth,
 
     spOSC2_Pitch,
     spOSC2_Waveform,
     spOSC2_ModSource,
     spOSC2_ModAmount,
     spOSC2_Level,
+    spOSC2_PulseWidth,
 
     spOSC3_Pitch,
     spOSC3_Waveform,
     spOSC3_ModSource,
     spOSC3_ModAmount,
     spOSC3_Level,
+    spOSC3_PulseWidth,
 
     spFilter_Cutoff,
     spFilter_Cutoff_ModSource,
     spFilter_Cutoff_ModAmount,
     spFilter_Resonance,
     spFilter_Envelope_Amount,
+    spFilter_Active,
+    spFilter_Type,
 
     spFilterEnv_Attack,
     spFilterEnv_Decay,
@@ -465,13 +474,14 @@ type
     spLFO3_Rate,
     spLFO3_Waveform,
 
+    spFeedback,
     spGlobal_Level,
     spLow_Note,
     spHigh_Note,
     spBase_Note,
 
     spSaturateDrivePreFilter,
-    spSaturateDrivePostFilter
+    spPostFilterFeedback
   );
 
   { TSampleParameterCommand }
@@ -564,11 +574,15 @@ type
     FOsc2Engine: TOscillatorEngine;
     FOsc3Engine: TOscillatorEngine;
 
-    FFilterEngine: TLP24DB;
+    FFilterEngine: {TLP24DB;}TDspFilter;
 
     FLFO1Engine: TOscillatorEngine;
     FLFO2Engine: TOscillatorEngine;
     FLFO3Engine: TOscillatorEngine;
+
+    // Feeds the filter output back into prefilter amp
+    FFeedback: single;
+    FFeedbackAmount: single;
 
     FLFOPhase: single;
     FNote: Integer;
@@ -675,7 +689,7 @@ end;
 
 procedure TSampleParameterCommand.DoExecute;
 begin
-  DBLog('start TSampleParameterCommand.DoExecute');
+  DBLog('start TSampleParameterCommand.DoExecute - ' + VarToStr(FValue));
 
   FSample.BeginUpdate;
 
@@ -706,6 +720,11 @@ begin
       FOldValue := FSample.Osc1.Level;
       FSample.Osc1.Level := FValue;
     end;
+    spOSC1_PulseWidth:
+    begin
+      FOldValue := FSample.Osc1.PulseWidth;
+      FSample.Osc1.PulseWidth := FValue;
+    end;
 
     // Osc 2
     spOSC2_Pitch:
@@ -732,6 +751,11 @@ begin
     begin
       FOldValue := FSample.Osc2.Level;
       FSample.Osc2.Level := FValue;
+    end;
+    spOSC2_PulseWidth:
+    begin
+      FOldValue := FSample.Osc2.PulseWidth;
+      FSample.Osc2.PulseWidth := FValue;
     end;
 
     // Osc 3
@@ -760,6 +784,11 @@ begin
       FOldValue := FSample.Osc3.Level;
       FSample.Osc3.Level := FValue;
     end;
+    spOSC3_PulseWidth:
+    begin
+      FOldValue := FSample.Osc3.PulseWidth;
+      FSample.Osc3.PulseWidth := FValue;
+    end;
 
     // Filter
     spFilter_Cutoff:
@@ -786,6 +815,16 @@ begin
     begin
       FOldValue := FSample.Filter.EnvelopeAmount;
       FSample.Filter.EnvelopeAmount := FValue;
+    end;
+    spFilter_Active:
+    begin
+      FOldValue := FSample.Filter.Active;
+      FSample.Filter.Active := FValue;
+    end;
+    spFilter_Type:
+    begin
+      FOldValue := FSample.Filter.FilterType;
+      FSample.Filter.FilterType := FValue;
     end;
 
     // Filter ADSR
@@ -912,7 +951,7 @@ begin
       FOldValue := FSample.SaturateDrivePreFilter;
       FSample.SaturateDrivePreFilter := FValue;
     end;
-    spSaturateDrivePostFilter:
+    spPostFilterFeedback:
     begin
       FOldValue := FSample.SaturateDrivePostFilter;
       FSample.SaturateDrivePostFilter := FValue;
@@ -931,6 +970,7 @@ begin
   FSample.BeginUpdate;
 
   case FParameter of
+    // OSC1
     spOSC1_Pitch:
     begin
       FSample.Osc1.Pitch := FOldValue;
@@ -951,6 +991,12 @@ begin
     begin
       FSample.Osc1.Level := FOldValue;
     end;
+    spOSC1_PulseWidth:
+    begin
+      FSample.Osc1.PulseWidth := FOldValue;
+    end;
+
+    // OSC2
     spOSC2_Pitch:
     begin
       FSample.Osc2.Pitch := FOldValue;
@@ -971,6 +1017,12 @@ begin
     begin
       FSample.Osc2.Level := FOldValue;
     end;
+    spOSC2_PulseWidth:
+    begin
+      FSample.Osc2.PulseWidth := FOldValue;
+    end;
+
+    // OSC3
     spOSC3_Pitch:
     begin
       FSample.Osc3.Pitch := FOldValue;
@@ -991,6 +1043,10 @@ begin
     begin
       FSample.Osc3.Level := FOldValue;
     end;
+    spOSC3_PulseWidth:
+    begin
+      FSample.Osc3.PulseWidth := FOldValue;
+    end;
 
     // Filter Cutoff
     spFilter_Cutoff:
@@ -1004,6 +1060,14 @@ begin
     spFilter_Cutoff_ModAmount:
     begin
       FSample.Filter.FreqModAmount := FOldValue;
+    end;
+    spFilter_Active:
+    begin
+      FSample.Filter.Active := FOldValue;
+    end;
+    spFilter_Type:
+    begin
+      FSample.Filter.FilterType := FOldValue;
     end;
 
     // Filter Resonance
@@ -1117,7 +1181,7 @@ begin
     begin
       FSample.SaturateDrivePreFilter := FOldValue;
     end;
-    spSaturateDrivePostFilter:
+    spPostFilterFeedback:
     begin
       FSample.SaturateDrivePostFilter := FOldValue;
     end;
@@ -1170,21 +1234,35 @@ begin
 
     end;
 
-    lMod := i - 1;
-    lMod := lMod shl 7;
-    lMod := lMod shr 7;
-    xm1 := Ftable[FOscillator.WaveForm, i - 1];
-    x0 := Ftable[FOscillator.WaveForm, i];
-    lMod := i + 1;
-    lMod := lMod shl 7;
-    lMod := lMod shr 7;
-    x1 := Ftable[FOscillator.WaveForm, i + 1];
-    lMod := i + 2;
-    lMod := lMod shl 7;
-    lMod := lMod shr 7;
-    x2 := Ftable[FOscillator.WaveForm, i + 2];
-
-    Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;
+    if FOscillator.WaveForm = square then
+    begin
+      // PulseWidth varies from 0..1, scaled to tablewidth 1-50%
+      if i < (FOscillator.PulseWidth * 256) then
+      begin
+        Result := 1;
+      end
+      else
+      begin
+        Result := -1;
+      end;
+    end
+    else
+    begin
+      lMod := i - 1;
+      lMod := lMod shl 7;
+      lMod := lMod shr 7;
+      xm1 := Ftable[FOscillator.WaveForm, i - 1];
+      x0 := Ftable[FOscillator.WaveForm, i];
+      lMod := i + 1;
+      lMod := lMod shl 7;
+      lMod := lMod shr 7;
+      x1 := Ftable[FOscillator.WaveForm, i + 1];
+      lMod := i + 2;
+      lMod := lMod shl 7;
+      lMod := lMod shr 7;
+      x2 := Ftable[FOscillator.WaveForm, i + 2];
+      Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;
+    end;
 
     // linear interpolation (low vs high quality setting)
 {    Result :=
@@ -1261,7 +1339,7 @@ begin
   end
   else
   begin
-    Finc := log_approx(Frate) * 51200 * FDivBySamplerate;
+    Finc := log_approx4(Frate) * 262144 * FDivBySamplerate;
   end;
 end;
 
@@ -1282,6 +1360,12 @@ procedure TOscillator.SetPitch(const AValue: Single);
 begin
   if FPitch = AValue then exit;
   FPitch := AValue;
+end;
+
+procedure TOscillator.SetPulseWidth(AValue: single);
+begin
+  if FPulseWidth = AValue then Exit;
+  FPulseWidth := AValue;
 end;
 
 procedure TOscillator.SetModAmount(const AValue: Single);
@@ -1452,6 +1536,8 @@ end;
 
 procedure TEnvelopeEngine.Process; inline;
 begin
+  Inc(FFrameCounter);
+
   case FState of
   esStart:
     begin
@@ -1494,7 +1580,6 @@ begin
       if FInternalLevel < 0.01 then
       begin
         FInternalLevel := 0;
-        FState := esEnd;
       end;
     end;
   esEnd:
@@ -1502,11 +1587,13 @@ begin
       // Stay here at the end, this should be a signal to put the voice engine
       // back in the voice pool
       FInternalLevel := 0;
+
+      // Set max steal priority
+      FFrameCounter := High(Integer);
+      FState := esEnd;
     end;
   end;
 
-  {if FInternalLevel < 0 then FInternalLevel := 0;
-  if FInternalLevel > 1 then FInternalLevel := 1;}
   if FInternalLevel > DENORMAL_KILLER then
   begin
     FLevel := log_approx(FInternalLevel);
@@ -1515,38 +1602,60 @@ begin
   begin
     FLevel := 0;
   end;
-
-  Inc(FFrameCounter);
 end;
 
 procedure TEnvelopeEngine.NoteOn;
 begin
-  FAttackAdder :=
-    1 / (Samplerate * log_approx( FEnvelope.Attack ) * 3);
+  if FEnvelope.Attack = 0 then
+  begin
+    FInternalLevel := 1;
+    FState := esDecay;
+  end
+  else
+  begin
+    FAttackAdder :=
+      1 / (Samplerate * log_approx( FEnvelope.Attack ) * 3);
+    FInternalLevel := 0;
+  end;
 
   // Time to decrease to sustain level
-  FDecayAdder :=
-    (1 - FEnvelope.Sustain) /
-    (Samplerate * log_approx( FEnvelope.Decay ) * 3);
+  if FEnvelope.Decay = 0 then
+  begin
+    FState := esSustain;
+    FInternalLevel := FEnvelope.Sustain;
+  end
+  else
+  begin
+    FDecayAdder :=
+      (1 - FEnvelope.Sustain) /
+      (Samplerate * log_approx( FEnvelope.Decay ) * 3);
+  end;
 
-  FInternalLevel := 0;
   FFrameCounter := 0;
   FState := esAttack;
 end;
 
 procedure TEnvelopeEngine.NoteOff;
 begin
-  if FInternalLevel > 0 then
+  if FInternalLevel = 0 then
   begin
-    FReleaseAdder :=
-      1 /
-    (Samplerate * log_approx( FEnvelope.Release ) * 3);
-
-    FState := esRelease;
+    FState := esEnd;
   end
   else
   begin
-    FState := esEnd;
+    if FEnvelope.Release = 0 then
+    begin
+      FInternalLevel := 0;
+      FState := esEnd;
+    end
+    else
+    begin
+      FReleaseAdder :=
+        FInternalLevel /
+        (Samplerate * log_approx( FEnvelope.Release ) * 5);
+    end;
+
+    FState := esRelease;
   end;
 end;
 
@@ -1629,16 +1738,16 @@ begin
 
   FOsc1.Initialize;
   FOsc1.Level := 1;
-  FOsc1.Pitch := 0;
+  FOsc1.Pitch := 12;
   FOsc1.WaveForm := sawtooth;
   FOsc2.Initialize;
   FOsc2.Level := 0;
-  FOsc2.Pitch := 0;
-  FOsc2.WaveForm := sawtooth;
+  FOsc2.Pitch := 12;
+  FOsc2.WaveForm := off;
   FOsc3.Initialize;
   FOsc3.Level := 0;
-  FOsc3.Pitch := 0;
-  FOsc3.WaveForm := sawtooth;
+  FOsc3.Pitch := 12;
+  FOsc3.WaveForm := off;
 
   // Init envelopes
   FAmpEnvelope.Initialize;
@@ -1647,19 +1756,22 @@ begin
 
   // Init Filter
 
-  FFilter.FilterType := ft24DB;
+  FFilter.FilterType := ftBandreject;
   FFilter.Initialize;
 
   // Init LFO
   FLFO1.Initialize;
-  FLFO1.Pitch := 0;
+  FLFO1.Pitch := 0.1;
   FLFO1.Mode := omLfo;
+  FLFO1.WaveForm := sinus;
   FLFO2.Initialize;
-  FLFO2.Pitch := 0;
+  FLFO2.Pitch := 0.1;
   FLFO2.Mode := omLfo;
+  FLFO2.WaveForm := off;
   FLFO3.Initialize;
-  FLFO3.Pitch := 0;
+  FLFO3.Pitch := 0.1;
   FLFO3.Mode := omLfo;
+  FLFO3.WaveForm := off;
 
   // Globals
   FLowNote := 0;
@@ -1905,12 +2017,6 @@ procedure TEnvelope.SetAttack(const AValue: single);
 begin
   if FAttack = AValue then exit;
   FAttack := AValue;
-
-  // Please no div by zero
-  if FAttack = 0 then
-  begin
-    FAttack := 0.0001;
-  end;
 end;
 
 procedure TEnvelope.SetActive(const AValue: Boolean);
@@ -1923,12 +2029,6 @@ procedure TEnvelope.SetDecay(const AValue: single);
 begin
   if FDecay = AValue then exit;
   FDecay := AValue;
-
-  // Please no div by zero
-  if FDecay = 0 then
-  begin
-    FDecay := 0.0001;
-  end;
 end;
 
 procedure TEnvelope.SetLoop(const AValue: Boolean);
@@ -1941,20 +2041,14 @@ procedure TEnvelope.SetRelease(const AValue: single);
 begin
   if FRelease = AValue then exit;
   FRelease := AValue;
-
-  // Please no div by zero
-  if FRelease = 0 then
-  begin
-    FRelease := 0.0001;
-  end;
 end;
 
 procedure TEnvelope.Initialize;
 begin
-  Attack := 0.00001;
+  Attack := 0;
   Decay := 0.3;
-  Sustain := 0.00001;
-  Release := 0.01;
+  Sustain := 0;
+  Release := 0;
 
   Active := True;
 
@@ -2281,7 +2375,7 @@ begin
   FLFO1Engine := TOscillatorEngine.Create(Frames);
   FLFO2Engine := TOscillatorEngine.Create(Frames);
   FLFO3Engine := TOscillatorEngine.Create(Frames);
-  FFilterEngine := TLP24DB.Create(Frames);
+  FFilterEngine := {TLP24DB}TDspFilter.Create(Frames);
 
   FLFOPhase := 0;
   FRunning := False;
@@ -2418,7 +2512,7 @@ begin
           end;
 
           // Waveform input in Envelope follower
-          //FEnvelopeFollowerEngine.Process(FInternalBuffer[i]);
+          FEnvelopeFollowerEngine.Process(FInternalBuffer[i]);
         end;
 
         // Oscillatorbank
@@ -2434,17 +2528,8 @@ begin
         lSampleC := FOsc3Engine.Process;
 
         // Mix oscillators
-        lSample := lSampleA + lSampleB + lSampleC;
-
-        // Saturate Pre filter
-        if FSample.SaturateDrivePreFilter > 1 then
-        begin
-          lSample := lSample * FSample.SaturateDrivePreFilter;
-          if lSample > 1 then
-            lSample := 1
-          else if lSample < -1 then
-            lsample := -1;
-        end;
+        lSample := tanh(lSampleA + lSampleB + lSampleC);{ +
+        (FFeedback * FSample.SaturateDrivePostFilter)); }
 
         // Filter
         if FFilterEngine.Filter.Active then
@@ -2469,20 +2554,17 @@ begin
           lSample := FFilterEngine.Process(lSample);
         end;
 
-        // Saturate Post filter
-        if FSample.SaturateDrivePostFilter > 1 then
-        begin
-          lSample := Tanh2(lSample * FSample.SaturateDrivePostFilter);
-          if lSample > 1 then
-            lSample := 1
-          else if lSample < -1 then
-            lsample := -1;
-        end;
+        FFeedback := lSample;
 
         // Amplifier
         if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
         begin
           lSample := lSample * FAmpEnvelopeEngine.Level;
+        end
+        else
+        begin
+          // Keep it tidy
+          FFeedback := 0;
         end;
 
         // FX
@@ -2667,21 +2749,6 @@ begin
   FSampleBank.Engine := Self;
 
   RefreshEngine;
-  {
-  // Destroy running sample engines
-  for lSampleEngineIndex := Pred(FSampleEngineList.Count) downto 0 do
-  begin
-    FSampleEngineList[lSampleEngineIndex].Free;
-  end;
-
-  // Now recreate the sample-engines
-  for lSampleEngineIndex := 0 to Pred(FSampleBank.SampleList.Count) do
-  begin
-    lSampleEngine := TSampleEngine.Create(Frames);
-    lSampleEngine.Sample := TSample(FSampleBank.SampleList[lSampleEngineIndex]);
-
-    FSampleEngineList.Add(lSampleEngine);
-  end; }
 end;
 
 constructor TSampleBankEngine.Create(AFrames: Integer);

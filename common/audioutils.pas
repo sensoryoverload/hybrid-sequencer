@@ -31,7 +31,8 @@ function lin2db(lin: single): single;
 function db2lin(db: single): single;
 function fast_log2(val:single):single;
 function log_approx(val: single): single; inline;
-function log_approx2(val: single): single; inline;
+function log_approx3(val: single): single; inline;
+function log_approx4(val: single): single; inline;
 
 
 implementation
@@ -120,12 +121,23 @@ end;
 {
   steep function
 }
-function log_approx2(val: single): single; inline;
+function log_approx3(val: single): single; inline;
 var
   lNormVal: single;
 begin
   //lNormVal := val + 1E-20;
   Result := val * val * val;
+end;
+
+{
+  supersteep function
+}
+function log_approx4(val: single): single; inline;
+var
+  lNormVal: single;
+begin
+  //lNormVal := val + 1E-20;
+  Result := val * val * val * val;
 end;
 
 { TParamSmooth }
@@ -134,7 +146,7 @@ constructor TParamSmooth.Create;
 begin
   inherited Create;
 
-  a := 0.99; // Slow tracking
+  a := 0.999; // Slow tracking
   b := 1.0 - a;
   z := 0;
 end;

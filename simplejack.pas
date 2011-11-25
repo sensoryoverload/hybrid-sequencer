@@ -33,10 +33,11 @@ uses
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
   ringbuffer, optionsgui, wavepatterncontrolgui, midipatterncontrolgui,
-  wavepatterngui, midipatterngui, patterngui;
+  wavepatterngui, midipatterngui, patterngui, sampler;
 
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
+  DIV_BY_24 = 1 /24;
 
 type
 
@@ -58,11 +59,11 @@ type
     // No function yet as midi-events are processed as fast as possible
     // all depending on samplerate, midithread priority and rate
     Time: longword;
-    // Size of 'Data' buffer as these are the packets delivered by Jack
-    Size: Integer;
-    Buffer: ^Byte;
+    DataValue1: Byte;
+    DataValue2: Byte;
+    DataValue3: Byte;
 
-    constructor Create(AJackMidiEvent: jack_midi_event_t);
+    constructor Create(AJackMidiEvent: pjack_midi_event_t);
     destructor Destroy; override;
   end;
 
@@ -79,15 +80,16 @@ type
   private
     FRingBuffer: pjack_ringbuffer_t;
     FBufferSize: Integer;
-
+    FMidiController: string;
     procedure Updater;
+    procedure DoMidiCallback(var AMidiController: string);
   protected
     procedure Execute; override;
   public
     constructor Create(CreateSuspended : boolean);
     destructor Destroy; override;
-    procedure PushMidiMessage(AJackMidiEvent: jack_midi_event_t);
-    function PopMidiMessage: TMidiMessage;
+    function PushMidiMessage(AJackMidiEvent: pjack_midi_event_t): Boolean;
+    function PopMidiMessage(AJackMidiEvent: TMidiMessage): Boolean;
   end;
 
 
@@ -113,12 +115,13 @@ type
     HelpMenu: TMenuItem;
     MenuItem3: TMenuItem;
     miCreateTrack: TMenuItem;
+    pnlVarious: TPanel;
+    pnlBottom: TPanel;
     pupScrollBox: TPopupMenu;
     SaveDialog1: TSaveDialog;
     SavePattern: TMenuItem;
     MenuItem4: TMenuItem;
     pnlTransport: TPanel;
-    pcPattern: TPageControl;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     LoadMenu: TMenuItem;
@@ -132,14 +135,11 @@ type
     OptionMenu: TMenuItem;
     SaveSession: TMenuItem;
     SaveTrack: TMenuItem;
-    Splitter5: TSplitter;
     gbTrackDetail: Tgroupbox;
     pnlTop: Tpanel;
     Sbtracks: Tscrollbox;
     ScreenUpdater: TTimer;
-    tsTrack: TTabSheet;
-    tsMonitor: TTabSheet;
-    tsPattern: TTabSheet;
+    Splitter1: TSplitter;
     ToolBar1: TToolBar;
     tbPlay: TToolButton;
     tbStop: TToolButton;
@@ -155,7 +155,6 @@ type
     procedure acStopExecute(Sender: TObject);
     procedure acUndoExecute(Sender: TObject);
     procedure acUndoUpdate(Sender: TObject);
-    procedure BottomSplitterDblClick(Sender: TObject);
     procedure btnCompileClick(Sender: TObject);
     procedure btnCreateTrackClick(Sender: TObject);
     procedure cbPitchedChange(Sender: TObject);
@@ -469,7 +468,7 @@ var
   TempLevel: jack_default_audio_sample_t;
   GlobalBPMscale: Single;
   lPlayingPattern: TPattern;
-
+  lMidiEvent: jack_midi_event_t;
   buffer_size: Integer;
 begin
 
@@ -495,10 +494,6 @@ begin
 
   jack_midi_clear_buffer(midi_out_buf);
 
-  // Get number of pending pgPattern-events
-	event_count := jack_midi_get_event_count(midi_in_buf, nframes);
-	event_index := 0;
- 
   // Query BPM from transport
   transport_state := jack_transport_query(client, @transport_pos);
 
@@ -508,12 +503,10 @@ begin
     GAudioStruct.MainSyncCounter := (MaxInt shr 1) - GAudioStruct.MainSyncCounter;
   end;
 
-  if event_count > 1 then
-  begin
-		for i := 0 to event_count - 1 do
-			jack_midi_event_get(@in_event, midi_in_buf, i, nframes);
-  end;
-  
+  // Get number of pending pgPattern-events
+	event_count := jack_midi_get_event_count(midi_in_buf, nframes);
+	event_index := 0;
+
 	jack_midi_event_get(@in_event, midi_in_buf, 0, nframes);
 
   // Silence y'all!
@@ -528,7 +521,7 @@ begin
 			if in_event.buffer^ and $f0 = $90 then
       begin
 				// note on
-				note := in_event.buffer^ + 1;
+				note := (in_event.buffer + 1)^;
 				note_on := 1.0;
       end
 			else if in_event.buffer^ and $f0 = $80 then
@@ -540,7 +533,7 @@ begin
 			else if in_event.buffer^ and $f0 = $F8 then
       begin
         // Calculate average bpm
-        GAudioStruct.BPM := (GAudioStruct.BPM + ((samplerate / 24) / (lastsyncposition - sync_counter)) * 60) / 2;
+        GAudioStruct.BPM := (GAudioStruct.BPM + ((samplerate * DIV_BY_24) / (lastsyncposition - sync_counter)) * 60) * 0.5;
       end
 			else if in_event.buffer^ and $f0 = $FA then
       begin
@@ -559,7 +552,7 @@ begin
         Push midi messages directly to the midithread to handle recording of notes,
         midi controller mapping, etc
       }
-      MIDIThread.PushMidiMessage(in_event);
+      MIDIThread.PushMidiMessage(@in_event);
 
       if note <> 0 then
         last_note := note;
@@ -736,20 +729,18 @@ end;
 
 { TMidiMessage }
 
-constructor TMidiMessage.Create(AJackMidiEvent: jack_midi_event_t);
+constructor TMidiMessage.Create(AJackMidiEvent: pjack_midi_event_t);
 begin
   inherited Create;
 
-  Buffer := GetMem(AJackMidiEvent.size);
-
-  Move(AJackMidiEvent.buffer, Buffer, AJackMidiEvent.size);
-  Time := AJackMidiEvent.time;
-  Size := AJackMidiEvent.size;
+  DataValue1 := AJackMidiEvent^.buffer^;
+  DataValue2 := (AJackMidiEvent^.buffer + 1)^;
+  DataValue3 := (AJackMidiEvent^.buffer + 2)^;
+  Time := AJackMidiEvent^.time;
 end;
 
 destructor TMidiMessage.Destroy;
 begin
-  Freemem(Buffer);
 
   inherited Destroy;
 end;
@@ -812,14 +803,6 @@ end;
 procedure TMainApp.acUndoUpdate(Sender: TObject);
 begin
   tbUndo.Enabled := ((GHistoryIndex > -1) and (GHistoryIndex < GHistoryQueue.Count));
-end;
-
-procedure TMainApp.BottomSplitterDblClick(Sender: TObject);
-begin
-  if pcPattern.Height < 30 then
-    pcPattern.Height := 200
-  else
-    pcPattern.Height := 0;
 end;
 
 procedure TMainApp.btnCompileClick(Sender: TObject);
@@ -1123,10 +1106,7 @@ var
 begin
 
   try
-    if pcPattern.ActivePage = tsMonitor then
-    begin
-      FSimpleWaveForm.Invalidate;
-    end;
+    FSimpleWaveForm.Invalidate;
 
     // Handle update of objects
     if FHighPriorityInterval = 0 then
@@ -1380,9 +1360,9 @@ begin
   FSimpleWaveForm.Data := buffer_allocate2;
   FSimpleWaveForm.Top := 0;
   FSimpleWaveForm.Left := 0;
-  FSimpleWaveForm.Width := tsMonitor.Width;
+  FSimpleWaveForm.Width := pnlVarious.Width;
   FSimpleWaveForm.Align := alClient;
-  FSimpleWaveForm.Parent := tsMonitor;
+  FSimpleWaveForm.Parent := pnlVarious;
   
   FMappingMonitor := TfmMappingMonitor.Create(Self);
   FMappingMonitor.Maps := GObjectMapper.Maps;
@@ -1397,6 +1377,8 @@ begin
 
   ScreenUpdater.Interval := 40;
   ScreenUpdater.Enabled := True;
+
+  pnlVarious.Width := 0;
 End;
 
 procedure TMainApp.Btndeletetrackclick(Sender: Tobject);
@@ -1650,7 +1632,7 @@ begin
 
           FMidiPatternControlGUI.Parent := nil;
           FWavePatternControlGUI.Align := alClient;
-          FWavePatternControlGUI.Parent := tsPattern;
+          FWavePatternControlGUI.Parent := pnlBottom;
 
           // Attach new pattern
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
@@ -1684,7 +1666,7 @@ begin
         if Assigned(GSettings.SelectedPatternGUI) then
         begin
           FWavePatternControlGUI.Align := alClient;
-          FWavePatternControlGUI.Parent := tsPattern;
+          FWavePatternControlGUI.Parent := pnlBottom;
 
           // Attach new pattern
           lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
@@ -1724,7 +1706,7 @@ begin
 
           FWavePatternControlGUI.Parent := nil;
           FMidiPatternControlGUI.Align := alClient;
-          FMidiPatternControlGUI.Parent := tsPattern;
+          FMidiPatternControlGUI.Parent := pnlBottom;
 
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
           if Assigned(lMidiPattern) then
@@ -1756,7 +1738,7 @@ begin
         if Assigned(GSettings.SelectedPatternGUI) then
         begin
           FMidiPatternControlGUI.Align := alClient;
-          FMidiPatternControlGUI.Parent := tsPattern;
+          FMidiPatternControlGUI.Parent := pnlBottom;
 
           lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
           if Assigned(lMidiPattern) then
@@ -2231,15 +2213,67 @@ end;
   It's function is to update the gui with new/altered midi data etc.
 }
 procedure TMIDIThread.Updater;
+var
+  lMidiEvent: TMidiMessage;
+  lGenericCommand: TSampleParameterCommand;
+  lMidiMap: TMidiMap;
+  lMidiMapIndex: Integer;
+  lEncodeMidi: string;
 begin
   while jack_ringbuffer_read_space(FRingBuffer) > 0 do
   begin
-    writeln(Format('MidiEvent.Buffer %d', [PopMidiMessage.Time]));
+    // Pop midi event from queue
+    jack_ringbuffer_read(FRingBuffer, @lMidiEvent, SizeOf(TMidiMessage));
 
-    // 1. Extract Midi event
-//    PopMidiMessage.;
-    // 2.
+    // Encode unique midievent id
+    lEncodeMidi := IntToStr(lMidiEvent.DataValue1 * 1000000 + lMidiEvent.DataValue2 * 1000);
+
+    // Store the id to bind it later on
+    FMidiController := lEncodeMidi;
+
+    // Get mapping for controller and send an model change
+    lMidiMapIndex := GCommandQueue.MidiMappingTable.IndexOf(lEncodeMidi);
+    if lMidiMapIndex <> -1 then
+    begin
+      lMidiMap := TMidiMap(GCommandQueue.MidiMappingTable.Objects[lMidiMapIndex]);
+      lGenericCommand := TSampleParameterCommand.Create(lMidiMap.ObjectOwnerID);
+      try
+        if GSettings.MapToVisible and (GSettings.SelectedPatternGUI is TMidiPatternGUI) then
+        begin
+          // Mapped to visible pattern
+          lGenericCommand.ObjectID := TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID;
+        end
+        else
+        begin
+          // Mapped to any pattern
+          lGenericCommand.ObjectID := lMidiMap.ObjectID;
+        end;
+
+        lGenericCommand.Parameter := TSampleParameter(lMidiMap.Parameter);
+        lGenericCommand.MidiLearn := False;
+        lGenericCommand.Value := lMidiMap.Scale * lMidiEvent.DataValue3;
+        lGenericCommand.Persist := False;
+
+        // Send to commandqueue
+        GCommandQueue.PushCommand(lGenericCommand);
+      except
+        lGenericCommand.Free;
+      end;
+    end;
+
+    // Now dispose of received object
+    lMidiEvent.Free;
   end;
+end;
+
+{
+  This is a callback event which gets called by the mvc-controller if a command has
+  been received that has MidiLearn = True. The controller calls this methods to
+  retrieve the last used midicontroller.
+}
+procedure TMIDIThread.DoMidiCallback(var AMidiController: string);
+begin
+  AMidiController := FMidiController;
 end;
 
 {
@@ -2249,8 +2283,8 @@ procedure TMIDIThread.Execute;
 begin
   while (not Terminated) do
   begin
-    // Only update at 1000 ms / 100 ms = about 10 fps
-    sleep(100);
+    // Only update at 1000 ms / 40 ms = about 25 fps
+    sleep(10);
 
     Synchronize(@Updater);
   end;
@@ -2262,6 +2296,8 @@ begin
 
   FBufferSize := 2048;
 
+  GCommandQueue.MidiCallback := @DoMidiCallback;
+
   FRingBuffer := jack_ringbuffer_create(FBufferSize);
 end;
 
@@ -2272,36 +2308,28 @@ begin
   inherited Destroy;
 end;
 
-procedure TMIDIThread.PushMidiMessage(AJackMidiEvent: jack_midi_event_t);
+function TMIDIThread.PushMidiMessage(AJackMidiEvent: pjack_midi_event_t): Boolean;
 var
   lMidiMessage: TMidiMessage;
 begin
-  if jack_ringbuffer_write_space(FRingBuffer) > SizeOf(lMidiMessage) then
+  Result := False;
+  if jack_ringbuffer_write_space(FRingBuffer) > SizeOf(TMidiMessage) then
   begin
     lMidiMessage := TMidiMessage.Create(AJackMidiEvent);
     try
-      jack_ringbuffer_write(FRingBuffer, @lMidiMessage, SizeOf(lMidiMessage));
+      jack_ringbuffer_write(FRingBuffer, @lMidiMessage, SizeOf(TMidiMessage));
+      Result := True;
     except
       lMidiMessage.Free;
     end;
   end;
 end;
 
-function TMIDIThread.PopMidiMessage: TMidiMessage;
-var
-  lMidiMessage: TMidiMessage;
+function TMIDIThread.PopMidiMessage(AJackMidiEvent: TMidiMessage): Boolean;
 begin
-  jack_ringbuffer_read(FRingBuffer, @lMidiMessage, SizeOf(lMidiMessage));
-
-  if Assigned(lMidiMessage) then
-  begin
-    Result := lMidiMessage;
-
-    lMidiMessage.Free;
-  end;
+	Result := False;
+  jack_ringbuffer_read(FRingBuffer, @AJackMidiEvent, SizeOf(TMidiMessage));
 end;
-
-
 
 initialization
   {$I simplejack.lrs}

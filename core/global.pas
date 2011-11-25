@@ -97,6 +97,7 @@ type
     FEscapeAction: Boolean;
     FSampleRate: single;
     FSampleMap: string;
+    FMapToVisible: Boolean;
     procedure SetFrames(const AValue: Integer);
     procedure SetModifier(const AValue: TShiftState);
     procedure SetSelectedPatternGUI(const AValue: TObject);
@@ -118,6 +119,7 @@ type
     property EscapeAction: Boolean read FEscapeAction write FEscapeAction default false;
     property SampleRate: single read FSampleRate write FSampleRate;
     property SampleMap: string read FSampleMap write FSampleMap;
+    property MapToVisible: Boolean read FMapToVisible write FMapToVisible;
   end;
 
   { TChannel }
@@ -287,6 +289,7 @@ begin
 
   FIDCounter:= 0;
   CursorPosition := 0;
+  FMapToVisible := False;
   //RecalculateSynchronize;
 end;
 
