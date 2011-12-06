@@ -44,6 +44,20 @@ type
     FMidiPattern: TMidiPattern;
   protected
     procedure Initialize; override;
+    procedure Finalize; override;
+  end;
+
+  TUpdateLoopMarkerCommand = class(TMidiCommand)
+  private
+    FDataType: TLoopMarkerType;
+    FLocation: Integer;
+    FOldLocation: Integer;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property Location: Integer read FLocation write FLocation;
+    property DataType: TLoopMarkerType read FDataType write FDataType;
   end;
 
   { TStretchNotesCommand }
@@ -158,6 +172,13 @@ type
     property MidiChannel: Integer read FMidiChannel write FMidiChannel;
   end;
 
+  { TMuteNotesCommand }
+
+  TMuteNotesCommand = class(TMidiCommand)
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  end;
 
   { TMidiNote }
 
@@ -202,6 +223,13 @@ type
 
   { TMidiPattern }
 
+  TNoteRecord = record
+    Mute: Boolean; { mute }
+    Solo: Boolean;  { solo }
+    MidiChannel: Integer; { -1 = use pattern midichannel, 0..15 = custom midichannel }
+    MidiNote: Integer; { midinotevalue out }
+  end;
+
   TMidiPattern = class(TPattern)
   private
     // Data
@@ -211,12 +239,17 @@ type
     FQuantizeSetting: Integer;
     FQuantizeValue: Single;
     FEnabled: Boolean;
+    FNoteRecordList: Array[0..127] of TNoteRecord;
 
     // Engine
     FRealCursorPosition: Integer;
     FCursorAdder: Single;
     FMidiDataCursor: TMidiData;
+    FStartingMidiDataCursor: TMidiData;
     FBPMScale: Single;
+    FWindowStart: Single;
+    FWindowEnd: Single;
+    FLooped: Boolean;
 
     FMidiBuffer: TMidiBuffer;
 
@@ -235,7 +268,6 @@ type
     procedure Initialize; override;
     procedure Assign(Source: TPersistent); override;
     function QuantizeLocation(ALocation: Integer): Integer;
-    function StartVirtualLocation(ALocation: Integer): TMidiData;
 
     procedure ProcessInit; override;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
@@ -258,6 +290,9 @@ type
     property NoteList: TObjectList read FNoteList write FNoteList;
     property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 1;
+    property LoopStart: TLoopMarker read FLoopStart write FLoopStart;
+    property LoopEnd: TLoopMarker read FLoopEnd write FLoopEnd;
+    property LoopLength: TLoopMarker read FLoopLength write FLoopLength;
   end;
 
   TMidiGridEngine = class
@@ -270,7 +305,21 @@ implementation
 
 uses Fx, audiostructure;
 
+{ TMuteNotesCommand }
+
+procedure TMuteNotesCommand.DoExecute;
+begin
+  //
+end;
+
+procedure TMuteNotesCommand.DoRollback;
+begin
+  //
+end;
+
 constructor TMidiPattern.Create(AObjectOwner: string; AMapped: Boolean = True);
+var
+  lIndex: Integer;
 begin
   DBLog('start TMidiGrid.Create');
 
@@ -278,9 +327,17 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FRealCursorPosition:= LoopStart;
+  FRealCursorPosition:= LoopStart.Location;
 
-  FNoteList := TObjectList.Create;
+  for lIndex := Low(FNoteRecordList) to High(FNoteRecordList) do
+  begin
+    FNoteRecordList[lIndex].Mute := False;
+    FNoteRecordList[lIndex].Solo := False;
+    FNoteRecordList[lIndex].MidiChannel := -1;
+    FNoteRecordList[lIndex].MidiNote := lIndex;
+  end;
+
+  FNoteList := TObjectList.Create(True);
   FMidiDataList := TMidiDataList.Create;
 
   FMidiBuffer := TMidiBuffer.Create;
@@ -294,6 +351,11 @@ begin
   FSample := TSample.Create(AObjectOwner, AMapped);
   FSample.LoadSample('kick.wav');
   FSample.Initialize;
+
+  LoopStart.Location := 0;
+  LoopLength.Location := 22050 * 4;
+  LoopEnd.Location := LoopStart.Location + LoopLength.Location;
+  FLooped := False;
 
   FSampleBank.SampleList.Add(FSample);
 
@@ -352,25 +414,11 @@ begin
   end;
 end;
 
-function TMidiPattern.StartVirtualLocation(ALocation: Integer): TMidiData;
-var
-  lIndex: Integer;
-begin
-  Result := nil;
-  for lIndex := Pred(FMidiDataList.Count) downto 0 do
-  begin
-    if TMidiData(FMidiDataList.Items[lIndex]).Location <= ALocation then
-    begin
-      Result := TMidiData(FMidiDataList.Items[lIndex]);
-    end;
-  end;
-end;
-
 procedure TMidiPattern.ProcessInit;
 begin
   // Reset buffer at beginning of callback
   FMidiBuffer.Reset;
-  FBPMScale := GAudioStruct.BPMScale;
+  FBPMScale := GAudioStruct.BPMAdder;
 end;
 
 {
@@ -379,48 +427,73 @@ end;
 procedure TMidiPattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
 var
   i: Integer;
+
 begin
-
-  if (CursorAdder >= LoopEnd) or SyncQuantize then
+  {
+    In the first frame this first midinote of the window has to be found.
+    later notes within this window can be found be walking the list
+  }
+  if (AFrameIndex = 0) or FLooped then
   begin
-    SyncQuantize := False;
-    CursorAdder := LoopStart;
+    FLooped := False;
+    {
+      Determine window
+    }
+    FWindowStart := CursorAdder;
+    FWindowEnd := CursorAdder + AFrameCount * GAudioStruct.BPMScale;
 
-    if MidiDataList.Count > 0 then
+    {
+      Look for first midi event in the window if any
+    }
+    FStartingMidiDataCursor := nil;
+    for i := 0 to Pred(MidiDataList.Count) do
     begin
-      MidiDataList.First;
-      MidiDataCursor := TMidiData( MidiDataList.Items[0] );
-    end;
-  end;
-
-  // Fill MidiBuffer with midi data if found
-  if not Updating then
-  begin
-    if MidiDataList.Count > 0 then
-    begin
-      while CursorAdder >= MidiDataCursor.Location do
+      if (FWindowStart <= TMidiData(MidiDataList[i]).Location) and
+        (FWindowEnd > TMidiData(MidiDataList[i]).Location) then
       begin
-        // Put event in buffer
-        MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
-
-        if Assigned(MidiDataCursor.Next) then
-        begin
-          MidiDataCursor := MidiDataCursor.Next
-        end
-        else
-        begin
-          break;
-        end;
+        FStartingMidiDataCursor := TMidiData(MidiDataList[i]);
+        break;
       end;
     end;
   end;
 
+  {
+    Walk the list and push midi events to the midibuffer
+  }
+  if Assigned(FStartingMidiDataCursor) then
+  begin
+    MidiDataCursor := FStartingMidiDataCursor;
+    while CursorAdder > MidiDataCursor.Location do
+    begin
+      {
+        Put event in buffer
+      }
+      MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
+
+      if Assigned(MidiDataCursor.Next) then
+      begin
+        MidiDataCursor := MidiDataCursor.Next
+      end
+      else
+      begin
+        break;
+      end;
+    end;
+    FStartingMidiDataCursor := MidiDataCursor;
+  end;
 end;
 
 procedure TMidiPattern.ProcessAdvance;
 begin
   RealCursorPosition := Round(CursorAdder);
   CursorAdder := CursorAdder + GAudioStruct.BPMScale;
+
+  if (CursorAdder >= LoopEnd.Location) or SyncQuantize then
+  begin
+    SyncQuantize := False;
+    FLooped := True;
+    CursorAdder := LoopEnd.Location - (LoopEnd.Location - LoopStart.Location);
+  end;
 end;
 
 function TMidiPattern.NoteByObjectID(AObjectID: string): TMidiNote;
@@ -525,9 +598,7 @@ end;
 
 procedure TMidiNote.Initialize;
 begin
-  BeginUpdate;
-
-  EndUpdate;
+  //
 end;
 
 procedure TMidiNote.Finalize;
@@ -567,20 +638,9 @@ begin
       lMementoNote.ObjectOwnerID := lMidiNote.ObjectOwnerID;
       Memento.Add(lMementoNote);
 
-      // Set the midicursor to another not if possible to prevent AV's in the callback
-      if (FMidiPattern.MidiDataCursor = lMidinote.MidiNoteStart) or
-        (FMidiPattern.MidiDataCursor = lMidinote.MidiNoteEnd) then
-      begin
-        if FMidiPattern.MidiDataList.Count > 0 then
-        begin
-          // TODO Make engine for iterating the list
-          FMidiPattern.MidiDataCursor := TMidiData(FMidiPattern.MidiDataList[0]);
-        end;
-      end;
       FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteStart);
       FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteEnd);
       FMidiPattern.NoteList.Remove(lMidinote);
-
     end;
   end;
   FMidiPattern.MidiDataList.IndexList;
@@ -616,9 +676,8 @@ begin
       FMidiPattern.NoteList.Add(lMidiNote);
       FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
       FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);
-
-      FMidiPattern.MidiDataList.IndexList;
     end;
+    FMidiPattern.MidiDataList.IndexList;
   end;
 
   FMidiPattern.EndUpdate;
@@ -774,30 +833,32 @@ begin
   begin
     lMidinote := TMidiNote(FMidiPattern.NoteList[lNoteIndex]);
 
-    if lMidinote.Selected then
+    if Assigned(lMidinote) then
     begin
-      if Persist then
+      if lMidinote.Selected then
       begin
-        lMidiNote.OriginalNote := lMidiNote.Note;
-        lMidiNote.OriginalNoteLocation := lMidiNote.NoteLocation;
+        if Persist then
+        begin
+          lMidiNote.OriginalNote := lMidiNote.Note;
+          lMidiNote.OriginalNoteLocation := lMidiNote.NoteLocation;
 
-        lMementoNote := TMidiNote.Create(FMidiPattern.ObjectID, NOT_MAPPED);
-        lMementoNote.ObjectID := lMidinote.ObjectID;
-        lMementoNote.Note := lMidinote.OriginalNote;
-        lMementoNote.NoteLength := lMidinote.NoteLength;
-        lMementoNote.NoteLocation := lMidinote.OriginalNoteLocation;
-        lMementoNote.NoteVelocity := lMidinote.NoteVelocity;
-        Memento.Add(lMementoNote);
+          lMementoNote := TMidiNote.Create(FMidiPattern.ObjectID, NOT_MAPPED);
+          lMementoNote.ObjectID := lMidinote.ObjectID;
+          lMementoNote.Note := lMidinote.OriginalNote;
+          lMementoNote.NoteLength := lMidinote.NoteLength;
+          lMementoNote.NoteLocation := lMidinote.OriginalNoteLocation;
+          lMementoNote.NoteVelocity := lMidinote.NoteVelocity;
+          Memento.Add(lMementoNote);
+        end;
+
+        lMidiNote.Note := lMidiNote.OriginalNote + NoteDiff;
+        lMidiNote.NoteLocation := lMidiNote.OriginalNoteLocation + NoteLocationDiff;
+
+        // now quantize it
+        lMidiNote.NoteLocation := FMidiPattern.QuantizeLocation(lMidiNote.NoteLocation);
+
+        lMidiNote.Notify;
       end;
-
-      lMidiNote.Note := lMidiNote.OriginalNote + NoteDiff;
-      lMidiNote.NoteLocation := lMidiNote.OriginalNoteLocation + NoteLocationDiff;
-
-
-      // now quantize it
-      lMidiNote.NoteLocation := FMidiPattern.QuantizeLocation(lMidiNote.NoteLocation);
-
-      lMidiNote.Notify;
     end;
   end;
 
@@ -1096,12 +1157,93 @@ begin
   DBLog('end TChangeMidiChannelCommand.DoRollback');
 end;
 
+{ TUpdateLoopMarkerCommand }
 
+procedure TUpdateLoopMarkerCommand.DoExecute;
+begin
+  DBLog('start TUpdateWaveLoopMarkerCommand.DoExecute');
+
+  if Persist then
+  begin
+    // Save state
+    case FDataType of
+    ltStart: FOldLocation := FMidiPattern.LoopStart.Location;
+    ltEnd: FOldLocation := FMidiPattern.LoopEnd.Location;
+    ltLength: FOldLocation := FMidiPattern.LoopLength.Location;
+    end;
+  end;
+
+  // Assign
+  case FDataType of
+  ltStart:
+  begin
+    if FLocation < 0 then FLocation := 0;
+    FMidiPattern.LoopStart.Location := FLocation;
+    FMidiPattern.LoopEnd.Location :=
+      FMidiPattern.LoopStart.Location + FMidiPattern.LoopLength.Location;
+  end;
+  ltEnd:
+  begin
+    if FLocation < 0 then FLocation := 0;
+    FMidiPattern.LoopEnd.Location := FLocation;
+    FMidiPattern.LoopLength.Location :=
+      FMidiPattern.LoopEnd.Location - FMidiPattern.LoopStart.Location;
+  end;
+  ltLength:
+  begin
+    FMidiPattern.LoopLength.Location := FLocation;
+    FMidiPattern.LoopEnd.Location := FMidiPattern.LoopStart.Location + FLocation;
+  end;
+  end;
+
+  // Update observers
+  FMidiPattern.Notify;
+  FMidiPattern.LoopStart.Notify;
+  FMidiPattern.LoopEnd.Notify;
+  FMidiPattern.LoopLength.Notify;
+
+  DBLog('end TUpdateWaveLoopMarkerCommand.DoExecute');
+end;
+
+procedure TUpdateLoopMarkerCommand.DoRollback;
+begin
+  DBLog('start TUpdateWaveLoopStartCommand.DoRollback');
+
+  // Retrieve state
+  FMidiPattern.LoopStart.Location := FOldLocation;
+
+  // Assign
+  case FDataType of
+  ltStart: FMidiPattern.LoopStart.Location := FOldLocation;
+  ltEnd: FMidiPattern.LoopEnd.Location := FOldLocation;
+  ltLength: FMidiPattern.LoopLength.Location := FOldLocation;
+  end;
+
+  // Update observers
+  FMidiPattern.Notify;
+  FMidiPattern.LoopStart.Notify;
+  FMidiPattern.LoopEnd.Notify;
+  FMidiPattern.LoopLength.Notify;
+
+  DBLog('end TUpdateWaveLoopStartCommand.DoRollback');
+end;
 { TMidiCommand }
 
 procedure TMidiCommand.Initialize;
 begin
+  inherited Initialize;
+
   FMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(ObjectOwner));
+  {FMidiPattern.OkToPlay := False;
+  writeln('OkToPlay := False'); }
+end;
+
+procedure TMidiCommand.Finalize;
+begin
+  {FMidiPattern.OkToPlay := True;
+  writeln('OkToPlay := True');}
+
+  inherited Finalize;
 end;
 
 initialization

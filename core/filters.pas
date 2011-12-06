@@ -490,6 +490,8 @@ procedure TFilter.Initialize;
 begin
   Active := True;
 
+  FFilterType := ftLowpass;
+
   Notify;
 end;
 

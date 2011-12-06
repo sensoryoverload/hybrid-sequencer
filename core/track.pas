@@ -31,6 +31,8 @@ uses
 type
   { TTrack }
 
+  TTrackType = (ttMaster, ttGroup, ttNormal);
+
   TTrack = class(THybridPersistentModel)
   private
     FPatternList: TObjectList;
@@ -56,6 +58,8 @@ type
     FRecording: Boolean;
     FVolume: Single;
     FVolumeMultiplier: Single;
+    FTrackType: TTrackType;
+    FTrackName: string;
 
     //FPluginProcessor: TPluginProcessor;
 
@@ -100,6 +104,8 @@ type
     property Active: Boolean read FActive write FActive;
     property ToTrackID: Integer read FToTrackID write FToTrackID;
     property DevValue: shortstring read GetDevValue write SetDevValue;
+    property TrackType: TTrackType read FTrackType write FTrackType;
+    property TrackName: string read FTrackName write FTrackName;
   end;
 
   PWaveFormTrack = ^TTrack;
@@ -328,8 +334,9 @@ begin
   FBooleanStack:= 1; // Start with off
   FToTrackID := 0; // 0 = master (default)
   FPitched:= False;
-  FVolume := 100;
+  Volume := 100;
   FActive := True;
+  FTrackType := ttNormal;
 
   //FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
   //FPluginProcessor.AudioIn.Buffer := FOutputBuffer;

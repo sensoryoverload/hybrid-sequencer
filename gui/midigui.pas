@@ -29,6 +29,9 @@ uses
   jacktypes, ContNrs, wave, global_command, midi, global, unix, BaseUNIX,
   lclintf, ActnList;
 
+const
+  DIVBY220 = 1 / 220.50;
+  DIVBY1000 = 1 / 1000;
 
 type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
@@ -140,6 +143,9 @@ type
     FDragging: Boolean;
     FDraggedNote: TMidiNoteGUI;
     FDragMode: Short;
+
+    FDraggingLoopMarker: Boolean;
+    FDraggedLoopMarker: TLoopMarkerGUI;
     FMouseButton: TMouseButton;
 
     FNoteHighlightLocation: Integer;
@@ -148,8 +154,9 @@ type
     { Audio }
     FRealCursorPosition: Integer;
     FCursorAdder: Single;
-    FLoopStart: Longint;
-    FLoopEnd: Longint;
+    FLoopStart: TLoopMarkerGUI;
+    FLoopEnd: TLoopMarkerGUI;
+    FLoopLength: TLoopMarkerGUI;
     FNoteListGUI: TObjectList;
     FQuantizeSetting: Integer;
     FQuantizeValue: Single;
@@ -159,17 +166,25 @@ type
     FRootNote: Integer;
     FMidiChannel: Integer;
 
+
+    procedure HandleLoopMarkerMouseDown(Button: TMouseButton; Shift: TShiftState; X,
+      Y: Integer);
+    procedure HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState;
+      X, Y: Integer);
     procedure HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
       Y: Integer);
     procedure HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
+    procedure HandleLoopMarkerMouseMove(Shift: TShiftState; X, Y: Integer);
     procedure HandleNoteMouseUp(Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    function LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerGUI;
     function QuantizeLocation(ALocation: Integer): Integer;
     function NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
     function ConvertTimeToScreen(ATime: Integer): Integer;
     function ConvertScreenToTime(AX: Integer): Integer;
     function ConvertNoteToScreen(ANote: Integer): Integer;
     function ConvertScreenToNote(AY: Integer): Integer;
+    procedure ReleaseNote(Data: PtrInt);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
   public
@@ -195,10 +210,11 @@ type
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
     property CursorAdder: Single read FCursorAdder write FCursorAdder;
-    property LoopStart: Longint read FLoopStart write FLoopStart;
-    property LoopEnd: Longint read FLoopEnd write FLoopEnd;
+    property LoopStart: TLoopMarkerGUI read FLoopStart write FLoopStart;
+    property LoopEnd: TLoopMarkerGUI read FLoopEnd write FLoopEnd;
+    property LoopLength: TLoopMarkerGUI read FLoopLength write FLoopLength;
     property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
-    property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 100;
+    property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 22050;
     property RootNote: Integer read FRootNote write FRootNote default 0;
     property MidiChannel: Integer read FMidiChannel write FMidiChannel;
   protected
@@ -289,7 +305,7 @@ type
 implementation
 
 uses
-  utils, appcolors;
+  utils, appcolors, pattern;
 
 { TMidiNoteGUI }
 
@@ -386,6 +402,23 @@ begin
   FBitmapIsDirty := True;
 end;
 
+procedure TMidiPatternGUI.HandleLoopMarkerMouseDown(Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  lUpdateLoopMarkerCommand: TUpdateLoopMarkerCommand;
+begin
+  lUpdateLoopMarkerCommand := TUpdateLoopMarkerCommand.Create(Self.ObjectID);
+  try
+    lUpdateLoopMarkerCommand.DataType := FDraggedLoopMarker.DataType;
+    lUpdateLoopMarkerCommand.Persist := True;
+    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X) * 220.50);
+
+    GCommandQueue.PushCommand(lUpdateLoopMarkerCommand);
+  except
+    lUpdateLoopMarkerCommand.Free;
+  end;
+end;
+
 procedure TMidiPatternGUI.HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 var
@@ -477,6 +510,26 @@ begin
   FDraggedNote := nil;
 end;
 
+procedure TMidiPatternGUI.HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+var
+  lUpdateLoopMarkerCommand: TUpdateLoopMarkerCommand;
+begin
+  lUpdateLoopMarkerCommand := TUpdateLoopMarkerCommand.Create(Self.ObjectID);
+  try
+    lUpdateLoopMarkerCommand.DataType := FDraggedLoopMarker.DataType;
+    lUpdateLoopMarkerCommand.Persist := False;
+    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X) * 220.50);
+
+    GCommandQueue.PushCommand(lUpdateLoopMarkerCommand);
+  except
+    lUpdateLoopMarkerCommand.Free;
+  end;
+
+  FDraggingLoopMarker:= False;
+  FDraggedLoopMarker := nil;
+end;
+
 procedure TMidiPatternGUI.HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
 var
   lMoveNotesCommand: TMoveNotesCommand;
@@ -532,6 +585,34 @@ begin
   end;
 end;
 
+procedure TMidiPatternGUI.HandleLoopMarkerMouseMove(Shift: TShiftState; X,
+  Y: Integer);
+var
+  lValue: Integer;
+begin
+  lValue := Round(ConvertScreenToTime(X) * 220.50);
+
+  case FDraggedLoopMarker.DataType of
+  ltStart:
+  begin
+    if lValue < 0 then lValue := 0;
+    FDraggedLoopMarker.Location := lValue;
+    LoopEnd.Location := LoopStart.Location + LoopLength.Location;
+  end;
+  ltEnd:
+  begin
+    if lValue < 0 then lValue := 0;
+    FDraggedLoopMarker.Location := lValue;
+    LoopLength.Location := LoopEnd.Location - LoopStart.Location;
+  end;
+  ltLength:
+  begin
+    FDraggedLoopMarker.Location := lValue;
+    LoopEnd.Location := LoopStart.Location + lValue;
+  end;
+  end;
+end;
+
 function TMidiNoteGUI.QuantizeLocation(ALocation: Integer): Integer;
 begin
   if MidiGridGUI.QuantizeSetting = 0 then
@@ -576,6 +657,10 @@ constructor TMidiPatternGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
+  FLoopStart := TLoopMarkerGUI.Create(ObjectID, ltStart);
+  FLoopEnd := TLoopMarkerGUI.Create(ObjectID, ltEnd);
+  FLoopLength := TLoopMarkerGUI.Create(ObjectID, ltLength);
+
   FOptionsView := [PianoKeyboard];
 
 // TODO Toggle button -----------
@@ -592,9 +677,7 @@ begin
   FBitmap := TBitmap.Create;
   DoubleBuffered := True;
 
-  FLoopStart:= 0;
-  FLoopEnd:= 44100; // TODO Round(GSettings.MainSampleRate * 4);
-  FRealCursorPosition:= FLoopStart;
+  FRealCursorPosition:= FLoopStart.Location;
   FRubberBandMode := False;
 
   FNoteListGUI := TObjectList.Create(True);
@@ -603,7 +686,7 @@ begin
 
   FDragging := False;
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 end;
 
 destructor TMidiPatternGUI.Destroy;
@@ -612,6 +695,10 @@ begin
     FNoteListGUI.Free;
 
   FBitmap.Free;
+
+  FLoopStart.Free;
+  FLoopEnd.Free;
+  FLoopLength.Free;
 
   inherited Destroy;
 end;
@@ -647,7 +734,6 @@ begin
     // Draw default background
     FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
     FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
-//    FBitmap.Canvas.Clipping := True;
     FBitmap.Canvas.Rectangle(0, 0, FBitmap.Width, FBitmap.Height);
 
     // Draw note indictor lines
@@ -824,13 +910,34 @@ begin
       FBitmap.Canvas.Line(30, 0, 30, FBitmap.Height);
 
     end;
+
+    // Draw loopstartmarker
+    FBitmap.Canvas.Pen.Width := 2;
+    x := Round((LoopStart.Location * FZoomFactorToScreenX) * DIVBY220 + FLocationOffset + FNoteInfoWidth);
+    if x >= FNoteInfoWidth then
+    begin
+      FBitmap.Canvas.Pen.Color := clRed;
+      FBitmap.Canvas.Line(x, 0, x, Height);
+    end;
+
+    FBitmap.Canvas.TextOut(0, 0, Format('Loopstart : %d calc %d',[FModel.LoopStart.Location, x]));
+
+    // Draw loopendmarker
+    x := Round((LoopEnd.Location * FZoomFactorToScreenX) * DIVBY220 + FLocationOffset + FNoteInfoWidth);
+    if x >= FNoteInfoWidth then
+    begin
+      FBitmap.Canvas.Pen.Color := clRed;
+      FBitmap.Canvas.Line(x, 0, x, Height);
+    end;
+    FBitmap.Canvas.Pen.Width := 1;
+
     FBitmapIsDirty := False;
   end;
 
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) / 220 + FLocationOffset + FNoteInfoWidth);
+  x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) / 220.50 + FLocationOffset + FNoteInfoWidth);
   if FOldCursorPosition <> x then
   begin
     if x >= FNoteInfoWidth then
@@ -869,26 +976,29 @@ procedure TMidiPatternGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TMidiGridGUI.Update');
 
-  {
-    In this case you should not use this construction
-    The view is not autopopulated from the modelside but
-    disconnected/connected clientside    }
-
   DiffLists(
     TMidiPattern(Subject).NoteList,
     FNoteListGUI,
     @Self.CreateNoteGUI,
     @Self.DeleteNoteGUI);
 
+  FLoopStart.Update(TMidiPattern(Subject).LoopStart);
+  FLoopEnd.Update(TMidiPattern(Subject).LoopEnd);
+  FLoopLength.Update(TMidiPattern(Subject).LoopLength);
+
   FBitmapIsDirty := True;
-  //Invalidate;
+  Invalidate;
 
   DBLog('end TMidiGridGUI.Update');
 end;
 
 procedure TMidiPatternGUI.Connect;
 begin
-  //FModel := TMidiPattern(GObjectMapper.GetModelObject(Self.ObjectID));
+  FModel := TMidiPattern(GObjectMapper.GetModelObject(Self.ObjectID));
+
+  FModel.LoopStart.Attach(FLoopStart);
+  FModel.LoopEnd.Attach(FLoopEnd);
+  FModel.LoopLength.Attach(FLoopLength);
 end;
 
 procedure TMidiPatternGUI.Disconnect;
@@ -911,6 +1021,10 @@ begin
       end;
     end;
   end;
+
+  FModel.LoopStart.Detach(FLoopStart);
+  FModel.LoopEnd.Detach(FLoopEnd);
+  FModel.LoopLength.Detach(FLoopLength);
 end;
 
 procedure TMidiPatternGUI.CreateNoteGUI(AObjectID: string);
@@ -936,6 +1050,17 @@ begin
   DBLog('end TMidiGridGUI.CreateNoteGUI');
 end;
 
+procedure TMidiPatternGUI.ReleaseNote(Data: PtrInt);
+var
+  lMidiNoteGUI: TMidiNoteGUI;
+begin
+  lMidiNoteGUI := TMidiNoteGUI(Data);
+  NoteListGUI.Remove(lMidiNoteGUI);
+
+  FBitmapIsDirty := True;
+  Invalidate;
+end;
+
 procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
 var
   lMidiNoteGUI: TMidiNoteGUI;
@@ -952,8 +1077,7 @@ begin
     begin
       if lMidiNoteGUI.ObjectID = AObjectID then
       begin
-        FNoteListGUI.Remove(lMidiNoteGUI);
-        break;
+        Application.QueueAsyncCall(@ReleaseNote, PtrInt(TMidiNoteGUI(lMidiNoteGUI)));
       end;
     end;
   end;
@@ -1103,39 +1227,48 @@ end;
 procedure TMidiPatternGUI.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
-  // First handle already present notes under mouseposition
   inherited MouseDown(Button, Shift, X, Y);
 
   FMouseX := X;
   FMouseY := Y;
 
-  FDraggedNote := NoteUnderCursor(X, Y);
+  // Moving loopmarker has precedence over notes
+  FDraggedLoopMarker := LoopMarkerAt(X, 5);
 
-  if Assigned(FDraggedNote) then
+  if Assigned(FDraggedLoopMarker) then
   begin
-    HandleNoteMouseDown(Button, Shift, X, Y);
+    HandleLoopMarkerMouseDown(Button, Shift, X, Y);
   end
   else
   begin
-    case Button of
-      mbLeft:
-      begin
-        FRubberBandMode := True;
-        FRubberBandSelect.TopLeft.X := X;
-        FRubberBandSelect.TopLeft.Y := Y;
-        FRubberBandSelect.BottomRight.X := X;
-        FRubberBandSelect.BottomRight.Y := Y;
-      end;
+    FDraggedNote := NoteUnderCursor(X, Y);
 
-      mbRight:
-      begin
-        FZoomingMode := True;
-        FOldZoomFactorX := FZoomFactorX;
-        FOldZoomFactorY := FZoomFactorY;
-        FOldLocationOffset := FLocationOffset;
-        FOldNoteOffset := FNoteOffset;
-        FOldX := X;
-        FOldY := Y;
+    if Assigned(FDraggedNote) then
+    begin
+      HandleNoteMouseDown(Button, Shift, X, Y);
+    end
+    else
+    begin
+      case Button of
+        mbLeft:
+        begin
+          FRubberBandMode := True;
+          FRubberBandSelect.TopLeft.X := X;
+          FRubberBandSelect.TopLeft.Y := Y;
+          FRubberBandSelect.BottomRight.X := X;
+          FRubberBandSelect.BottomRight.Y := Y;
+        end;
+
+        mbRight:
+        begin
+          FZoomingMode := True;
+          FOldZoomFactorX := FZoomFactorX;
+          FOldZoomFactorY := FZoomFactorY;
+          FOldLocationOffset := FLocationOffset;
+          FOldNoteOffset := FNoteOffset;
+          FOldX := X;
+          FOldY := Y;
+        end;
       end;
     end;
   end;
@@ -1146,7 +1279,11 @@ procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
-  if Assigned(FDraggedNote) then
+  if Assigned(FDraggedLoopMarker) then
+  begin
+    HandleLoopMarkerMouseUp(Button, Shift, X, Y);
+  end
+  else if Assigned(FDraggedNote) then
   begin
     HandleNoteMouseUp(Button, Shift, X, Y);
   end
@@ -1174,6 +1311,32 @@ begin
   end;
 end;
 
+function TMidiPatternGUI.LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerGUI;
+var
+  lLocation: Integer;
+begin
+  LoopStart.Location := FModel.LoopStart.Location;
+  LoopEnd.Location := FModel.LoopEnd.Location;
+  LoopLength.Location := FModel.LoopLength.Location;
+
+  Result := nil;
+
+  if Abs(X - ConvertTimeToScreen(LoopStart.Location) * DIVBY220 - (FLocationOffset + FNoteInfoWidth)) < AMargin then
+  begin
+    Result := LoopStart;
+  end
+  else
+  if Abs(X - ConvertTimeToScreen(LoopEnd.Location) * DIVBY220 - (FLocationOffset + FNoteInfoWidth)) < AMargin then
+  begin
+    Result := LoopEnd;
+  end
+  else
+  if Abs(X - ConvertTimeToScreen(LoopLength.Location) * DIVBY220 - (FLocationOffset + FNoteInfoWidth)) < AMargin then
+  begin
+    Result := LoopLength;
+  end;
+end;
+
 procedure TMidiPatternGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
 var
   lSelectObjectListCommand: TSelectObjectListCommand;
@@ -1183,7 +1346,11 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  if Assigned(FDraggedNote) then
+  if Assigned(FDraggedLoopMarker) then
+  begin
+    HandleLoopMarkerMouseMove(Shift, X, Y);
+  end
+  else if Assigned(FDraggedNote) then
   begin
     HandleNoteMouseMove(Shift, X, Y);
   end
@@ -1233,7 +1400,7 @@ begin
   // requested by the observer and not the subject ie mousemove changes are not always
   // persistent towards the subject.
   FBitmapIsDirty := True;
-  Invalidate;
+  //Invalidate;
 end;
 
 procedure TMidiPatternGUI.DblClick;
@@ -1269,15 +1436,15 @@ begin
       lCreateNoteCommand.Free;
     end;
   end;
+
   inherited DblClick;
+
 end;
 
 function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
   ): Boolean;
 begin
   ZoomFactorY := ZoomFactorY + 100;
-  //FNoteOffset := ConvertScreenToNote(MousePos.Y);
-
 
   FBitmapIsDirty := True;
   Invalidate;
@@ -1289,7 +1456,6 @@ function TMidiPatternGUI.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
   ): Boolean;
 begin
   ZoomFactorY := ZoomFactorY - 100;
-  //FNoteOffset := ConvertScreenToNote(MousePos.Y);
 
   FBitmapIsDirty := True;
   Invalidate;
@@ -1321,11 +1487,11 @@ procedure TMidigridOverview.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TMidigridOverview.Update');
 
-  {DiffLists(
+  DiffLists(
     TMidiPattern(Subject).NoteList,
     FNoteListGUI,
     @Self.CreateOverviewNoteGUI,
-    @Self.DeleteOverviewNoteGUI);}
+    @Self.DeleteOverviewNoteGUI);
 
   // Determine total width of a notes
   FTotalWidth := CalculateTotalWidth;

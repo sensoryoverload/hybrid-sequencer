@@ -36,14 +36,14 @@ type
     StringGrid1: TStringGrid;
   private
     { private declarations }
-    FMaps: TObjectList;
+    FMaps: TStringList;
     FCriticalSection: TCriticalSection;
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure UpdateGrid;
-    property Maps: TObjectList read FMaps write FMaps;
+    property Maps: TStringList read FMaps write FMaps;
   end; 
 
 var
@@ -82,12 +82,12 @@ begin
 
     for lRow := 0 to Pred(FMaps.Count) do
     begin
-      StringGrid1.Cells[1, lRow] := THybridPersistentModel(FMaps[lRow]).ObjectID;
-      if Assigned(FMaps[lRow]) then
+      StringGrid1.Cells[1, lRow] := THybridPersistentModel(FMaps.Objects[lRow]).ObjectID;
+      if Assigned(FMaps.Objects[lRow]) then
       begin
-        if Assigned(THybridPersistentModel(FMaps[lRow])) then
+        if Assigned(THybridPersistentModel(FMaps.Objects[lRow])) then
         begin
-          lTempStr := THybridPersistentModel(FMaps[lRow]).ClassName;
+          lTempStr := THybridPersistentModel(FMaps.Objects[lRow]).ClassName;
           StringGrid1.Cells[2, lRow] := lTempStr;
         end;
       end;

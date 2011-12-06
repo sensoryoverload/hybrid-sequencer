@@ -126,9 +126,6 @@ begin
   FSampleView.Enabled := False;
   FSampleView.EnableControls := False;
   FSampleView.Parent := Self;
-
-
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
 end;
 
 destructor TBankView.Destroy;

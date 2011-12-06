@@ -92,7 +92,7 @@ begin
 
   OnEndDrag := @MyEndDrag;
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 end;
 
 destructor TMidiPatternGUI.Destroy;
@@ -306,7 +306,7 @@ begin
   DBLog('start TPatternGUI.Update');
 
   Position := TMidiPattern(Subject).Position;
-  PatternLength := TMidiPattern(Subject).LoopEnd;  //todo Use global patternlength
+  PatternLength := TMidiPattern(Subject).LoopEnd.Location;  //todo Use global patternlength
 //  PatternControls.RealBPM := Model.WavePattern.RealBPM;
 //  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
 

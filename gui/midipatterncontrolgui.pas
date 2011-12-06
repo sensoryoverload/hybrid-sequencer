@@ -109,7 +109,7 @@ begin
   cbMidiChannel.Items.Add('15');
   cbMidiChannel.Items.Add('16');
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 
   FSampleBankGUI.Align := alBottom;
   FSampleBankGUI.Parent := nil;

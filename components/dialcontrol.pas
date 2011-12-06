@@ -35,6 +35,8 @@ const
   KNOB_SCALE_STEP_TO_ANGLE = KNOB_IMAGE_COUNT / 300;
   KNOBSTYLE1 = 'BlackKnob';
   KNOBSTYLE2 = 'SimpleKnob';
+  DIVBY100 = 1 / 100;
+  DIVBY20 = 1 / 20;
 
 Type
   PPSingle = ^PSingle;
@@ -1069,7 +1071,6 @@ procedure TVolumeControl.Paint;
 var
   Millimeter: Integer;
   MillimeterStep: Single;
-  MillimeterNumber: Integer;
   HeightScale: Integer;
   i: byte;
   Bitmap: TBitmap;
@@ -1097,19 +1098,18 @@ begin
 
     // Draw Scale
     Bitmap.Canvas.Pen.Color := clBlack;
-    MillimeterNumber:= 20;
-    MillimeterStep:= Height / MillimeterNumber;
-    for Millimeter:= 0 to Pred(MillimeterNumber) do
+
+    MillimeterStep:= Height * DIVBY20;
+    for Millimeter:= 0 to 19 do
     begin
       Bitmap.Canvas.Line(
-        12, Round(Millimeter * MillimeterStep) + 2,
-        15, Round(Millimeter * MillimeterStep) + 2);
+        12, Round(Millimeter * 20) + 2,
+        15, Round(Millimeter * 20) + 2);
     end;
     Bitmap.Canvas.Brush.Color:= clBlue;
 
     // Draw FaderHandle
-
-    FY := Round(Bitmap.Height - (FPosition * (Bitmap.Height / FRange)));
+    FY := Round(Bitmap.Height - (FPosition * (Bitmap.Height * DIVBY100)));
     Bitmap.Canvas.FillRect(0, FY - 2, 10, FY + 2);
     Bitmap.Canvas.TextOut(0, 0, Format('%f', [FPosition]));
     Canvas.Draw(0, 0, Bitmap);

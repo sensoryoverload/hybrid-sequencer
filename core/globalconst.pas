@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, LCLIntf, LMessages, Controls, Forms, jacktypes, ContNrs,
-  typinfo, variants, {Laz_XMLStreaming, }DOM, XMLWrite, XMLRead;
+  typinfo, variants, DOM, XMLWrite, XMLRead;
 
 const
   MAX_LATENCY = 20000;
@@ -126,6 +126,8 @@ type
   end;
 
   THybridPersistentModel = class;
+
+  { TObjectList }
 
   ISubject = interface;
 
@@ -441,6 +443,21 @@ type
     property FileName: string read FFilename write FFilename;
   end;
 
+  { TLoopMarkerGUI }
+
+  TLoopMarkerGUI = class(THybridPersistentView)
+  private
+    FDataType: TLoopMarkerType;
+    FLocation: Integer;
+    FLoopMarker: TLoopMarker;
+  public
+    constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType);
+    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    property LoopMarker: TLoopMarker read FLoopMarker write FLoopMarker;
+    property DataType: TLoopMarkerType read FDataType write FDataType;
+    property Location: Integer read FLocation write FLocation;
+  end;
+
   TDiffCallback = procedure (AObjectID: string) of object;
 
 procedure ChangeControlStyle(AControl: TControl; const AInclude: TControlStyle; const AExclude: TControlStyle = []; Recursive: Boolean = True);
@@ -456,10 +473,10 @@ procedure ChangeControlStyle(AControl: TControl; const AInclude: TControlStyle; 
 var
   I: Integer;
 begin
-  AControl.ControlStyle := AControl.ControlStyle + AInclude - AExclude;
+  {AControl.ControlStyle := AControl.ControlStyle + AInclude - AExclude;
   if Recursive and (AControl is TWinControl) then
     for I := 0 to TWinControl(AControl).ControlCount - 1 do
-      ChangeControlStyle(TWinControl(AControl).Controls[I], AInclude, AExclude, True);
+      ChangeControlStyle(TWinControl(AControl).Controls[I], AInclude, AExclude, True);}
 end;
 
 procedure DiffLists(AModelList, AViewList: TObjectList; ACreateProc, ADestroyProc: TDiffCallback);
@@ -471,7 +488,7 @@ var
   lViewIntf: IObserver;
 begin
   DBLog('start DiffLists');
-  {try }
+  try
     if Assigned(AModelList) and Assigned(AViewList) and
       Assigned(ACreateProc) and Assigned(ADestroyProc) then
     begin
@@ -526,14 +543,13 @@ begin
       end;
     end;
 
-  {except
+  except
     on e: exception do
     begin
       DumpExceptionCallStack(e);
       DBLog('DiffLists error: ' + e.Message);
-      //raise;
     end;
-  end;}
+  end;
   DBLog('end DiffLists');
 end;
 
@@ -1422,6 +1438,21 @@ procedure TPersistentGraphicControl.SetModel(AModel: THybridPersistentModel);
 begin
   FModel := AModel;
 end;
+
+{ TLoopMarkerGUI }
+
+constructor TLoopMarkerGUI.Create(AObjectOwner: string; ADataType: TLoopMarkerType);
+begin
+  inherited Create(AObjectOwner);
+
+  FDataType := ADataType;
+end;
+
+procedure TLoopMarkerGUI.Update(Subject: THybridPersistentModel);
+begin
+  Self.Location := TLoopMarker(Subject).Location;
+end;
+
 
 end.
 

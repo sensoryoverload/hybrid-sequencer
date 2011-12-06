@@ -5,18 +5,18 @@ LazarusResources.Add('TBankView','FORMDATA',[
   +'dth'#3#154#3#5'Align'#7#8'alClient'#12'ClientHeight'#3#141#0#11'ClientWidth'
   +#3#154#3#8'TabOrder'#2#0#10'DesignLeft'#3#233#0#9'DesignTop'#3#4#1#0#9'TGrou'
   +'pBox'#14'gbSampleSelect'#4'Left'#2#0#6'Height'#3#141#0#3'Top'#2#0#5'Width'#2
-  +'['#5'Align'#7#6'alLeft'#7'Caption'#6#7'Samples'#12'ClientHeight'#3#128#0#11
-  +'ClientWidth'#2'W'#8'TabOrder'#2#0#0#8'TListBox'#16'lbSampleSelector'#4'Left'
-  +#2#0#6'Height'#3#128#0#3'Top'#2#0#5'Width'#2'W'#5'Align'#7#8'alClient'#11'Bo'
-  +'rderStyle'#7#6'bsNone'#10'ItemHeight'#2#0#7'OnClick'#7#21'lbSampleSelectorC'
-  +'lick'#10'OnDblClick'#7#24'lbSampleSelectorDblClick'#10'OnDragDrop'#7#24'lbS'
-  +'ampleSelectorDragDrop'#10'OnDragOver'#7#24'lbSampleSelectorDragOver'#9'Popu'
-  +'pMenu'#7#14'pmSampleSelect'#11'ScrollWidth'#2'W'#8'TabOrder'#2#0#8'TopIndex'
-  +#2#255#0#0#0#10'TPopupMenu'#14'pmSampleSelect'#4'left'#3#20#1#3'top'#2'7'#0#9
-  +'TMenuItem'#11'miNewSample'#6'Action'#7#12'actNewSample'#0#0#9'TMenuItem'#14
-  +'miDeleteSample'#6'Action'#7#15'actDeleteSample'#0#0#0#11'TActionList'#14'al'
-  +'SampleSelect'#4'left'#3'q'#1#3'top'#2'7'#0#7'TAction'#12'actNewSample'#7'Ca'
-  +'ption'#6#3'New'#9'OnExecute'#7#19'actNewSampleExecute'#0#0#7'TAction'#15'ac'
-  +'tDeleteSample'#7'Caption'#6#6'Delete'#9'OnExecute'#7#22'actDeleteSampleExec'
-  +'ute'#0#0#0#0
+  +'['#5'Align'#7#6'alLeft'#7'Caption'#6#7'Samples'#12'ClientHeight'#2'~'#11'Cl'
+  +'ientWidth'#2'W'#8'TabOrder'#2#0#0#8'TListBox'#16'lbSampleSelector'#4'Left'#2
+  +#0#6'Height'#2'~'#3'Top'#2#0#5'Width'#2'W'#5'Align'#7#8'alClient'#11'BorderS'
+  +'tyle'#7#6'bsNone'#10'ItemHeight'#2#0#7'OnClick'#7#21'lbSampleSelectorClick'
+  +#10'OnDblClick'#7#24'lbSampleSelectorDblClick'#10'OnDragDrop'#7#24'lbSampleS'
+  +'electorDragDrop'#10'OnDragOver'#7#24'lbSampleSelectorDragOver'#9'PopupMenu'
+  +#7#14'pmSampleSelect'#11'ScrollWidth'#2'W'#8'TabOrder'#2#0#8'TopIndex'#2#255
+  +#0#0#0#10'TPopupMenu'#14'pmSampleSelect'#4'left'#3#20#1#3'top'#2'7'#0#9'TMen'
+  +'uItem'#11'miNewSample'#6'Action'#7#12'actNewSample'#0#0#9'TMenuItem'#14'miD'
+  +'eleteSample'#6'Action'#7#15'actDeleteSample'#0#0#0#11'TActionList'#14'alSam'
+  +'pleSelect'#4'left'#3'q'#1#3'top'#2'7'#0#7'TAction'#12'actNewSample'#7'Capti'
+  +'on'#6#3'New'#9'OnExecute'#7#19'actNewSampleExecute'#0#0#7'TAction'#15'actDe'
+  +'leteSample'#7'Caption'#6#6'Delete'#9'OnExecute'#7#22'actDeleteSampleExecute'
+  +#0#0#0#0
 ]);

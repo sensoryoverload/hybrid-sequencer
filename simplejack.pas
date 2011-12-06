@@ -100,9 +100,6 @@ type
     acPause: TAction;
     acRedo: TAction;
     acAbout: TAction;
-    acNewScriptAction: TAction;
-    acDeleteScriptAction: TAction;
-    acSaveScriptActionAs: TAction;
     acUndo: TAction;
     alGlobalActions: TActionList;
     btnDeleteTrack: TButton;
@@ -293,7 +290,7 @@ implementation
 uses
   fx, librubberband;
 
-procedure DumpCallStack;
+function DumpCallStack: string;
 var
   I: Longint;
   prevbp: Pointer;
@@ -326,10 +323,10 @@ begin
    except
      { prevent endless dump if an exception occured }
    end;
-  ShowMessage(Report);
+  Result := Report;
 end;
 
-procedure DumpExceptionCallStack(E: Exception);
+function DumpExceptionCallStack(E: Exception): string;
 var
   I: Integer;
   Frames: PPointer;
@@ -345,7 +342,7 @@ begin
   Frames := ExceptFrames;
   for I := 0 to ExceptFrameCount - 1 do
     Report := Report + LineEnding + BackTraceStrFunc(Frames[I]);
-  ShowMessage(Report);
+  Result := Report;
 end;
 
 
@@ -570,69 +567,72 @@ begin
   for j := 0 to Pred(GAudioStruct.Tracks.Count) do
   begin
     lTrack := TTrack(GAudioStruct.Tracks.Items[j]);
-
-     // Increment cursor regardless if audible or not
-    if Assigned(lTrack.PlayingPattern) then
-    begin
-      lTrack.PlayingPattern.ProcessInit;
-
-      if lTrack.Playing then
-      begin
-        // Send midi pattern to jack buffer
-        if lTrack.PlayingPattern is TMidiPattern then
-        begin
-          process_midi_buffer(TMidiPattern(lTrack.PlayingPattern), midi_out_buf, nframes, lTrack);
-        end;
-      end;
-    end;
-
-    //GLogger.PushMessage('Logging - ' + IntToStr(Random(1000)));
-
-    for i := 0 to Pred(nframes) do
+    if Assigned(lTrack) then
     begin
 
-      if lTrack.Playing then
+       // Increment cursor regardless if audible or not
+      if Assigned(lTrack.PlayingPattern) then
       begin
-        // Synchronize section
-        if (GAudioStruct.MainSyncCounter + i) mod GAudioStruct.MainSyncModula = 0 then
+        lTrack.PlayingPattern.ProcessInit;
+
+        if lTrack.Playing then
         begin
-          if Assigned(lTrack.ScheduledPattern) then
+          // Send midi pattern to jack buffer
+          if lTrack.PlayingPattern is TMidiPattern then
           begin
-            if Assigned(lTrack.PlayingPattern) then
-            begin
-              lTrack.PlayingPattern.Playing := False;
-            end;
-            lTrack.PlayingPattern := lTrack.ScheduledPattern;
-
-            if lTrack.PlayingPattern is TWavePattern then
-            begin;
-              TWavePattern(lTrack.PlayingPattern).TimeStretch.Flush;
-            end
-            else if lTrack.PlayingPattern is TMidiPattern then
-            begin
-              if TMidiPattern(lTrack.PlayingPattern).MidiDataList.Count > 0 then
-              begin
-                TMidiPattern(lTrack.PlayingPattern).MidiDataList.First;
-                TMidiPattern(lTrack.PlayingPattern).MidiDataCursor :=
-                  TMidiData( TMidiPattern(lTrack.PlayingPattern).MidiDataList.Items[0] );
-              end;
-            end;
-
-            lTrack.PlayingPattern.Playing := True;
-            lTrack.PlayingPattern.Scheduled := False;
-            lTrack.PlayingPattern.SyncQuantize := True;
-            lTrack.ScheduledPattern := nil;
+            process_midi_buffer(TMidiPattern(lTrack.PlayingPattern), midi_out_buf, nframes, lTrack);
           end;
         end;
+      end;
 
-        if Assigned(lTrack.PlayingPattern) then
+      //GLogger.PushMessage('Logging - ' + IntToStr(Random(1000)));
+
+      for i := 0 to Pred(nframes) do
+      begin
+
+        if lTrack.Playing then
         begin
-          lPlayingPattern := lTrack.PlayingPattern;
-
-          if lPlayingPattern.OkToPlay then
+          // Synchronize section
+          if (GAudioStruct.MainSyncCounter + i) mod GAudioStruct.MainSyncModula = 0 then
           begin
-            lPlayingPattern.Process(lTrack.OutputBuffer, i, nframes);
-            lPlayingPattern.ProcessAdvance;
+            if Assigned(lTrack.ScheduledPattern) then
+            begin
+              if Assigned(lTrack.PlayingPattern) then
+              begin
+                lTrack.PlayingPattern.Playing := False;
+              end;
+              lTrack.PlayingPattern := lTrack.ScheduledPattern;
+
+              if lTrack.PlayingPattern is TWavePattern then
+              begin;
+                TWavePattern(lTrack.PlayingPattern).TimeStretch.Flush;
+              end
+              else if lTrack.PlayingPattern is TMidiPattern then
+              begin
+                if TMidiPattern(lTrack.PlayingPattern).MidiDataList.Count > 0 then
+                begin
+                  TMidiPattern(lTrack.PlayingPattern).MidiDataList.First;
+                  TMidiPattern(lTrack.PlayingPattern).MidiDataCursor :=
+                    TMidiData( TMidiPattern(lTrack.PlayingPattern).MidiDataList.Items[0] );
+                end;
+              end;
+
+              lTrack.PlayingPattern.Playing := True;
+              lTrack.PlayingPattern.Scheduled := False;
+              lTrack.PlayingPattern.SyncQuantize := True;
+              lTrack.ScheduledPattern := nil;
+            end;
+          end;
+
+          if Assigned(lTrack.PlayingPattern) then
+          begin
+            lPlayingPattern := lTrack.PlayingPattern;
+
+            if lPlayingPattern.OkToPlay then
+            begin
+              lPlayingPattern.Process(lTrack.OutputBuffer, i, nframes);
+              lPlayingPattern.ProcessAdvance;
+            end;
           end;
         end;
       end;
@@ -642,65 +642,72 @@ begin
   for j := 0 to Pred(GAudioStruct.Tracks.Count) do
   begin
     lTrack := TTrack(GAudioStruct.Tracks.Items[j]);
-
-    FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
-
-    lPlayingPattern := lTrack.PlayingPattern;
-    if Assigned(lPlayingPattern) then
+    if Assigned(lTrack) then
     begin
-      if lPlayingPattern.OkToPlay then
-      begin
+      FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
 
-        if lTrack.Playing then
+      lPlayingPattern := lTrack.PlayingPattern;
+      if Assigned(lPlayingPattern) then
+      begin
+        if lPlayingPattern.OkToPlay then
         begin
 
-          if lTrack.Active then
+          if lTrack.Playing then
           begin
-            { TODO Not switched on
-              lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input[0], nframes);
-            }
-            if lPlayingPattern is TMidiPattern then
+
+            if lTrack.Active then
             begin
-              TMidiPattern(lPlayingPattern).SampleBankEngine.Process( TMidiPattern(lPlayingPattern).MidiBuffer,
-                lTrack.OutputBuffer, nframes);
+              { TODO Not switched on
+                lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input[0], nframes);
+              }
+              if lPlayingPattern is TMidiPattern then
+              begin
+                TMidiPattern(lPlayingPattern).SampleBankEngine.Process( TMidiPattern(lPlayingPattern).MidiBuffer,
+                  lTrack.OutputBuffer, nframes);
+              end;
+
+              // 1. Execute per pattern plugins
+  {            lPlayingPattern.PluginProcessor.Execute(nframes, lPlayingPattern.WavePattern.BufferData2);
+
+              // 2. Execute per track plugins
+              lTrack.PluginProcessor.Execute(nframes, lPlayingPattern.PluginProcessor.Buffer);
+
+              // 3. Apply tracksettings (Level, Mute, ...) to track output buffer
+              for i := 0 to Pred(nframes) do
+              begin
+                lTrack.OutputBuffer[i] :=
+                  (lTrack.PluginProcessor.Buffer[i] + input[i]) * lTrack.VolumeMultiplier * 1.5;
+              end;          }
+
+              // Mix to the jack out only when audible
+              if lTrack.VolumeMultiplier > DENORMAL_KILLER then
+              begin
+                for i := 0 to Pred(nframes) do
+                begin
+                  lTrack.OutputBuffer[i] := lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier;
+                  output_left[i] := output_left[i] + lTrack.OutputBuffer[i];
+                  output_right[i] := output_right[i] + lTrack.OutputBuffer[i];
+                end;
+              end;
+
+              // Copy to track output (JUST FOR DEBUGGING, use MasterOut )
+              {Move(lTrack.OutputBuffer[0], output_left[0], buffer_size);
+              Move(lTrack.OutputBuffer[0], output_right[0], buffer_size);}
             end;
-
-            // 1. Execute per pattern plugins
-{            lPlayingPattern.PluginProcessor.Execute(nframes, lPlayingPattern.WavePattern.BufferData2);
-
-            // 2. Execute per track plugins
-            lTrack.PluginProcessor.Execute(nframes, lPlayingPattern.PluginProcessor.Buffer);
-
-            // 3. Apply tracksettings (Level, Mute, ...) to track output buffer
-            for i := 0 to Pred(nframes) do
-            begin
-              lTrack.OutputBuffer[i] :=
-                (lTrack.PluginProcessor.Buffer[i] + input[i]) * lTrack.VolumeMultiplier * 1.5;
-            end;          }
-
-            // Mix to the jack out
-            for i := 0 to Pred(nframes) do
-            begin
-              output_left[i] := output_left[i] + lTrack.OutputBuffer[i];
-              output_right[i] := output_right[i] + lTrack.OutputBuffer[i];
-            end;
-
-            // Copy to track output (JUST FOR DEBUGGING, use MasterOut )
-            {Move(lTrack.OutputBuffer[0], output_left[0], buffer_size);
-            Move(lTrack.OutputBuffer[0], output_right[0], buffer_size);}
           end;
         end;
       end;
-    end;
 
-    for i := 0 to Pred(nframes) do
-    begin
-      // TODO Test denormals?
-      TempLevel := Abs(lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier);
-      if TempLevel > lTrack.Level then
-        lTrack.Level := (attack_coef * (lTrack.Level - TempLevel)) + TempLevel
-      else
-        lTrack.Level := (release_coef * (lTrack.Level - TempLevel)) + TempLevel;
+      // Should visible levels be calculated here?? Maybe the mainthread...
+      // Save's a lot of multiplications
+      for i := 0 to Pred(nframes) do
+      begin
+        TempLevel := Abs(lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier);
+        if TempLevel > lTrack.Level then
+          lTrack.Level := (attack_coef * (lTrack.Level - TempLevel)) + TempLevel
+        else
+          lTrack.Level := (release_coef * (lTrack.Level - TempLevel)) + TempLevel;
+      end;
     end;
   end;
   //------- End effects section ----------------------------------------
@@ -774,12 +781,14 @@ begin
   // Make shure we're in a valid region
   if (GHistoryIndex > -1) and (GHistoryIndex < GHistoryQueue.Count) then
   begin
-    lCommand:= TCommand(GHistoryQueue[GHistoryIndex]);
+    lCommand := TCommand(GHistoryQueue[GHistoryIndex]);
     if Assigned(lCommand) then
     begin
       try
         DBLog('Rolling back command class: %s', lCommand.ClassName);
+        lCommand.Initialize;
         lCommand.Rollback;
+        lCommand.Finalize;
 
         for lTrimIndex := Pred(GHistoryQueue.Count) downto GHistoryIndex do
         begin
@@ -792,7 +801,8 @@ begin
       except
         on e:exception do
         begin
-          DBLog(Format('Internal error at acUndoExecute: %s, class: %s', [e.Message, lCommand.ClassName]));
+          DBLog(Format('Internal error at acUndoExecute: class: %s, %s, %s ',
+            [lCommand.ClassName, DumpExceptionCallStack(e), DumpCallStack]));
           lCommand.Free;
         end;
       end;
@@ -871,7 +881,9 @@ begin
     lCommand:= TCommand(GHistoryQueue[GHistoryIndex]);
     if Assigned(lCommand) then
     begin
+      lCommand.Initialize;
       lCommand.Execute;
+      lCommand.Finalize;
       Inc(GHistoryIndex);
     end;
   end;
@@ -1104,9 +1116,12 @@ var
   lMidiPatternGUI: TMidiPatternGUI;
   lWavePatternGUI: TWavePatternGUI;
 begin
-
+  Application.ProcessMessages;
   try
     FSimpleWaveForm.Invalidate;
+
+    acUndoUpdate(Self);
+    acRedoUpdate(Self);
 
     // Handle update of objects
     if FHighPriorityInterval = 0 then
@@ -1123,7 +1138,7 @@ begin
       end;
     end;
 
-    Application.ProcessMessages;
+
 
     for i := 0 to Pred(MainApp.Tracks.Count) do
     begin
@@ -1339,6 +1354,7 @@ begin
 
 
   GAudioStruct := TAudioStructure.Create('{D6DDECB0-BA12-4448-BBAE-3A96EEC90BFB}', MAPPED);
+  GAudioStruct.Initialize;
   GAudioStruct.MainSampleRate := samplerate;
   GAudioStruct.BPM := 120;
 
@@ -1373,7 +1389,7 @@ begin
 
   GAudioStruct.Attach(MainApp);
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 
   ScreenUpdater.Interval := 40;
   ScreenUpdater.Enabled := True;
@@ -1958,6 +1974,11 @@ begin
   lTrackGUI.OnUpdateTrackControls := @UpdateTrackControls;
   lTrackGUI.OnTracksRefreshGUI := @DoTracksRefreshEvent;
   lTrackGUI.OnPatternRefreshGUI := @DoPatternRefreshEvent;
+  case lTrack.TrackType of
+  ttNormal: lTrackGUI.Align := alNone;
+  ttMaster: lTrackGUI.Align := alRight;
+  ttGroup: lTrackGUI.Align := alNone;
+  end;
 
   lTrackGUI.Track := lTrack;
   Tracks.Add(lTrackGUI);
@@ -2218,7 +2239,6 @@ var
   lGenericCommand: TSampleParameterCommand;
   lMidiMap: TMidiMap;
   lMidiMapIndex: Integer;
-  lEncodeMidi: string;
 begin
   while jack_ringbuffer_read_space(FRingBuffer) > 0 do
   begin
@@ -2226,13 +2246,10 @@ begin
     jack_ringbuffer_read(FRingBuffer, @lMidiEvent, SizeOf(TMidiMessage));
 
     // Encode unique midievent id
-    lEncodeMidi := IntToStr(lMidiEvent.DataValue1 * 1000000 + lMidiEvent.DataValue2 * 1000);
-
-    // Store the id to bind it later on
-    FMidiController := lEncodeMidi;
+    FMidiController := IntToStr(lMidiEvent.DataValue1 * 1000000 + lMidiEvent.DataValue2 * 1000);
 
     // Get mapping for controller and send an model change
-    lMidiMapIndex := GCommandQueue.MidiMappingTable.IndexOf(lEncodeMidi);
+    lMidiMapIndex := GCommandQueue.MidiMappingTable.IndexOf(FMidiController);
     if lMidiMapIndex <> -1 then
     begin
       lMidiMap := TMidiMap(GCommandQueue.MidiMappingTable.Objects[lMidiMapIndex]);
@@ -2284,7 +2301,7 @@ begin
   while (not Terminated) do
   begin
     // Only update at 1000 ms / 40 ms = about 25 fps
-    sleep(10);
+    sleep(40);
 
     Synchronize(@Updater);
   end;

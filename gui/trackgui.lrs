@@ -2,53 +2,57 @@
 
 LazarusResources.Add('TTrackGUI','FORMDATA',[
   'TPF0'#9'TTrackGUI'#8'TrackGUI'#4'Left'#2#0#6'Height'#3#155#2#3'Top'#2#0#5'Wi'
-  +'dth'#2'h'#5'Align'#7#8'alCustom'#7'Anchors'#11#5'akTop'#0#12'ClientHeight'#3
-  +#155#2#11'ClientWidth'#2'h'#9'PopupMenu'#7#7'pmTrack'#8'TabOrder'#2#0#10'Des'
-  +'ignLeft'#3'!'#3#9'DesignTop'#2'k'#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2
-  +#0#6'Height'#3'3'#1#3'Top'#3'h'#1#5'Width'#2'h'#5'Align'#7#8'alBottom'#10'Be'
-  +'velInner'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3'3'#1
-  +#11'ClientWidth'#2'h'#5'Color'#7#9'clBtnFace'#11'ParentColor'#8#9'PopupMenu'
-  +#7#7'pmTrack'#8'TabOrder'#2#0#11'OnMouseDown'#7#22'TrackControlsMouseDown'#11
-  +'OnMouseMove'#7#22'TrackControlsMouseMove'#9'OnMouseUp'#7#20'TrackControlsMo'
-  +'useUp'#0#14'TToggleControl'#4'tcOn'#4'Left'#2#9#6'Height'#2#14#3'Top'#3#153
-  +#0#5'Width'#2#30#10'SwitchedOn'#9#8'OnChange'#7#10'tcOnChange'#0#0#9'TComboB'
-  +'ox'#9'ComboBox1'#4'Left'#2#0#6'Height'#2#22#3'Top'#2'C'#5'Width'#2'A'#8'Aut'
-  +'oSize'#8#11'Font.Height'#2#7#10'ItemHeight'#2#0#9'ItemIndex'#2#0#13'Items.S'
-  +'trings'#1#6#4'None'#0#10'ParentFont'#8#5'Style'#7#14'csDropDownList'#8'TabO'
-  +'rder'#2#1#4'Text'#6#4'None'#0#0#9'TComboBox'#8'cbOutput'#4'Left'#2#0#6'Heig'
-  +'ht'#2#22#3'Top'#2'X'#5'Width'#2'A'#8'AutoSize'#8#11'Font.Height'#2#7#10'Ite'
-  +'mHeight'#2#0#9'ItemIndex'#2#0#13'Items.Strings'#1#6#6'Master'#0#10'ParentFo'
-  +'nt'#8#5'Style'#7#14'csDropDownList'#8'TabOrder'#2#2#4'Text'#6#6'Master'#0#0
-  +#14'TVolumeControl'#7'vcLevel'#4'Left'#2#6#6'Height'#3#137#0#3'Top'#3#168#0#5
-  +'Width'#2')'#8'OnChange'#7#13'vcLevelChange'#13'OnStartChange'#7#18'vcLevelS'
-  +'tartChange'#0#0#12'TDialControl'#12'DialControl1'#4'Left'#2#6#6'Height'#2'('
-  +#3'Top'#2'q'#5'Width'#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#7'Bal'
-  +'ance'#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#200#5'@'#7
-  +'Enabled'#9#12'ValueVisible'#9#0#0#12'TDialControl'#10'dcLowLevel'#4'Left'#2
-  +'0'#6'Height'#2'('#3'Top'#3#193#0#5'Width'#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0
-  +#0#7'Caption'#6#9'Low Level'#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0
-  +#0#0#0#0#0#128#255'?'#7'Enabled'#9#12'ValueVisible'#9#0#0#12'TDialControl'#10
-  +'dcMidLevel'#4'Left'#2'0'#6'Height'#2'('#3'Top'#3#153#0#5'Width'#2'$'#5'Valu'
-  +'e'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#9'Mid Level'#6'Lowest'#5#0#0#0#0#0#0#0
-  +#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#128#255'?'#7'Enabled'#9#12'ValueVisible'#9
-  +#0#0#12'TDialControl'#11'dcHighLevel'#4'Left'#2'0'#6'Height'#2'('#3'Top'#2'q'
-  +#5'Width'#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#8'Hi Level'#6'Low'
-  +'est'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#128#255'?'#7'Enabled'
-  +#9#12'ValueVisible'#9#0#0#0#6'TPanel'#11'pnlPatterns'#4'Left'#2#0#6'Height'#3
-  +'h'#1#4'Hint'#6#18'Drop patterns here'#3'Top'#2#0#5'Width'#2'h'#5'Align'#7#8
-  +'alClient'#10'BevelInner'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#14'Paren'
-  +'tShowHint'#8#9'PopupMenu'#7#14'pupPatternList'#8'ShowHint'#9#8'TabOrder'#2#1
-  +#10'OnDragDrop'#7#19'pnlPatternsDragDrop'#10'OnDragOver'#7#19'pnlPatternsDra'
-  +'gOver'#11'OnMouseDown'#7#20'pnlPatternsMouseDown'#0#0#10'TPopupMenu'#7'pmTr'
-  +'ack'#4'left'#2'!'#3'top'#3#246#0#0#9'TMenuItem'#13'miDeleteTrack'#6'Action'
-  +#7#13'acDeleteTrack'#7'OnClick'#7#18'miDeleteTrackClick'#0#0#0#11'TActionLis'
-  +'t'#11'ActionList1'#4'left'#2'"'#3'top'#3#201#0#0#7'TAction'#13'acDeleteTrac'
-  +'k'#7'Caption'#6#12'Delete track'#9'OnExecute'#7#20'acDeleteTrackExecute'#0#0
-  +#7'TAction'#19'acCreateWavePattern'#7'Caption'#6#20'Create audio pattern'#9
-  +'OnExecute'#7#26'acCreateWavePatternExecute'#0#0#7'TAction'#19'acCreateMidiP'
-  +'attern'#7'Caption'#6#19'Create midi pattern'#9'OnExecute'#7#26'acCreateMidi'
-  +'PatternExecute'#0#0#0#10'TPopupMenu'#14'pupPatternList'#4'left'#2'&'#3'top'
-  +#2'M'#0#9'TMenuItem'#19'miCreateWavePattern'#6'Action'#7#19'acCreateWavePatt'
-  +'ern'#0#0#9'TMenuItem'#19'miCreateMidiPattern'#6'Action'#7#19'acCreateMidiPa'
-  +'ttern'#0#0#0#0
+  +'dth'#2'P'#5'Align'#7#8'alCustom'#7'Anchors'#11#5'akTop'#0#12'ClientHeight'#3
+  +#155#2#11'ClientWidth'#2'P'#20'Constraints.MaxWidth'#2'P'#20'Constraints.Min'
+  +'Width'#2'P'#9'PopupMenu'#7#7'pmTrack'#8'TabOrder'#2#0#10'DesignLeft'#3'!'#3
+  +#9'DesignTop'#2'k'#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2#0#6'Height'#3
+  +#250#0#3'Top'#3#161#1#5'Width'#2'P'#5'Align'#7#8'alBottom'#10'BevelInner'#7#9
+  +'bvLowered'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3#250#0#11'ClientWid'
+  +'th'#2'P'#5'Color'#7#9'clBtnFace'#11'ParentColor'#8#9'PopupMenu'#7#7'pmTrack'
+  +#8'TabOrder'#2#0#11'OnMouseDown'#7#22'TrackControlsMouseDown'#11'OnMouseMove'
+  +#7#22'TrackControlsMouseMove'#9'OnMouseUp'#7#20'TrackControlsMouseUp'#0#14'T'
+  +'ToggleControl'#4'tcOn'#4'Left'#2#9#6'Height'#2#14#3'Top'#2'b'#5'Width'#2#30
+  +#10'SwitchedOn'#9#8'OnChange'#7#10'tcOnChange'#0#0#9'TComboBox'#9'ComboBox1'
+  +#4'Left'#2#2#6'Height'#2#22#3'Top'#2#12#5'Width'#2'N'#7'Anchors'#11#6'akLeft'
+  +#7'akRight'#0#8'AutoSize'#8#11'Font.Height'#2#7#10'ItemHeight'#2#0#9'ItemInd'
+  +'ex'#2#0#13'Items.Strings'#1#6#4'None'#0#10'ParentFont'#8#5'Style'#7#14'csDr'
+  +'opDownList'#8'TabOrder'#2#1#4'Text'#6#4'None'#0#0#9'TComboBox'#8'cbOutput'#4
+  +'Left'#2#2#6'Height'#2#22#3'Top'#2'!'#5'Width'#2'N'#7'Anchors'#11#6'akLeft'#7
+  +'akRight'#0#8'AutoSize'#8#11'Font.Height'#2#7#10'ItemHeight'#2#0#9'ItemIndex'
+  +#2#0#13'Items.Strings'#1#6#6'Master'#0#10'ParentFont'#8#5'Style'#7#14'csDrop'
+  +'DownList'#8'TabOrder'#2#2#4'Text'#6#6'Master'#0#0#14'TVolumeControl'#7'vcLe'
+  +'vel'#4'Left'#2#6#6'Height'#3#137#0#3'Top'#2'q'#5'Width'#2')'#8'OnChange'#7
+  +#13'vcLevelChange'#13'OnStartChange'#7#18'vcLevelStartChange'#0#0#12'TDialCo'
+  +'ntrol'#12'DialControl1'#4'Left'#2#6#6'Height'#2'('#3'Top'#2':'#5'Width'#2'$'
+  +#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#7'Balance'#6'Lowest'#5#0#0#0#0#0
+  +#0#0#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#200#5'@'#7'Enabled'#9#12'ValueVisible'
+  +#9#0#0#12'TDialControl'#10'dcLowLevel'#4'Left'#2','#6'Height'#2'('#3'Top'#3
+  +#138#0#5'Width'#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#9'Low Level'
+  +#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0#0#0#0#0#0#128#255'?'#7'Ena'
+  +'bled'#9#12'ValueVisible'#9#0#0#12'TDialControl'#10'dcMidLevel'#4'Left'#2','
+  +#6'Height'#2'('#3'Top'#2'b'#5'Width'#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'C'
+  +'aption'#6#9'Mid Level'#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highest'#5#0#0#0#0
+  +#0#0#0#128#255'?'#7'Enabled'#9#12'ValueVisible'#9#0#0#12'TDialControl'#11'dc'
+  +'HighLevel'#4'Left'#2','#6'Height'#2'('#3'Top'#2':'#5'Width'#2'$'#5'Value'#5
+  +#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#8'Hi Level'#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0
+  +#7'Highest'#5#0#0#0#0#0#0#0#128#255'?'#7'Enabled'#9#12'ValueVisible'#9#0#0#0
+  +#6'TPanel'#11'pnlPatterns'#4'Left'#2#0#6'Height'#3#144#1#4'Hint'#6#18'Drop p'
+  +'atterns here'#3'Top'#2#17#5'Width'#2'P'#5'Align'#7#8'alClient'#10'BevelInne'
+  +'r'#7#9'bvLowered'#10'BevelOuter'#7#6'bvNone'#14'ParentShowHint'#8#9'PopupMe'
+  +'nu'#7#14'pupPatternList'#8'ShowHint'#9#8'TabOrder'#2#1#10'OnDragDrop'#7#19
+  +'pnlPatternsDragDrop'#10'OnDragOver'#7#19'pnlPatternsDragOver'#11'OnMouseDow'
+  +'n'#7#20'pnlPatternsMouseDown'#0#0#5'TEdit'#7'edtName'#4'Left'#2#0#6'Height'
+  +#2#17#3'Top'#2#0#5'Width'#2'P'#5'Align'#7#5'alTop'#11'BorderStyle'#7#6'bsNon'
+  +'e'#8'TabOrder'#2#2#4'Text'#6#9'Trackname'#0#0#10'TPopupMenu'#7'pmTrack'#4'l'
+  +'eft'#2'!'#3'top'#3#246#0#0#9'TMenuItem'#13'miDeleteTrack'#6'Action'#7#13'ac'
+  +'DeleteTrack'#7'OnClick'#7#18'miDeleteTrackClick'#0#0#0#11'TActionList'#11'A'
+  +'ctionList1'#4'left'#2'"'#3'top'#3#201#0#0#7'TAction'#13'acDeleteTrack'#7'Ca'
+  +'ption'#6#12'Delete track'#9'OnExecute'#7#20'acDeleteTrackExecute'#0#0#7'TAc'
+  +'tion'#19'acCreateWavePattern'#7'Caption'#6#20'Create audio pattern'#9'OnExe'
+  +'cute'#7#26'acCreateWavePatternExecute'#0#0#7'TAction'#19'acCreateMidiPatter'
+  +'n'#7'Caption'#6#19'Create midi pattern'#9'OnExecute'#7#26'acCreateMidiPatte'
+  +'rnExecute'#0#0#0#10'TPopupMenu'#14'pupPatternList'#4'left'#2'&'#3'top'#2'M'
+  +#0#9'TMenuItem'#19'miCreateWavePattern'#6'Action'#7#19'acCreateWavePattern'#0
+  +#0#9'TMenuItem'#19'miCreateMidiPattern'#6'Action'#7#19'acCreateMidiPattern'#0
+  +#0#0#0
 ]);

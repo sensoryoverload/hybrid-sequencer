@@ -130,6 +130,7 @@ type
     FPlayState: Integer;
     FSelectedBank: TSampleBank;
     FOldSelectedBank: TSampleBank;
+    FMasterTrack: TTrack;
 
     procedure SetBPM(const AValue: Single);
     procedure RecalculateSynchronize;
@@ -176,7 +177,6 @@ begin
 
   FSelectedBank := nil;
   FOldSelectedBank := nil;
-  //FModelThread := TModelThread.Create(False);
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
@@ -187,7 +187,6 @@ end;
 
 destructor TAudioStructure.Destroy;
 begin
-  //FModelThread.Terminate;
   FTrack.Free;
 
   inherited Destroy;
@@ -195,6 +194,11 @@ end;
 
 procedure TAudioStructure.Initialize;
 begin
+  FMasterTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
+  FMasterTrack.TrackType := ttMaster;
+
+  GAudioStruct.Tracks.Add(FMasterTrack);
+
   Notify;
 end;
 
@@ -308,6 +312,9 @@ begin
 
       if lModelObject.ObjectID = ObjectIdList[i] then
       begin
+        lModelObject.Active := False;
+        lModelObject.Playing := False;
+
         // Remove from live objectlist
         GAudioStruct.Tracks.Extract(lModelObject);
 
@@ -431,6 +438,7 @@ procedure TCreateTrackCommand.DoRollback;
 var
   i: Integer;
   lTrackIndex: Integer;
+  lTrack: TTrack;
 begin
   DBLog('start TCreateTrackCommand.DoRollback');
 
@@ -441,8 +449,11 @@ begin
     lTrackIndex := GAudioStruct.IndexOfTrack(ObjectIdList[i]);
     if lTrackIndex <> -1 then
     begin
+      lTrack := TTrack(GAudioStruct.Tracks[lTrackIndex]);
+      lTrack.Active := False;
+      lTrack.Playing := False;
 
-      GAudioStruct.Tracks.Remove(GAudioStruct.Tracks[lTrackIndex]);
+      GAudioStruct.Tracks.Remove(lTrack);
     end;
   end;
 

@@ -16,12 +16,12 @@ object BankView: TBankView
     Width = 91
     Align = alLeft
     Caption = 'Samples'
-    ClientHeight = 128
+    ClientHeight = 126
     ClientWidth = 87
     TabOrder = 0
     object lbSampleSelector: TListBox
       Left = 0
-      Height = 128
+      Height = 126
       Top = 0
       Width = 87
       Align = alClient

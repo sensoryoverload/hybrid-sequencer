@@ -48,6 +48,7 @@ type
     dcLowLevel: TDialControl;
     dcMidLevel: TDialControl;
     dcHighLevel: TDialControl;
+    edtName: TEdit;
     miCreateMidiPattern: TMenuItem;
     miCreateWavePattern: TMenuItem;
     miDeleteTrack: TMenuItem;
@@ -212,13 +213,6 @@ begin
   tcOn.SwitchedOn := TTrack(Subject).Active;
   vcLevel.Position := TTrack(Subject).Volume;
 
-  {if Assigned(OnTracksRefreshGUI) then
-  begin
-    OnTracksRefreshGUI(nil);
-  end; }
-
-  //Invalidate;
-
   DBLog('end TTrack.Update');
 end;
 
@@ -352,7 +346,7 @@ begin
   FShuffle := TShuffle.Create;
   tcOn.OnChange := @tcOnChange;
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);  }
 
   DBLog('end TTrack.Create');
 end;

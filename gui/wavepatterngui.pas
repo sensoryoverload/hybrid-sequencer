@@ -92,7 +92,7 @@ begin
 
   OnEndDrag := @MyEndDrag;
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True); }
 end;
 
 destructor TWavePatternGUI.Destroy;

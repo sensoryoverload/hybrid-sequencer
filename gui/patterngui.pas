@@ -114,7 +114,7 @@ begin
 
   FOkToPlay := False;
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 end;
 
 destructor TPatternGUI.Destroy;
@@ -133,7 +133,7 @@ begin
   DBLog('start TPatternGUI.Update');
 
   Position := TPattern(Subject).Position;
-  PatternLength := TPattern(Subject).LoopEnd;  //todo Use global patternlength
+//  PatternLength := TPattern(Subject).LoopEnd.Location;  //todo Use global patternlength
 //  PatternControls.RealBPM := Model.WavePattern.RealBPM;
 //  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
   writeln(inttostr(PatternLength));

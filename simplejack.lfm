@@ -365,18 +365,6 @@ object MainApp: TMainApp
       ImageIndex = 18
       OnExecute = acAboutExecute
     end
-    object acNewScriptAction: TAction
-      Category = 'ScriptEditor'
-      Caption = 'New script'
-    end
-    object acDeleteScriptAction: TAction
-      Category = 'ScriptEditor'
-      Caption = 'Delete script'
-    end
-    object acSaveScriptActionAs: TAction
-      Category = 'ScriptEditor'
-      Caption = 'Save script'
-    end
   end
   object ilGlobalImages: TImageList
     left = 629

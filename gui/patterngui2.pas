@@ -333,7 +333,7 @@ begin
   cbMidiChannel.Items.Add('15');
   cbMidiChannel.Items.Add('16');
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 
   DBLog('end TPatternControls.Create');
 end;

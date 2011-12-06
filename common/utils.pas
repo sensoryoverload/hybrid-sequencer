@@ -130,8 +130,8 @@ procedure DBLog(AFormat: string; AMessage: integer);
 
 function hermite4(frac_pos, xm1, x0, x1, x2: single): single; inline;
 
-procedure DumpExceptionCallStack(E: Exception);
-
+function DumpExceptionCallStack(E: Exception): string;
+function DumpCallStack: string;
 
 var
   FLogging: Boolean;
@@ -539,7 +539,43 @@ begin
   end
 end;
 
-procedure DumpExceptionCallStack(E: Exception);
+function DumpCallStack: string;
+var
+  I: Longint;
+  prevbp: Pointer;
+  CallerFrame,
+  CallerAddress,
+  bp: Pointer;
+  Report: string;
+const
+  MaxDepth = 20;
+begin
+  Report := '';
+  bp := get_frame;
+  // This trick skip SendCallstack item
+  // bp:= get_caller_frame(get_frame);
+  try
+    prevbp := bp - 1;
+    I := 0;
+    while bp > prevbp do begin
+       CallerAddress := get_caller_addr(bp);
+       CallerFrame := get_caller_frame(bp);
+       if (CallerAddress = nil) then
+         Break;
+       Report := Report + BackTraceStrFunc(CallerAddress) + LineEnding;
+       Inc(I);
+       if (I >= MaxDepth) or (CallerFrame = nil) then
+         Break;
+       prevbp := bp;
+       bp := CallerFrame;
+     end;
+   except
+     { prevent endless dump if an exception occured }
+   end;
+  Result := Report;
+end;
+
+function DumpExceptionCallStack(E: Exception): string;
 var
   I: Integer;
   Frames: PPointer;
@@ -555,8 +591,7 @@ begin
   Frames := ExceptFrames;
   for I := 0 to ExceptFrameCount - 1 do
     Report := Report + LineEnding + BackTraceStrFunc(Frames[I]);
-  ShowMessage(Report);
-  Halt; // End of program execution
+  Result := Report;
 end;
 
 initialization

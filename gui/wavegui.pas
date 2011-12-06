@@ -75,21 +75,6 @@ type
     property PrevSlice: TMarkerGUI read FPrevSlice write FPrevSlice;
   end;
 
-  { TLoopMarkerGUI }
-
-  TLoopMarkerGUI = class(THybridPersistentView)
-  private
-    FDataType: TLoopMarkerType;
-    FLocation: Integer;
-    FLoopMarker: TLoopMarker;
-  public
-    constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType);
-    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
-    property LoopMarker: TLoopMarker read FLoopMarker write FLoopMarker;
-    property DataType: TLoopMarkerType read FDataType write FDataType;
-    property Location: Integer read FLocation write FLocation;
-  end;
-
   { TWaveGUI }
   TWaveGUI = class(TPersistentCustomControl)
   private
@@ -326,7 +311,7 @@ begin
   FSliceListGUI := TObjectList.Create(True);
   FCurrentSliceIndex:= 0;
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True); }
 end;
 
 destructor TWaveGUI.Destroy;
@@ -1044,20 +1029,6 @@ begin
   end;
 
   DBLog('end TWaveFormGUI.DeleteMarkerGUI');
-end;
-
-{ TLoopMarkerGUI }
-
-constructor TLoopMarkerGUI.Create(AObjectOwner: string; ADataType: TLoopMarkerType);
-begin
-  inherited Create(AObjectOwner);
-
-  FDataType := ADataType;
-end;
-
-procedure TLoopMarkerGUI.Update(Subject: THybridPersistentModel);
-begin
-  Self.Location := TLoopMarker(Subject).Location;
 end;
 
 { TMarkerGUI }

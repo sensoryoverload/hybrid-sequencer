@@ -68,7 +68,7 @@ type
 
   TObjectMapper = class(THybridPersistent)
   private
-    FMaps: TObjectList;
+    FMaps: TStringList;
   public
     constructor Create;
     destructor Destroy; override;
@@ -77,7 +77,7 @@ type
     procedure SetModelObjectID(AObject: THybridPersistentModel; AObjectID: string);
     function GetModelObject(AGUID: string): THybridPersistentModel;
 
-    property Maps: TObjectList read FMaps write FMaps;
+    property Maps: TStringList read FMaps write FMaps;
   end;
 
   { TSettings }
@@ -189,7 +189,8 @@ uses
 
 constructor TObjectMapper.Create;
 begin
-  FMaps := TObjectList.Create(False);
+  FMaps := TStringList.Create;
+  FMaps.Sorted := True;
 end;
 
 destructor TObjectMapper.Destroy;
@@ -203,17 +204,17 @@ procedure TObjectMapper.AddMapping(AObject: TObject);
 begin
   DBLog('Add model to mapping: ' + THybridPersistentModel(AObject).ObjectID);
 
-  FMaps.Add(AObject);
+  FMaps.AddObject(THybridPersistentModel(AObject).ObjectID, AObject);
 end;
 
 procedure TObjectMapper.SetModelObjectID(AObject: THybridPersistentModel; AObjectID: string);
 var
   lIndex: Integer;
 begin
-  lIndex := FMaps.IndexOf(AObject);
+  lIndex := FMaps.IndexOfObject(AObject);
   if lIndex <> -1 then
   begin
-    THybridPersistentModel(FMaps[lIndex]).ObjectID := AObjectID;
+    THybridPersistentModel(FMaps.Objects[lIndex]).ObjectID := AObjectID;
   end;
 end;
 
@@ -222,14 +223,18 @@ var
   lIndex: Integer;
 begin
   // Always go from high to low when deleting elements
-  for lIndex := Pred(FMaps.Count) downto 0 do
+  lIndex := FMaps.IndexOf(AGUID);
+  if lIndex <> -1 then
+  begin
+    FMaps.Delete(lIndex);
+  end;
+  {for lIndex := Pred(FMaps.Count) downto 0 do
   begin
     if THybridPersistentModel(FMaps[lIndex]).ObjectID = AGUID then
     begin
-      FMaps.Delete(lIndex);
       break;
     end;
-  end;
+  end;}
 end;
 
 function TObjectMapper.GetModelObject(AGUID: string): THybridPersistentModel;
@@ -244,14 +249,20 @@ begin
   end
   else
   begin
-    for lIndex := 0 to Pred(FMaps.Count) do
+    lIndex := FMaps.IndexOf(AGUID);
+    if lIndex <> -1 then
+    begin
+      Result := THybridPersistentModel(FMaps.Objects[lIndex]);
+    end;
+
+    {for lIndex := 0 to Pred(FMaps.Count) do
     begin
       if THybridPersistentModel(FMaps[lIndex]).ObjectID = AGUID then
       begin
         Result := THybridPersistentModel(FMaps[lIndex]);
         break;
       end;
-    end;
+    end; }
   end;
 
   if Result = nil then
@@ -323,7 +334,7 @@ begin
 
   FBufferFormat := bfInterleave;
 
-  FChannelList := TChannelList.Create(True);
+  FChannelList := TObjectList.Create(True);
 
   for lChannelIndex := 0 to 7 do
   begin

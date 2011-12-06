@@ -52,8 +52,9 @@ type
     FFilter: TDecimateFX;
     FFilter2: TMoogFilter;}
 
-    FLoopStart: Longint;
-    FLoopEnd: Longint;
+    FLoopStart: TLoopMarker;
+    FLoopEnd: TLoopMarker;
+    FLoopLength: TLoopMarker;
 
 
     procedure SetOkToPlay(const AValue: Boolean);
@@ -61,8 +62,6 @@ type
     procedure SetPosition(const AValue: Integer);
     procedure SetText(const AValue: string);
     procedure Setpitch(const Avalue: Single);
-    procedure SetLoopEnd(const AValue: Longint);
-    procedure SetLoopStart(const AValue: Longint);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -91,8 +90,6 @@ type
     property PatternLength: Longint read FPatternLength write FPatternLength;
     property PatternName: string read FPatternName write FPatternName;
     property FileName: string read FFileName write FFileName;
-    property LoopStart: Longint read FLoopStart write SetLoopStart;
-    property LoopEnd: Longint read FLoopEnd write SetLoopEnd;
   end;
 
   { TPatternCommand }
@@ -104,6 +101,21 @@ type
     procedure Initialize; override;
   end;
 
+  { TUpdateLoopMarkerCommand }
+(*
+  TUpdateLoopMarkerCommand = class(TPatternCommand)
+  private
+    FDataType: TLoopMarkerType;
+    FLocation: Integer;
+    FOldLocation: Integer;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property Location: Integer read FLocation write FLocation;
+    property DataType: TLoopMarkerType read FDataType write FDataType;
+  end;
+*)
   { TLoadPatternCommand }
 
   TLoadPatternCommand = class(TPatternCommand)
@@ -127,7 +139,70 @@ implementation
 
 uses
   utils, DOM, XMLWrite, XMLRead;
+(*
+{ TUpdateLoopMarkerCommand }
 
+procedure TUpdateLoopMarkerCommand.DoExecute;
+begin
+  DBLog('start TUpdateWaveLoopMarkerCommand.DoExecute');
+
+  if Persist then
+  begin
+    // Save state
+    case FDataType of
+    ltStart: FOldLocation := FPattern.LoopStart.Location;
+    ltEnd: FOldLocation := FPattern.LoopEnd.Location;
+    ltLength: FOldLocation := FPattern.LoopLength.Location;
+    end;
+  end;
+
+  // Assign
+  case FDataType of
+  ltStart:
+  begin
+    if FLocation < 0 then FLocation := 0;
+    FPattern.LoopStart.Location := FLocation;
+  end;
+  ltEnd:
+  begin
+    if FLocation < 0 then FLocation := 0;
+    FPattern.LoopEnd.Location := FLocation;
+  end;
+  ltLength: FPattern.LoopLength.Location := FLocation;
+  end;
+
+  // Update observers
+  FPattern.Notify;
+  FPattern.LoopStart.Notify;
+  FPattern.LoopEnd.Notify;
+  FPattern.LoopLength.Notify;
+
+  DBLog('end TUpdateWaveLoopMarkerCommand.DoExecute');
+end;
+
+procedure TUpdateLoopMarkerCommand.DoRollback;
+begin
+  DBLog('start TUpdateWaveLoopStartCommand.DoRollback');
+
+  // Retrieve state
+  FPattern.LoopStart.Location := FOldLocation;
+
+  // Assign
+  case FDataType of
+  ltStart: FPattern.LoopStart.Location := FOldLocation;
+  ltEnd: FPattern.LoopEnd.Location := FOldLocation;
+  ltLength: FPattern.LoopLength.Location := FOldLocation;
+  end;
+
+  // Update observers
+  FPattern.Notify;
+  FPattern.LoopStart.Notify;
+  FPattern.LoopEnd.Notify;
+  FPattern.LoopLength.Notify;
+
+  DBLog('end TUpdateWaveLoopStartCommand.DoRollback');
+end;
+*)
 { TSavePatternCommand }
 
 procedure TSavePatternCommand.DoExecute;
@@ -284,8 +359,12 @@ begin
   FOkToPlay := False;
 
   // Defaults
-  FLoopStart:= 0;
-  FLoopEnd:= Round(44100 * 4);
+  FLoopStart := TLoopMarker.Create(AObjectOwner, ltStart);
+  FLoopEnd := TLoopMarker.Create(AObjectOwner, ltEnd);
+  FLoopLength := TLoopMarker.Create(AObjectOwner, ltLength);
+
+  FLoopStart.Location := 0;
+  FLoopEnd.Location := Round(44100 * 4);
 
   DBLog('end TPattern.Create');
 end;
@@ -295,7 +374,12 @@ begin
   //FPluginProcessor.Free;
   //FFilter.Free;
   //FFilter2.Free;
-
+  if Assigned(FLoopStart) then
+    FLoopStart.Free;
+  if Assigned(FLoopEnd) then
+    FLoopEnd.Free;
+  if Assigned(FLoopLength) then
+    FLoopLength.Free;
 
   inherited Destroy;
 end;
@@ -309,21 +393,6 @@ procedure TPattern.RecalculateSynchronize;
 begin
   //FPatternLength := Round(WavePattern.SampleRate * (60 / FRealBPM)) * 4; // TODO choose next multiple of 4
 end;
-
-procedure TPattern.SetLoopEnd(const AValue: Longint);
-begin
-  if FLoopEnd = AValue then exit;
-  FLoopEnd := AValue;
-end;
-
-procedure TPattern.SetLoopStart(const AValue: Longint);
-begin
-  if FLoopStart = AValue then exit;
-  FLoopStart := AValue;
-
-
-end;
-
 
 { TPatternCommand }
 

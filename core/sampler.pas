@@ -245,7 +245,7 @@ type
   TOscillatorEngine = class(TBaseEngine)
   private
     FRate: single;
-    FTable: array[Low(TOscWaveform)..High(TOscWaveform), 0..512] of Single; // 1 more for linear interpolation
+    FTable: array[Low(TOscWaveform)..High(TOscWaveform), 0..513] of Single; // 1 more for linear interpolation
     FPhase,
     FInc: single;
     FOscillator: TOscillator;
@@ -579,10 +579,6 @@ type
     FLFO1Engine: TOscillatorEngine;
     FLFO2Engine: TOscillatorEngine;
     FLFO3Engine: TOscillatorEngine;
-
-    // Feeds the filter output back into prefilter amp
-    FFeedback: single;
-    FFeedbackAmount: single;
 
     FLFOPhase: single;
     FNote: Integer;
@@ -1229,7 +1225,7 @@ begin
       // Hardsync linked oscillator
       if Assigned(FSyncOscillator) then
       begin
-        FSyncOscillator.Sync(FPhase);
+        //FSyncOscillator.Sync(FPhase);
       end;
 
     end;
@@ -1248,6 +1244,8 @@ begin
     end
     else
     begin
+      { table needs overflowextension
+
       lMod := i - 1;
       lMod := lMod shl 7;
       lMod := lMod shr 7;
@@ -1261,14 +1259,14 @@ begin
       lMod := lMod shl 7;
       lMod := lMod shr 7;
       x2 := Ftable[FOscillator.WaveForm, i + 2];
-      Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;
+      Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;}
     end;
 
     // linear interpolation (low vs high quality setting)
-{    Result :=
+    Result :=
       (Ftable[FOscillator.WaveForm, i] * (1 - lFrac) +
       Ftable[FOscillator.WaveForm, i + 1] * lFrac) *
-      FOscillator.Level;}
+      FOscillator.Level;
 
     FLevel := Result;
   end
@@ -1284,6 +1282,7 @@ begin
   inherited Initialize;
 
   FDivBySamplerate := 1 / SampleRate;
+  FPulseWidth := 1;
   FPhase := 0;
   CalculateWaveform;
 end;
@@ -1292,7 +1291,7 @@ procedure TOscillatorEngine.CalculateWaveform;
 var
   i: Integer;
 begin
-  for i := 0 to 512 do
+  for i := 0 to 513 do
   begin
     FTable[sinus, i] := sin(2*pi*(i/512));
   end;
@@ -1305,12 +1304,14 @@ begin
     FTable[triangle, i+384] := - (128-i) / 128;
   end;
   FTable[triangle, 512] := 0;
+  FTable[triangle, 513] := 1 / 128;
 
   for i:= 0 to 511 do
   begin
     FTable[sawtooth, i] := 2 * (i / 512) - 1;
   end;
   FTable[sawtooth, 512] := -1;
+  FTable[sawtooth, 513] := 2 * (1 / 512) - 1;
 
   for i := 0 to 255 do
   begin
@@ -1318,6 +1319,7 @@ begin
     FTable[square, i + 256] := -1;
   end;
   FTable[square, 512] := 1;
+  FTable[square, 513] := 1;
 
   // symetric exponent similar to triangle
   for i:=0 to 255 do
@@ -1326,6 +1328,7 @@ begin
     FTable[exponent, i + 256] := 2 * ((exp((256 - i) / 256) - 1) / (exp(1) - 1)) - 1  ;
   end;
   FTable[exponent, 512] := -1;
+  FTable[exponent, 512] := 2 * ((exp(1 / 256) - 1) / (exp(1) - 1)) - 1  ;;
 end;
 
 procedure TOscillatorEngine.SetRate(const AValue: single);
@@ -1339,7 +1342,7 @@ begin
   end
   else
   begin
-    Finc := log_approx4(Frate) * 262144 * FDivBySamplerate;
+    Finc := log_approx4(Frate) * 524288 * FDivBySamplerate;
   end;
 end;
 
@@ -2017,6 +2020,10 @@ procedure TEnvelope.SetAttack(const AValue: single);
 begin
   if FAttack = AValue then exit;
   FAttack := AValue;
+  if FAttack < 0.01 then
+  begin
+    FAttack :=  0.01;
+  end;
 end;
 
 procedure TEnvelope.SetActive(const AValue: Boolean);
@@ -2029,6 +2036,10 @@ procedure TEnvelope.SetDecay(const AValue: single);
 begin
   if FDecay = AValue then exit;
   FDecay := AValue;
+  if FDecay < 0.01 then
+  begin
+    FDecay :=  0.01;
+  end;
 end;
 
 procedure TEnvelope.SetLoop(const AValue: Boolean);
@@ -2041,14 +2052,18 @@ procedure TEnvelope.SetRelease(const AValue: single);
 begin
   if FRelease = AValue then exit;
   FRelease := AValue;
+  if FRelease < 0.01 then
+  begin
+    FRelease :=  0.01;
+  end;
 end;
 
 procedure TEnvelope.Initialize;
 begin
-  Attack := 0;
+  Attack := 0.001;
   Decay := 0.3;
   Sustain := 0;
-  Release := 0;
+  Release := 0.001;
 
   Active := True;
 
@@ -2420,10 +2435,13 @@ begin
     FAmpEnvelopeEngine.Envelope := FSample.AmpEnvelope;
     FPitchEnvelopeEngine.Envelope := FSample.PitchEnvelope;
     FLFO1Engine.Oscillator := FSample.LFO1;
+    FLFO1Engine.Oscillator.PulseWidth := 1;
     FLFO1Engine.Modifier := GetSourceAmountPtr(FSample.FLFO1.ModSource);
     FLFO2Engine.Oscillator := FSample.LFO2;
+    FLFO2Engine.Oscillator.PulseWidth := 1;
     FLFO2Engine.Modifier := GetSourceAmountPtr(FSample.FLFO2.ModSource);
     FLFO3Engine.Oscillator := FSample.LFO3;
+    FLFO3Engine.Oscillator.PulseWidth := 1;
     FLFO3Engine.Modifier := GetSourceAmountPtr(FSample.FLFO3.ModSource);
     FFilterEngine.Filter := FSample.Filter;
     FFilterEngine.Modifier := GetSourceAmountPtr(FSample.Filter.FreqModSource);
@@ -2527,9 +2545,8 @@ begin
         lSampleB := FOsc2Engine.Process;
         lSampleC := FOsc3Engine.Process;
 
-        // Mix oscillators
-        lSample := tanh(lSampleA + lSampleB + lSampleC);{ +
-        (FFeedback * FSample.SaturateDrivePostFilter)); }
+        // Mix and overdrive oscillators
+        lSample := tanh2((lSampleA + lSampleB + lSampleC) * FSample.SaturateDrivePreFilter);
 
         // Filter
         if FFilterEngine.Filter.Active then
@@ -2554,17 +2571,18 @@ begin
           lSample := FFilterEngine.Process(lSample);
         end;
 
-        FFeedback := lSample;
-
         // Amplifier
         if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
         begin
+          // Amp
           lSample := lSample * FAmpEnvelopeEngine.Level;
+
+          // Overdrive
+          lSample := tanh2(lSample * FSample.SaturateDrivePostFilter);
         end
         else
         begin
-          // Keep it tidy
-          FFeedback := 0;
+          lSample := 0;
         end;
 
         // FX

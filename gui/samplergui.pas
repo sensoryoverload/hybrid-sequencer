@@ -328,7 +328,7 @@ begin
 
   FBankListGUI := TObjectList.Create;
 
-  ChangeControlStyle(Self, [csDisplayDragImage], [], True);
+  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 end;
 
 destructor TSamplerGUI.Destroy;

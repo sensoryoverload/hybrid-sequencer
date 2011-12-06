@@ -50,10 +50,12 @@ type
   protected
     procedure DoExecute; virtual; abstract;
     procedure DoRollback; virtual;
-    procedure Initialize; virtual;
   public
     constructor Create(AObjectID: string);
     destructor Destroy; override;
+
+    procedure Initialize; virtual;
+    procedure Finalize; virtual;
 
     procedure Execute;
     procedure Rollback; // Reverse effect of Execute
@@ -281,6 +283,11 @@ begin
   // Virtual base method placeholder
 end;
 
+procedure TCommand.Finalize;
+begin
+  // Virtual base method placeholder
+end;
+
 constructor TCommand.Create(AObjectID: string);
 begin
   FObjectOwner := AObjectID;
@@ -330,7 +337,7 @@ var
   lCommand: TCommand;
   lStatus: string;
 begin
-  while FCommandQueue.Count > 0 do
+  //while FCommandQueue.Count > 0 do
   begin
     try
       lCommand := TCommand(FCommandQueue.Pop);
@@ -368,6 +375,7 @@ begin
       begin
         lCommand.Initialize;
         lCommand.Execute;
+        lCommand.Finalize;
 
         if lCommand.Persist then
         begin
@@ -383,7 +391,8 @@ begin
     except
       on e: exception do
       begin
-        DBLog(Format('Failed command execute: %s, command class %s', [e.message, lCommand.ClassName]));
+        DBLog(Format('Failed command execute: %s : %s : %s',
+          [lCommand.ClassName, DumpExceptionCallStack(e), DumpCallStack]));
         lCommand.Free;
       end;
     end;

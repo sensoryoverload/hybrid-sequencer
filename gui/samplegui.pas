@@ -210,7 +210,6 @@ begin
   try
     lGenericCommand.Parameter := TSampleParameter(TDialControl(Sender).Tag);
     lGenericCommand.MidiLearn := TDialControl(Sender).MidiMappingMode;
-    writeln('midilearn mode '+BoolToStr(lGenericCommand.MidiLearn, True));
     lGenericCommand.ObjectID := Self.ObjectID;
     lGenericCommand.Value := TDialControl(Sender).Value;
     lGenericCommand.Persist := False;
@@ -263,7 +262,6 @@ begin
   try
     lGenericCommand.Parameter := TSampleParameter(TDialControl(Sender).Tag);
     lGenericCommand.MidiLearn := TDialControl(Sender).MidiMappingMode;
-    writeln('midilearn mode '+BoolToStr(lGenericCommand.MidiLearn, True));
     lGenericCommand.ObjectID := Self.ObjectID;
     lGenericCommand.Value := TDialControl(Sender).Value;
     lGenericCommand.Persist := True;
@@ -440,8 +438,8 @@ begin
   FillNoteComboBox(cbHighNote, spHigh_Note);
   FillNoteComboBox(cbBaseNote, spBase_Note);
 
-  SetupDialControl(dcSaturateDrivePreFilter, spSaturateDrivePreFilter, 1, 25, 1);
-  SetupDialControl(dcSaturateDrivePostFilter, spPostFilterFeedback, 1, 25, 1);
+  SetupDialControl(dcSaturateDrivePreFilter, spSaturateDrivePreFilter, 1, 10, 1);
+  SetupDialControl(dcSaturateDrivePostFilter, spPostFilterFeedback, 1, 5, 1);
 
   SetEnableControls(False);
 end;
