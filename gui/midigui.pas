@@ -411,7 +411,7 @@ begin
   try
     lUpdateLoopMarkerCommand.DataType := FDraggedLoopMarker.DataType;
     lUpdateLoopMarkerCommand.Persist := True;
-    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X) * 220.50);
+    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X - FLocationOffset) * 220.50);
 
     GCommandQueue.PushCommand(lUpdateLoopMarkerCommand);
   except
@@ -519,7 +519,7 @@ begin
   try
     lUpdateLoopMarkerCommand.DataType := FDraggedLoopMarker.DataType;
     lUpdateLoopMarkerCommand.Persist := False;
-    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X) * 220.50);
+    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X - FLocationOffset) * 220.50);
 
     GCommandQueue.PushCommand(lUpdateLoopMarkerCommand);
   except
@@ -590,7 +590,7 @@ procedure TMidiPatternGUI.HandleLoopMarkerMouseMove(Shift: TShiftState; X,
 var
   lValue: Integer;
 begin
-  lValue := Round(ConvertScreenToTime(X) * 220.50);
+  lValue := Round(ConvertScreenToTime(X - FLocationOffset) * 220.50);
 
   case FDraggedLoopMarker.DataType of
   ltStart:
@@ -711,8 +711,10 @@ end;
 procedure TMidiPatternGUI.Paint;
 var
   x: Integer;
-  lTime: Integer;
-  lTimeSpacing: Integer;
+  lTime: Single;
+  lTimeSpacing: Single;
+  lLastTime: Integer;
+  lNewTime: Integer;
   lHighlightLocation: Integer;
   lHighlightNote: Integer;
   lHighlightWidth: Integer;
@@ -721,7 +723,6 @@ var
   lNoteIndex: Integer;
   lMidiNoteModula: Integer;
   lMidiNoteKey: TKey;
-
 begin
   if not Assigned(FModel) then exit;
 
@@ -770,7 +771,7 @@ begin
     // Draw vertica time indicators
     FBitmap.Canvas.Pen.Color := clGlobalOutline;
 
-    lTimeSpacing := Round(QuantizeValue);
+    lTimeSpacing := QuantizeValue;
     if lTimeSpacing < 1 then
       lTimeSpacing := 100;
 
@@ -800,11 +801,16 @@ begin
 
     lTime := lTimeSpacing;
     repeat
-      x := ConvertTimeToScreen(lTime) + FLocationOffset;
+      x := ConvertTimeToScreen(Round(lTime)) + FLocationOffset;
       FBitmap.Canvas.Pen.Color := clGray;
       FBitmap.Canvas.Line(x, 0, x, FBitmap.Height);
-      FBitmap.Canvas.TextOut(x + 2, 1, Format('%d', [lTime div 100 + 1]));
-      Inc(lTime, lTimeSpacing);
+      lNewTime := Round(lTime) div 100 + 1;
+      if lLastTime <> lNewTime then
+      begin
+        FBitmap.Canvas.TextOut(x + 2, 1, Format('%d', [lNewTime]));
+      end;
+      lLastTime := lNewTime;
+      lTime := lTime + lTimeSpacing;
     until x > FBitmap.Width;
 
     // Draw note cursor box
@@ -920,8 +926,6 @@ begin
       FBitmap.Canvas.Line(x, 0, x, Height);
     end;
 
-    FBitmap.Canvas.TextOut(0, 0, Format('Loopstart : %d calc %d',[FModel.LoopStart.Location, x]));
-
     // Draw loopendmarker
     x := Round((LoopEnd.Location * FZoomFactorToScreenX) * DIVBY220 + FLocationOffset + FNoteInfoWidth);
     if x >= FNoteInfoWidth then
@@ -937,7 +941,7 @@ begin
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) / 220.50 + FLocationOffset + FNoteInfoWidth);
+  x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) * DIVBY220 + FLocationOffset + FNoteInfoWidth);
   if FOldCursorPosition <> x then
   begin
     if x >= FNoteInfoWidth then

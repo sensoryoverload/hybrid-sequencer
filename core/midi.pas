@@ -559,16 +559,16 @@ end;
 procedure TMidiNote.SetNoteLength(const AValue: Integer);
 begin
   FNoteLength:= AValue;
-  FMidiNoteEnd.Location := (FNoteLocation * 220) + (FNoteLength * 220);
+  FMidiNoteEnd.Location := Round((FNoteLocation * 220.50) + (FNoteLength * 220.50));
   FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
 end;
 
 procedure TMidiNote.SetNoteLocation(const AValue: Integer);
 begin
   FNoteLocation:= AValue;
-  FMidiNoteEnd.Location := (FNoteLocation * 220) + (FNoteLength * 220);
+  FMidiNoteEnd.Location := Round((FNoteLocation * 220.50) + (FNoteLength * 220.50));
 
-  FMidiNoteStart.Location := FNoteLocation * 220;
+  FMidiNoteStart.Location := Round(FNoteLocation * 220.50);
   FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
 end;
 
