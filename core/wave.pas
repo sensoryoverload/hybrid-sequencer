@@ -24,7 +24,7 @@ interface
 uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
  jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils,
- globalconst, librubberband, SoundTouchObject, contnrs, global_command,
+ globalconst, librubberband, soundtouch, contnrs, global_command,
  ShellCtrls, global, multiband_wsola, flqueue, math, ringbuffer, pattern,
  audiostructure;
 
@@ -157,7 +157,6 @@ type
     DivideByCursorRamp_Multiplier: Single;
 
     lFrames: Longint;
-    lPlayingPattern: TPattern;
     lAudioPlaying: Boolean;
     lBuffer: PSingle;
     lFramePacket: TFrameData;
@@ -231,6 +230,7 @@ type
     FWavePattern: TWavePattern;
   protected
     procedure Initialize; override;
+    procedure Finalize; override;
   end;
 
   { TAddMarkerCommand }
@@ -472,7 +472,7 @@ begin
   FCurrentSliceIndex:= 0;
 
   FTimeStretch := TSoundTouch.Create;
-  FTimeStretch.Channels := 1;
+  FTimeStretch.setChannels(1);
   FTimeStretch.SetSetting(SETTING_USE_QUICKSEEK, 1);
   FTimeStretch.SetSetting(SETTING_USE_AA_FILTER, 0);
   {FTimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
@@ -493,6 +493,8 @@ begin
 
   FTimePitchScale := rubberband_new(44100, 1, FTimePitchOptions, 1, 1);
   rubberband_set_max_process_size(FTimePitchScale, 4096);
+
+  Pitch := 1;
 
   FPitchAlgorithm := paST;
 
@@ -552,6 +554,8 @@ end;
 
 procedure TWavePattern.Initialize;
 begin
+  inherited Initialize;
+
   BeginUpdate;
 
   if FWaveFileName <> '' then
@@ -968,6 +972,7 @@ procedure TWavePattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCou
 var
   i, k : integer;
 begin
+  {try}
   WorkBuffer[AFrameIndex] := 0;
 
   if AFrameIndex = 0 then
@@ -976,7 +981,7 @@ begin
   end;
 
   // Synchronize with global quantize track
-  if (CursorReal >= LoopEnd.Location) or lPlayingPattern.SyncQuantize then
+  if (CursorReal >= LoopEnd.Location) or SyncQuantize then
   begin
     SyncQuantize := False;
     CursorReal := LoopStart.Location;
@@ -992,11 +997,10 @@ begin
   CursorRamp := lFramePacket.Ramp * FBPMscale;
 
   if PitchAlgorithm = paPitched then
-    CursorRamp := lPlayingPattern.Pitch;
+    CursorRamp := Pitch;
 
   // Put sound in buffer, interpolate with Hermite4 function
   lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
-
   frac_pos := Frac(CursorAdder);
   buf_offset := (Trunc(CursorAdder) * Wave.ChannelCount);
 
@@ -1004,11 +1008,10 @@ begin
     xm1 := 0
   else
     xm1 := lBuffer[buf_offset - 1];
-
   x0 := lBuffer[buf_offset];
   x1 := lBuffer[buf_offset + 1];
   x2 := lBuffer[buf_offset + 2];
-  WorkBuffer[i] := hermite4(frac_pos, xm1, x0, x1, x2);
+  WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
 
   // Scale buffer up to now when the scaling-factor has changed or
   // the end of the buffer has been reached.
@@ -1017,7 +1020,7 @@ begin
     if (CursorRamp <> psLastScaleValue) or (AFrameIndex = (AFrameCount - 1)) then
     begin
       psEndLocation := AFrameIndex;
-      CalculatedPitch := lPlayingPattern.Pitch * DivideByCursorRamp_Multiplier;
+      CalculatedPitch := Pitch * DivideByCursorRamp_Multiplier;
       if CalculatedPitch < 0.062 then CalculatedPitch := 0.062;
       if CalculatedPitch > 16 then CalculatedPitch := 16;
 
@@ -1030,7 +1033,9 @@ begin
       case PitchAlgorithm of
         paST:
         begin
-          TimeStretch.Pitch := CalculatedPitch;
+          {glogger.PushMessage(format('1. Frames %d CalculatedPitch %f lFramePacket.Ramp %f FBPMscale %f Pitch %f',
+            [lFrames, CalculatedPitch, lFramePacket.Ramp, FBPMscale, Pitch])); }
+          TimeStretch.setPitch(CalculatedPitch);
           TimeStretch.PutSamples(CB_TimeBuffer, lFrames);
           TimeStretch.ReceiveSamples(CB_TimeBuffer, lFrames);
         end;
@@ -1048,7 +1053,10 @@ begin
       end;
 
       for k := 0 to Pred(lFrames) do
-        BufferData2[psBeginLocation + k] := CB_TimeBuffer[k];
+      begin
+        //BufferData2[psBeginLocation + k] := CB_TimeBuffer[k];
+        ABuffer[psBeginLocation + k] := CB_TimeBuffer[k];
+      end;
 
       // Remember last change
       psBeginLocation:= AFrameIndex;
@@ -1057,9 +1065,13 @@ begin
   end
   else
   begin
-    BufferData2[AFrameIndex] := WorkBuffer[AFrameIndex];
+    //BufferData2[AFrameIndex] := WorkBuffer[AFrameIndex];
+    ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
   end;
-
+  {except
+    on e: exception do
+    glogger.PushMessage('wave.process error: ' + e.Message);
+  end;}
 end;
 
 procedure TWavePattern.ProcessAdvance;
@@ -1503,7 +1515,14 @@ end;
 
 procedure TWaveFormCommand.Initialize;
 begin
+  inherited Initialize;
+
   FWavePattern := TWavePattern(GObjectMapper.GetModelObject(ObjectOwner));
+end;
+
+procedure TWaveFormCommand.Finalize;
+begin
+  inherited Finalize;
 end;
 
 { TDiskReaderThread }
@@ -1589,7 +1608,6 @@ begin
   FOldFileName := FWavePattern.WaveFileName;
   FWavePattern.WaveFileName := FFileName;
   FWavePattern.Initialize;
-  FWavePattern.OkToPlay := True;
 
   FWavePattern.EndUpdate;
 
@@ -1602,9 +1620,9 @@ begin
 
   FWavePattern.BeginUpdate;
 
-  FWavePattern.OkToPlay := False;
   FWavePattern.WaveFileName := FFileName;
   FWavePattern.UnLoadSample;
+  FWavePattern.Finalize;
 
   FWavePattern.EndUpdate;
 

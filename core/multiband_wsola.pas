@@ -25,7 +25,7 @@ unit multiband_wsola;
 interface
 
 uses
-  Classes, SysUtils, Math, uRbjEqFilters, ContNrs, SoundTouchObject;
+  Classes, SysUtils, Math, uRbjEqFilters, ContNrs, soundtouch;
 
 
 
@@ -355,32 +355,32 @@ end;
 
 procedure TMultiWSOLA.Initialize;
 begin
-  FBand1Pitcher.Channels := FChannels;
-  FBand1Pitcher.SampleRate := 44100;
+  FBand1Pitcher.setChannels(FChannels);
+  FBand1Pitcher.setSampleRate(44100);
   FBand1Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
   FBand1Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FBand1Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
   FBand1Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FBand1Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
 
-  FBand2Pitcher.Channels := FChannels;
-  FBand2Pitcher.SampleRate := 44100;
+  FBand2Pitcher.setChannels(FChannels);
+  FBand2Pitcher.setSampleRate(44100);
   FBand2Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
   FBand2Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FBand2Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
   FBand2Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FBand2Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
 
-  FBand3Pitcher.Channels := FChannels;
-  FBand3Pitcher.SampleRate := 44100;
+  FBand3Pitcher.setChannels(FChannels);
+  FBand3Pitcher.setSampleRate(44100);
   FBand3Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
   FBand3Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FBand3Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
   FBand3Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FBand3Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
 
-  FBand4Pitcher.Channels := FChannels;
-  FBand4Pitcher.SampleRate := 44100;
+  FBand4Pitcher.setChannels(FChannels);
+  FBand4Pitcher.setSampleRate(44100);
   FBand4Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
   FBand4Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FBand4Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
@@ -420,27 +420,27 @@ begin
   begin
     // Band 1
     FBand1LowPass.process(AInput, FBufferLow1, AFrames);
-    FBand1Pitcher.Pitch := FPitch;
+    FBand1Pitcher.setPitch(FPitch);
     FBand1Pitcher.PutSamples(FBufferLow1, AFrames);
     FBand1Pitcher.ReceiveSamples(FTimeBuffer1, AFrames);
 
     // Band 2
     FBand2HighPass.process(AInput, FBufferHigh2, AFrames);
     FBand2LowPass.process(FBufferHigh2, FBufferLow2, AFrames);
-    FBand2Pitcher.Pitch := FPitch;
+    FBand2Pitcher.setPitch(FPitch);
     FBand2Pitcher.PutSamples(FBufferLow2, AFrames);
     FBand2Pitcher.ReceiveSamples(FTimeBuffer2, AFrames);
 
     // Band 3
     FBand3HighPass.process(AInput, FBufferHigh3, AFrames);
     FBand3LowPass.process(FBufferHigh3, FBufferLow3, AFrames);
-    FBand3Pitcher.Pitch := FPitch;
+    FBand3Pitcher.setPitch(FPitch);
     FBand3Pitcher.PutSamples(FBufferLow3, AFrames);
     FBand3Pitcher.ReceiveSamples(FTimeBuffer3, AFrames);
 
     // Band 4
     FBand4HighPass.process(AInput, FBufferHigh4, AFrames);
-    FBand4Pitcher.Pitch := FPitch;
+    FBand4Pitcher.setPitch(FPitch);
     FBand4Pitcher.PutSamples(FBufferHigh4, AFrames);
     FBand4Pitcher.ReceiveSamples(FTimeBuffer4, AFrames);
     //if AFrames > 500 then AFrames := 500;

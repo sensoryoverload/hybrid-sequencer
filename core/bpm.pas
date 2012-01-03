@@ -56,7 +56,7 @@ unit bpm;
 interface
 
 uses
-  Classes, Sysutils, Jacktypes;
+  Classes, Sysutils;
 
 const
   // Minimum allowed BPM rate. Used to restrict accepted result above a reasonable limit.
@@ -82,38 +82,38 @@ type
 
   TFIFOSampleBuffer = class(TObject)
   private
-    /// Sample buffer.
-    buffer: Pjack_default_audio_sample_t;
-
     // Raw unaligned buffer memory. 'buffer' is made aligned by pointing it to first
     // 16-byte aligned location of this buffer
-    bufferUnaligned: Pjack_default_audio_sample_t;
+    bufferUnaligned: PSingle;
 
     /// Sample buffer size in bytes
-    sizeInBytes: word;
+    sizeInBytes: longword;
 
     /// How many samples are currently in buffer.
-    samplesInBuffer: word;
+    samplesInBuffer: longword;
 
     /// Channels, 1=mono, 2=stereo.
-    fchannels: word;
-
-    /// Current position pointer to the buffer. This pointer is increased when samples are
-    /// removed from the pipe so that it's necessary to actually rewind buffer (move data)
-    /// only new data when is put to the pipe.
-    bufferPos: word;
+    fchannels: longword;
 
     /// Rewind the buffer by moving data from position pointed by 'bufferPos' to real
     /// beginning of the buffer.
     procedure rewind;
 
     /// Returns current capacity.
-    function getCapacity: word;
+    function getCapacity: longword;
 
   public
+    /// Sample buffer.
+    buffer: PSingle;
+
+    /// Current position pointer to the buffer. This pointer is increased when samples are
+    /// removed from the pipe so that it's necessary to actually rewind buffer (move data)
+    /// only new data when is put to the pipe.
+    bufferPos: longword;
+
 
     /// Constructor
-    constructor Create(numChannels: word     ///< Number of channels, 1=mono, 2=stereo.
+    constructor Create(numChannels: longword     ///< Number of channels, 1=mono, 2=stereo.
                                               ///< Default is stereo.
                       );
 
@@ -121,7 +121,7 @@ type
     destructor Destroy; override;
 
     /// Ensures that the buffer has capacity for at least this many samples.
-    procedure ensureCapacity(capacityRequirement: word);
+    procedure ensureCapacity(capacityRequirement: longword);
 
     /// Returns a pointer to the beginning of the output samples.
     /// This function is provided for accessing the output samples directly.
@@ -130,7 +130,7 @@ type
     /// When using this function to output samples, also remember to 'remove' the
     /// output samples from the buffer by calling the
     /// 'receiveSamples(numSamples)' function
-    function ptrBegin: Pjack_default_audio_sample_t;
+    function ptrBegin: PSingle;
 
     /// Returns a pointer to the end of the used part of the sample buffer (i.e.
     /// where the new samples are to be inserted). This function may be used for
@@ -141,16 +141,16 @@ type
     /// to increase the sample count afterwards, by calling  the
     /// 'putSamples(numSamples)' function.
     function ptrEnd(
-                slackCapacity: word  ///< How much free capacity (in samples) there _at least_
+                slackCapacity: longword  ///< How much free capacity (in samples) there _at least_
                                      ///< should be so that the caller can succesfully insert the
                                      ///< desired samples to the buffer. If necessary, the function
                                      ///< grows the buffer size to comply with this requirement.
-                ): Pjack_default_audio_sample_t;
+                ): PSingle;
 
     /// Adds 'numSamples' pcs of samples from the 'samples' memory position to
     /// the sample buffer.
-    procedure putSamples(samples: Pjack_default_audio_sample_t;  ///< Pointer to samples.
-                         numSamples: word                        ///< Number of samples to insert.
+    procedure putSamples(samples: PSingle;  ///< Pointer to samples.
+                         numSamples: longword                        ///< Number of samples to insert.
                         );
 
     /// Adjusts the book-keeping to increase number of samples in the buffer without
@@ -159,7 +159,7 @@ type
     /// This function is used to update the number of samples in the sample buffer
     /// when accessing the buffer directly with 'ptrEnd' function. Please be
     /// careful though!
-    procedure putSamples(numSamples: word   ///< Number of samples been inserted.
+    procedure putSamples(numSamples: longword   ///< Number of samples been inserted.
                          );
 
     /// Output samples from beginning of the sample buffer. Copies requested samples to
@@ -167,23 +167,23 @@ type
     /// 'numsample' samples in the buffer, returns all that available.
     ///
     /// \return Number of samples returned.
-    function receiveSamples(output: Pjack_default_audio_sample_t; ///< Buffer where to copy output samples.
-                                maxSamples: word                  ///< How many samples to receive at max.
-                                ): word;
+    function receiveSamples(output: PSingle; ///< Buffer where to copy output samples.
+                                maxSamples: longword                  ///< How many samples to receive at max.
+                                ): longword;
 
     /// Adjusts book-keeping so that given number of samples are removed from beginning of the
     /// sample buffer without copying them anywhere.
     ///
     /// Used to reduce the number of samples in the buffer when accessing the sample buffer directly
     /// with 'ptrBegin' function.
-    function receiveSamples(maxSamples: word   ///< Remove this many samples from the beginning of pipe.
-                            ): word;
+    function receiveSamples(maxSamples: longword   ///< Remove this many samples from the beginning of pipe.
+                            ): longword;
 
     /// Returns number of samples currently available.
-    function numSamples: word;
+    function numSamples: longword;
 
     /// Sets number of channels, 1 = mono, 2 = stereo.
-    procedure setChannels(numChannels: word);
+    procedure setChannels(numChannels: longword);
 
     /// Returns nonzero if there aren't any samples available for outputting.
     function isEmpty: integer;
@@ -294,11 +294,11 @@ type
     /// Decimates samples to approx. 500 Hz.
     ///
     /// \return Number of output samples.
-    function decimate(dest, src: Pjack_default_audio_sample_t;numsamples: longint): longint;
+    function decimate(dest, src: PSingle;numsamples: longint): longint;
 
     /// Calculates amplitude envelope for the buffer of samples.
     /// Result is output to 'samples'.
-    procedure calcEnvelope(samples: Pjack_default_audio_sample_t; numsamples: longint);
+    procedure calcEnvelope(samples: PSingle; numsamples: longint);
   public
     /// Constructor.
     constructor Create(NumChannels, SampleRate: longint);
@@ -312,7 +312,7 @@ type
     /// function.
     ///
     /// Notice that data in 'samples' array can be disrupted in processing.
-    procedure inputSamples(samples: Pjack_default_audio_sample_t; numSamples: longint);
+    procedure inputSamples(samples: PSingle; numSamples: longint);
 
 
     /// Analyzes the results and returns the BPM rate. Use this function to read result
@@ -323,9 +323,23 @@ type
     function getBpm: single;
 end;
 
+procedure memcpy(dest, source: Pointer; count: Integer);
+function memmove(dest, src: Pointer; n: Cardinal): Pointer;
+procedure memset(P: Pointer; B: Integer; count: Integer);
+function max(x, y: single): single;
+function max(x, y: Integer): Integer;
+
 implementation
 
 //    #define max(x, y) (((x) > (y)) ? (x) : (y))
+function max(x, y: Integer): Integer;
+begin
+  if x > y then
+    Result := x
+  else
+    Result := y;
+end;
+
 function max(x, y: single): single;
 begin
   if x > y then
@@ -382,7 +396,7 @@ end;
 procedure Tbpmdetect.Updatexcorr(Process_samples: Longint);
 var
   offs: longint;
-  pBuffer: Pjack_default_audio_sample_t;
+  pBuffer: PSingle;
   sum: double;
   i: longint;
 begin
@@ -405,7 +419,7 @@ begin
 end;
 
 function Tbpmdetect.Decimate(Dest,
-  Src: Pjack_default_audio_sample_t; Numsamples: Longint): Longint;
+  Src: PSingle; Numsamples: Longint): Longint;
 var
   count, outcount: longint;
   output: double;
@@ -423,7 +437,7 @@ begin
       output := double(decimateSum / decimateBy);
       decimateSum := 0;
       decimateCount := 0;
-      dest[outcount] := jack_default_audio_sample_t(output);
+      dest[outcount] := Single(output);
       inc(outcount);
     end;
   end;
@@ -431,7 +445,7 @@ begin
 end;
 
 procedure Tbpmdetect.Calcenvelope(
-  Samples: Pjack_default_audio_sample_t; Numsamples: Longint);
+  Samples: PSingle; Numsamples: Longint);
 const
   decay = 0.7;               // decay constant for smoothing the envelope
   norm = (1 - decay);
@@ -517,7 +531,7 @@ begin
 end;
 
 procedure Tbpmdetect.Inputsamples(
-  Samples: Pjack_default_audio_sample_t; Numsamples: Longint);
+  Samples: PSingle; Numsamples: Longint);
 var
   decimated: array[0..DECIMATED_BLOCK_SAMPLES] of Single;
   i: longint;
@@ -801,10 +815,10 @@ begin
   end;
 end;
 
-procedure Tfifosamplebuffer.Ensurecapacity(Capacityrequirement: Word);
+procedure Tfifosamplebuffer.Ensurecapacity(Capacityrequirement: longword);
 var
   tempUnaligned,
-  temp: Pjack_default_audio_sample_t;
+  temp: PSingle;
 begin
   if capacityRequirement > getCapacity then
   begin
@@ -833,12 +847,12 @@ begin
   end;
 end;
 
-function Tfifosamplebuffer.Getcapacity: Word;
+function Tfifosamplebuffer.Getcapacity: longword;
 begin
   Result := sizeInBytes div (fchannels * sizeof(SAMPLETYPE));
 end;
 
-constructor Tfifosamplebuffer.Create(Numchannels: Word);
+constructor Tfifosamplebuffer.Create(Numchannels: longword);
 begin
   if Numchannels = 0 then
     Numchannels := 2;
@@ -848,6 +862,8 @@ begin
   samplesInBuffer := 0;
   bufferPos := 0;
   fchannels := numChannels;
+
+  inherited Create;
 end;
 
 destructor Tfifosamplebuffer.Destroy;
@@ -858,21 +874,21 @@ begin
   inherited;
 end;
 
-function Tfifosamplebuffer.Ptrbegin: Pjack_default_audio_sample_t;
+function Tfifosamplebuffer.Ptrbegin: PSingle;
 begin
   Result := buffer + bufferPos * fchannels;
 end;
 
 function Tfifosamplebuffer.Ptrend(
-  Slackcapacity: Word): Pjack_default_audio_sample_t;
+  Slackcapacity: longword): PSingle;
 begin
   ensureCapacity(samplesInBuffer + slackCapacity);
   Result := buffer + samplesInBuffer * fchannels;
 end;
 
-procedure Tfifosamplebuffer.Putsamples(Numsamples: Word);
+procedure Tfifosamplebuffer.Putsamples(Numsamples: longword);
 var
-  req: word;
+  req: longword;
 begin
   req := samplesInBuffer + numSamples;
   ensureCapacity(req);
@@ -880,16 +896,16 @@ begin
 end;
 
 procedure Tfifosamplebuffer.Putsamples(
-  Samples: Pjack_default_audio_sample_t; Numsamples: Word);
+  Samples: PSingle; Numsamples: longword);
 begin
   memcpy(ptrEnd(numSamples), samples, sizeof(SAMPLETYPE) * numSamples * fchannels);
   samplesInBuffer += numSamples;
 end;
 
 function Tfifosamplebuffer.Receivesamples(
-  Output: Pjack_default_audio_sample_t; Maxsamples: Word): Word;
+  Output: PSingle; Maxsamples: longword): longword;
 var
-  num: word;
+  num: longword;
 begin
   if maxSamples > samplesInBuffer then
     num := samplesInBuffer
@@ -899,9 +915,9 @@ begin
   Result := receiveSamples(num);
 end;
 
-function Tfifosamplebuffer.Receivesamples(Maxsamples: Word): Word;
+function Tfifosamplebuffer.Receivesamples(Maxsamples: longword): longword;
 var
-  temp: word;
+  temp: longword;
 begin
   if maxSamples >= samplesInBuffer then
   begin
@@ -917,14 +933,14 @@ begin
   Result := maxSamples;
 end;
 
-function Tfifosamplebuffer.Numsamples: Word;
+function Tfifosamplebuffer.Numsamples: longword;
 begin
   Result := samplesInBuffer;
 end;
 
-procedure Tfifosamplebuffer.Setchannels(Numchannels: Word);
+procedure Tfifosamplebuffer.Setchannels(Numchannels: longword);
 var
-  usedBytes: word;
+  usedBytes: longword;
 begin
   usedBytes := fchannels * samplesInBuffer;
   fchannels := numChannels;

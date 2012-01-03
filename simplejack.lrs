@@ -48,8 +48,8 @@ LazarusResources.Add('TMainApp','FORMDATA',[
   +'h'#2'u'#7'Caption'#6#11'MasterTempo'#12'ClientHeight'#2'('#11'ClientWidth'#2
   +'q'#5'Color'#7#12'clBackground'#11'ParentColor'#8#8'TabOrder'#2#0#0#12'TRadi'
   +'oButton'#10'rbMidiSync'#4'Left'#2#1#6'Height'#2#24#3'Top'#2#254#5'Width'#2
-  +'J'#7'Caption'#6#14'MidiSync Slave'#8'TabOrder'#2#0#0#0#12'TRadioButton'#8'r'
-  +'bMaster'#4'Left'#2#1#6'Height'#2#24#3'Top'#2#11#5'Width'#2'1'#7'Caption'#6#6
+  +'a'#7'Caption'#6#14'MidiSync Slave'#8'TabOrder'#2#0#0#0#12'TRadioButton'#8'r'
+  +'bMaster'#4'Left'#2#1#6'Height'#2#24#3'Top'#2#11#5'Width'#2'<'#7'Caption'#6#6
   +'Master'#7'Checked'#9#8'TabOrder'#2#1#7'TabStop'#9#0#0#12'TDialControl'#12'D'
   +'ialControl1'#4'Left'#2'L'#6'Height'#2'('#4'Hint'#6#8'BPM Rate'#3'Top'#2#0#5
   +'Width'#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#3'BPM'#6'Lowest'#5#0

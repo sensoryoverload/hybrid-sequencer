@@ -166,16 +166,16 @@ begin
 
     case FMidiGridGUI.QuantizeSetting of
     0: FMidiGridGUI.QuantizeValue := -1;
-    1: FMidiGridGUI.QuantizeValue := 100 * 4;
-    2: FMidiGridGUI.QuantizeValue := 100 * 2;
-    3: FMidiGridGUI.QuantizeValue := 100;
-    4: FMidiGridGUI.QuantizeValue := 100 / 2;
-    5: FMidiGridGUI.QuantizeValue := 100 / 3;
-    6: FMidiGridGUI.QuantizeValue := 100 / 4;
-    7: FMidiGridGUI.QuantizeValue := 100 / 6;
-    8: FMidiGridGUI.QuantizeValue := 100 / 8;
-    9: FMidiGridGUI.QuantizeValue := 100 / 16;
-    10: FMidiGridGUI.QuantizeValue := 100 / 32;
+    1: FMidiGridGUI.QuantizeValue := 22050 * 4;
+    2: FMidiGridGUI.QuantizeValue := 22050 * 2;
+    3: FMidiGridGUI.QuantizeValue := 22050;
+    4: FMidiGridGUI.QuantizeValue := 22050 / 2;
+    5: FMidiGridGUI.QuantizeValue := 22050 / 3;
+    6: FMidiGridGUI.QuantizeValue := 22050 / 4;
+    7: FMidiGridGUI.QuantizeValue := 22050 / 6;
+    8: FMidiGridGUI.QuantizeValue := 22050 / 8;
+    9: FMidiGridGUI.QuantizeValue := 22050 / 16;
+    10: FMidiGridGUI.QuantizeValue := 22050 / 32;
     end;
   end;
 

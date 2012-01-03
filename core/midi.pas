@@ -394,7 +394,7 @@ procedure TMidiPattern.Initialize;
 begin
   BeginUpdate;
 
-  Inherited;
+  Inherited Initialize;
 
   EndUpdate;
 end;
@@ -408,7 +408,7 @@ begin
   end
   else
   begin
-    Result := Round(Trunc(ALocation / FQuantizeValue) * FQuantizeValue);
+    Result := Round(Round(ALocation / FQuantizeValue) * FQuantizeValue);
 
     DBLog(Format('Floor(ALocation / FQuantizeValue) %d', [Trunc(ALocation / FQuantizeValue)]));
   end;
@@ -559,16 +559,16 @@ end;
 procedure TMidiNote.SetNoteLength(const AValue: Integer);
 begin
   FNoteLength:= AValue;
-  FMidiNoteEnd.Location := Round((FNoteLocation * 220.50) + (FNoteLength * 220.50));
+  FMidiNoteEnd.Location := FNoteLocation + FNoteLength;
   FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
 end;
 
 procedure TMidiNote.SetNoteLocation(const AValue: Integer);
 begin
   FNoteLocation:= AValue;
-  FMidiNoteEnd.Location := Round((FNoteLocation * 220.50) + (FNoteLength * 220.50));
+  FMidiNoteEnd.Location := FNoteLocation + FNoteLength;
 
-  FMidiNoteStart.Location := Round(FNoteLocation * 220.50);
+  FMidiNoteStart.Location := FNoteLocation;
   FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
 end;
 
@@ -966,16 +966,16 @@ begin
 
   case FMidiPattern.QuantizeSetting of
   0: FMidiPattern.QuantizeValue := -1;
-  1: FMidiPattern.QuantizeValue := 100 * 4;
-  2: FMidiPattern.QuantizeValue := 100 * 2;
-  3: FMidiPattern.QuantizeValue := 100;
-  4: FMidiPattern.QuantizeValue := 100 / 2;
-  5: FMidiPattern.QuantizeValue := 100 / 3;
-  6: FMidiPattern.QuantizeValue := 100 / 4;
-  7: FMidiPattern.QuantizeValue := 100 / 6;
-  8: FMidiPattern.QuantizeValue := 100 / 8;
-  9: FMidiPattern.QuantizeValue := 100 / 16;
-  10: FMidiPattern.QuantizeValue := 100 / 32;
+  1: FMidiPattern.QuantizeValue := 22050 * 4;
+  2: FMidiPattern.QuantizeValue := 22050 * 2;
+  3: FMidiPattern.QuantizeValue := 22050;
+  4: FMidiPattern.QuantizeValue := 22050 / 2;
+  5: FMidiPattern.QuantizeValue := 22050 / 3;
+  6: FMidiPattern.QuantizeValue := 22050 / 4;
+  7: FMidiPattern.QuantizeValue := 22050 / 6;
+  8: FMidiPattern.QuantizeValue := 22050 / 8;
+  9: FMidiPattern.QuantizeValue := 22050 / 16;
+  10: FMidiPattern.QuantizeValue := 22050 / 32;
   end;
 
   FMidiPattern.EndUpdate;
@@ -993,16 +993,16 @@ begin
 
   case FMidiPattern.QuantizeSetting of
   0: FMidiPattern.QuantizeValue := -1;
-  1: FMidiPattern.QuantizeValue := 100 * 4;
-  2: FMidiPattern.QuantizeValue := 100 * 2;
-  3: FMidiPattern.QuantizeValue := 100;
-  4: FMidiPattern.QuantizeValue := 100 / 2;
-  5: FMidiPattern.QuantizeValue := 100 / 3;
-  6: FMidiPattern.QuantizeValue := 100 / 4;
-  7: FMidiPattern.QuantizeValue := 100 / 6;
-  8: FMidiPattern.QuantizeValue := 100 / 8;
-  9: FMidiPattern.QuantizeValue := 100 / 16;
-  10: FMidiPattern.QuantizeValue := 100 / 32;
+  1: FMidiPattern.QuantizeValue := 22050 * 4;
+  2: FMidiPattern.QuantizeValue := 22050 * 2;
+  3: FMidiPattern.QuantizeValue := 22050;
+  4: FMidiPattern.QuantizeValue := 22050 / 2;
+  5: FMidiPattern.QuantizeValue := 22050 / 3;
+  6: FMidiPattern.QuantizeValue := 22050 / 4;
+  7: FMidiPattern.QuantizeValue := 22050 / 6;
+  8: FMidiPattern.QuantizeValue := 22050 / 8;
+  9: FMidiPattern.QuantizeValue := 22050 / 16;
+  10: FMidiPattern.QuantizeValue := 22050 / 32;
   end;
 
   FMidiPattern.EndUpdate;
@@ -1234,14 +1234,10 @@ begin
   inherited Initialize;
 
   FMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(ObjectOwner));
-  {FMidiPattern.OkToPlay := False;
-  writeln('OkToPlay := False'); }
 end;
 
 procedure TMidiCommand.Finalize;
 begin
-  {FMidiPattern.OkToPlay := True;
-  writeln('OkToPlay := True');}
 
   inherited Finalize;
 end;

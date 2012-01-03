@@ -223,16 +223,16 @@ begin
 
     case FMidiPatternGUI.QuantizeSetting of
     0: FMidiPatternGUI.QuantizeValue := -1;
-    1: FMidiPatternGUI.QuantizeValue := 100 * 4;
-    2: FMidiPatternGUI.QuantizeValue := 100 * 2;
-    3: FMidiPatternGUI.QuantizeValue := 100;
-    4: FMidiPatternGUI.QuantizeValue := 100 / 2;
-    5: FMidiPatternGUI.QuantizeValue := 100 / 3;
-    6: FMidiPatternGUI.QuantizeValue := 100 / 4;
-    7: FMidiPatternGUI.QuantizeValue := 100 / 6;
-    8: FMidiPatternGUI.QuantizeValue := 100 / 8;
-    9: FMidiPatternGUI.QuantizeValue := 100 / 16;
-    10: FMidiPatternGUI.QuantizeValue := 100 / 32;
+    1: FMidiPatternGUI.QuantizeValue := 22050 * 4;
+    2: FMidiPatternGUI.QuantizeValue := 22050 * 2;
+    3: FMidiPatternGUI.QuantizeValue := 22050;
+    4: FMidiPatternGUI.QuantizeValue := 22050 / 2;
+    5: FMidiPatternGUI.QuantizeValue := 22050 / 3;
+    6: FMidiPatternGUI.QuantizeValue := 22050 / 4;
+    7: FMidiPatternGUI.QuantizeValue := 22050 / 6;
+    8: FMidiPatternGUI.QuantizeValue := 22050 / 8;
+    9: FMidiPatternGUI.QuantizeValue := 22050 / 16;
+    10: FMidiPatternGUI.QuantizeValue := 22050 / 32;
     end;
   end;
 

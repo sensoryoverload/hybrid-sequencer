@@ -27,7 +27,7 @@ uses
   Classes, Sysutils, Lresources, Forms, LCLProc, Controls, Graphics, Dialogs,
   StdCtrls, jack, midiport, jacktypes, ExtCtrls, Math, sndfile, wave, Spin,
   ContNrs, transport, FileCtrl, PairSplitter, Utils, ComCtrls, GlobalConst,
-  Menus, ActnList, dialcontrol, bpm, SoundTouchObject,
+  Menus, ActnList, dialcontrol, bpm,
   TypInfo, FileUtil, global_command, LCLType, LCLIntf,
   ShellCtrls, Grids, TrackGUI, wavegui, global, track, pattern,
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
@@ -586,7 +586,6 @@ begin
       end;
 
       //GLogger.PushMessage('Logging - ' + IntToStr(Random(1000)));
-
       for i := 0 to Pred(nframes) do
       begin
 
@@ -617,6 +616,12 @@ begin
                 end;
               end;
 
+              GLogger.PushMessage(
+                format('MainSyncCounter %d ScheduledPattern %s PlayingPattern %s OkToPlay %s',
+                [GAudioStruct.MainSyncCounter, booltostr(assigned(lTrack.ScheduledPattern), True),
+                booltostr(assigned(lTrack.PlayingPattern), True),
+                booltostr(lTrack.PlayingPattern.OkToPlay, True)]));
+
               lTrack.PlayingPattern.Playing := True;
               lTrack.PlayingPattern.Scheduled := False;
               lTrack.PlayingPattern.SyncQuantize := True;
@@ -644,7 +649,6 @@ begin
     lTrack := TTrack(GAudioStruct.Tracks.Items[j]);
     if Assigned(lTrack) then
     begin
-      FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
 
       lPlayingPattern := lTrack.PlayingPattern;
       if Assigned(lPlayingPattern) then
@@ -662,6 +666,7 @@ begin
               }
               if lPlayingPattern is TMidiPattern then
               begin
+                FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
                 TMidiPattern(lPlayingPattern).SampleBankEngine.Process( TMidiPattern(lPlayingPattern).MidiBuffer,
                   lTrack.OutputBuffer, nframes);
               end;
