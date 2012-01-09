@@ -62,6 +62,9 @@ LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   +'ion'#2#10#8'ScalePos'#7#6'trLeft'#8'TabOrder'#2#16#0#0#21'TFloatSpinEditCon'
   +'trol'#13'spnPitchValue'#4'Left'#2'>'#6'Height'#2#23#3'Top'#2#24#5'Width'#2
   +'2'#9'Increment'#5#0#208#204#204#204#204#204#204#251'?'#8'MaxValue'#5#0#0#0#0
-  +#0#0#0#128#1'@'#8'MinValue'#5#0#0#0#0#0#0#0#128#252'?'#8'TabOrder'#2#17#5'Va'
-  +'lue'#5#0#0#0#0#0#0#0#128#255'?'#0#0#0#0
+  +#0#0#0#128#1'@'#8'MinValue'#5#0#0#0#0#0#0#0#128#253'?'#8'OnChange'#7#14'spnP'
+  +'itchChange'#8'TabOrder'#2#17#5'Value'#5#0#0#0#0#0#0#0#128#255'?'#0#0#12'TDi'
+  +'alControl'#12'DialControl1'#4'Left'#2#11#6'Height'#2'('#3'Top'#2'\'#5'Width'
+  ,#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#6'Lowest'#5#0#0#0#0#0#0#0#0#0#0#7'Highe'
+  +'st'#5#0#0#0#0#0#0#0#128#255'?'#7'Enabled'#9#12'ValueVisible'#8#0#0#0#0
 ]);

@@ -246,9 +246,21 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Width = 50
       Increment = 0.1
       MaxValue = 4
-      MinValue = 0.125
+      MinValue = 0.25
+      OnChange = spnPitchChange
       TabOrder = 17
       Value = 1
+    end
+    object DialControl1: TDialControl
+      Left = 11
+      Height = 40
+      Top = 92
+      Width = 36
+      Value = 0
+      Lowest = 0
+      Highest = 1
+      Enabled = True
+      ValueVisible = False
     end
   end
 end

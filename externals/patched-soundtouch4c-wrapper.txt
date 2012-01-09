@@ -1,4 +1,0 @@
-I've patched SoundTouch4C to have floating point as the default.
-
-Robbert Latumahina
-

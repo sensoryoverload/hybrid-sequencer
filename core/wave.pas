@@ -23,7 +23,7 @@ interface
 
 uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
- jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils,
+ jacktypes, StdCtrls, Dialogs, Spin, bpmdetect, beattrigger, Utils,
  globalconst, librubberband, soundtouch, contnrs, global_command,
  ShellCtrls, global, multiband_wsola, flqueue, math, ringbuffer, pattern,
  audiostructure;
@@ -163,8 +163,6 @@ type
     lStartingSliceIndex: Integer;
     buf_offset: integer;
     buffer_size: Integer;
-    CB_TimeBuffer: psingle;
-
 
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
@@ -384,7 +382,6 @@ type
 
 var
   BeatDetect: TBeatDetector;
-  BPMDetect: TBPMDetect;
 
 implementation
 
@@ -475,6 +472,7 @@ begin
   FTimeStretch.setChannels(1);
   FTimeStretch.SetSetting(SETTING_USE_QUICKSEEK, 1);
   FTimeStretch.SetSetting(SETTING_USE_AA_FILTER, 0);
+  FTimeStretch.setSampleRate(Round(GSettings.SampleRate));
   {FTimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
   FTimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 15);
   FTimeStretch.setSetting(SETTING_OVERLAP_MS, 8);}
@@ -485,11 +483,11 @@ begin
   MultiWSOLA.Pitch := 1;
   MultiWSOLA.Initialize;
 
-{  FTimePitchOptions:=
+  FTimePitchOptions:=
     RubberBandOptionProcessRealTime or
     RubberBandOptionPhaseLaminar or
     RubberBandOptionWindowShort or
-    RubberBandOptionPitchHighQuality; }
+    RubberBandOptionPitchHighQuality;
 
   FTimePitchScale := rubberband_new(44100, 1, FTimePitchOptions, 1, 1);
   rubberband_set_max_process_size(FTimePitchScale, 4096);
@@ -504,8 +502,6 @@ begin
 //  FDiskWriterThread.FreeOnTerminate := True;
 //  FDiskReaderThread := TDiskReaderThread.Create(False);
 //FDiskReaderThread.FreeOnTerminate := True;
-
-  Getmem(CB_TimeBuffer, 144100);
 
   DBLog('end Twaveform.Create');
 end;
@@ -542,7 +538,6 @@ begin
     FDiskWriterThread.Free;}
 //  if Assigned(FDiskReaderThread) then
 //    FDiskReaderThread.Free;
-  FreeMem(CB_TimeBuffer);
 
   inherited Destroy;
 end;
@@ -634,7 +629,7 @@ begin
       begin
         lValue:= lValue + lWaveBuffer[i * DECIMATED_CACHE_DISTANCE + j];
       end;
-      DecimatedData[i]:= lValue / DECIMATED_CACHE_DISTANCE;
+      DecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
     end;
 
     lBPMDetect := TBPMDetect.Create(FWave.ChannelCount, FWave.SampleRate);
@@ -647,7 +642,7 @@ begin
           inc(SamplesRead, DECIMATED_BLOCK_SAMPLES);
         end;
         lBPMDetect.inputSamples(BufferData3 + SamplesRead, FWave.ReadCount - SamplesRead);
-        RealBPM:= lBPMDetect.getBpm;
+        RealBPM := lBPMDetect.getBpm;
         DBLog('Calculated BPM: ' + FloatToStr(RealBPM));
 
       except
@@ -797,6 +792,7 @@ end;
 
 procedure TWavePattern.SetRealBPM(const AValue: Single);
 begin
+  GLogger.PushMessage(Format('BPMDetect analysed: %f', [AValue]));
   if FRealBPM = AValue then exit;
   FRealBPM := AValue;
 
@@ -812,11 +808,10 @@ begin
   if FCursorRamp = AValue then exit;
   FCursorRamp := AValue;
 
-  if FCursorRamp <> 0 then
+  if FCursorRamp = 0 then
   begin
     FCursorRamp := 1;
   end;
-  DivideByCursorRamp_Multiplier := 1 / FCursorRamp;
 end;
 
 function TWavePattern.NextSlice: TMarker;
@@ -972,9 +967,6 @@ procedure TWavePattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCou
 var
   i, k : integer;
 begin
-  {try}
-  WorkBuffer[AFrameIndex] := 0;
-
   if AFrameIndex = 0 then
   begin
     psLastScaleValue := CursorRamp;
@@ -992,86 +984,75 @@ begin
   begin
     StartingSliceIndex := StartVirtualLocation(CursorReal);
   end;
+
   VirtualLocation(StartingSliceIndex, CursorReal, lFramePacket);
   CursorAdder := lFramePacket.Location;
   CursorRamp := lFramePacket.Ramp * FBPMscale;
-
   if PitchAlgorithm = paPitched then
     CursorRamp := Pitch;
 
-  // Put sound in buffer, interpolate with Hermite4 function
+  // Put sound in buffer
   lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
   frac_pos := Frac(CursorAdder);
   buf_offset := (Trunc(CursorAdder) * Wave.ChannelCount);
 
-  if buf_offset <= 0 then
-    xm1 := 0
-  else
-    xm1 := lBuffer[buf_offset - 1];
-  x0 := lBuffer[buf_offset];
-  x1 := lBuffer[buf_offset + 1];
-  x2 := lBuffer[buf_offset + 2];
-  WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
-
-  // Scale buffer up to now when the scaling-factor has changed or
-  // the end of the buffer has been reached.
-  if PitchAlgorithm <> paNone then
+  if Trunc(CursorAdder) < Wave.Frames then
   begin
-    if (CursorRamp <> psLastScaleValue) or (AFrameIndex = (AFrameCount - 1)) then
+    // Interpolate with Hermite interpolation
+    if buf_offset <= 0 then
+      xm1 := 0
+    else
+      xm1 := lBuffer[buf_offset - 1];
+    x0 := lBuffer[buf_offset];
+    x1 := lBuffer[buf_offset + 1];
+    x2 := lBuffer[buf_offset + 2];
+    WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
+
+    // Scale buffer up to now when the scaling-factor has changed or
+    // the end of the buffer has been reached.
+    PitchAlgorithm := paMultiST;
+    if PitchAlgorithm <> paNone then
     begin
-      psEndLocation := AFrameIndex;
-      CalculatedPitch := Pitch * DivideByCursorRamp_Multiplier;
-      if CalculatedPitch < 0.062 then CalculatedPitch := 0.062;
-      if CalculatedPitch > 16 then CalculatedPitch := 16;
-
-      // Frames to process this window
-      lFrames := (psEndLocation - psBeginLocation) + 1;
-
-      for k := 0 to Pred(lFrames) do
-        CB_TimeBuffer[k] := WorkBuffer[psBeginLocation + k];
-
-      case PitchAlgorithm of
-        paST:
-        begin
-          {glogger.PushMessage(format('1. Frames %d CalculatedPitch %f lFramePacket.Ramp %f FBPMscale %f Pitch %f',
-            [lFrames, CalculatedPitch, lFramePacket.Ramp, FBPMscale, Pitch])); }
-          TimeStretch.setPitch(CalculatedPitch);
-          TimeStretch.PutSamples(CB_TimeBuffer, lFrames);
-          TimeStretch.ReceiveSamples(CB_TimeBuffer, lFrames);
-        end;
-        paMultiST:
-        begin
-          WSOLA.Pitch := CalculatedPitch;
-          WSOLA.Process(CB_TimeBuffer, CB_TimeBuffer, lFrames);
-        end;
-        paRubberband:
-        begin
-          rubberband_set_pitch_scale(TimePitchScale, CalculatedPitch);
-          rubberband_process(TimePitchScale, @CB_TimeBuffer, lFrames, 0);
-          rubberband_retrieve(TimePitchScale, @CB_TimeBuffer, lFrames);
-        end;
-      end;
-
-      for k := 0 to Pred(lFrames) do
+      if (CursorRamp <> psLastScaleValue) or (AFrameIndex = (AFrameCount - 1)) then
       begin
-        //BufferData2[psBeginLocation + k] := CB_TimeBuffer[k];
-        ABuffer[psBeginLocation + k] := CB_TimeBuffer[k];
-      end;
+        psEndLocation := AFrameIndex;
+        CalculatedPitch := Pitch * (1 / FCursorRamp);
+        if CalculatedPitch < 0.062 then CalculatedPitch := 0.062;
+        if CalculatedPitch > 16 then CalculatedPitch := 16;
 
-      // Remember last change
-      psBeginLocation:= AFrameIndex;
-      psLastScaleValue:= CursorRamp;
+        // Frames to process this window
+        lFrames := (psEndLocation - psBeginLocation) + 1;
+
+        case PitchAlgorithm of
+          paST:
+          begin
+            TimeStretch.setPitch(CalculatedPitch);
+            TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
+            TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
+          end;
+          paMultiST:
+          begin
+            WSOLA.Pitch := CalculatedPitch;
+            WSOLA.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
+          end;
+          paRubberband:
+          begin
+            rubberband_set_pitch_scale(TimePitchScale, CalculatedPitch);
+            rubberband_process(TimePitchScale, @WorkBuffer[psBeginLocation], lFrames, 0);
+            rubberband_retrieve(TimePitchScale, @ABuffer[psBeginLocation], lFrames);
+          end;
+        end;
+
+        // Remember last change
+        psBeginLocation:= AFrameIndex;
+        psLastScaleValue:= CursorRamp;
+      end;
+    end
+    else
+    begin
+      ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
     end;
-  end
-  else
-  begin
-    //BufferData2[AFrameIndex] := WorkBuffer[AFrameIndex];
-    ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
   end;
-  {except
-    on e: exception do
-    glogger.PushMessage('wave.process error: ' + e.Message);
-  end;}
 end;
 
 procedure TWavePattern.ProcessAdvance;
@@ -1665,7 +1646,7 @@ begin
   DBLog('start TChangePitchCommand.DoExecute');
 
   // Store pitch
-  FOldpitch := Pitch;
+  FOldpitch := FWavePattern.Pitch;
   FWavePattern.Pitch := Pitch;
   FWavePattern.Notify;
 
@@ -1781,10 +1762,8 @@ end;
 initialization
 
   BeatDetect := TBeatDetector.Create;
-  BPMDetect := TBPMDetect.Create(1, 44100);
 
 finalization
   BeatDetect.Free;
-  BPMDetect.Free;
 
 end.

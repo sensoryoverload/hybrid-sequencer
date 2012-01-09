@@ -449,7 +449,7 @@ begin
         // First point
         ChannelScreenOffset := ChannelLoop * ChannelHeight + ChannelHeight shr 1;
         ChannelZeroLine := ChannelHeight div FModel.Wave.ChannelCount;
-        FBitmap.Canvas.Pen.Color := clBlue;
+        FBitmap.Canvas.Pen.Color := clGray;
         FBitmap.Canvas.Pen.Width := 1;
         FBitmap.Canvas.MoveTo(0, ChannelScreenOffset);
 

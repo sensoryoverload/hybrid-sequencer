@@ -39,7 +39,7 @@ type
     fc: Integer;
     srate: Integer;
     wc, wc2, wc3, wc4, k, k2, k3, k4: single;
-    sqrt2, sq_tmp1, sq_tmp2, a_tmp: single;
+    sqrt2, sq_tmp1, sq_tmp2, a_tmp, inverse_a_tmp: single;
     a0, a1, a2, a3, a4: single;
     b1, b2, b3, b4: single;
 
@@ -155,6 +155,7 @@ begin
   sq_tmp1 := sqrt2 * wc3 * k;
   sq_tmp2 := sqrt2 * wc * k3;
   a_tmp := 4 * wc2 * k2 + 2 * sq_tmp1 + k4 + 2 * sq_tmp2 + wc4;
+  inverse_a_tmp := 1 / a_tmp;
 
   b1 := (4*(wc4+sq_tmp1-k4-sq_tmp2))/a_tmp;
   b2 := (6*wc4-8*wc2*k2+6*k4)/a_tmp;
@@ -169,9 +170,9 @@ begin
   if FFilterType = ftLowPass then
   begin
     // low-pass
-    a0 := wc4 / a_tmp;
-    a1 := 4 * wc4 / a_tmp;
-    a2 := 6 * wc4 / a_tmp;
+    a0 := wc4 * inverse_a_tmp;
+    a1 := 4 * wc4 * inverse_a_tmp;
+    a2 := 6 * wc4 * inverse_a_tmp;
     a3 := a1;
     a4 := a0;
     for i := 0 to Pred(AFrames) do
@@ -195,9 +196,9 @@ begin
   else
   begin
     // high-pass
-    a0 := k4 / a_tmp;
-    a1 := -4 * k4 / a_tmp;
-    a2 := 6 * k4 / a_tmp;
+    a0 := k4 * inverse_a_tmp;
+    a1 := -4 * k4 * inverse_a_tmp;
+    a2 := 6 * k4 * inverse_a_tmp;
     a3 := a1;
     a4 := a0;
     for i := 0 to Pred(AFrames) do
@@ -228,6 +229,12 @@ begin
   begin
     FPitch := AValue;
     FPitchOld := FPitch;
+
+    FBand1Pitcher.setPitch(FPitch);
+    FBand2Pitcher.setPitch(FPitch);
+    FBand3Pitcher.setPitch(FPitch);
+    FBand4Pitcher.setPitch(FPitch);
+
   end;
 end;
 
@@ -358,7 +365,7 @@ begin
   FBand1Pitcher.setChannels(FChannels);
   FBand1Pitcher.setSampleRate(44100);
   FBand1Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
-  FBand1Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
+  FBand1Pitcher.setSetting(SETTING_USE_AA_FILTER, 1);
   FBand1Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
   FBand1Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FBand1Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
@@ -366,7 +373,7 @@ begin
   FBand2Pitcher.setChannels(FChannels);
   FBand2Pitcher.setSampleRate(44100);
   FBand2Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
-  FBand2Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
+  FBand2Pitcher.setSetting(SETTING_USE_AA_FILTER, 1);
   FBand2Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
   FBand2Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FBand2Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
@@ -374,7 +381,7 @@ begin
   FBand3Pitcher.setChannels(FChannels);
   FBand3Pitcher.setSampleRate(44100);
   FBand3Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
-  FBand3Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
+  FBand3Pitcher.setSetting(SETTING_USE_AA_FILTER, 1);
   FBand3Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
   FBand3Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FBand3Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
@@ -382,7 +389,7 @@ begin
   FBand4Pitcher.setChannels(FChannels);
   FBand4Pitcher.setSampleRate(44100);
   FBand4Pitcher.SetSetting(SETTING_USE_QUICKSEEK, 1);
-  FBand4Pitcher.setSetting(SETTING_USE_AA_FILTER, 0);
+  FBand4Pitcher.setSetting(SETTING_USE_AA_FILTER, 1);
   FBand4Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
   FBand4Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FBand4Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
@@ -420,27 +427,23 @@ begin
   begin
     // Band 1
     FBand1LowPass.process(AInput, FBufferLow1, AFrames);
-    FBand1Pitcher.setPitch(FPitch);
     FBand1Pitcher.PutSamples(FBufferLow1, AFrames);
     FBand1Pitcher.ReceiveSamples(FTimeBuffer1, AFrames);
 
     // Band 2
     FBand2HighPass.process(AInput, FBufferHigh2, AFrames);
     FBand2LowPass.process(FBufferHigh2, FBufferLow2, AFrames);
-    FBand2Pitcher.setPitch(FPitch);
     FBand2Pitcher.PutSamples(FBufferLow2, AFrames);
     FBand2Pitcher.ReceiveSamples(FTimeBuffer2, AFrames);
 
     // Band 3
     FBand3HighPass.process(AInput, FBufferHigh3, AFrames);
     FBand3LowPass.process(FBufferHigh3, FBufferLow3, AFrames);
-    FBand3Pitcher.setPitch(FPitch);
     FBand3Pitcher.PutSamples(FBufferLow3, AFrames);
     FBand3Pitcher.ReceiveSamples(FTimeBuffer3, AFrames);
 
     // Band 4
     FBand4HighPass.process(AInput, FBufferHigh4, AFrames);
-    FBand4Pitcher.setPitch(FPitch);
     FBand4Pitcher.PutSamples(FBufferHigh4, AFrames);
     FBand4Pitcher.ReceiveSamples(FTimeBuffer4, AFrames);
     //if AFrames > 500 then AFrames := 500;

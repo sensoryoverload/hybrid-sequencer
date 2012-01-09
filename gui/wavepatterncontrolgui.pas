@@ -14,6 +14,7 @@ type
 
   TWavePatternControlGUI = class(TFrame, IObserver)
     cbPitched: TCheckBox;
+    DialControl1: TDialControl;
     edtFilename: TLabeledEdit;
     gbAudioTrackSettings: TGroupBox;
     Label1: TLabel;
