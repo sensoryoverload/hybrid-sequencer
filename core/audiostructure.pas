@@ -123,6 +123,10 @@ type
     FMainSyncCounter: Integer;
     FMainSyncModula: Integer;
     FMainQuantizeLength: Integer;
+
+    FMainCursor: Single;
+    FMainScale: Single;
+    FMainTimeLine: Single;
     FBPM: Single;
     FBPMScale: Single;
     FBPMAdder: Single;
@@ -181,6 +185,7 @@ begin
   FOnCreateInstanceCallback := @DoCreateInstance;
 
   FMainQuantizeLength := 8; // Syncronize at a 1 bar quantization
+  FMainTimeLine := 10000; // Default 1 bar (4 beat) length
   FMainSyncCounter := 0;
   FBPM := 120;
 end;
@@ -228,8 +233,8 @@ begin
   FBPM := AValue;
   if FBPM < 1 then FBPM := 1;
 
-  FBPMAdder := FBPM / 120;
-
+  FBPMAdder := FBPM * DIVIDE_BY_120_MULTIPLIER;
+// ?
   FBPMscale := FBPM * DIVIDE_BY_120_MULTIPLIER;
 
   RecalculateSynchronize;
@@ -238,6 +243,9 @@ end;
 procedure TAudioStructure.RecalculateSynchronize;
 begin
   FMainSyncModula := Round(MainSampleRate * (60 / FBPM)) * FMainQuantizeLength;
+  //FMainCursor :=
+  //FMainScale := FMainTimeLine / MainSampleRate; // (10000 / (4 * 44100))
+  //FMainTimeLine: ;
 end;
 
 procedure TAudioStructure.DoCreateInstance(var AObject: TObject; AClassName: string);

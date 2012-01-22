@@ -102,31 +102,26 @@ type
     acAbout: TAction;
     acUndo: TAction;
     alGlobalActions: TActionList;
-    btnDeleteTrack: TButton;
     LeftSplitter: TCollapseSplitter;
     BottomSplitter: TCollapseSplitter;
     DialControl1: TDialControl;
-    gbMasterTempo: TGroupBox;
     ilGlobalImages: TImageList;
     MainMenu1: TMainMenu;
     HelpMenu: TMenuItem;
     MenuItem3: TMenuItem;
     miCreateTrack: TMenuItem;
+    pnlToolbar: TPanel;
     pnlVarious: TPanel;
     pnlBottom: TPanel;
     pupScrollBox: TPopupMenu;
     SaveDialog1: TSaveDialog;
     SavePattern: TMenuItem;
     MenuItem4: TMenuItem;
-    pnlTransport: TPanel;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     LoadMenu: TMenuItem;
     LoadSession: TMenuItem;
     pnlFileManager: TPanel;
-    rbMaster: TRadioButton;
-    rbMidiSync: TRadioButton;
-    rgEditMode: TRadioGroup;
     SaveMenu: TMenuItem;
     ControlMenu: TMenuItem;
     OptionMenu: TMenuItem;
@@ -616,11 +611,11 @@ begin
                 end;
               end;
 
-              GLogger.PushMessage(
+              {GLogger.PushMessage(
                 format('MainSyncCounter %d ScheduledPattern %s PlayingPattern %s OkToPlay %s',
                 [GAudioStruct.MainSyncCounter, booltostr(assigned(lTrack.ScheduledPattern), True),
                 booltostr(assigned(lTrack.PlayingPattern), True),
-                booltostr(lTrack.PlayingPattern.OkToPlay, True)]));
+                booltostr(lTrack.PlayingPattern.OkToPlay, True)]));}
 
               lTrack.PlayingPattern.Playing := True;
               lTrack.PlayingPattern.Scheduled := False;
@@ -1067,7 +1062,7 @@ end;
 
 procedure TMainApp.rgEditModeClick(Sender: TObject);
 begin
-  GSettings.EditMode := rgEditMode.ItemIndex;
+  GSettings.EditMode := 0;
 end;
 
 procedure TMainApp.SaveSessionClick(Sender: TObject);
@@ -1143,8 +1138,7 @@ begin
       end;
     end;
 
-
-
+    // Update session grid
     for i := 0 to Pred(MainApp.Tracks.Count) do
     begin
       lTrack := TTrackGUI(MainApp.Tracks[i]).Track;
@@ -1186,16 +1180,29 @@ begin
       TTrackGUI(MainApp.Tracks[i]).Invalidate;
     end;
 
-    if Assigned(GSettings.SelectedPatternGUI) then
+    // Update patterneditor grid
+    {if Assigned(GSettings.SelectedPatternGUI) then
     begin
       if GSettings.SelectedPatternGUI is TMidiPatternGUI then
       begin
+        FMidiPatternControlGUI.MidiPatternGUI.CacheIsDirty := True;
         FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
       end
       else if GSettings.SelectedPatternGUI is TWavePatternGUI then
       begin
+        FWavePatternControlGUI.WavePatternGUI.CacheIsDirty := True;
         FWavePatternControlGUI.WavePatternGUI.Invalidate;
       end;
+    end; }
+    if pnlBottom = FMidiPatternControlGUI.Parent then
+    begin
+      FMidiPatternControlGUI.MidiPatternGUI.CacheIsDirty := True;
+      FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
+    end
+    else if pnlBottom = FWavePatternControlGUI.Parent then
+    begin
+      FWavePatternControlGUI.WavePatternGUI.CacheIsDirty := True;
+      FWavePatternControlGUI.WavePatternGUI.Invalidate;
     end;
 
     Inc(FLowPriorityInterval);

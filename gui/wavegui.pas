@@ -30,8 +30,21 @@ uses
 
 const
   DECIMATED_CACHE_DISTANCE = 64;
+  GRAYSCALE_10 = TColor($000000);
+  GRAYSCALE_20 = TColor($080808);
+  GRAYSCALE_30 = TColor($111111);
+  GRAYSCALE_40 = TColor($333333);
+  GRAYSCALE_50 = TColor($555555);
+  GRAYSCALE_60 = TColor($777777);
+  GRAYSCALE_70 = TColor($999999);
+  GRAYSCALE_80 = TColor($BBBBBB);
+  GRAYSCALE_90 = TColor($DDDDDD);
+  GRAYSCALE_100 = TColor($FFFFFF);
+  REDSCALE_70 = TColor($0000BB);
 
 type
+  TMouseArea = (maNone, maSliceMarkers, maLoopMarkers, maSampleMarkers, maWave);
+
   { TSimpleWaveForm }
 
   TSimpleWaveForm = class(TCustomControl)
@@ -79,6 +92,7 @@ type
   TWaveGUI = class(TPersistentCustomControl)
   private
     { GUI }
+    FTransportBarHeight: Integer;
     FZoomFactorX: Single;
     FZoomFactorY: Single;
     FZoomFactorToScreen: Single;
@@ -99,11 +113,14 @@ type
     FLoopStart: TLoopMarkerGUI;
     FLoopEnd: TLoopMarkerGUI;
     FLoopLength: TLoopMarkerGUI;
+    FSampleStart: TSampleMarkerGUI;
+    FSampleEnd: TSampleMarkerGUI;
     FBarLength: Integer;
     FDragSlice: Boolean;
     FZooming: Boolean;
     FSelectedSlice: TMarkerGUI;
     FSelectedLoopMarkerGUI: TLoopMarkerGUI;
+    FSelectedSampleMarkerGUI: TSampleMarkerGUI;
     FRubberbandX1,
     FRubberbandX2: Integer;
     FRubberbandSelect: Boolean;
@@ -122,6 +139,13 @@ type
     FPitch: Single;
     FRealBPM: Single;
     FPitched: Boolean;
+    FMouseXRelative: Integer;
+    FMargin: single;
+    FMouseArea: TMouseArea;
+    FBpmFactor: Single;
+    FBpmAdder: Single;
+    FSampleStartLocation: Integer;
+    FMouseX: Integer;
 
     procedure RecalculateWarp;
     procedure SetTransientThreshold(const AValue: Integer);
@@ -129,6 +153,7 @@ type
     procedure SetZoomFactorY(const AValue: Single);
     procedure Setpitch(const Avalue: Single);
     procedure Sortslices;
+    procedure UpdateSampleScale;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -138,6 +163,7 @@ type
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
     procedure DragDrop(Source: TObject; X, Y: Integer); override;
+    function SampleMarkerAt(Location: Integer; AMargin: Single): TSampleMarkerGUI;
     function LoopMarkerAt(Location: Integer; AMargin: Single): TLoopMarkerGUI;
     function NextSlice: TMarkerGUI;
     function GetSliceAt(Location: Integer; AMargin: Single): TMarkerGUI;
@@ -152,6 +178,8 @@ type
     property LoopStart: TLoopMarkerGUI read FLoopStart write FLoopStart;
     property LoopEnd: TLoopMarkerGUI read FLoopEnd write FLoopEnd;
     property LoopLength: TLoopMarkerGUI read FLoopLength write FLoopLength;
+    property SampleStart: TSampleMarkerGUI read FSampleStart write FSampleStart;
+    property SampleEnd: TSampleMarkerGUI read FSampleEnd write FSampleEnd;
     property SliceListGUI: TObjectList read FSliceListGUI write FSliceListGUI;
     property CursorReal: Single read FCursorReal write FCursorReal default 1.0;
     property CursorRamp: Single read FCursorRamp write FCursorRamp default 1.0;
@@ -167,6 +195,7 @@ type
     property Pitched: Boolean read FPitched write FPitched default False;
     property RealBPM: Single read FRealBPM write FRealBPM default 120;
   protected
+    procedure DblClick; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
@@ -288,18 +317,26 @@ constructor TWaveGUI.Create(Aowner: Tcomponent);
 begin
   inherited Create(Aowner);
 
+  // Loop markers
   FLoopStart := TLoopMarkerGUI.Create(ObjectID, ltStart);
   FLoopEnd := TLoopMarkerGUI.Create(ObjectID, ltEnd);
   FLoopLength := TLoopMarkerGUI.Create(ObjectID, ltLength);
 
+  // Sample start & end -markers
+  FSampleStart := TSampleMarkerGUI.Create(ObjectID, stStart);
+  FSampleEnd := TSampleMarkerGUI.Create(ObjectID, stEnd);
+
+  FMouseArea := maNone;
+
   FBitmap := TBitmap.Create;
 
   // Initalize settings
+  FTransportBarHeight:= 30;
   FOffset:= 0;
   FData:= nil;
   FDecimatedData:= nil;
-  FZoomFactorX:= 2;
-  FZoomFactorY:= 3;
+  ZoomFactorX:= 2;
+  ZoomFactorY:= 1;
   FDragSlice:= False;
   FZooming:= False;
   FRubberbandSelect:= False;
@@ -310,6 +347,7 @@ begin
 
   FSliceListGUI := TObjectList.Create(True);
   FCurrentSliceIndex:= 0;
+
 
   {ChangeControlStyle(Self, [csDisplayDragImage], [], True); }
 end;
@@ -323,6 +361,9 @@ begin
   FLoopStart.Free;
   FLoopEnd.Free;
   FLoopLength.Free;
+
+  FSampleStart.Free;
+  FSampleEnd.Free;
 
   inherited Destroy;
 end;
@@ -341,6 +382,9 @@ begin
   FLoopEnd.Update(TWavePattern(Subject).LoopEnd);
   FLoopLength.Update(TWavePattern(Subject).LoopLength);
 
+  FSampleStart.Update(TWavePattern(Subject).SampleStart);
+  FSampleEnd.Update(TWavePattern(Subject).SampleEnd);
+
   Sortslices;
 
   Invalidate;
@@ -356,6 +400,9 @@ begin
   FModel.LoopEnd.Attach(FLoopEnd);
   FModel.LoopLength.Attach(FLoopLength);
 
+  FModel.SampleStart.Attach(FSampleStart);
+  FModel.SampleEnd.Attach(FSampleEnd);
+
   writeln('end TWaveFormGUI.Connect');
 end;
 
@@ -364,6 +411,9 @@ begin
   FModel.LoopStart.Detach(FLoopStart);
   FModel.LoopEnd.Detach(FLoopEnd);
   FModel.LoopLength.Detach(FLoopLength);
+
+  FModel.SampleStart.Detach(FSampleStart);
+  FModel.SampleEnd.Detach(FSampleEnd);
 end;
 
 procedure TWaveGUI.EraseBackground(DC: HDC);
@@ -377,8 +427,8 @@ var
   ChannelLoop: Integer;
   ScreenLoop: Integer;
   SliceLoop: Integer;
-  SliceX: Integer;
-  SliceX2: Integer;
+  SliceLeft: Integer;
+  SliceRight: Integer;
   PositionInData1: Single;
   PositionInData2: Single;
   ChannelScreenOffset: Integer;
@@ -386,6 +436,7 @@ var
   ChannelZeroLine: Integer;
   TrackHeight: Integer;
   TempRubberbandX: Integer;
+  Ramp: Single;
   Adder: Single;
   AdderFactor: Single;
   DataValue: Single;
@@ -393,7 +444,7 @@ var
   MinValue: Single;
   SubSampleLoop: Integer;
   TimeMarker: Integer;
-  TimeMarkerSpacing: Integer;
+  QuarterBeatMarkerSpacing: single;
   TimeMarkerLocation: Integer;
 begin
   if not Assigned(FModel) then exit;
@@ -408,91 +459,197 @@ begin
     FBitmap.Height := TrackHeight;
     FBitmap.Width := Width;
 
-    FBitmap.Canvas.Brush.Color:= clLtGray;
+    // Draw loopmarker bar
+    FBitmap.Canvas.Pen.Width := 1;
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_80;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
+    FBitmap.Canvas.Rectangle(
+      0,
+      0,
+      Width,
+      FTransportBarHeight);
 
-    FBitmap.Canvas.Pen.Color := clBlack;
-    FBitmap.Canvas.Clipping := False;
-    FBitmap.Canvas.Rectangle(0, 0, Width, TrackHeight);
+    // Draw samplemarker bar
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Line(
+      0,
+      9,
+      Width,
+      9);
 
-    if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and (FModel.Wave.Frames > 0) then
+    // Draw slicemarker bar
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Line(
+      0,
+      19,
+      Width,
+      19);
+
+    // Draw sample start to end bar
+    SliceLeft := Round(SampleStart.Location * FZoomFactorToScreen - FOffset);
+    SliceRight := Round(SampleEnd.Location * FZoomFactorToScreen - FOffset);
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
+    FBitmap.Canvas.FillRect(
+      SliceLeft,
+      10,
+      SliceRight,
+      19);
+
+    // Start of sample
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Pen.Width:= 1;
+    FBitmap.Canvas.Rectangle(
+      SliceLeft - 5,
+      10,
+      SliceLeft + 5,
+      19);
+
+    // End of sample
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Pen.Width:= 1;
+    FBitmap.Canvas.Rectangle(
+      SliceRight - 5,
+      10,
+      SliceRight + 5,
+      19);
+
+    // Full background
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
+    FBitmap.Canvas.FillRect(
+      0,
+      FTransportBarHeight,
+      Width,
+      Height);
+
+    // Sample overlay background
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
+    FBitmap.Canvas.FillRect(
+      SliceLeft,
+      FTransportBarHeight,
+      SliceRight,
+      Height);
+
+    // Draw measurements
+    FBitmap.Canvas.Pen.Width := 1;
+
+    // 120 BPM => 2 beats/sec => 1/4th beat = 0.125 (1 / 8)
+    QuarterBeatMarkerSpacing :=
+      FZoomFactorToScreen * Round(GSettings.SampleRate * 0.125);
+
+    // Draw marker white every 4 markers ( = 1 beat )
+    for TimeMarker := 0 to Round(Width / QuarterBeatMarkerSpacing) do
+    begin
+      if TimeMarker and 3 = 0 then
+      begin
+        FBitmap.Canvas.Pen.Color := GRAYSCALE_100;
+      end
+      else
+      begin
+        FBitmap.Canvas.Pen.Color := GRAYSCALE_90;
+      end;
+      TimeMarkerLocation := Round((TimeMarker * QuarterBeatMarkerSpacing) - FOffset);
+      FBitmap.Canvas.Line(TimeMarkerLocation, FTransportBarHeight, TimeMarkerLocation, Height);
+    end;
+
+    if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and
+      (FModel.Wave.Frames > 0) then
     begin
       // Bound parameters
       FOffset := GSettings.CursorPosition;
 
-      if FZoomFactorX <= 2 then FZoomFactorX := 2;
-      if FZoomFactorY <= 0 then FZoomFactorY := 1;
-      FZoomFactorToScreen:= FZoomFactorX / 1000;
-      FZoomFactorToData:= 1000 / FZoomFactorX;
-
-      // Draw Selected Area
-      if FRubberbandSelect then
-      begin
-        FBitmap.Canvas.Brush.Color:= clYellow;
-        if FRubberbandX1 > FRubberbandX2 then
-        begin
-          // Swap if x1 > x2
-          TempRubberbandX := FRubberbandX1;
-          FRubberbandX1 := FRubberbandX2;
-          FRubberbandX2 := TempRubberbandX;
-        end;
-        FBitmap.Canvas.FillRect(Round(FRubberbandX1 * FZoomFactorToScreen - FOffset), 0,
-          Round(FRubberbandX2 * FZoomFactorToScreen - FOffset), TrackHeight);
-        FBitmap.Canvas.Brush.Color:= clWhite;
-      end;
-
-      ChannelHeight := FBitmap.Height div FModel.Wave.ChannelCount;
+      ChannelHeight := (FBitmap.Height - FTransportBarHeight) div FModel.Wave.ChannelCount;
       for ChannelLoop := 0 to Pred(FModel.Wave.ChannelCount) do
       begin
+        FBitmap.Canvas.Pen.Width := 1;
         FBitmap.Canvas.Pen.Color := clBlack;
-        FBitmap.Canvas.Line(0, ChannelHeight * ChannelLoop, Width, ChannelHeight * ChannelLoop);
+        FBitmap.Canvas.Line(0, ChannelHeight * ChannelLoop + FTransportBarHeight, Width, ChannelHeight * ChannelLoop + FTransportBarHeight);
 
         // First point
-        ChannelScreenOffset := ChannelLoop * ChannelHeight + ChannelHeight shr 1;
-        ChannelZeroLine := ChannelHeight div FModel.Wave.ChannelCount;
-        FBitmap.Canvas.Pen.Color := clGray;
+        ChannelScreenOffset := ChannelLoop * ChannelHeight + ChannelHeight shr 1 + FTransportBarHeight;
+        ChannelZeroLine := ChannelHeight div 2;
+        FBitmap.Canvas.Pen.Color := RGBToColor(35, 40, 52);
         FBitmap.Canvas.Pen.Width := 1;
-        FBitmap.Canvas.MoveTo(0, ChannelScreenOffset);
+        FBitmap.Canvas.MoveTo(Round(FSampleStartLocation * FZoomFactorToScreen) - FOffset, ChannelScreenOffset);
 
         for SliceLoop := 0 to SliceListGUI.Count - 2 do
         begin
           AdderFactor := TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate;
 
-          SliceX := Round(TMarkerGUI(SliceListGUI[SliceLoop]).Location * FZoomFactorToScreen - FOffset);
-          SliceX2 := Round(TMarkerGUI(SliceListGUI[SliceLoop + 1]).Location * FZoomFactorToScreen - FOffset);
+          SliceLeft :=
+            Round((TMarkerGUI(SliceListGUI[SliceLoop]).Location) *
+            FBpmFactor * FZoomFactorToScreen - FOffset);
 
-          Adder := TMarkerGUI(SliceListGUI[SliceLoop]).OriginalLocation * FZoomFactorToScreen - FOffset;
+          SliceRight :=
+            Round((TMarkerGUI(SliceListGUI[SliceLoop + 1]).Location) *
+            FBpmFactor * FZoomFactorToScreen - FOffset);
 
-          // Only render data within the view
-          if (SliceX < Width) and (SliceX2 > 0) then
+          Adder :=
+            TMarkerGUI(SliceListGUI[SliceLoop]).OriginalLocation *
+            FBpmFactor * FZoomFactorToScreen - FOffset;
+
+          // Only render data within view
+          if (SliceRight > 0) and (SliceLeft < Width) then
           begin
-            for ScreenLoop := SliceX to Pred(SliceX2) do
+            for ScreenLoop := SliceLeft to Pred(SliceRight) do
             begin
-              PositionInData1 := (FOffset + Adder) * FZoomFactorToData;
-              PositionInData2 := (FOffset + Adder + AdderFactor) * FZoomFactorToData;
-              MinValue:= 100;
-              MaxValue:= -100;
-              if (ScreenLoop <= Width) and (ScreenLoop >= 0) then
+              PositionInData1 :=
+                (FOffset + Adder) * FBpmAdder * FZoomFactorToData;
+              PositionInData2 :=
+                (FOffset + Adder + AdderFactor) * FBpmAdder * FZoomFactorToData;
+
+              // Initialize to opposite maxima
+              MinValue := 1;
+              MaxValue := -1;
+
+              if (ScreenLoop >= 0) and (ScreenLoop < Width) then
               begin
                 if FZoomFactorToData > 50 then
                 begin
                   // Subsampling sample values when zoomed in
-                  DataValue := FModel.DecimatedData[Round(PositionInData1 * FModel.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                  DataValue := FModel.DecimatedData[
+                    Round(PositionInData1 *
+                    FModel.Wave.ChannelCount + ChannelLoop) div
+                    DECIMATED_CACHE_DISTANCE];
+
+                  // Seek maxima
                   for SubSampleLoop := Round(PositionInData1) to Round(PositionInData2) - 1 do
                   begin
-                    DataValue := FModel.DecimatedData[(SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                    DataValue := FModel.DecimatedData[
+                        (SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div
+                        DECIMATED_CACHE_DISTANCE];
+
                     if DataValue < MinValue then MinValue := DataValue;
                     if DataValue > MaxValue then MaxValue := DataValue;
                   end;
-                  FBitmap.Canvas.Line(ScreenLoop, Round(MinValue * FZoomFactorY * ChannelZeroLine) + ChannelScreenOffset,
-                    ScreenLoop, Round(MaxValue * FZoomFactorY * ChannelZeroLine) + ChannelScreenOffset);
+
+                  // Make sure the value is limited to the screen range
+                  if MaxValue > 1 then MaxValue := 1;
+                  if MinValue < -1 then MinValue := -1;
+
+                  FBitmap.Canvas.Line(
+                    FSampleStartLocation + ScreenLoop,
+                    Round(MinValue * ChannelZeroLine) + ChannelScreenOffset,
+                    FSampleStartLocation + ScreenLoop,
+                    Round(MaxValue * ChannelZeroLine) + ChannelScreenOffset);
                 end
                 else
                 begin
                   // Pixelview
-                  DataValue := FModel.DecimatedData[(Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div DECIMATED_CACHE_DISTANCE];
+                  DataValue := FModel.DecimatedData[
+                    (Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div
+                    DECIMATED_CACHE_DISTANCE];
+
                   if PositionInData1 < FModel.Wave.ReadCount then
                   begin
-                    FBitmap.Canvas.LineTo(ScreenLoop, Round(DataValue * FZoomFactorY * ChannelZeroLine) + ChannelScreenOffset);
+                    // Make sure the value is limited to the screen range
+                    if DataValue > 1 then DataValue := 1;
+                    if DataValue < -1 then DataValue := -1;
+
+                    FBitmap.Canvas.LineTo(
+                      FSampleStartLocation + ScreenLoop,
+                      Round(DataValue * ChannelZeroLine) + ChannelScreenOffset);
                   end;
                 end;
               end;
@@ -503,110 +660,219 @@ begin
 
         FBitmap.Canvas.Pen.Color := clLime;
         FBitmap.Canvas.MoveTo(0, ChannelScreenOffset);
+
+        for SliceLoop := 0 to Pred(SliceListGUI.Count) do
+        begin
+          SliceLeft := Round(
+            FSampleStartLocation +
+            TMarkerGUI(SliceListGUI[SliceLoop]).Location *
+            FBpmFactor * FZoomFactorToScreen - FOffset);
+
+          // SliceMarker
+          case TMarkerGUI(SliceListGUI[SliceLoop]).SliceType of
+          SLICE_UNDELETABLE: Canvas.Pen.Color := clYellow;
+          SLICE_NORMAL: Canvas.Pen.Color := clRed;
+          SLICE_VIRTUAL: Canvas.Pen.Color := clGray;
+          end;
+
+          if TMarkerGUI(SliceListGUI[SliceLoop]).Selected then
+            FBitmap.Canvas.Pen.Color := clGreen;
+
+          FBitmap.Canvas.Pen.Width := 1;
+          FBitmap.Canvas.Pen.Color := clBlack;
+          FBitmap.Canvas.Line(
+            SliceLeft,
+            Succ(FTransportBarHeight),
+            SliceLeft,
+            TrackHeight);
+
+          if TMarkerGUI(SliceListGUI[SliceLoop]).Locked then
+          begin
+            FBitmap.Canvas.Brush.Color := clYellow;
+            FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+          end
+          else
+          begin
+            FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
+            FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+          end;
+        end;
+
+        SliceLeft := Round(LoopStart.Location * FZoomFactorToScreen - FOffset);
+        FBitmap.Canvas.Pen.Color := clRed;
+        FBitmap.Canvas.Brush.Color := REDSCALE_70;
+        FBitmap.Canvas.Pen.Width := 3;
+        FBitmap.Canvas.Line(
+          SliceLeft,
+          Succ(FTransportBarHeight),
+          SliceLeft,
+          TrackHeight);
+        FBitmap.Canvas.Pen.Width := 1;
+        FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
+
+        SliceLeft := Round(LoopEnd.Location * FZoomFactorToScreen - FOffset);
+        FBitmap.Canvas.Pen.Color := clRed;
+        FBitmap.Canvas.Brush.Color := REDSCALE_70;
+        FBitmap.Canvas.Pen.Width := 3;
+        FBitmap.Canvas.Line(
+          SliceLeft,
+          Succ(FTransportBarHeight),
+          SliceLeft,
+          TrackHeight);
+        FBitmap.Canvas.Pen.Width := 1;
+        FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
+
+        FCacheIsDirty := False;
       end;
     end;
-
-    for SliceLoop := 0 to Pred(SliceListGUI.Count) do
-    begin
-      SliceX := Round(TMarkerGUI(SliceListGUI[SliceLoop]).Location * FZoomFactorToScreen - FOffset);
-
-      // SliceMarker
-      case TMarkerGUI(SliceListGUI[SliceLoop]).SliceType of
-      SLICE_UNDELETABLE: Canvas.Pen.Color := clYellow;
-      SLICE_NORMAL: Canvas.Pen.Color := clRed;
-      SLICE_VIRTUAL: Canvas.Pen.Color := clGray;
-      end;
-
-      if TMarkerGUI(SliceListGUI[SliceLoop]).Selected then
-        FBitmap.Canvas.Pen.Color := clGreen;
-
-      FBitmap.Canvas.Line(SliceX, TrackHeight - 12, SliceX, 0);
-      if TMarkerGUI(SliceListGUI[SliceLoop]).Locked then
-      begin
-        FBitmap.Canvas.Brush.Color := clLime;
-        FBitmap.Canvas.FillRect(SliceX - 4, TrackHeight - 12, SliceX + 4, TrackHeight - 4);
-      end
-      else
-      begin
-        FBitmap.Canvas.Brush.Color := clLtGray;
-        FBitmap.Canvas.Rectangle(SliceX - 4, TrackHeight - 12, SliceX + 4, TrackHeight - 4);
-      end;
-
-{      Ramp := TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate;
-      FBitmap.Canvas.TextOut(SliceX, 5, Format('Ramp %f',[Ramp]));
-      FBitmap.Canvas.TextOut(SliceX, 15, Format('Location %d',[TMarkerGUI(SliceListGUI[SliceLoop]).Location]));
-      FBitmap.Canvas.TextOut(
-        Round(TMarkerGUI(SliceListGUI[SliceLoop]).Location * FZoomFactorToScreen - FOffset),
-        ChannelHeight - 10, Format('OrigLocation %d',[TMarkerGUI(SliceListGUI[SliceLoop]).OriginalLocation]));}
-    end;
-
-    // Draw measurements
-    FBitmap.Canvas.Pen.Color := clWhite;
-    TimeMarkerSpacing := Round(FZoomFactorToScreen * 22100) ;
-    for TimeMarker := 0 to LoopEnd.Location div 22100  do
-    begin
-      TimeMarkerLocation:= Round((TimeMarker * TimeMarkerSpacing) - FOffset);
-      FBitmap.Canvas.Line(TimeMarkerLocation, 0, TimeMarkerLocation, TrackHeight);
-    end;
-
-
-    SliceX := Round((LoopStart.Location) * FZoomFactorToScreen - FOffset);
-    FBitmap.Canvas.Pen.Color := clRed;
-    FBitmap.Canvas.Pen.Width:= 3;
-    FBitmap.Canvas.Line(SliceX, 0, SliceX, TrackHeight);
-//    FBitmap.Canvas.TextOut(SliceX, 15, Format('LoopStart %d',[LoopStart.Location]));
-
-    SliceX := Round((LoopEnd.Location) * FZoomFactorToScreen - FOffset);
-    FBitmap.Canvas.Pen.Color := clRed;
-    FBitmap.Canvas.Line(SliceX, 0, SliceX, TrackHeight);
-//    FBitmap.Canvas.TextOut(SliceX, 15, Format('LoopEnd %d',[LoopEnd.Location]));
-
-    FCacheIsDirty := False;
   end;
 
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  SliceX := Round((FModel.RealCursorPosition) * FZoomFactorToScreen - FOffset);
-  if FOldCursorPosition <> SliceX then
+  SliceLeft := Round(FModel.RealCursorPosition * FZoomFactorToScreen - FOffset);
+  if FOldCursorPosition <> SliceLeft then
   begin
-    Canvas.Pen.Color := clBlack;
-    Canvas.Line(SliceX, 0, SliceX, TrackHeight);
+    Canvas.Pen.Color := clWhite;
+    Canvas.Line(FSampleStartLocation + SliceLeft, Succ(FTransportBarHeight), SliceLeft, TrackHeight);
 
-    FOldCursorPosition := SliceX;
+    FOldCursorPosition := SliceLeft;
   end;
 
   inherited Paint;
 end;
 
+procedure TWaveGUI.UpdateSampleScale;
+begin
+  // Original to Scaled BPM rate factor
+  FBpmFactor := (SampleEnd.Location - SampleStart.Location) / FModel.Wave.Frames;
+  FBpmAdder := 1 / FBpmFactor;
+  FSampleStartLocation := Round(SampleStart.Location * FZoomFactorToScreen);
+end;
+
+procedure TWaveGUI.DblClick;
+var
+  lDetectSliceMarker: TMarkerGUI;
+  lRemoveMarkerCommand: TRemoveMarkerCommand;
+  lAddMarkerCommand: TAddMarkerCommand;
+  lXRelative: Integer;
+begin
+  lXRelative := Round((FOffset + FMouseX) * FZoomFactorToData * FBpmAdder) - Round(SampleStart.Location * FBpmAdder);
+
+  lDetectSliceMarker := GetSliceAt(lXRelative, 5 * FZoomFactorToData);
+  if Assigned(lDetectSliceMarker) then
+  begin
+    lRemoveMarkerCommand := TRemoveMarkerCommand.Create(Self.ObjectID);
+    try
+      lRemoveMarkerCommand.ObjectID := lDetectSliceMarker.ObjectID;
+      lRemoveMarkerCommand.Persist := True;
+
+      GCommandQueue.PushCommand(lRemoveMarkerCommand);
+    except
+      lRemoveMarkerCommand.Free;
+    end;
+  end
+  else
+  begin
+    lAddMarkerCommand := TAddMarkerCommand.Create(Self.ObjectID);
+    try
+      lAddMarkerCommand.Location := lXRelative;
+      lAddMarkerCommand.Persist := True;
+
+      GCommandQueue.PushCommand(lAddMarkerCommand);
+    except
+      lAddMarkerCommand.Free;
+    end;
+  end;
+
+  FCacheIsDirty := True;
+  Invalidate;
+
+  inherited DblClick;
+end;
+
 procedure TWaveGUI.Mousedown(Button: Tmousebutton; Shift: Tshiftstate; X,
   Y: Integer);
 var
-  XRelative: Integer;
-  i: Integer;
-  lMode: Integer;
-  lMargin: single;
+  lXRelative: Integer;
+  lMousePosition: Integer;
   lMoveMarkerCommand: TUpdateMarkerCommand;
-  lRemoveMarkerCommand: TRemoveMarkerCommand;
-  lAddMarkerCommand: TAddMarkerCommand;
   lToggleLockCommand: TToggleLockMarkerCommand;
   lUpdateWaveLoopMarkerCommand: TUpdateWaveLoopMarkerCommand;
+  lUpdateWaveSampleMarkerCommand: TUpdateWaveSampleMarkerCommand;
 begin
-  lMargin := 5 * (1000 / ZoomFactorX);
-  XRelative:= Round((FOffset + X) * (1000 / ZoomFactorX));
+  FMouseX := X;
 
-  if (Height - Y) < 10 then
-    lMode := 1
-  else
-    lMode := 0;
+  FMargin := 5 * FZoomFactorToData;
 
-  case Button of
-  mbLeft:
+  lXRelative := Round((FOffset + X) * FZoomFactorToData);
+
+  // Where are we in this control?
+  lMousePosition := Y - Top;
+  if (lMousePosition >= 0) and (lMousePosition < 10) then
   begin
-    case GSettings.EditMode of
-    emEdit:
+    FMouseArea := maLoopMarkers;
+  end
+  else if (lMousePosition >= 10) and (lMousePosition < 20) then
+  begin
+    FMouseArea := maSampleMarkers;
+  end
+  else if (lMousePosition >= 20) and (lMousePosition < 30) then
+  begin
+    FMouseArea := maSliceMarkers;
+  end
+  else
+  begin
+    FMouseArea := maWave;
+  end;
+
+  case FMouseArea of
+    maSliceMarkers:
     begin
-      FSelectedLoopMarkerGUI := LoopMarkerAt(XRelative, lMargin);
+      FSelectedSlice :=
+        GetSliceAt(
+          Round(lXRelative * FBpmAdder) -
+          Round(SampleStart.Location * FBpmAdder),
+        FMargin);
+
+      if Assigned(FSelectedSlice) then
+      begin
+        case Button of
+          mbLeft:
+          begin
+            if FSelectedSlice.Locked then
+            begin
+              FDragSlice := True;
+
+              lMoveMarkerCommand := TUpdateMarkerCommand.Create(Self.ObjectID);
+              try
+                lMoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
+                lMoveMarkerCommand.Location := FSelectedSlice.Location;
+                lMoveMarkerCommand.Persist := True;
+
+                GCommandQueue.PushCommand(lMoveMarkerCommand);
+              except
+                lMoveMarkerCommand.Free;
+              end;
+            end;
+          end;
+          mbRight:
+          begin
+            lToggleLockCommand := TToggleLockMarkerCommand.Create(Self.ObjectID);
+            try
+              lToggleLockCommand.ObjectID := FSelectedSlice.ObjectID;
+
+              GCommandQueue.PushCommand(lToggleLockCommand);
+            except
+              lToggleLockCommand.Free;
+            end;
+          end;
+        end;
+      end;
+    end;
+    maLoopMarkers:
+    begin
+      FSelectedLoopMarkerGUI := LoopMarkerAt(lXRelative, FMargin);
 
       if Assigned(FSelectedLoopMarkerGUI) then
       begin
@@ -615,90 +881,36 @@ begin
           lUpdateWaveLoopMarkerCommand.ObjectID := FSelectedLoopMarkerGUI.ObjectID;
           lUpdateWaveLoopMarkerCommand.DataType := FSelectedLoopMarkerGUI.DataType;
           lUpdateWaveLoopMarkerCommand.Persist := True;
-          lUpdateWaveLoopMarkerCommand.Location := XRelative;
+          lUpdateWaveLoopMarkerCommand.Location := lXRelative;
 
           GCommandQueue.PushCommand(lUpdateWaveLoopMarkerCommand);
         except
           lUpdateWaveLoopMarkerCommand.Free;
         end;
-      end
-      else
+      end;
+    end;
+    maSampleMarkers:
+    begin
+      FSelectedSampleMarkerGUI := SampleMarkerAt(lXRelative, FMargin);
+
+      if Assigned(FSelectedSampleMarkerGUI) then
       begin
-        FSelectedSlice := GetSliceAt(XRelative, lMargin);
+        lUpdateWaveSampleMarkerCommand := TUpdateWaveSampleMarkerCommand.Create(Self.ObjectID);
+        try
+          lUpdateWaveSampleMarkerCommand.ObjectID := FSelectedSampleMarkerGUI.ObjectID;
+          lUpdateWaveSampleMarkerCommand.DataType := FSelectedSampleMarkerGUI.DataType;
+          lUpdateWaveSampleMarkerCommand.Persist := True;
+          lUpdateWaveSampleMarkerCommand.Location := lXRelative;
 
-        if Assigned(FSelectedSlice) then
-        begin
-          FSelectedSlice.Selected := True;
-
-          case lMode of
-            1:
-            begin
-              lToggleLockCommand := TToggleLockMarkerCommand.Create(Self.ObjectID);
-              try
-                lToggleLockCommand.ObjectID := FSelectedSlice.ObjectID;
-
-                GCommandQueue.PushCommand(lToggleLockCommand);
-              except
-                lToggleLockCommand.Free;
-              end;
-            end;
-            0:
-            begin
-              if FSelectedSlice.Locked then
-              begin
-                FDragSlice := True;
-
-                lMoveMarkerCommand := TUpdateMarkerCommand.Create(Self.ObjectID);
-                try
-                  lMoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
-                  lMoveMarkerCommand.Location := FSelectedSlice.Location;
-                  lMoveMarkerCommand.Persist := True;
-
-                  GCommandQueue.PushCommand(lMoveMarkerCommand);
-                except
-                  lMoveMarkerCommand.Free;
-                end;
-              end;
-            end;
-          end;
-        end
-        else
-        begin
-          lAddMarkerCommand := TAddMarkerCommand.Create(Self.ObjectID);
-          try
-            lAddMarkerCommand.Location := XRelative;
-            lAddMarkerCommand.Persist := True;
-
-            GCommandQueue.PushCommand(lAddMarkerCommand);
-          except
-            lAddMarkerCommand.Free;
-          end;
+          GCommandQueue.PushCommand(lUpdateWaveSampleMarkerCommand);
+        except
+          lUpdateWaveSampleMarkerCommand.Free;
         end;
       end;
     end;
-    emRubberbandSelect:
+    maWave:
     begin
-      // Rubbeband selectmode
-      FRubberbandSelect := True;
-      FRubberbandX1 := XRelative;
-    end;
-    emSelect:
-    begin
-      // Deselect all before add/edit
-      for i:= 0 to Pred(SliceListGUI.Count) do
-        TMarkerGUI(SliceListGUI.Items[i]).Selected:= False;
-
-      FSelectedSlice:= GetSliceAt(XRelative, lMargin);
-      FSelectedSlice.Selected:= True;
-    end;
-    else
-    end;
-  end;
-  mbRight:
-    begin
-      FSelectedSlice := GetSliceAt(XRelative, lMargin);
-
-      if not Assigned(FSelectedSlice) then
+      if Button = mbLeft then
       begin
         FOriginalZoomFactorX := FZoomFactorX;
         FOriginalOffsetX := X;
@@ -706,22 +918,6 @@ begin
         FOldOffset:= FOffset;
         FOldX:= X;
         FZooming := True;
-      end;
-
-      if Assigned(FSelectedSlice) then
-      begin
-        if not FSelectedSlice.Locked then
-        begin
-          lRemoveMarkerCommand := TRemoveMarkerCommand.Create(Self.ObjectID);
-          try
-            lRemoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
-            lRemoveMarkerCommand.Persist := True;
-
-            GCommandQueue.PushCommand(lRemoveMarkerCommand);
-          except
-            lRemoveMarkerCommand.Free;
-          end;
-        end;
       end;
     end;
   end;
@@ -735,11 +931,14 @@ end;
 procedure TWaveGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 var
-  XRelative: Integer;
+  lXRelative: Integer;
   lMoveMarkerCommand: TUpdateMarkerCommand;
   lUpdateWaveLoopMarkerCommand: TUpdateWaveLoopMarkerCommand;
+  lUpdateWaveSampleMarkerCommand: TUpdateWaveSampleMarkerCommand;
 begin
-  XRelative:= Round((FOffset + X) * (1000 / ZoomFactorX));
+  FMouseX := X;
+
+  lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
   if Assigned(FSelectedLoopMarkerGUI) then
   begin
@@ -747,7 +946,7 @@ begin
     try
       lUpdateWaveLoopMarkerCommand.DataType := FSelectedLoopMarkerGUI.DataType;
       lUpdateWaveLoopMarkerCommand.Persist := False;
-      lUpdateWaveLoopMarkerCommand.Location := XRelative;
+      lUpdateWaveLoopMarkerCommand.Location := lXRelative;
 
       GCommandQueue.PushCommand(lUpdateWaveLoopMarkerCommand);
     except
@@ -756,15 +955,31 @@ begin
 
     FSelectedLoopMarkerGUI := nil;
   end
-  else
-  if FDragSlice then
+  else if Assigned(FSelectedSampleMarkerGUI) then
+  begin
+    lUpdateWaveSampleMarkerCommand := TUpdateWaveSampleMarkerCommand.Create(Self.ObjectID);
+    try
+      lUpdateWaveSampleMarkerCommand.DataType := FSelectedSampleMarkerGUI.DataType;
+      lUpdateWaveSampleMarkerCommand.Persist := False;
+      lUpdateWaveSampleMarkerCommand.Location := lXRelative;
+
+      GCommandQueue.PushCommand(lUpdateWaveSampleMarkerCommand);
+    except
+      lUpdateWaveSampleMarkerCommand.Free;
+    end;
+
+    UpdateSampleScale;
+
+    FSelectedSampleMarkerGUI := nil;
+  end
+  else if FDragSlice then
   begin
     // Update model with last slice location before end drag slice
     // do not persist as this is done BEFORE a change
     lMoveMarkerCommand := TUpdateMarkerCommand.Create(Self.ObjectID);
     try
       lMoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
-      lMoveMarkerCommand.Location := XRelative;
+      lMoveMarkerCommand.Location := Round(lXRelative * FBpmAdder) - Round(SampleStart.Location * FBpmAdder);
       lMoveMarkerCommand.Persist := False;
 
       GCommandQueue.PushCommand(lMoveMarkerCommand);
@@ -778,8 +993,7 @@ begin
   if FZooming then
     FZooming:= False;
 
-  if FRubberbandSelect then
-    FRubberbandSelect:= False;
+  FMouseArea := maNone;
 
   FCacheIsDirty := True;
   Invalidate;
@@ -789,47 +1003,54 @@ end;
 
 procedure TWaveGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
 var
-  XRelative: Integer;
+  lXRelative: Integer;
+  lXLocationInSample: Integer;
 begin
-  XRelative:= Round((FOffset + X) * (1000 / ZoomFactorX));
+  FMouseX := X;
+
+  UpdateSampleScale;
+
+  lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
   if Assigned(FSelectedLoopMarkerGUI) then
   begin
-    FSelectedLoopMarkerGUI.Location := XRelative;
+    FSelectedLoopMarkerGUI.Location := lXRelative;
   end
-  else
-  if FDragSlice then
+  else if Assigned(FSelectedSampleMarkerGUI) then
+  begin
+    FSelectedSampleMarkerGUI.Location := lXRelative;
+  end
+  else if FDragSlice then
   begin
     if Assigned(FSelectedSlice) then
     begin
       if FSelectedSlice.Locked then
       begin
-        if (XRelative > FSelectedSlice.PrevSlice.Location) and (XRelative < FSelectedSlice.NextSlice.Location) then
+        lXLocationInSample :=
+          Round(lXRelative * FBpmAdder) -
+          Round(SampleStart.Location * FBpmAdder);
+
+        if (lXLocationInSample > FSelectedSlice.PrevSlice.Location) and
+           (lXLocationInSample < FSelectedSlice.NextSlice.Location) then
         begin
-          FSelectedSlice.Location := XRelative;
+          FSelectedSlice.Location := lXLocationInSample;
+
           Sortslices;
         end;
       end;
     end;
   end
-  else
-  if FZooming then
+  else if FZooming then
   begin
-    FZoomFactorX:= FOriginalZoomFactorX + ((FOriginalOffsetY - Y) / 5);
+    FZoomFactorX := FOriginalZoomFactorX + ((FOriginalOffsetY - Y) / 5);
     if FZoomFactorX < 0.3 then FZoomFactorX := 0.3;
-    FOffset:= FOldOffset + (X - FOldX);
-  end
-  else
-  if FRubberbandSelect then
-  begin
-    XRelative:= Round((FOffset + X) * (1000 / ZoomFactorX));
-    FRubberbandX2:= XRelative;
+    FOffset := FOldOffset + (X - FOldX);
   end;
-
-  inherited MouseMove(Shift, X, Y);
 
   FCacheIsDirty := True;
   Invalidate;
+
+  inherited MouseMove(Shift, X, Y);
 end;
 
 procedure TWaveGUI.DragDrop(Source: TObject; X, Y: Integer);
@@ -854,6 +1075,25 @@ begin
     except
       lDropWave.Free;
     end;
+  end;
+end;
+
+function TWaveGUI.SampleMarkerAt(Location: Integer; AMargin: Single
+  ): TSampleMarkerGUI;
+begin
+  SampleStart.Location := FModel.SampleStart.Location;
+  SampleEnd.Location := FModel.SampleEnd.Location;
+
+  Result := nil;
+
+  if Abs(Location - SampleStart.Location) < AMargin then
+  begin
+    Result := SampleStart;
+  end
+  else
+  if Abs(Location - SampleEnd.Location) < AMargin then
+  begin
+    Result := SampleEnd;
   end;
 end;
 

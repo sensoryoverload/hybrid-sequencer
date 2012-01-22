@@ -5,11 +5,10 @@ unit tdstretch;
 {$ifdef cpu386}
 {$ASMMODE INTEL}
 {$endif cpu386}
-
 interface
 
 uses
-  sysutils, fifosamplebuffer, fifosamplepipe, mmx;
+  sysutils, fifosamplebuffer, fifosamplepipe, mmx, beattrigger;
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
@@ -112,18 +111,18 @@ DEFAULT_SEQUENCE_MS = USE_AUTO_SEQUENCE_LEN;
 
   // Adjust tempo param according to tempo, so that variating processing sequence length is used
   // at varius tempo settings, between the given low...top limits
-  AUTOSEQ_TEMPO_LOW = 0.5;     // auto setting low tempo range (-50%)
-  AUTOSEQ_TEMPO_TOP = 2.0;     // auto setting top tempo range (+100%)
+  AUTOSEQ_TEMPO_LOW = 0.9; //0.5;     // auto setting low tempo range (-50%)
+  AUTOSEQ_TEMPO_TOP = 1.07; //2.0;     // auto setting top tempo range (+100%)
 
   // sequence-ms setting values at above low & top tempo
-  AUTOSEQ_AT_MIN =    125.0;
-  AUTOSEQ_AT_MAX =    50.0;
+  AUTOSEQ_AT_MIN =    120; //125.0;
+  AUTOSEQ_AT_MAX =    30; //50.0;
   AUTOSEQ_K =         ((AUTOSEQ_AT_MAX - AUTOSEQ_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEQ_C =         (AUTOSEQ_AT_MIN - (AUTOSEQ_K) * (AUTOSEQ_TEMPO_LOW));
 
   // seek-window-ms setting values at above low & top tempo
-  AUTOSEEK_AT_MIN =   25.0;
-  AUTOSEEK_AT_MAX =   15.0;
+  AUTOSEEK_AT_MIN =   20; // 25.0;
+  AUTOSEEK_AT_MAX =   3; //15.0;
   AUTOSEEK_K =        ((AUTOSEEK_AT_MAX - AUTOSEEK_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEEK_C =        (AUTOSEEK_AT_MIN - (AUTOSEEK_K) * (AUTOSEQ_TEMPO_LOW));
 
@@ -165,6 +164,7 @@ type
     pRefMidBuffer: PSingle;
     overlapLength: Integer;
     seekLength: Integer;
+    inverseSeekLength: Single;
     seekWindowLength: Integer;
     overlapDividerBits: Integer;
     slopingDivider: Integer;
@@ -179,6 +179,7 @@ type
     overlapMs: Integer;
     bAutoSeqSetting: Boolean;
     bAutoSeekSetting: Boolean;
+    beatdetect: TBeatDetector;
 
     procedure acceptNewOverlapLength(newOverlapLength: Integer);
 
@@ -291,6 +292,11 @@ begin
 
   inherited Create(outputBuffer);
 
+  beatdetect := TBeatDetector.Create;
+
+  beatdetect.setSampleRate(44100);
+  beatdetect.setThresHold(1);
+
   bQuickSeek := FALSE;
   channels := 1;
 
@@ -311,6 +317,9 @@ end;
 destructor TTDStretch.Destroy;
 begin
   FreeMem(pMidBuffer);
+
+  beatdetect.Free;
+
   inherited Destroy;
 end;
 
@@ -520,7 +529,7 @@ begin
     // to 'i'
     corr := calcCrossCorrStereo(refPos + 2 * i, pRefMidBuffer);
     // heuristic rule to slightly favour values close to mid of the range
-    tmp := (2 * i - seekLength) / seekLength;
+    tmp := (2 * i - seekLength) * inverseSeekLength;
     corr := ((corr + 0.1) * (1.0 - 0.25 * tmp * tmp));
 
     // Checks for the highest correlation value
@@ -575,7 +584,7 @@ begin
       // to 'tempOffset'
       corr := calcCrossCorrStereo(refPos + 2 * tempOffset, pRefMidBuffer);
       // heuristic rule to slightly favour values close to mid of the range
-      tmp := (2 * tempOffset - seekLength) / seekLength;
+      tmp := (2 * tempOffset - seekLength) * inverseSeekLength;
       corr := ((corr + 0.1) * (1.0 - 0.25 * tmp * tmp));
 
       // Checks for the highest correlation value
@@ -622,7 +631,7 @@ begin
     // to 'tempOffset'
     corr := calcCrossCorrMono(pRefMidBuffer, compare);
     // heuristic rule to slightly favour values close to mid of the range
-    tmp := (2 * tempOffset - seekLength) / seekLength;
+    tmp := (2 * tempOffset - seekLength) * inverseSeekLength;
     corr := ((corr + 0.1) * (1.0 - 0.25 * tmp * tmp));
 
     // Checks for the highest correlation value
@@ -677,7 +686,7 @@ begin
       // to 'tempOffset'
       corr := calcCrossCorrMono(refPos + tempOffset, pRefMidBuffer);
       // heuristic rule to slightly favour values close to mid of the range
-      tmp := (2 * tempOffset - seekLength) / seekLength;
+      tmp := (2 * tempOffset - seekLength) * inverseSeekLength;
       corr := ((corr + 0.1) * (1.0 - 0.25 * tmp * tmp));
 
       // Checks for the highest correlation value
@@ -731,6 +740,8 @@ begin
     seekWindowLength := 2 * overlapLength;
   end;
   seekLength := (sampleRate * seekWindowMs) div 1000;
+
+  inverseSeekLength := 1 / seekLength;
 end;
 
 // Sets new target tempo. Normal tempo = 'SCALE', smaller values represent slower 

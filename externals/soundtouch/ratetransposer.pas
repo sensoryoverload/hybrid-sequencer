@@ -2,8 +2,6 @@ unit ratetransposer;
 
 {$mode objfpc}
 
-{$fputype sse2}
-
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Sample rate transposer. Changes sample rate by using linear interpolation

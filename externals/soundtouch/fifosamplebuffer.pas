@@ -63,7 +63,7 @@ const
   MIN_BPM = 29;
 
   // Maximum allowed BPM rate. Used to restrict accepted result below a reasonable limit.
-  MAX_BPM = 230;
+  MAX_BPM = 200;
 
   INPUT_BLOCK_SAMPLES = 2048;
   DECIMATED_BLOCK_SAMPLES = 256;
@@ -198,7 +198,6 @@ function max(x, y: Integer): Integer;
 
 implementation
 
-//    #define max(x, y) (((x) > (y)) ? (x) : (y))
 function max(x, y: Integer): Integer;
 begin
   if x > y then

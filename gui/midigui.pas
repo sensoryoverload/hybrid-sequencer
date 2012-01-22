@@ -133,7 +133,7 @@ type
 
     FZoomingMode: Boolean;
     FBitmap: TBitmap;
-    FBitmapIsDirty: Boolean;
+    FCacheIsDirty: Boolean;
 
     FRubberBandSelect: TRect;
     FRubberBandMode: Boolean;
@@ -205,6 +205,7 @@ type
     property LocationOffset: Integer read FLocationOffset write FLocationOffset;
     property NoteOffset: Integer read FNoteOffset write FNoteOffset;
     property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
+    property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
     property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -398,7 +399,7 @@ begin
   // Hmmm..self initialize..
   ZoomFactorY := FZoomFactorY;
 
-  FBitmapIsDirty := True;
+  FCacheIsDirty := True;
 end;
 
 procedure TMidiPatternGUI.HandleLoopMarkerMouseDown(Button: TMouseButton;
@@ -647,7 +648,7 @@ begin
   ZoomFactorX := 1000000 / (AZoomTimeRight - AZoomTimeLeft);
   FLocationOffset := 0 - ConvertTimeToScreen(AZoomTimeLeft);
 
-  FBitmapIsDirty := True;
+  FCacheIsDirty := True;
   Invalidate;
 end;
 
@@ -725,7 +726,7 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-  if FBitmapIsDirty then
+  if FCacheIsDirty then
   begin
     FBitmap.Canvas.Clear;
     FBitmap.Height := Height;
@@ -935,7 +936,7 @@ begin
     end;
     FBitmap.Canvas.Pen.Width := 1;
 
-    FBitmapIsDirty := False;
+    FCacheIsDirty := False;
   end;
 
   Canvas.Draw(0, 0, FBitmap);
@@ -990,7 +991,7 @@ begin
   FLoopEnd.Update(TMidiPattern(Subject).LoopEnd);
   FLoopLength.Update(TMidiPattern(Subject).LoopLength);
 
-  FBitmapIsDirty := True;
+  FCacheIsDirty := True;
   Invalidate;
 
   DBLog('end TMidiGridGUI.Update');
@@ -1061,7 +1062,7 @@ begin
   lMidiNoteGUI := TMidiNoteGUI(Data);
   NoteListGUI.Remove(lMidiNoteGUI);
 
-  FBitmapIsDirty := True;
+  FCacheIsDirty := True;
   Invalidate;
 end;
 
@@ -1403,7 +1404,7 @@ begin
   // Invalidate here as this one of the few situations that screen updates are
   // requested by the observer and not the subject ie mousemove changes are not always
   // persistent towards the subject.
-  FBitmapIsDirty := True;
+  FCacheIsDirty := True;
   //Invalidate;
 end;
 
@@ -1450,7 +1451,7 @@ function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
 begin
   ZoomFactorY := ZoomFactorY + 100;
 
-  FBitmapIsDirty := True;
+  FCacheIsDirty := True;
   Invalidate;
 
   Result := inherited DoMouseWheelDown(Shift, MousePos);
@@ -1461,7 +1462,7 @@ function TMidiPatternGUI.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
 begin
   ZoomFactorY := ZoomFactorY - 100;
 
-  FBitmapIsDirty := True;
+  FCacheIsDirty := True;
   Invalidate;
 
   Result := inherited DoMouseWheelUp(Shift, MousePos);

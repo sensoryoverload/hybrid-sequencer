@@ -13,19 +13,17 @@ type
   { TWavePatternControlGUI }
 
   TWavePatternControlGUI = class(TFrame, IObserver)
-    cbPitched: TCheckBox;
-    DialControl1: TDialControl;
+    cbPitchAlgo: TComboBox;
     edtFilename: TLabeledEdit;
+    fspnPitch: TFloatSpinEditControl;
     gbAudioTrackSettings: TGroupBox;
     Label1: TLabel;
+    lblPitch: TLabel;
     lblLoopEnd: TLabel;
     lblLoopLength: TLabel;
     lblLoopStart: TLabel;
-    lblRootNote: TLabel;
     lblThreshold: TStaticText;
     spnBeatsPerMinute: TFloatSpinEdit;
-    spnPitchValue: TFloatSpinEditControl;
-    spnRootNote: TSpinEdit;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
     TrackBar1: TTrackBar;
@@ -39,6 +37,9 @@ type
     vcLoopStartBeat: TValueControl;
     vcLoopStartFrac: TValueControl;
 
+    procedure cbPitchAlgoChange(Sender: TObject);
+    procedure tbThresholdMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure TrackBar1Change(Sender: TObject);
     procedure LoopMetricChange(Sender: TObject);
     procedure cbPitchedChange(Sender: TObject);
@@ -117,7 +118,8 @@ procedure TWavePatternControlGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TWavePatternControl.Update');
 
-  spnBeatsPerMinute.Value := TWavePattern(Subject).RealBPM;
+  //spnBeatsPerMinute.Value := TWavePattern(Subject).RealBPM;
+  cbPitchAlgo.ItemIndex := Integer(TWavePattern(Subject).PitchAlgorithm);
 
   DBLog('end TWavePatternControl.Update');
 end;
@@ -173,7 +175,7 @@ var
 begin
   lTogglePitchCommand := TTogglePitchCommand.Create(FObjectID);
   try
-    lTogglePitchCommand.State := cbPitched.Checked;
+//    lTogglePitchCommand.State := cbPitched.Checked;
 
     GCommandQueue.PushCommand(lTogglePitchCommand);
   except
@@ -187,7 +189,7 @@ var
 begin
   lChangePitchCommand := TChangePitchCommand.Create(FObjectID);
   try
-    lChangePitchCommand.Pitch := spnPitchValue.Value;
+    lChangePitchCommand.Pitch := fspnPitch.Value;
 
     GCommandQueue.PushCommand(lChangePitchCommand);
   except
@@ -225,6 +227,36 @@ begin
   end;
 end;
 
+procedure TWavePatternControlGUI.tbThresholdMouseUp(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  lChangeThresholdCommand: TChangeThresHoldCommand;
+begin
+  lChangeThresholdCommand := TChangeThresHoldCommand.Create(FObjectID);
+  try
+    lChangeThresholdCommand.Threshold :=
+      Round((100 * tbThreshold.Position) / tbThreshold.Max);
+
+    GCommandQueue.PushCommand(lChangeThresholdCommand);
+  except
+    lChangeThresholdCommand.Free;
+  end;
+end;
+
+procedure TWavePatternControlGUI.cbPitchAlgoChange(Sender: TObject);
+var
+  lChangeStretchAlgoCommand: TChangeStretchAlgoCommand;
+begin
+  lChangeStretchAlgoCommand := TChangeStretchAlgoCommand.Create(FObjectID);
+  try
+    lChangeStretchAlgoCommand.PitchAlgorithm := TPitchAlgorithm(cbPitchAlgo.ItemIndex);
+
+    GCommandQueue.PushCommand(lChangeStretchAlgoCommand);
+  except
+    lChangeStretchAlgoCommand.Free;
+  end;
+end;
+
 procedure TWavePatternControlGUI.LoopMetricChange(Sender: TObject);
 begin
   //
@@ -244,6 +276,13 @@ end;
 constructor TWavePatternControlGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+
+  cbPitchAlgo.Items.Add('None');
+  cbPitchAlgo.Items.Add('SoundTouch Eco');
+  cbPitchAlgo.Items.Add('MultiBand SoundTouch Eco');
+  cbPitchAlgo.Items.Add('SoundTouch Hi-Q');
+  cbPitchAlgo.Items.Add('MultiBand SoundTouch Hi-Q');
+  cbPitchAlgo.Items.Add('Pitched');
 
   FWavePatternGUI := TWaveGUI.Create(nil);
   FWavePatternGUI.Align := alClient;

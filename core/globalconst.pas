@@ -103,6 +103,8 @@ type
 
   TLoopMarkerType = (ltStart, ltEnd, ltLength);
 
+  TSampleMarkerType = (stStart, stEnd);
+
   TStoreType = (stDefinition, stObject, stDatabase, stXML);
 
   TIterateState = (isStore, isRetrieve);
@@ -111,7 +113,7 @@ type
 
   TFileSourceTypes = (fsTrack, fsEmpty, fsWave, fsMIDI, fsPlugin);
 
-  TPitchAlgorithm = (paNone, paST, paMultiST, paRubberband, paPitched);
+  TPitchAlgorithm = (paNone, paSoundTouchEco, paMultiBandSoundTouchEco, paSoundTouch, paMultiBandSoundTouch, paPitched);
 
   TSerializeAction = (saRetrieveProperties, saInitilizeObjects);
 
@@ -366,6 +368,21 @@ type
     property Location: Integer read FLocation write FLocation;
   end;
 
+  { TSampleMarker }
+
+  TSampleMarker = class(THybridPersistentModel)
+  private
+    FDataType: TSampleMarkerType;
+    FLocation: Integer;
+  public
+    constructor Create(AObjectOwner: string; ADataType: TSampleMarkerType);
+    procedure Initialize; override;
+    procedure Finalize; override;
+  published
+    property DataType: TSampleMarkerType read FDataType write FDataType;
+    property Location: Integer read FLocation write FLocation;
+  end;
+
   { TMarker }
 
   TMarker = class(THybridPersistentModel)
@@ -455,6 +472,21 @@ type
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
     property LoopMarker: TLoopMarker read FLoopMarker write FLoopMarker;
     property DataType: TLoopMarkerType read FDataType write FDataType;
+    property Location: Integer read FLocation write FLocation;
+  end;
+
+  { TSampleMarkerGUI }
+
+  TSampleMarkerGUI = class(THybridPersistentView)
+  private
+    FDataType: TSampleMarkerType;
+    FLocation: Integer;
+    FSampleMarker: TSampleMarker;
+  public
+    constructor Create(AObjectOwner: string; ADataType: TSampleMarkerType);
+    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    property SampleMarker: TSampleMarker read FSampleMarker write FSampleMarker;
+    property DataType: TSampleMarkerType read FDataType write FDataType;
     property Location: Integer read FLocation write FLocation;
   end;
 
@@ -1311,6 +1343,25 @@ begin
   //
 end;
 
+{ TSampleMarker }
+
+constructor TSampleMarker.Create(AObjectOwner: string; ADataType: TSampleMarkerType);
+begin
+  inherited Create(AObjectOwner, False);
+
+  FDataType := ADataType;
+end;
+
+procedure TSampleMarker.Initialize;
+begin
+  Notify;
+end;
+
+procedure TSampleMarker.Finalize;
+begin
+  //
+end;
+
 { TPersistentPanel }
 
 destructor TPersistentFrame.Destroy;
@@ -1451,6 +1502,20 @@ end;
 procedure TLoopMarkerGUI.Update(Subject: THybridPersistentModel);
 begin
   Self.Location := TLoopMarker(Subject).Location;
+end;
+
+{ TSampleMarkerGUI }
+
+constructor TSampleMarkerGUI.Create(AObjectOwner: string; ADataType: TSampleMarkerType);
+begin
+  inherited Create(AObjectOwner);
+
+  FDataType := ADataType;
+end;
+
+procedure TSampleMarkerGUI.Update(Subject: THybridPersistentModel);
+begin
+  Self.Location := TSampleMarker(Subject).Location;
 end;
 
 

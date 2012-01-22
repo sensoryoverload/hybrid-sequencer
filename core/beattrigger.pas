@@ -62,16 +62,15 @@ implementation
 constructor TBeatDetector.create;
 begin
   inherited;
-  LowThresHold:= 0.15;  // 0.15
-  ThresHold:= 0.3; // 0.3
-  Filter1Out:= 0.0;
-  Filter2Out:= 0.0;
-  PeakEnv:= 0.0;
-  BeatTrigger:= false;
-  PrevBeatPulse:= false;
-  PrevBeatTrigger:= false;
-  //Setfiltercutoff(150);
-  //Setfiltercutoff(750);
+
+  LowThresHold := 0.15;
+  ThresHold := 0.3;
+  Filter1Out := 0.0;
+  Filter2Out := 0.0;
+  PeakEnv := 0.0;
+  BeatTrigger := false;
+  PrevBeatPulse := false;
+  PrevBeatTrigger := false;
   Setfiltercutoff(500);
   setSampleRate(44100);
 end;
@@ -79,8 +78,8 @@ end;
 // Compute all sample frequency related coeffs
 procedure TBeatDetector.setSampleRate(sampleRate:single);
 begin
-  KBeatFilter:=1.0 / (sampleRate * T_Filter);
-  BeatRelease:= exp(-1.0 / (sampleRate * Beat_ReleaseTime));
+  KBeatFilter :=1.0 / (sampleRate * T_Filter);
+  BeatRelease := exp(-1.0 / (sampleRate * Beat_ReleaseTime));
 end;
 
 procedure Tbeatdetector.Setfiltercutoff(Freq_Lp_Beat: Single);
@@ -113,17 +112,17 @@ var
   EnvIn: Single;
 begin
   // Step 1 : 2nd order low pass filter (made of two 1st order RC filter)
-  Filter1Out:= Filter1Out + (KBeatFilter * (input - Filter1Out));
-  Filter2Out:= Filter2Out + (KBeatFilter * (Filter1Out - Filter2Out));
+  Filter1Out := Filter1Out + (KBeatFilter * (input - Filter1Out));
+  Filter2Out := Filter2Out + (KBeatFilter * (Filter1Out - Filter2Out));
   
   // Step 2 : peak detector
-  EnvIn:= fabs(Filter2Out);
+  EnvIn := fabs(Filter2Out);
   if EnvIn > PeakEnv then
-    PeakEnv:= EnvIn  // Attack time = 0
+    PeakEnv := EnvIn  // Attack time = 0
   else
   begin
-    PeakEnv:= PeakEnv * BeatRelease;
-    PeakEnv:= PeakEnv + (1.0 - BeatRelease) * EnvIn;
+    PeakEnv := PeakEnv * BeatRelease;
+    PeakEnv := PeakEnv + (1.0 - BeatRelease) * EnvIn;
   end;
   
   // Step 3 : Schmitt trigger
@@ -136,22 +135,22 @@ begin
   begin
     if PeakEnv < LowThresHold then
     begin
-      BeatTrigger:= false;
+      BeatTrigger := false;
     end;
   end;
 
   // Step 4 : rising edge detector
-  BeatPulse:= false;
+  BeatPulse := false;
   if BeatTrigger and (not PrevBeatPulse) then
-    BeatPulse:= true;
+    BeatPulse := true;
 
   // Step 5 : declining edge detector
-  ReleasePulse:= false;
+  ReleasePulse := false;
   if (not BeatTrigger) and PrevBeatTrigger then
-    ReleasePulse:= true;
+    ReleasePulse := true;
     
-  PrevBeatPulse:= BeatTrigger;
-  PrevBeatTrigger:= BeatTrigger;
+  PrevBeatPulse := BeatTrigger;
+  PrevBeatTrigger := BeatTrigger;
 end;
 
 end.

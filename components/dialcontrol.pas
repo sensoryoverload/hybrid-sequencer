@@ -581,7 +581,7 @@ end;
 procedure TDialControl.EraseBackground(DC: HDC);
 begin
   // Uncomment this to enable default background erasing
-  //inherited EraseBackground(DC);
+  inherited EraseBackground(DC);
 end;
 
 procedure TDialControl.Paint;
@@ -878,6 +878,8 @@ begin
     begin
       OnChange(Self);
     end;
+
+    Invalidate;
   end;
 
   inherited MouseMove(Shift, X, Y);
@@ -1269,6 +1271,8 @@ begin
     begin
       OnChange(Self);
     end;
+
+    Invalidate;
   end;
 
   inherited MouseMove(Shift, X, Y);

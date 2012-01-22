@@ -2,8 +2,6 @@ unit soundtouch;
 
 {$mode objfpc}
 
-{$fputype sse2}
-
 //////////////////////////////////////////////////////////////////////////////
 ///
 /// SoundTouch - main class for tempo/pitch/rate adjusting routines. 
@@ -413,11 +411,11 @@ begin
   tempo := virtualTempo / virtualPitch;
   rate := virtualPitch * virtualRate;
 
-  if not TEST_FLOAT_EQUAL(rate, oldRate) then
+  //if not TEST_FLOAT_EQUAL(rate, oldRate) then
   begin
     pRateTransposer.setRate(rate);
   end;
-  if not TEST_FLOAT_EQUAL(tempo, oldTempo) then
+  //if not TEST_FLOAT_EQUAL(tempo, oldTempo) then
   begin
     pTDStretch.setTempo(tempo);
   end;
