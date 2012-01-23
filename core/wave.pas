@@ -118,7 +118,8 @@ type
     FSelectedSlice: TMarker;
     FRubberbandSelect: Boolean;
     FCursorAdder: Single;
-    FCursorReal: Single;
+    FPatternCursor: Single;
+    FSampleCursor: Single;
     FCursorRamp: Single;
     FSampleRate: Single;
     FVolumeDecay: Single;
@@ -129,19 +130,22 @@ type
     FWave: TWaveFile;
     FRealBPM: Single;
     FPatternLength: Integer;
-    FBPMscale: single;
+    FBPMscale: Single;
+    FSampleScale: Single;
 
 //    FDiskWriterThread: TDiskWriterThread;
     FDiskReaderThread: TDiskReaderThread;
     MultiWSOLA: TMultiWSOLA;
     FPitchAlgorithm: TPitchAlgorithm;
 
+    function CalculateSampleCursor: Boolean;
     procedure SetCursorRamp(const AValue: Single);
     procedure SetPitchAlgorithm(AValue: TPitchAlgorithm);
     procedure SetRealBPM(const AValue: Single);
     function SliceAt(Location: Integer; Margin: single): TMarker;
     procedure SetTransientThreshold(const AValue: Integer);
     procedure UpdateBPMScale;
+    procedure UpdateSampleScale;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -196,7 +200,8 @@ type
     property VirtualCursorPosition: Integer read FVirtualCursorPosition write FVirtualCursorPosition;
     property CurrentSliceIndex: Integer read FCurrentSliceIndex write FCurrentSliceIndex;
     property CursorAdder: Single read FCursorAdder write FCursorAdder;
-    property CursorReal: Single read FCursorReal write FCursorReal default 1.0;
+    property PatternCursor: Single read FPatternCursor write FPatternCursor default 1.0;
+    property SampleCursor: Single read FSampleCursor write FSampleCursor;
     property CursorRamp: Single read FCursorRamp write SetCursorRamp default 1.0;
     property BufferFrames: Integer read FBufferFrames write FBufferFrames;
 //    property DiskWriterThread: TDiskWriterThread read FDiskWriterThread;
@@ -279,7 +284,7 @@ type
     property Location: Integer read FLocation write FLocation;
   end;
 
-  { TUpdateWaveLoopStartCommand }
+  { TUpdateWaveSampleMarkerCommand }
 
   TUpdateWaveSampleMarkerCommand = class(TWaveFormCommand)
   private
@@ -294,7 +299,7 @@ type
     property DataType: TSampleMarkerType read FDataType write FDataType;
   end;
 
-  { TUpdateWaveLoopStartCommand }
+  { TUpdateWaveLoopMarkerCommand }
 
   TUpdateWaveLoopMarkerCommand = class(TWaveFormCommand)
   private
@@ -474,11 +479,12 @@ begin
   FWave.BufferFormat := bfInterleave;
 
   // Initalize settings
-  FDragSlice:= False;
-  FZooming:= False;
-  FRubberbandSelect:= False;
-  FCursorAdder:= 0;
-  FVolumeDecay:= 1;
+  FDragSlice := False;
+  FZooming := False;
+  FRubberbandSelect := False;
+  FCursorAdder := 0;
+  FVolumeDecay := 1;
+  FSampleScale := 1;
 
   FSliceList := TObjectList.Create(True);
   FCurrentSliceIndex:= 0;
@@ -944,7 +950,10 @@ begin
 
     if (ALocation >= lSliceStart.Location) and (ALocation < lSliceEnd.Location) then
     begin
-      AFrameData.Location := lSliceStart.OrigLocation + (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
+      AFrameData.Location :=
+        lSliceStart.OrigLocation +
+        (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
+
       AFrameData.Ramp := lSliceStart.DecayRate;
       break;
     end;
@@ -975,11 +984,24 @@ begin
   end;
 end;
 
+function TWavePattern.CalculateSampleCursor: Boolean;
+begin
+  Result := (FPatternCursor >= FSampleStart.Location) and (FPatternCursor < FSampleEnd.Location);
+  if Result then
+  begin
+    FSampleCursor := (FPatternCursor - FSampleStart.Location) * FSampleScale;
+  end;
+end;
+
+procedure TWavePattern.UpdateSampleScale;
+begin
+  FSampleScale := FWave.Frames / (FSampleEnd.Location - FSampleStart.Location);
+  GLogger.PushMessage(Format('FSampleScale %f', [FSampleScale]));
+end;
+
 procedure TWavePattern.UpdateBPMScale;
 begin
-  //  FBPMscale := GAudioStruct.BPM / FRealBPM;
-  FBPMscale := GAudioStruct.BPM * DivideByRealBPM_Multiplier *
-    (FWave.Frames / (FSampleEnd.Location - FSampleStart.Location));
+  FBPMscale := GAudioStruct.BPM * DivideByRealBPM_Multiplier;
   if FBPMscale > 16 then
     FBPMscale := 16
   else if FBPMscale < 0.1 then
@@ -996,6 +1018,7 @@ end;
 procedure TWavePattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
 var
   lAvailSamples: longint;
+  lInSample: Boolean;
 begin
   if AFrameIndex = 0 then
   begin
@@ -1003,82 +1026,91 @@ begin
   end;
 
   // Synchronize with global quantize track
-  if (CursorReal >= LoopEnd.Location) or SyncQuantize then
+  if (PatternCursor >= LoopEnd.Location) or SyncQuantize then
   begin
     SyncQuantize := False;
-    CursorReal := LoopStart.Location;
+    PatternCursor := LoopStart.Location;
   end;
+
+  lInSample := CalculateSampleCursor;
 
   // Fetch frame data packet containing warp factor and virtual location in wave data
   if AFrameIndex = 0 then
   begin
-    StartingSliceIndex := StartVirtualLocation(CursorReal);
+    StartingSliceIndex := StartVirtualLocation(FSampleCursor);
   end;
 
-  VirtualLocation(StartingSliceIndex, CursorReal, lFramePacket);
-  CursorAdder := lFramePacket.Location;
-  CursorRamp := lFramePacket.Ramp * FBPMscale;
-  if PitchAlgorithm = paPitched then
-    CursorRamp := Pitch;
-
-  // Put sound in buffer
-  lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
-  frac_pos := Frac(CursorAdder);
-  buf_offset := (Trunc(CursorAdder) * Wave.ChannelCount);
-
-  if Trunc(CursorAdder) < Wave.Frames then
+  if lInSample then
   begin
-    // Interpolate with Hermite interpolation
-    if buf_offset <= 0 then
-      xm1 := 0
-    else
-      xm1 := lBuffer[buf_offset - 1];
-    x0 := lBuffer[buf_offset];
-    x1 := lBuffer[buf_offset + 1];
-    x2 := lBuffer[buf_offset + 2];
-    WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
+    VirtualLocation(StartingSliceIndex, FSampleCursor, lFramePacket);
+    CursorAdder := lFramePacket.Location;
+    CursorRamp := lFramePacket.Ramp * FBPMscale;
+    if PitchAlgorithm = paPitched then
+      CursorRamp := Pitch;
 
-    // Scale buffer up to now when the scaling-factor has changed or
-    // the end of the buffer has been reached.
-    if PitchAlgorithm <> paNone then
+    // Put sound in buffer
+    lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
+    frac_pos := Frac(CursorAdder);
+    buf_offset := (Trunc(CursorAdder) * Wave.ChannelCount);
+
+    if Trunc(CursorAdder) < Wave.Frames then
     begin
-      if (CursorRamp <> psLastScaleValue) or (AFrameIndex = (AFrameCount - 1)) then
+      // Interpolate with Hermite interpolation
+      if buf_offset <= 0 then
+        xm1 := 0
+      else
+        xm1 := lBuffer[buf_offset - 1];
+      x0 := lBuffer[buf_offset];
+      x1 := lBuffer[buf_offset + 1];
+      x2 := lBuffer[buf_offset + 2];
+      WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
+
+      // Scale buffer up to now when the scaling-factor has changed or
+      // the end of the buffer has been reached.
+      if PitchAlgorithm <> paNone then
       begin
-        psEndLocation := AFrameIndex;
-        CalculatedPitch := Pitch * (1 / FCursorRamp);
+        if (CursorRamp <> psLastScaleValue) or (AFrameIndex = (AFrameCount - 1)) then
+        begin
+          psEndLocation := AFrameIndex;
+          CalculatedPitch := Pitch * (1 / FCursorRamp);
 
-        // Frames to process this window
-        lFrames := (psEndLocation - psBeginLocation) + 1;
+          // Frames to process this window
+          lFrames := (psEndLocation - psBeginLocation) + 1;
 
-        case PitchAlgorithm of
-          paSoundTouch, paSoundTouchEco:
-          begin
-            if CursorRamp <> psLastScaleValue then
+          case PitchAlgorithm of
+            paSoundTouch, paSoundTouchEco:
             begin
-              TimeStretch.setPitch(CalculatedPitch);
+              if CursorRamp <> psLastScaleValue then
+              begin
+                TimeStretch.setPitch(CalculatedPitch);
+              end;
+              TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
+              TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
             end;
-            TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
-            TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
-          end;
-          paMultiBandSoundTouch, paMultiBandSoundTouchEco:
-          begin
-            if CursorRamp <> psLastScaleValue then
+            paMultiBandSoundTouch, paMultiBandSoundTouchEco:
             begin
-              WSOLA.Pitch := CalculatedPitch;
+              if CursorRamp <> psLastScaleValue then
+              begin
+                WSOLA.Pitch := CalculatedPitch;
+              end;
+              WSOLA.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
             end;
-            WSOLA.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
           end;
+
+          // Remember last change
+          psBeginLocation:= AFrameIndex;
+          psLastScaleValue:= CursorRamp;
         end;
-
-        // Remember last change
-        psBeginLocation:= AFrameIndex;
-        psLastScaleValue:= CursorRamp;
+      end
+      else
+      begin
+        ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
       end;
-    end
-    else
-    begin
-      ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
     end;
+  end
+  else
+  begin
+    ABuffer[AFrameIndex] := 0;
   end;
 end;
 
@@ -1087,8 +1119,8 @@ begin
   UpdateBPMScale;
 
   // Advance cursors for midi and tsPattern
-  RealCursorPosition := Round(CursorReal);
-  CursorReal := CursorReal + FBPMscale;
+  RealCursorPosition := Round(PatternCursor);
+  PatternCursor := PatternCursor + FBPMscale;
 end;
 
 { TWaveFormScrollBox }
@@ -1444,6 +1476,7 @@ begin
     end;
   end;
 
+  FWavePattern.UpdateSampleScale;
   FWavePattern.UpdateBPMScale;
 
   // Update observers
@@ -1466,6 +1499,9 @@ begin
     stStart: FWavePattern.SampleStart.Location := FOldLocation;
     stEnd: FWavePattern.SampleEnd.Location := FOldLocation;
   end;
+
+  FWavePattern.UpdateSampleScale;
+  FWavePattern.UpdateBPMScale;
 
   // Update observers
   FWavePattern.Notify;

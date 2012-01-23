@@ -2658,7 +2658,7 @@ begin
   FNote := ANote;
 
   // Initialize with note length and decrease each iteration of a frame. This is
-  // like a pre allocated note off. When using loops this will play the note past
+  // like a pre allocated note off. When using loops this will play the note paSoundTouch
   // the end loop marker.
   FLength := ALength;
 

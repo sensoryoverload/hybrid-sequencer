@@ -734,7 +734,7 @@ begin
   if FOldCursorPosition <> SliceLeft then
   begin
     Canvas.Pen.Color := clWhite;
-    Canvas.Line(FSampleStartLocation + SliceLeft, Succ(FTransportBarHeight), SliceLeft, TrackHeight);
+    Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, TrackHeight);
 
     FOldCursorPosition := SliceLeft;
   end;
