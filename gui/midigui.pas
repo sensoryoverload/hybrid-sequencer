@@ -925,6 +925,8 @@ begin
     begin
       FBitmap.Canvas.Pen.Color := clRed;
       FBitmap.Canvas.Line(x, 0, x, Height);
+      FBitmap.Canvas.TextOut(x + 10, 10, Format('Start %d', [LoopStart.Location]))
+
     end;
 
     // Draw loopendmarker
@@ -933,6 +935,7 @@ begin
     begin
       FBitmap.Canvas.Pen.Color := clRed;
       FBitmap.Canvas.Line(x, 0, x, Height);
+      FBitmap.Canvas.TextOut(x + 10, 10, Format('End %d', [LoopEnd.Location]))
     end;
     FBitmap.Canvas.Pen.Width := 1;
 
@@ -949,6 +952,7 @@ begin
     begin
       Canvas.Pen.Color := clBlack;
       Canvas.Line(x, 0, x, Height);
+      Canvas.TextOut(x + 10, 10, Format('BPMScale %f', [FModel.BPMScale]));
     end;
 
     FOldCursorPosition := x;
@@ -1083,6 +1087,7 @@ begin
       if lMidiNoteGUI.ObjectID = AObjectID then
       begin
         Application.QueueAsyncCall(@ReleaseNote, PtrInt(TMidiNoteGUI(lMidiNoteGUI)));
+        break;
       end;
     end;
   end;

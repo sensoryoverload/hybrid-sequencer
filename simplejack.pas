@@ -458,10 +458,9 @@ var
   transport_state : jack_transport_state_t;
   lTrack: TTrack;
   TempLevel: jack_default_audio_sample_t;
-  GlobalBPMscale: Single;
   lPlayingPattern: TPattern;
-  lMidiEvent: jack_midi_event_t;
   buffer_size: Integer;
+  sync_frame: Integer;
 begin
 
   buffer_size := nframes * SizeOf(Single);
@@ -489,10 +488,22 @@ begin
   // Query BPM from transport
   transport_state := jack_transport_query(client, @transport_pos);
 
-  // Make sure that the main synchronize counter is valid
-  if GAudioStruct.MainSyncCounter >= (MaxInt shr 1) then
+  // Default to no-sync
+  sync_frame := -1;
+
+  // Detect at which frame a sync should be done
+  for i := 0 to Pred(nframes) do
   begin
-    GAudioStruct.MainSyncCounter := (MaxInt shr 1) - GAudioStruct.MainSyncCounter;
+    GAudioStruct.MainSyncCounter :=
+      GAudioStruct.MainSyncCounter + GAudioStruct.BPMScale;
+
+    if GAudioStruct.MainSyncCounter >= GAudioStruct.MainSyncLength then
+    begin
+      GAudioStruct.MainSyncCounter :=
+        GAudioStruct.MainSyncCounter - GAudioStruct.MainSyncLength;
+
+      sync_frame := i;
+    end;
   end;
 
   // Get number of pending pgPattern-events
@@ -557,8 +568,6 @@ begin
     inc(sync_counter);
   end;
 
-  GlobalBPMscale := GAudioStruct.BPM * DIVIDE_BY_120_MULTIPLIER;
-
   for j := 0 to Pred(GAudioStruct.Tracks.Count) do
   begin
     lTrack := TTrack(GAudioStruct.Tracks.Items[j]);
@@ -580,14 +589,13 @@ begin
         end;
       end;
 
-      //GLogger.PushMessage('Logging - ' + IntToStr(Random(1000)));
       for i := 0 to Pred(nframes) do
       begin
 
         if lTrack.Playing then
         begin
           // Synchronize section
-          if (GAudioStruct.MainSyncCounter + i) mod GAudioStruct.MainSyncModula = 0 then
+          if i = sync_frame then
           begin
             if Assigned(lTrack.ScheduledPattern) then
             begin
@@ -610,12 +618,6 @@ begin
                     TMidiData( TMidiPattern(lTrack.PlayingPattern).MidiDataList.Items[0] );
                 end;
               end;
-
-              {GLogger.PushMessage(
-                format('MainSyncCounter %d ScheduledPattern %s PlayingPattern %s OkToPlay %s',
-                [GAudioStruct.MainSyncCounter, booltostr(assigned(lTrack.ScheduledPattern), True),
-                booltostr(assigned(lTrack.PlayingPattern), True),
-                booltostr(lTrack.PlayingPattern.OkToPlay, True)]));}
 
               lTrack.PlayingPattern.Playing := True;
               lTrack.PlayingPattern.Scheduled := False;
@@ -712,15 +714,6 @@ begin
   end;
   //------- End effects section ----------------------------------------
 
-  {case GSettings.PlayState of
-    psPlay:
-    begin}
-      GAudioStruct.MainSyncCounter := GAudioStruct.MainSyncCounter + nframes;
-    {end;
-    psStop:;
-    psPause:;
-  end;}
-
   // Move to displaybuffer
   if GAudioStruct.Tracks.Count > 0 then
   begin
@@ -762,12 +755,27 @@ end;
 procedure TMainApp.acStopExecute(Sender: TObject);
 var
   i: Integer;
+  lWavePattern: TWavePattern;
+  lMidiPattern: TMidiPattern;
 begin
   // Stop
   GAudioStruct.PlayState:= psStop;
   for i := 0 to Pred(GAudioStruct.Tracks.Count) do
   begin
     TTrack(GAudioStruct.Tracks[i]).Playing:= False;
+    if Assigned(TTrack(GAudioStruct.Tracks[i]).PlayingPattern) then
+    begin
+      if TTrack(GAudioStruct.Tracks[i]).PlayingPattern is TWavePattern then
+      begin
+        lWavePattern := TWavePattern(TTrack(GAudioStruct.Tracks[i]).PlayingPattern);
+        lWavePattern.CursorAdder := lWavePattern.LoopStart.Location;
+      end
+      else if TTrack(GAudioStruct.Tracks[i]).PlayingPattern is TMidiPattern then
+      begin
+        lMidiPattern := TMidiPattern(TTrack(GAudioStruct.Tracks[i]).PlayingPattern);
+        lMidiPattern.CursorAdder := lMidiPattern.LoopStart.Location;
+      end
+    end;
   end;
 end;
 
@@ -1593,8 +1601,6 @@ end;
 
 procedure TMainApp.DoTracksRefreshEvent(TrackObject: TObject);
 var
-  lWavePattern: TWavePattern;
-  lMidiPattern: TMidiPattern;
   lTrackIndex: Integer;
 begin
   if not Assigned(TrackObject) then
@@ -1628,7 +1634,6 @@ procedure TMainApp.DoPatternRefreshEvent(TrackObject: TObject);
 var
   lWavePattern: TWavePattern;
   lMidiPattern: TMidiPattern;
-  lTrackIndex: Integer;
 begin
   if not Assigned(TrackObject) then
   begin

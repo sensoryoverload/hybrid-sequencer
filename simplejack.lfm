@@ -1,7 +1,7 @@
 object MainApp: TMainApp
-  Left = 406
+  Left = 183
   Height = 679
-  Top = 122
+  Top = 95
   Width = 1095
   ActiveControl = pnlTop
   AllowDropFiles = True

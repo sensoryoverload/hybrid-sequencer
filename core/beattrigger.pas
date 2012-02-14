@@ -35,7 +35,6 @@ type
     Filter2Out,
     BeatRelease,               // Release time coefficient
     PeakEnv:single;            // Peak enveloppe follower
-    BeatTrigger,               // Schmitt trigger output
     PrevBeatPulse:Boolean;     // Rising edge memory
     PrevBeatTrigger: Boolean;
     T_Filter,
@@ -45,6 +44,7 @@ type
   public
     BeatPulse:Boolean;         // Beat detector output
     ReleasePulse:Boolean;         // Beat detector output
+    BeatTrigger: Boolean;      // Schmitt trigger output
     constructor Create;
     procedure setSampleRate(SampleRate: single);
     procedure setFilterCutOff(Freq_Lp_Beat: single);
@@ -63,29 +63,29 @@ constructor TBeatDetector.create;
 begin
   inherited;
 
-  LowThresHold := 0.15;
-  ThresHold := 0.3;
+  LowThresHold := 0.3;
+  ThresHold := 0.5;
   Filter1Out := 0.0;
   Filter2Out := 0.0;
   PeakEnv := 0.0;
   BeatTrigger := false;
   PrevBeatPulse := false;
   PrevBeatTrigger := false;
-  Setfiltercutoff(500);
+  Setfiltercutoff(2000);
   setSampleRate(44100);
 end;
 
 // Compute all sample frequency related coeffs
 procedure TBeatDetector.setSampleRate(sampleRate:single);
 begin
-  KBeatFilter :=1.0 / (sampleRate * T_Filter);
+  KBeatFilter := 1.0 / (sampleRate * T_Filter);
   BeatRelease := exp(-1.0 / (sampleRate * Beat_ReleaseTime));
 end;
 
 procedure Tbeatdetector.Setfiltercutoff(Freq_Lp_Beat: Single);
 begin
   T_Filter := 1.0 / (2.0 * PI * Freq_Lp_Beat); // Low Pass filter time constant
-  Beat_ReleaseTime := 0.05; //0.02; // Release time of enveloppe detector in second
+  Beat_ReleaseTime := 0.05; // Release time of enveloppe detector in second
 end;
 
 procedure Tbeatdetector.Setthreshold(AValue: Single);

@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, globalconst, ContNrs, sampler, track, global_command,
-  utils, global, midi, midicontrolmap;
+  utils, global, midi, midicontrolmap, fileutil;
 
 type
   TAudioStructure = class;
@@ -120,8 +120,9 @@ type
     FMidiMapping: TMidiControlMap;
     //FModelThread: TModelThread;
 
-    FMainSyncCounter: Integer;
-    FMainSyncModula: Integer;
+    FMainSyncCounter: Single;
+    FMainSyncLength: Single;
+    FMainSyncSignal: Boolean;
     FMainQuantizeLength: Integer;
 
     FMainCursor: Single;
@@ -153,8 +154,9 @@ type
     property OldSelectedBank: TSampleBank read FOldSelectedBank write FOldSelectedBank;
   published
     property Tracks: TObjectList read FTrack write FTrack;
-    property MainSyncCounter: Integer read FMainSyncCounter write FMainSyncCounter;
-    property MainSyncModula: Integer read FMainSyncModula write FMainSyncModula;
+    property MainSyncCounter: Single read FMainSyncCounter write FMainSyncCounter;
+    property MainSyncLength: Single read FMainSyncLength write FMainSyncLength;
+    property MainSyncSignal: Boolean read FMainSyncSignal write FMainSyncSignal;
     property BPM: Single read FBPM write SetBPM;
     property BPMScale: Single read FBPMScale;
     property BPMAdder: Single read FBPMAdder;
@@ -187,6 +189,7 @@ begin
   FMainQuantizeLength := 8; // Syncronize at a 1 bar quantization
   FMainTimeLine := 10000; // Default 1 bar (4 beat) length
   FMainSyncCounter := 0;
+  MainSyncSignal := True;
   FBPM := 120;
 end;
 
@@ -242,10 +245,7 @@ end;
 
 procedure TAudioStructure.RecalculateSynchronize;
 begin
-  FMainSyncModula := Round(MainSampleRate * (60 / FBPM)) * FMainQuantizeLength;
-  //FMainCursor :=
-  //FMainScale := FMainTimeLine / MainSampleRate; // (10000 / (4 * 44100))
-  //FMainTimeLine: ;
+  FMainSyncLength := GSettings.SampleRate * 2;
 end;
 
 procedure TAudioStructure.DoCreateInstance(var AObject: TObject; AClassName: string);
@@ -398,6 +398,7 @@ begin
       lTrack.BeginUpdate;
 
       lWavePattern := TWavePattern.Create(lTrack.ObjectID);
+      lWavePattern.Text := ExtractFileNameWithoutExt(PatternName);
       lWavePattern.PatternName := PatternName;
       lWavePattern.WaveFileName := SourceLocation;
       lWavePattern.Position := Position;
@@ -416,6 +417,7 @@ begin
       lTrack.BeginUpdate;
 
       lMidiPattern := TMidiPattern.Create(lTrack.ObjectID);
+      lMidiPattern.Text := ExtractFileNameWithoutExt(PatternName);
       lMidiPattern.PatternName := PatternName;
       lMidiPattern.Position := Position;
       lTrack.PatternList.Add(lMidiPattern);

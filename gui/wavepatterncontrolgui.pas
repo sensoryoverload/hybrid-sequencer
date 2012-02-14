@@ -13,6 +13,8 @@ type
   { TWavePatternControlGUI }
 
   TWavePatternControlGUI = class(TFrame, IObserver)
+    btnDouble: TButton;
+    btnHalf: TButton;
     cbPitchAlgo: TComboBox;
     edtFilename: TLabeledEdit;
     fspnPitch: TFloatSpinEditControl;
@@ -22,11 +24,10 @@ type
     lblLoopEnd: TLabel;
     lblLoopLength: TLabel;
     lblLoopStart: TLabel;
-    lblThreshold: TStaticText;
-    spnBeatsPerMinute: TFloatSpinEdit;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
     TrackBar1: TTrackBar;
+    tbLatency: TTrackBar;
     vcLoopEndBar: TValueControl;
     vcLoopEndBeat: TValueControl;
     vcLoopEndFrac: TValueControl;
@@ -37,7 +38,10 @@ type
     vcLoopStartBeat: TValueControl;
     vcLoopStartFrac: TValueControl;
 
+    procedure btnDoubleClick(Sender: TObject);
+    procedure btnHalfClick(Sender: TObject);
     procedure cbPitchAlgoChange(Sender: TObject);
+    procedure tbLatencyChange(Sender: TObject);
     procedure tbThresholdMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure TrackBar1Change(Sender: TObject);
@@ -45,7 +49,6 @@ type
     procedure cbPitchedChange(Sender: TObject);
     procedure spnBeatsPerMinuteChange(Sender: TObject);
     procedure spnPitchChange(Sender: TObject);
-    procedure tbThresholdChange(Sender: TObject);
   private
     { private declarations }
     FModel: TWavePattern;
@@ -96,6 +99,7 @@ uses utils, global_command, global;
 
 procedure TWavePatternControlGUI.Connect;
 begin
+  DBLog(Format('Start Connect waveform (%s)', [FModel.ObjectID]));
   if Assigned(FModel) then
   begin
     FModel.Attach(FWavePatternGUI);
@@ -103,15 +107,18 @@ begin
 //    FWavePatternGUI.ZoomFactorX := 5;
 //    FWavePatternGUI.ZoomFactorY := 1;
   end;
+  DBLog(Format('End Connect waveform (%s)', [FModel.ObjectID]));
 end;
 
 procedure TWavePatternControlGUI.Disconnect;
 begin
-  DBLog(Format('Disconnect waveform (%s)', [FWavePatternGUI.ObjectID]));
+  DBLog(Format('Start Disconnect waveform (%s)', [FModel.ObjectID]));
   if Assigned(FModel) then
   begin
+    FWavePatternGUI.Disconnect;
     FModel.Detach(FWavePatternGUI);
   end;
+  DBLog(Format('End Disconnect waveform (%s)', [FModel.ObjectID]));
 end;
 
 procedure TWavePatternControlGUI.Update(Subject: THybridPersistentModel);
@@ -161,7 +168,7 @@ var
 begin
   lChangeRealBPMCommand := TChangeRealBPMCommand.Create(FObjectID);
   try
-    lChangeRealBPMCommand.RealBPM := spnBeatsPerMinute.Value;
+//    lChangeRealBPMCommand.RealBPM := spnBeatsPerMinute.Value;
 
     GCommandQueue.PushCommand(lChangeRealBPMCommand);
   except
@@ -195,26 +202,6 @@ begin
   except
     lChangePitchCommand.Free;
   end;
-end;
-
-procedure TWavePatternControlGUI.tbThresholdChange(Sender: TObject);
-var
-  lChangeThresholdCommand: TChangeThresHoldCommand;
-begin
-{ disable as it would produce idle commands needing countless undo's
-
-  lChangeThresholdCommand := TChangeThresHoldCommand.Create(FObjectID);
-  try
-    lChangeThresholdCommand.Threshold := tbThreshold.Position;
-
-    GCommandQueue.PushCommand(lChangeThresholdCommand);
-  except
-    lChangeThresholdCommand.Free;
-  end;}
-  { Put in command object
-      GAudioStruct.SelectedTrack.SelectedPattern.WaveForm.TransientThreshold:=
-        Round((100 * tbThreshold.Position) / tbThreshold.Max);
-  }
 end;
 
 procedure TWavePatternControlGUI.TrackBar1Change(Sender: TObject);
@@ -257,6 +244,46 @@ begin
   end;
 end;
 
+procedure TWavePatternControlGUI.tbLatencyChange(Sender: TObject);
+var
+  FChangeLatencyCommand: TChangeLatencyCommand;
+begin
+  // Double the length of the loop
+  FChangeLatencyCommand := TChangeLatencyCommand.Create(FObjectID);
+  try
+    FChangeLatencyCommand.Latency := tbLatency.Position;
+    GCommandQueue.PushCommand(FChangeLatencyCommand);
+  except
+    FChangeLatencyCommand.Free;
+  end;
+end;
+
+procedure TWavePatternControlGUI.btnDoubleClick(Sender: TObject);
+var
+  FDoubleLoopLengthCommand: TDoubleLoopLengthCommand;
+begin
+  // Double the length of the loop
+  FDoubleLoopLengthCommand := TDoubleLoopLengthCommand.Create(FObjectID);
+  try
+    GCommandQueue.PushCommand(FDoubleLoopLengthCommand);
+  except
+    FDoubleLoopLengthCommand.Free;
+  end;
+end;
+
+procedure TWavePatternControlGUI.btnHalfClick(Sender: TObject);
+var
+  FHalveLoopLengthCommand: THalveLoopLengthCommand;
+begin
+  // Halve the length of the loop
+  FHalveLoopLengthCommand := THalveLoopLengthCommand.Create(FObjectID);
+  try
+    GCommandQueue.PushCommand(FHalveLoopLengthCommand);
+  except
+    FHalveLoopLengthCommand.Free;
+  end;
+end;
+
 procedure TWavePatternControlGUI.LoopMetricChange(Sender: TObject);
 begin
   //
@@ -279,9 +306,9 @@ begin
 
   cbPitchAlgo.Items.Add('None');
   cbPitchAlgo.Items.Add('SoundTouch Eco');
-  cbPitchAlgo.Items.Add('MultiBand SoundTouch Eco');
-  cbPitchAlgo.Items.Add('SoundTouch Hi-Q');
-  cbPitchAlgo.Items.Add('MultiBand SoundTouch Hi-Q');
+  cbPitchAlgo.Items.Add('SoundTouch HQ');
+  cbPitchAlgo.Items.Add('FFT');
+  cbPitchAlgo.Items.Add('Rubberband');
   cbPitchAlgo.Items.Add('Pitched');
 
   FWavePatternGUI := TWaveGUI.Create(nil);

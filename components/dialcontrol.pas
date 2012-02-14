@@ -49,8 +49,6 @@ Type
 
   TDialControl = class(TCustomControl, IFeedBack)
   private
-    FBitmap: TBitmap;
-
     FDialMoving: Boolean;
     FStartingInternalValue: Single;
     FOldInternalValue: Single;
@@ -297,7 +295,6 @@ Type
 
   TVolumeControl = class(TCustomControl, IFeedBack)
   private
-    FTimer: TTimer;
     FPosition: Single;
     FY: Integer;
     FFaderMoving: Boolean;
@@ -1294,7 +1291,6 @@ var
   lIndex: Integer;
   lImage: TBGRABitmap;
   lResourcePicture: TPicture;
-  lImageLocation: string;
 begin
   GImageList := TList.Create;
   lResourcePicture := TPicture.Create;

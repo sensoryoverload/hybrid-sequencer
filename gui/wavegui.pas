@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, LCLType, Graphics, globalconst, global, jacktypes,
-  ComCtrls, pattern, global_command, wave, utils, ContNrs;
+  ComCtrls, pattern, global_command, wave, utils, ContNrs, Forms;
 
 const
   DECIMATED_CACHE_DISTANCE = 64;
@@ -121,8 +121,6 @@ type
     FSelectedSlice: TMarkerGUI;
     FSelectedLoopMarkerGUI: TLoopMarkerGUI;
     FSelectedSampleMarkerGUI: TSampleMarkerGUI;
-    FRubberbandX1,
-    FRubberbandX2: Integer;
     FRubberbandSelect: Boolean;
     FCursorAdder: Single;
     FCursorReal: Single;
@@ -148,6 +146,7 @@ type
     FMouseX: Integer;
 
     procedure RecalculateWarp;
+    procedure ReleaseMarker(Data: PtrInt);
     procedure SetTransientThreshold(const AValue: Integer);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
@@ -387,6 +386,8 @@ begin
 
   Sortslices;
 
+  UpdateSampleScale;
+
   Invalidate;
 
   DBLog('end TWaveFormGUI.Update');
@@ -407,7 +408,26 @@ begin
 end;
 
 procedure TWaveGUI.Disconnect;
+var
+  lMarkerGUI: TMarkerGUI;
+  lMarker: TMarker;
+  lIndex: Integer;
 begin
+  for lIndex := Pred(FSliceListGUI.Count) downto 0 do
+  begin
+    lMarkerGUI := TMarkerGUI(FSliceListGUI[lIndex]);
+
+    if Assigned(lMarkerGUI) then
+    begin
+      lMarker := TMarker(GObjectMapper.GetModelObject(lMarkerGUI.ObjectID));
+      if Assigned(lMarker) then
+      begin
+        lMarker.Detach(lMarkerGUI);
+        FSliceListGUI.Remove(lMarkerGUI);
+      end;
+    end;
+  end;
+
   FModel.LoopStart.Detach(FLoopStart);
   FModel.LoopEnd.Detach(FLoopEnd);
   FModel.LoopLength.Detach(FLoopLength);
@@ -696,6 +716,9 @@ begin
             FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
             FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
           end;
+
+          //FBitmap.Canvas.TextOut(SliceLeft + 5, 60, Format('%f', [TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
+          //FBitmap.Canvas.TextOut(SliceLeft + 5, 70, Format('%f', [1 /TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
         end;
 
         SliceLeft := Round(LoopStart.Location * FZoomFactorToScreen - FOffset);
@@ -709,6 +732,7 @@ begin
           TrackHeight);
         FBitmap.Canvas.Pen.Width := 1;
         FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
+        FBitmap.Canvas.TextOut(SliceLeft + 10, 50, Format('LoopStart %d', [LoopStart.Location]));
 
         SliceLeft := Round(LoopEnd.Location * FZoomFactorToScreen - FOffset);
         FBitmap.Canvas.Pen.Color := clRed;
@@ -721,6 +745,7 @@ begin
           TrackHeight);
         FBitmap.Canvas.Pen.Width := 1;
         FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
+        FBitmap.Canvas.TextOut(SliceLeft + 10, 50, Format('LoopEnd %d', [LoopEnd.Location]));
 
         FCacheIsDirty := False;
       end;
@@ -735,6 +760,7 @@ begin
   begin
     Canvas.Pen.Color := clWhite;
     Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, TrackHeight);
+    //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
 
     FOldCursorPosition := SliceLeft;
   end;
@@ -1234,7 +1260,9 @@ begin
   lMarker := TMarker(GObjectMapper.GetModelObject(AObjectID));
   if Assigned(lMarker) then
   begin
-    lMarkerGUI := TMarkerGUI.Create(ObjectID);
+    lMarkerGUI := TMarkerGUI.Create(Self.ObjectID);
+    lMarkerGUI.ObjectID := lMarker.ObjectID;
+    lMarkerGUI.ObjectOwnerID := lMarker.ObjectOwnerID;
     lMarkerGUI.Location := lMarker.Location;
     lMarkerGUI.OriginalLocation := lMarker.OrigLocation;
     lMarkerGUI.Selected := lMarker.Selected;
@@ -1250,6 +1278,22 @@ begin
   DBLog('end TWaveFormGUI.CreateMarkerGUI');
 end;
 
+
+procedure TWaveGUI.ReleaseMarker(Data: PtrInt);
+var
+  lMarkerGUI: TMarkerGUI;
+begin
+  lMarkerGUI := TMarkerGUI(Data);
+  if Assigned(lMarkerGUI) then
+  begin
+//    GLogger.PushMessage('start Remove found');
+    FSliceListGUI.Remove(lMarkerGUI);
+//    GLogger.PushMessage('end Remove found');
+  end;
+
+  Invalidate;
+end;
+
 procedure TWaveGUI.DeleteMarkerGUI(AObjectID: string);
 var
   lMarkerGUI: TMarkerGUI;
@@ -1260,11 +1304,14 @@ begin
   for lIndex := Pred(FSliceListGUI.Count) downto 0 do
   begin
     lMarkerGUI := TMarkerGUI(FSliceListGUI[lIndex]);
-
-    if lMarkerGUI.ObjectID = AObjectID then
+    if Assigned(lMarkerGUI) then
     begin
-      FSliceListGUI.Remove(lMarkerGUI);
-      break;
+      if lMarkerGUI.ObjectID = AObjectID then
+      begin
+//        GLogger.PushMessage('object found');
+        Application.QueueAsyncCall(@ReleaseMarker, PtrInt(lMarkerGUI));
+//        break;
+      end;
     end;
   end;
 

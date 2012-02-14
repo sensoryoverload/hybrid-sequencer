@@ -27,9 +27,54 @@ unit multiband_wsola;
 interface
 
 uses
-  Classes, SysUtils, Math, {uRbjEqFilters, }ContNrs, soundtouch;
+  Classes, SysUtils, Math, ContNrs, soundtouch;
 
+type
 
+  { T3BandFilterbank }
+
+  T3BandFilterbank = class
+  private
+    // Filter #1 (Low band)
+
+    lf: single; // Frequency
+    f1p0: single; // Poles ...
+    f1p1: single;
+    f1p2: single;
+    f1p3: single;
+
+    // Filter #2 (High band)
+
+    hf: single; // Frequency
+    f2p0: single; // Poles ...
+    f2p1: single;
+    f2p2: single;
+    f2p3: single;
+
+    // Sample history buffer
+
+    sdm1: single; // Sample data minus 1
+    sdm2: single; // 2
+    sdm3: single; // 3
+
+    // Gain Controls
+
+    lg: single; // low gain
+    mg: single; // mid gain
+    hg: single; // high gain
+
+  public
+    l,m,h: single; // Low / Mid / High - Sample Values
+
+    constructor Create;
+    procedure Initialize(lowfreq: Integer; highfreq: Integer; mixfreq: Integer);
+    procedure Process(
+      AInput: psingle; ABand1: psingle; ABand2: psingle; ABand3: psingle; anumsamples: Integer);
+  end;
+
+const
+  vsa = (1.0 / 4294967295.0); // Very small amount (Denormal Fix)
+  M_PI = 3.14159265358979323846;
 
 type
   TFilterType = (ftLowPass, ftHighPass);
@@ -72,11 +117,9 @@ type
     FBands: Integer;
     FOverlapMS: Integer;
     FSamplerate: Integer;
-    FBufferLow1: psingle;
-    FBufferHigh2: psingle;
-    FBufferLow2: psingle;
-    FBufferHigh3: psingle;
-    FBufferLow3: psingle;
+    FBufferLow: psingle;
+    FBufferMid: psingle;
+    FBufferHigh: psingle;
 
     FTimeBuffer1: psingle;
     FTimeBuffer2: psingle;
@@ -86,10 +129,7 @@ type
     FBand2Pitcher: TSoundTouch;
     FBand3Pitcher: TSoundTouch;
 
-    FBand1LowPass: TLinkWitzFilter;
-    FBand2HighPass: TLinkWitzFilter;
-    FBand2LowPass: TLinkWitzFilter;
-    FBand3HighPass: TLinkWitzFilter;
+    FThreeBandFilterbank: T3BandFilterbank;
 
     FPitch: single;
     FPitchOld: single;
@@ -330,35 +370,26 @@ end;
 
 constructor TMultiWSOLA.Create;
 begin
-  FBand1LowPass := TLinkWitzFilter.Create;
-  FBand1LowPass.FilterType := ftLowPass;
-  FBand2HighPass := TLinkWitzFilter.Create;
-  FBand2HighPass.FilterType := ftHighPass;
-  FBand2LowPass := TLinkWitzFilter.Create;
-  FBand2LowPass.FilterType := ftLowPass;
-  FBand3HighPass := TLinkWitzFilter.Create;
-  FBand3HighPass.FilterType := ftHighPass;
-
   FBand1Pitcher := TSoundTouch.Create;
   FBand2Pitcher := TSoundTouch.Create;
   FBand3Pitcher := TSoundTouch.Create;
 
-  FBufferLow1 := GetMem(40000);
-  FBufferHigh2 := GetMem(40000);
-  FBufferLow2 := GetMem(40000);
-  FBufferHigh3 := GetMem(40000);
+  FBufferLow := GetMem(40000);
+  FBufferMid := GetMem(40000);
+  FBufferHigh := GetMem(40000);
 
   FTimeBuffer1 := GetMem(40000);
   FTimeBuffer2 := GetMem(40000);
   FTimeBuffer3 := GetMem(40000);
+
+  FThreeBandFilterbank := T3BandFilterbank.Create;
 end;
 
 destructor TMultiWSOLA.Destroy;
 begin
-  FreeMem(FBufferLow1);
-  FreeMem(FBufferHigh2);
-  FreeMem(FBufferLow2);
-  FreeMem(FBufferHigh3);
+  FreeMem(FBufferLow);
+  FreeMem(FBufferMid);
+  FreeMem(FBufferHigh);
 
   FreeMem(FTimeBuffer1);
   FreeMem(FTimeBuffer2);
@@ -368,53 +399,40 @@ begin
   FBand2Pitcher.Free;
   FBand3Pitcher.Free;
 
-  FBand1LowPass.Free;
-  FBand2HighPass.Free;
-  FBand2LowPass.Free;
-  FBand3HighPass.Free;
+  FThreeBandFilterbank.Free;
 
   inherited Destroy;
 end;
 
 procedure TMultiWSOLA.Initialize;
 begin
-(*
-  FBand1Pitcher.setSampleRate(FSamplerate);
+
+  {FBand1Pitcher.setSampleRate(FSamplerate);
   FBand1Pitcher.setChannels(FChannels);
   FBand1Pitcher.SetSetting(SETTING_USE_QUICKSEEK, BoolToInt(FQuickSeek));
-  FBand1Pitcher.setSetting(SETTING_USE_AA_FILTER, BoolToInt(FAntiAliasFilter));
-  FBand1Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
-  FBand1Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
-  FBand1Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
+  FBand1Pitcher.setSetting(SETTING_USE_AA_FILTER, BoolToInt(FAntiAliasFilter));}
+  {FBand1Pitcher.setSetting(SETTING_SEQUENCE_MS, 40);
+  FBand1Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 40);
+  FBand1Pitcher.setSetting(SETTING_OVERLAP_MS, 8);    }
 
-  FBand2Pitcher.setSampleRate(FSamplerate);
+  {FBand2Pitcher.setSampleRate(FSamplerate);
   FBand2Pitcher.setChannels(FChannels);
   FBand2Pitcher.SetSetting(SETTING_USE_QUICKSEEK, BoolToInt(FQuickSeek));
-  FBand2Pitcher.setSetting(SETTING_USE_AA_FILTER, BoolToInt(FAntiAliasFilter));
-  FBand2Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
-  FBand2Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
-  FBand2Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
+  FBand2Pitcher.setSetting(SETTING_USE_AA_FILTER, BoolToInt(FAntiAliasFilter));}
+  {FBand2Pitcher.setSetting(SETTING_SEQUENCE_MS, 40);
+  FBand2Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 40);
+  FBand2Pitcher.setSetting(SETTING_OVERLAP_MS, 8);  }
 
-  FBand3Pitcher.setSampleRate(FSamplerate);
+  {FBand3Pitcher.setSampleRate(FSamplerate);
   FBand3Pitcher.setChannels(FChannels);
   FBand3Pitcher.SetSetting(SETTING_USE_QUICKSEEK, BoolToInt(FQuickSeek));
-  FBand3Pitcher.setSetting(SETTING_USE_AA_FILTER, BoolToInt(FAntiAliasFilter));
-  FBand3Pitcher.setSetting(SETTING_SEQUENCE_MS, FDefaultSequenceWindow);
-  FBand3Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
-  FBand3Pitcher.setSetting(SETTING_OVERLAP_MS, FDefaultOverlapWindow);
-  *)
-  FBand1LowPass.Cutoff := 300;
-  FBand1LowPass.Samplerate := FSamplerate;
-  FBand1LowPass.Init;
-  FBand2HighPass.Cutoff := 300;
-  FBand2HighPass.Samplerate := FSamplerate;
-  FBand2HighPass.Init;
-  FBand2LowPass.Cutoff := 1500;
-  FBand2LowPass.Samplerate := FSamplerate;
-  FBand2LowPass.Init;
-  FBand3HighPass.Cutoff := 1500;
-  FBand3HighPass.Samplerate := FSamplerate;
-  FBand3HighPass.Init;
+  FBand3Pitcher.setSetting(SETTING_USE_AA_FILTER, BoolToInt(FAntiAliasFilter));}
+  {FBand3Pitcher.setSetting(SETTING_SEQUENCE_MS, 40);
+  FBand3Pitcher.setSetting(SETTING_SEEKWINDOW_MS, 40);
+  FBand3Pitcher.setSetting(SETTING_OVERLAP_MS, 8); }
+
+
+  FThreeBandFilterbank.Initialize(1000, 3000, FSamplerate);
 end;
 
 function TMultiWSOLA.GetLatency: Integer;
@@ -425,14 +443,14 @@ end;
 procedure TMultiWSOLA.Flush;
 begin
   FBand1Pitcher.flush;
-  FBand1Pitcher.flush;
+  FBand2Pitcher.flush;
   FBand3Pitcher.flush;
 end;
 
 procedure TMultiWSOLA.Clear;
 begin
   FBand1Pitcher.Clear;
-  FBand1Pitcher.Clear;
+  FBand2Pitcher.Clear;
   FBand3Pitcher.Clear;
 end;
 
@@ -440,25 +458,88 @@ procedure TMultiWSOLA.Process(AInput, AOutput: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
+  FThreeBandFilterbank.Process(AInput, FTimeBuffer1, FTimeBuffer2, FTimeBuffer3, AFrames);
+
   // Band 1
-  FBand1LowPass.process(AInput, FBufferLow1, AFrames);
-  FBand1Pitcher.PutSamples(FBufferLow1, AFrames);
-  FBand1Pitcher.ReceiveSamples(FTimeBuffer1, AFrames);
+  FBand1Pitcher.PutSamples(FTimeBuffer1, AFrames);
+  FBand1Pitcher.ReceiveSamples(FBufferLow, AFrames);
 
   // Band 2
-  FBand2HighPass.process(AInput, FBufferHigh2, AFrames);
-  FBand2LowPass.process(FBufferHigh2, FBufferLow2, AFrames);
-  FBand2Pitcher.PutSamples(FBufferLow2, AFrames);
-  FBand2Pitcher.ReceiveSamples(FTimeBuffer2, AFrames);
+  FBand2Pitcher.PutSamples(FTimeBuffer2, AFrames);
+  FBand2Pitcher.ReceiveSamples(FBufferMid, AFrames);
 
   // Band 3
-  FBand3HighPass.process(AInput, FBufferHigh3, AFrames);
-  FBand3Pitcher.PutSamples(FBufferHigh3, AFrames);
-  FBand3Pitcher.ReceiveSamples(FTimeBuffer3, AFrames);
+  FBand3Pitcher.PutSamples(FTimeBuffer3, AFrames);
+  FBand3Pitcher.ReceiveSamples(FBufferHigh, AFrames);
 
   for i := 0 to Pred(AFrames) do
   begin
-    AOutput[i] := FTimeBuffer1[i] + FTimeBuffer2[i] + FTimeBuffer3[i];
+    AOutput[i] := FBufferLow[i] + FBufferMid[i] + FBufferHigh[i];
+  end;
+end;
+
+constructor T3BandFilterbank.Create;
+begin
+  Initialize(1000, 3000, 44100);
+end;
+
+// Recommended frequencies are ...
+//
+// lowfreq = 880 Hz
+// highfreq = 5000 Hz
+//
+// Set mixfreq to whatever rate your system is using (eg 48Khz)
+procedure T3BandFilterbank.Initialize(lowfreq: Integer; highfreq: Integer; mixfreq: Integer);
+begin
+  // Set Low/Mid/High gains to unity
+  lg := 1.0;
+  mg := 1.0;
+  hg := 1.0;
+
+  // Calculate filter cutoff frequencies
+  lf := 2 * sin(M_PI * (lowfreq / mixfreq));
+  hf := 2 * sin(M_PI * (highfreq / mixfreq));
+end;
+
+procedure T3BandFilterbank.Process(AInput: psingle; ABand1: psingle; ABand2: psingle; ABand3: psingle; anumsamples: Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(anumsamples) do
+  begin
+    // Filter #1 (lowpass)
+    f1p0 += (lf * (AInput[i] - f1p0)) + vsa;
+    f1p1 += (lf * (f1p0 - f1p1));
+    f1p2 += (lf * (f1p1 - f1p2));
+    f1p3 += (lf * (f1p2 - f1p3));
+
+    l := f1p3;
+
+    // Filter #2 (highpass)
+    f2p0 += (hf * (AInput[i] - f2p0)) + vsa;
+    f2p1 += (hf * (f2p0 - f2p1));
+    f2p2 += (hf * (f2p1 - f2p2));
+    f2p3 += (hf * (f2p2 - f2p3));
+
+    h := sdm3 - f2p3;
+
+    // Calculate midrange (signal - (low + high))
+    m := sdm3 - (h + l);
+
+    // Scale, Combine and store
+    {l *= lg;
+    m *= mg;
+    h *= hg;}
+
+    // Shuffle history buffer
+    sdm3 := sdm2;
+    sdm2 := sdm1;
+    sdm1 := AInput[i];
+
+    // Return result
+    ABand1[i] := l;
+    ABand2[i] := m;
+    ABand3[i] := h;
   end;
 end;
 

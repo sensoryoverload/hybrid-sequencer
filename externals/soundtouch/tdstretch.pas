@@ -2,13 +2,10 @@ unit tdstretch;
 
 {$mode objfpc}{$H+}
 
-{$ifdef cpu386}
-{$ASMMODE INTEL}
-{$endif cpu386}
 interface
 
 uses
-  sysutils, fifosamplebuffer, fifosamplepipe, mmx, beattrigger;
+  sysutils, fifosamplebuffer, fifosamplepipe, mmx, beattrigger, utils;
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
@@ -111,18 +108,18 @@ DEFAULT_SEQUENCE_MS = USE_AUTO_SEQUENCE_LEN;
 
   // Adjust tempo param according to tempo, so that variating processing sequence length is used
   // at varius tempo settings, between the given low...top limits
-  AUTOSEQ_TEMPO_LOW = 0.9; //0.5;     // auto setting low tempo range (-50%)
-  AUTOSEQ_TEMPO_TOP = 1.07; //2.0;     // auto setting top tempo range (+100%)
+  AUTOSEQ_TEMPO_LOW = 0.25; //0.9;     // auto setting low tempo range (-50%)
+  AUTOSEQ_TEMPO_TOP = 4.0; //1.07;     // auto setting top tempo range (+100%)
 
   // sequence-ms setting values at above low & top tempo
-  AUTOSEQ_AT_MIN =    120; //125.0;
-  AUTOSEQ_AT_MAX =    30; //50.0;
+  AUTOSEQ_AT_MIN =    125; //120.0;
+  AUTOSEQ_AT_MAX =    50; //30.0;
   AUTOSEQ_K =         ((AUTOSEQ_AT_MAX - AUTOSEQ_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEQ_C =         (AUTOSEQ_AT_MIN - (AUTOSEQ_K) * (AUTOSEQ_TEMPO_LOW));
 
   // seek-window-ms setting values at above low & top tempo
-  AUTOSEEK_AT_MIN =   20; // 25.0;
-  AUTOSEEK_AT_MAX =   3; //15.0;
+  AUTOSEEK_AT_MIN =   25; // 20.0;
+  AUTOSEEK_AT_MAX =   15; //3.0;
   AUTOSEEK_K =        ((AUTOSEEK_AT_MAX - AUTOSEEK_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEEK_C =        (AUTOSEEK_AT_MIN - (AUTOSEEK_K) * (AUTOSEQ_TEMPO_LOW));
 
@@ -180,23 +177,26 @@ type
     bAutoSeqSetting: Boolean;
     bAutoSeekSetting: Boolean;
     beatdetect: TBeatDetector;
+    FTransientDetection: Boolean;
 
     procedure acceptNewOverlapLength(newOverlapLength: Integer);
 
     procedure calculateOverlapLength(aoverlapInMsec: Integer);
 
     function calcCrossCorrStereo(const mixingPos: PSingle; const compare: PSingle): double;
-    function calcCrossCorrStereoSSE(const mixingPos: PSingle; const compare: PSingle): double;
     function calcCrossCorrMono(const mixingPos: PSingle; const compare: PSingle): double;
-
     function seekBestOverlapPositionStereo(const refPos: PSingle): Integer;
+    function seekBestOverlapPositionStereoEfficient(const refPos: PSingle): Integer;
     function seekBestOverlapPositionStereoQuick(const refPos: PSingle): Integer;
     function seekBestOverlapPositionMono(const refPos: PSingle): Integer;
+    function seekBestOverlapPositionMonoEfficient(const refPos: PSingle): Integer;
     function seekBestOverlapPositionMonoQuick(const refPos: PSingle): Integer;
     function seekBestOverlapPosition(const refPos: PSingle): Integer;
 
     procedure overlapStereo(poutput: PSingle; const pinput: PSingle);
     procedure overlapMono(poutput: PSingle; const pinput: PSingle);
+
+    function detectTransient(const refPos: PSingle): Integer;
 
     procedure clearMidBuffer;
     procedure overlap(poutput: PSingle; const pinput: PSingle; ovlPos: longword);
@@ -272,6 +272,7 @@ type
 
     function getInputSampleReq: Integer;
     function getOutputBatchSize: Integer;
+    procedure enableTransientDetection(enable: Integer);
   end;
 
 implementation
@@ -295,7 +296,10 @@ begin
   beatdetect := TBeatDetector.Create;
 
   beatdetect.setSampleRate(44100);
-  beatdetect.setThresHold(1);
+  beatdetect.setThresHold(0.4);
+  beatdetect.setFilterCutOff(2000);
+
+  FTransientDetection := False;
 
   bQuickSeek := FALSE;
   channels := 1;
@@ -417,12 +421,33 @@ var
   i, itemp: Integer;
   DivByOverlapLength: Single;
 begin
+  // Multiplication is a bit faster than division
   DivByOverlapLength := 1 / overlapLength;
 
   for i := 0 to Pred(overlapLength) do
   begin
     itemp := overlapLength - i;
-    pOutput[i] := (pInput[i] * i + pMidBuffer[i] * itemp ) * DivByOverlapLength; // / overlapLength;
+    pOutput[i] := (pInput[i] * i + pMidBuffer[i] * itemp ) * DivByOverlapLength;
+  end;
+end;
+
+function TTDStretch.detectTransient(const refPos: PSingle): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+  for i := 0 to Pred(seekLength) do
+  begin
+    if FTransientDetection then
+    begin
+      beatdetect.AudioProcess((refPos + i)^);
+      if beatdetect.BeatPulse then
+      begin
+        Result := i;
+        GLogger.PushMessage(format('pulse at %d', [i]));
+        break;
+      end;
+    end;
   end;
 end;
 
@@ -460,16 +485,26 @@ end;
 // Seeks for the optimal overlap-mixing position.
 function TTDStretch.seekBestOverlapPosition(const refPos: PSingle): Integer;
 begin
+  Result := detectTransient(refPos);
+
   if channels = 2 then
   begin
     // stereo sound
     if bQuickSeek then
     begin
-      Result := seekBestOverlapPositionStereoQuick(refPos);
+      if Result = -1 then
+      begin
+        Result := seekBestOverlapPositionStereoQuick(refPos);
+//      Result := seekBestOverlapPositionStereoEfficient(refPos);
+      end;
     end
     else
     begin
-      Result := seekBestOverlapPositionStereo(refPos);
+      if Result = -1 then
+      begin
+//      Result := seekBestOverlapPositionStereoQuick(refPos);
+        Result := seekBestOverlapPositionStereo(refPos);
+      end;
     end;
   end
   else
@@ -477,11 +512,19 @@ begin
     // mono sound
     if bQuickSeek then
     begin
-      Result := seekBestOverlapPositionMonoQuick(refPos);
+      if Result = -1 then
+      begin
+        Result := seekBestOverlapPositionMonoQuick(refPos);
+//      Result := seekBestOverlapPositionMonoEfficient(refPos);
+      end;
     end
     else
     begin
-      Result := seekBestOverlapPositionMono(refPos);
+      if Result = -1 then
+      begin
+//      Result := seekBestOverlapPositionMonoQuick(refPos);
+        Result := seekBestOverlapPositionMono(refPos);
+      end;
     end;
   end;
 end;
@@ -543,6 +586,84 @@ begin
   Result := bestOffs;
 end;
 
+function TTDStretch.seekBestOverlapPositionStereoEfficient(const refPos: PSingle): Integer;
+var
+  i, j: Integer;
+  adder: single;
+  main_adder: single;
+  position: Integer;
+  pRefMidBuffer_iterate: PSingle;
+  refPos_iterate: PSingle;
+begin
+  // Slopes the amplitude of the 'midBuffer' samples
+  precalcCorrReferenceStereo;
+
+  main_adder := 99999999;
+  for i := 0 to Pred(2 * seekLength) do
+  begin
+    adder := 0;
+    pRefMidBuffer_iterate := pRefMidBuffer;
+    refPos_iterate := refPos + i * 2;
+    for j := 0 to Pred(2 * overlapLength) do
+    begin
+      adder :=
+        (pRefMidBuffer_iterate^ + (pRefMidBuffer_iterate + 1)^) -
+        (refPos_iterate^ + (refPos_iterate + 1)^);
+
+      Inc(pRefMidBuffer_iterate, 2);
+      Inc(refPos_iterate, 2);
+{      adder +=
+        (pRefMidBuffer[j] + pRefMidBuffer[j + 1]) -
+        ((refPos + i)[j] + (refPos + i)[j + 1]);}
+    end;
+    if adder < main_adder then
+    begin
+      main_adder := adder;
+      position := i;
+    end;
+  end;
+  if main_adder = 99999999 then
+    Result := 0
+  else
+    Result := position;
+end;
+
+function TTDStretch.seekBestOverlapPositionMonoEfficient(const refPos: PSingle): Integer;
+var
+  i, j: Integer;
+  adder: single;
+  main_adder: single;
+  position: Integer;
+  pRefMidBuffer_iterate: PSingle;
+  refPos_iterate: PSingle;
+begin
+  // Slopes the amplitude of the 'midBuffer' samples
+  precalcCorrReferenceMono;
+
+  main_adder := 99999999;
+  for i := 0 to Pred(seekLength) do
+  begin
+    adder := 0;
+    pRefMidBuffer_iterate := pRefMidBuffer;
+    refPos_iterate := refPos + i;
+    for j := 0 to Pred(overlapLength) do
+    begin
+      adder := pRefMidBuffer_iterate^ - refPos_iterate^;
+      Inc(pRefMidBuffer_iterate);
+      Inc(refPos_iterate);
+    end;
+    if adder < main_adder then
+    begin
+      main_adder := adder;
+      position := i;
+    end;
+  end;
+
+  if main_adder = 99999999 then
+    Result := 0
+  else
+    Result := position;
+end;
 
 // Seeks for the optimal overlap-mixing position. The 'stereo' version of the
 // routine
@@ -957,96 +1078,20 @@ var
   norm: double;
   i, j: Integer;
 begin
-  if is_sse2_cpu then
+  corr := 0;
+  norm := 0;
+  for i := 2 to Pred(2 * overlapLength) do
   begin
-    Result := calcCrossCorrStereoSSE(mixingPos, compare);
-  end
-  else
-  begin
-    corr := 0;
-    norm := 0;
-    for i := 2 to Pred(2 * overlapLength) do
-    begin
 
-      j := i * 2;
-      corr += mixingPos[j] * compare[j] +
-              mixingPos[j + 1] * compare[j + 1];
-      norm += mixingPos[j] * mixingPos[j] +
-              mixingPos[j + 1] * mixingPos[j + 1];
-    end;
-
-    if norm < 1e-9 then norm := 1.0;    // to avoid div by zero
-    Result := corr / sqrt(norm);
-  end;
-end;
-
-function TTDStretch.calcCrossCorrStereoSSE(const mixingPos: PSingle; const compare: PSingle): double;
-label
-  loop1;
-var
-  overlapLengthLocal: longword;
-  corr: single;
-begin
-  overlapLengthLocal := overlapLength;
-
-  asm
-    // Very important note: data in 'pV2' _must_ be aligned to
-    // 16-byte boundary!
-
-    // give prefetch hints to CPU of what data are to be needed soonish
-    // give more aggressive hints on pV1 as that changes while pV2 stays
-    // same between runs
-    prefetcht0 [mixingPos]
-    prefetcht0 [compare]
-    prefetcht0 [mixingPos + 32]
-
-    mov     eax, dword ptr mixingPos
-    mov     ebx, dword ptr compare
-
-    xorps   xmm0, xmm0
-
-    mov     ecx, overlapLengthLocal
-    shr     ecx, 3  // div by eight
-
-  loop1:
-    prefetcht0 [eax + 64]     // give a prefetch hint to CPU what data are to be needed soonish
-    prefetcht0 [ebx + 32]     // give a prefetch hint to CPU what data are to be needed soonish
-    movups  xmm1, [eax]
-    mulps   xmm1, [ebx]
-    addps   xmm0, xmm1
-
-    movups  xmm2, [eax + 16]
-    mulps   xmm2, [ebx + 16]
-    addps   xmm0, xmm2
-
-    prefetcht0 [eax + 96]     // give a prefetch hint to CPU what data are to be needed soonish
-    prefetcht0 [ebx + 64]     // give a prefetch hint to CPU what data are to be needed soonish
-
-    movups  xmm3, [eax + 32]
-    mulps   xmm3, [ebx + 32]
-    addps   xmm0, xmm3
-
-    movups  xmm4, [eax + 48]
-    mulps   xmm4, [ebx + 48]
-    addps   xmm0, xmm4
-
-    add     eax, 64
-    add     ebx, 64
-
-    dec     ecx
-    jnz     loop1
-
-    // add the four floats of xmm0 together and return the result.
-
-    movhlps xmm1, xmm0          // move 3 & 4 of xmm0 to 1 & 2 of xmm1
-    addps   xmm1, xmm0
-    movaps  xmm2, xmm1
-    shufps  xmm2, xmm2, 01{0x01}    // move 2 of xmm2 as 1 of xmm2
-    addss   xmm2, xmm1
-    movss   corr, xmm2
+    j := i * 2;
+    corr += mixingPos[j] * compare[j] +
+            mixingPos[j + 1] * compare[j + 1];
+    norm += mixingPos[j] * mixingPos[j] +
+            mixingPos[j + 1] * mixingPos[j + 1];
   end;
 
-  Result := corr;
+  if norm < 1e-9 then norm := 1.0;    // to avoid div by zero
+  Result := corr / sqrt(norm);
 end;
 
 /// return nominal input sample requirement for triggering a processing batch
@@ -1059,6 +1104,11 @@ end;
 function TTDStretch.getOutputBatchSize: Integer;
 begin
  	Result := seekWindowLength - overlapLength;
+end;
+
+procedure TTDStretch.enableTransientDetection(enable: Integer);
+begin
+  FTransientDetection := (enable = 1);
 end;
 
 end.

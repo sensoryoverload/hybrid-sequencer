@@ -386,7 +386,7 @@ begin
     }
     lCreatePattern := TCreatePatternCommand.Create(Self.ObjectID);
     try
-      lCreatePattern.PatternName := lTreeView.Selected.Text;
+      lCreatePattern.PatternName := ExtractFileNameWithoutExt(lTreeView.Selected.Text);
       lCreatePattern.Position := (Y div 15) * 15;
       lCreatePattern.SourceType := fsWave;
       lCreatePattern.SourceLocation := TTreeFolderData(lTreeView.Selected.Data).Path;

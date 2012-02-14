@@ -121,7 +121,6 @@ type
     FObjectID: string;
     FModel: TSample;
     FObjectOwner: TObject;
-    FSelectedBankObjectID: string;
     FEnabled: Boolean;
 
     FKeyboard: TSampleKeyboardControl;
@@ -153,7 +152,6 @@ type
   private
     FCaption: string;
     FSampleLocation: string;
-    FCaptionWidth: Integer;
     FOnChange: TChangeSelectSample;
     FSelected: Boolean;
     FSampleView: TSampleView;

@@ -113,7 +113,7 @@ type
 
   TFileSourceTypes = (fsTrack, fsEmpty, fsWave, fsMIDI, fsPlugin);
 
-  TPitchAlgorithm = (paNone, paSoundTouchEco, paMultiBandSoundTouchEco, paSoundTouch, paMultiBandSoundTouch, paPitched);
+  TPitchAlgorithm = (paNone, paSoundTouchEco, paSoundTouch, paFFT, paRubberband, paPitched);
 
   TSerializeAction = (saRetrieveProperties, saInitilizeObjects);
 
@@ -351,6 +351,7 @@ type
     Data: Single;      // Value of sample frame, usually -1 to +1
     Location: Single;  // Virtual location due to warping
     Ramp: Single;      // Current warp ramp
+    Pitch: Single;     // Pitch rate for slice
   end;
 
   { TLoopMarker }
@@ -391,6 +392,7 @@ type
     FSliceType: Integer;         // See const above
     FActive: Boolean;            // On/Off
     FDecayRate: Single;          // Rate of decay
+    FPitchRate: Single;          // Nominal pitch
     FNextSlice: TMarker;         // Points to next slice to the right or nil if last
     FPrevSlice: TMarker;         // Points to next slice to the right or nil if last
     FSelected: Boolean;          // When true it'll be used in batch editting/processing
@@ -409,6 +411,7 @@ type
     property SliceType: Integer read FSliceType write FSliceType;
     property Active: Boolean read FActive write FActive;
     property DecayRate: Single read FDecayRate write FDecayRate;
+    property PitchRate: Single read FPitchRate write FPitchRate;
   end;
 
   PSlice = ^TSlice;
@@ -502,8 +505,8 @@ uses
   global, utils, Base64;
 
 procedure ChangeControlStyle(AControl: TControl; const AInclude: TControlStyle; const AExclude: TControlStyle = []; Recursive: Boolean = True);
-var
-  I: Integer;
+{var
+  I: Integer;}
 begin
   {AControl.ControlStyle := AControl.ControlStyle + AInclude - AExclude;
   if Recursive and (AControl is TWinControl) then

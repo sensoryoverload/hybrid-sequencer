@@ -334,7 +334,6 @@ begin
   begin
 
     harmonic := i * 0.5;
-    //peakpos := highPeak / harmonic + 0.5;
     peakpos := Round(highPeak / harmonic);
     if peakpos < minPos then break;
     peakpos := findTop(data, peakpos);   // seek true local maximum index
@@ -352,9 +351,7 @@ begin
     if (diff < 0.96) or (diff > 1.04) then continue;   // peak too afar from expected
 
     // now compare to highest detected peak
-//        i1 = highPeak + 0.5;
     i1 := Round(highPeak);
-//        i2 = peaktmp + 0.5;
     i2 := Round(peaktmp);
     if data[i2] >= 0.5 * data[i1] then
     begin

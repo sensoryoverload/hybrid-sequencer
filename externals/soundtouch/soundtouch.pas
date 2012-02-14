@@ -142,6 +142,8 @@ const
 ///   tempo/pitch/rate/samplerate settings.
   SETTING_NOMINAL_OUTPUT_SEQUENCE	=	7;
 
+  SETTING_USE_TRANSIENT_DETECTION = 8;
+
 type
   TSoundTouch = class(TFIFOProcessor)
   private
@@ -411,11 +413,11 @@ begin
   tempo := virtualTempo / virtualPitch;
   rate := virtualPitch * virtualRate;
 
-  //if not TEST_FLOAT_EQUAL(rate, oldRate) then
+  if not TEST_FLOAT_EQUAL(rate, oldRate) then
   begin
     pRateTransposer.setRate(rate);
   end;
-  //if not TEST_FLOAT_EQUAL(tempo, oldTempo) then
+  if not TEST_FLOAT_EQUAL(tempo, oldTempo) then
   begin
     pTDStretch.setTempo(tempo);
   end;
@@ -583,6 +585,12 @@ begin
     begin
             // change time-stretch overlap length parameter
             pTDStretch.setParameters(sampleRate, sequenceMs, seekWindowMs, value);
+            Result := TRUE;
+    end;
+    SETTING_USE_TRANSIENT_DETECTION:
+    begin
+            // change time-stretch overlap length parameter
+            pTDStretch.enableTransientDetection(value);
             Result := TRUE;
     end
     else

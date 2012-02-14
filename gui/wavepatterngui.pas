@@ -191,7 +191,6 @@ begin
     if (X - Self.Left) < 15 then
     begin
       Scheduled := True;
-      writeln('SCHEDULE');
       lSchedulePattern := TSchedulePatternCommand.Create(ObjectID);
       try
         lSchedulePattern.ObjectIdList.Add(Self.ObjectID);
