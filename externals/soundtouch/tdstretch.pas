@@ -112,14 +112,14 @@ DEFAULT_SEQUENCE_MS = USE_AUTO_SEQUENCE_LEN;
   AUTOSEQ_TEMPO_TOP = 4.0; //1.07;     // auto setting top tempo range (+100%)
 
   // sequence-ms setting values at above low & top tempo
-  AUTOSEQ_AT_MIN =    125; //120.0;
-  AUTOSEQ_AT_MAX =    50; //30.0;
+  AUTOSEQ_AT_MIN =    150; //120.0;
+  AUTOSEQ_AT_MAX =    25; //30.0;
   AUTOSEQ_K =         ((AUTOSEQ_AT_MAX - AUTOSEQ_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEQ_C =         (AUTOSEQ_AT_MIN - (AUTOSEQ_K) * (AUTOSEQ_TEMPO_LOW));
 
   // seek-window-ms setting values at above low & top tempo
-  AUTOSEEK_AT_MIN =   25; // 20.0;
-  AUTOSEEK_AT_MAX =   15; //3.0;
+  AUTOSEEK_AT_MIN =   20; // 20.0;
+  AUTOSEEK_AT_MAX =   3; //3.0;
   AUTOSEEK_K =        ((AUTOSEEK_AT_MAX - AUTOSEEK_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEEK_C =        (AUTOSEEK_AT_MIN - (AUTOSEEK_K) * (AUTOSEQ_TEMPO_LOW));
 
@@ -177,7 +177,7 @@ type
     bAutoSeqSetting: Boolean;
     bAutoSeekSetting: Boolean;
     beatdetect: TBeatDetector;
-    FTransientDetection: Boolean;
+    transient: Boolean;
 
     procedure acceptNewOverlapLength(newOverlapLength: Integer);
 
@@ -299,7 +299,7 @@ begin
   beatdetect.setThresHold(0.4);
   beatdetect.setFilterCutOff(2000);
 
-  FTransientDetection := False;
+  transient := False;
 
   bQuickSeek := FALSE;
   channels := 1;
@@ -438,13 +438,12 @@ begin
   Result := -1;
   for i := 0 to Pred(seekLength) do
   begin
-    if FTransientDetection then
+    if transient then
     begin
       beatdetect.AudioProcess((refPos + i)^);
       if beatdetect.BeatPulse then
       begin
         Result := i;
-        GLogger.PushMessage(format('pulse at %d', [i]));
         break;
       end;
     end;
@@ -485,26 +484,18 @@ end;
 // Seeks for the optimal overlap-mixing position.
 function TTDStretch.seekBestOverlapPosition(const refPos: PSingle): Integer;
 begin
-  Result := detectTransient(refPos);
-
   if channels = 2 then
   begin
     // stereo sound
     if bQuickSeek then
     begin
-      if Result = -1 then
-      begin
-        Result := seekBestOverlapPositionStereoQuick(refPos);
+      Result := seekBestOverlapPositionStereoQuick(refPos);
 //      Result := seekBestOverlapPositionStereoEfficient(refPos);
-      end;
     end
     else
     begin
-      if Result = -1 then
-      begin
 //      Result := seekBestOverlapPositionStereoQuick(refPos);
-        Result := seekBestOverlapPositionStereo(refPos);
-      end;
+      Result := seekBestOverlapPositionStereo(refPos);
     end;
   end
   else
@@ -512,19 +503,13 @@ begin
     // mono sound
     if bQuickSeek then
     begin
-      if Result = -1 then
-      begin
-        Result := seekBestOverlapPositionMonoQuick(refPos);
+      Result := seekBestOverlapPositionMonoQuick(refPos);
 //      Result := seekBestOverlapPositionMonoEfficient(refPos);
-      end;
     end
     else
     begin
-      if Result = -1 then
-      begin
 //      Result := seekBestOverlapPositionMonoQuick(refPos);
-        Result := seekBestOverlapPositionMono(refPos);
-      end;
+      Result := seekBestOverlapPositionMono(refPos);
     end;
   end;
 end;
@@ -1108,7 +1093,7 @@ end;
 
 procedure TTDStretch.enableTransientDetection(enable: Integer);
 begin
-  FTransientDetection := (enable = 1);
+  transient := (enable = 1);
 end;
 
 end.

@@ -1,14 +1,15 @@
 { This is an automatically generated lazarus resource file }
 
 LazarusResources.Add('TBankView','FORMDATA',[
-  'TPF0'#9'TBankView'#8'BankView'#4'Left'#2#0#6'Height'#3#141#0#3'Top'#2#0#5'Wi'
-  +'dth'#3#154#3#5'Align'#7#8'alClient'#12'ClientHeight'#3#141#0#11'ClientWidth'
-  +#3#154#3#8'TabOrder'#2#0#10'DesignLeft'#3#233#0#9'DesignTop'#3#4#1#0#9'TGrou'
-  +'pBox'#14'gbSampleSelect'#4'Left'#2#0#6'Height'#3#141#0#3'Top'#2#0#5'Width'#2
-  +'['#5'Align'#7#6'alLeft'#7'Caption'#6#7'Samples'#12'ClientHeight'#2'~'#11'Cl'
-  +'ientWidth'#2'W'#8'TabOrder'#2#0#0#8'TListBox'#16'lbSampleSelector'#4'Left'#2
-  +#0#6'Height'#2'~'#3'Top'#2#0#5'Width'#2'W'#5'Align'#7#8'alClient'#11'BorderS'
-  +'tyle'#7#6'bsNone'#10'ItemHeight'#2#0#7'OnClick'#7#21'lbSampleSelectorClick'
+  'TPF0'#9'TBankView'#8'BankView'#4'Left'#2#0#6'Height'#3#190#0#3'Top'#2#0#5'Wi'
+  +'dth'#3#154#3#5'Align'#7#8'alClient'#12'ClientHeight'#3#190#0#11'ClientWidth'
+  +#3#154#3#21'Constraints.MaxHeight'#3#190#0#21'Constraints.MinHeight'#3#190#0
+  +#8'TabOrder'#2#0#10'DesignLeft'#3#233#0#9'DesignTop'#3#4#1#0#9'TGroupBox'#14
+  +'gbSampleSelect'#4'Left'#2#0#6'Height'#3#190#0#3'Top'#2#0#5'Width'#2'['#5'Al'
+  +'ign'#7#6'alLeft'#7'Caption'#6#7'Samples'#12'ClientHeight'#3#175#0#11'Client'
+  +'Width'#2'W'#8'TabOrder'#2#0#0#8'TListBox'#16'lbSampleSelector'#4'Left'#2#0#6
+  +'Height'#3#175#0#3'Top'#2#0#5'Width'#2'W'#5'Align'#7#8'alClient'#11'BorderSt'
+  +'yle'#7#6'bsNone'#10'ItemHeight'#2#0#7'OnClick'#7#21'lbSampleSelectorClick'
   +#10'OnDblClick'#7#24'lbSampleSelectorDblClick'#10'OnDragDrop'#7#24'lbSampleS'
   +'electorDragDrop'#10'OnDragOver'#7#24'lbSampleSelectorDragOver'#9'PopupMenu'
   +#7#14'pmSampleSelect'#11'ScrollWidth'#2'W'#8'TabOrder'#2#0#8'TopIndex'#2#255

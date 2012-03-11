@@ -19,6 +19,8 @@
 }
 unit wave;
 
+{$fputype sse}
+
 interface
 
 uses
@@ -108,13 +110,9 @@ type
     FSliceList: TObjectList;
     FCurrentSliceIndex: Integer;
     FCurrentSlice: TMarker;
-    FRealCursorPosition: Integer;
     FVirtualCursorPosition: Integer;
-    FLoopStart: TLoopMarker;
-    FLoopEnd: TLoopMarker;
     FSampleStart: TLoopMarker;
     FSampleEnd: TLoopMarker;
-    FLoopLength: TLoopMarker;
     FBarCount: Integer;
     FBarLength: Integer;
     FDragSlice: Boolean;
@@ -122,7 +120,6 @@ type
     FSelectedSlice: TMarker;
     FRubberbandSelect: Boolean;
     FCursorAdder: Single;
-    FPatternCursor: Single;
     FSampleCursor: Single;
     FCursorRamp: Single;
     FSampleRate: Single;
@@ -173,6 +170,7 @@ type
     lAudioPlaying: Boolean;
     lBuffer: PSingle;
     lFramePacket: TFrameData;
+    FLastSliceIndex: Integer;
     lStartingSliceIndex: Integer;
     buf_offset: integer;
     buffer_size: Integer;
@@ -193,8 +191,9 @@ type
     function LoadSampleInfo: Boolean;
     procedure AutoMarkerProcess(ACalculateStatistics: Boolean = True);
     function GetSliceAt(Location: Integer; AMargin: single): TMarker;
-    procedure VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData);
+    function VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
     function StartVirtualLocation(ALocation: single): Integer;
+    procedure Flush;
 
     procedure ProcessInit; override;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
@@ -206,11 +205,9 @@ type
     property CurrentSlice: TMarker read FCurrentSlice write FCurrentSlice;
     property SelectedSlice: TMarker read FSelectedSlice write FSelectedSlice;
     property DecimatedData: PSingle read FDecimatedData write FDecimatedData;
-    property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
     property VirtualCursorPosition: Integer read FVirtualCursorPosition write FVirtualCursorPosition;
     property CurrentSliceIndex: Integer read FCurrentSliceIndex write FCurrentSliceIndex;
     property CursorAdder: Single read FCursorAdder write FCursorAdder;
-    property PatternCursor: Single read FPatternCursor write FPatternCursor default 1.0;
     property SampleCursor: Single read FSampleCursor write FSampleCursor;
     property CursorRamp: Single read FCursorRamp write SetCursorRamp default 1.0;
     property BPMscale: Single read FBPMscale write FBPMScale;
@@ -220,9 +217,6 @@ type
     property DiskReaderThread: TDiskReaderThread read FDiskReaderThread;
   published
     property SliceList: TObjectList read FSliceList write FSliceList;
-    property LoopStart: TLoopMarker read FLoopStart write FLoopStart;
-    property LoopEnd: TLoopMarker read FLoopEnd write FLoopEnd;
-    property LoopLength: TLoopMarker read FLoopLength write FLoopLength;
     property SampleStart: TLoopMarker read FSampleStart write FSampleStart;
     property SampleEnd: TLoopMarker read FSampleEnd write FSampleEnd;
     property SampleRate: Single read FSampleRate write FSampleRate;
@@ -504,16 +498,16 @@ end;
 
 procedure THalveLoopLengthCommand.DoExecute;
 begin
-  FOldLoopEnd := FWavePattern.LoopEnd.Location;
-  FOldLoopLength := FWavePattern.LoopLength.Location;
-  FOldSampleEnd := FWavePattern.SampleEnd.Location;
+  FOldLoopEnd := FWavePattern.LoopEnd.Value;
+  FOldLoopLength := FWavePattern.LoopLength.Value;
+  FOldSampleEnd := FWavePattern.SampleEnd.Value;
 
-  FWavePattern.LoopLength.Location := FWavePattern.LoopLength.Location div 2;
-  FWavePattern.LoopEnd.Location :=
-    FWavePattern.LoopStart.Location + FWavePattern.LoopLength.Location;
+  FWavePattern.LoopLength.Value := FWavePattern.LoopLength.Value div 2;
+  FWavePattern.LoopEnd.Value :=
+    FWavePattern.LoopStart.Value + FWavePattern.LoopLength.Value;
 
-  FWavePattern.SampleEnd.Location := FWavePattern.SampleStart.Location +
-    (FWavePattern.SampleEnd.Location - FWavePattern.SampleStart.Location) div 2;
+  FWavePattern.SampleEnd.Value := FWavePattern.SampleStart.Value +
+    (FWavePattern.SampleEnd.Value - FWavePattern.SampleStart.Value) div 2;
 
   FWavePattern.UpdateBPMScale;
   FWavePattern.UpdateSampleScale;
@@ -526,9 +520,9 @@ end;
 
 procedure THalveLoopLengthCommand.DoRollback;
 begin
-  FWavePattern.LoopLength.Location := FOldLoopLength;
-  FWavePattern.LoopEnd.Location := FOldLoopEnd;
-  FWavePattern.SampleEnd.Location := FOldSampleEnd;
+  FWavePattern.LoopLength.Value := FOldLoopLength;
+  FWavePattern.LoopEnd.Value := FOldLoopEnd;
+  FWavePattern.SampleEnd.Value := FOldSampleEnd;
 
   FWavePattern.UpdateBPMScale;
   FWavePattern.UpdateSampleScale;
@@ -543,16 +537,16 @@ end;
 
 procedure TDoubleLoopLengthCommand.DoExecute;
 begin
-  FOldLoopEnd := FWavePattern.LoopEnd.Location;
-  FOldLoopLength := FWavePattern.LoopLength.Location;
-  FOldSampleEnd := FWavePattern.SampleEnd.Location;
+  FOldLoopEnd := FWavePattern.LoopEnd.Value;
+  FOldLoopLength := FWavePattern.LoopLength.Value;
+  FOldSampleEnd := FWavePattern.SampleEnd.Value;
 
-  FWavePattern.LoopLength.Location := FWavePattern.LoopLength.Location * 2;
-  FWavePattern.LoopEnd.Location :=
-    FWavePattern.LoopStart.Location + FWavePattern.LoopLength.Location;
+  FWavePattern.LoopLength.Value := FWavePattern.LoopLength.Value * 2;
+  FWavePattern.LoopEnd.Value :=
+    FWavePattern.LoopStart.Value + FWavePattern.LoopLength.Value;
 
-  FWavePattern.SampleEnd.Location := FWavePattern.SampleStart.Location +
-    (FWavePattern.SampleEnd.Location - FWavePattern.SampleStart.Location) * 2;
+  FWavePattern.SampleEnd.Value := FWavePattern.SampleStart.Value +
+    (FWavePattern.SampleEnd.Value - FWavePattern.SampleStart.Value) * 2;
 
   FWavePattern.UpdateBPMScale;
   FWavePattern.UpdateSampleScale;
@@ -565,9 +559,9 @@ end;
 
 procedure TDoubleLoopLengthCommand.DoRollback;
 begin
-  FWavePattern.LoopLength.Location := FOldLoopLength;
-  FWavePattern.LoopEnd.Location := FOldLoopEnd;
-  FWavePattern.SampleEnd.Location := FOldSampleEnd;
+  FWavePattern.LoopLength.Value := FOldLoopLength;
+  FWavePattern.LoopEnd.Value := FOldLoopEnd;
+  FWavePattern.SampleEnd.Value := FOldSampleEnd;
 
   FWavePattern.UpdateBPMScale;
   FWavePattern.UpdateSampleScale;
@@ -610,10 +604,6 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FLoopStart := TLoopMarker.Create(AObjectOwner, ltStart);
-  FLoopEnd := TLoopMarker.Create(AObjectOwner, ltEnd);
-  FLoopLength := TLoopMarker.Create(AObjectOwner, ltLength);
-
   FSampleStart := TLoopMarker.Create(AObjectOwner, ltStart);
   FSampleEnd := TLoopMarker.Create(AObjectOwner, ltEnd);
 
@@ -631,10 +621,12 @@ begin
   FSliceList := TObjectList.Create(True);
   FCurrentSliceIndex:= 0;
 
+  FLastSliceIndex := -1;
+
   FWSOLAStretcher := TSoundTouch.Create;
   FWSOLAStretcher.setChannels(1);
   FWSOLAStretcher.setSampleRate(Round(GSettings.SampleRate));
-  //FWSOLAStretcher.setSetting(SETTING_USE_TRANSIENT_DETECTION, 1);
+  FWSOLAStretcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FWSOLAStretcher.setPitch(1);
 
   Pitch := 1;
@@ -655,7 +647,7 @@ begin
   rubberband_set_debug_level(FRubberbandStretcher, 0);
   FLatency := rubberband_get_latency(FRubberbandStretcher);
 
-  PitchAlgorithm := paRubberband;
+  PitchAlgorithm := paNone;
 
   Getmem(FWorkBuffer, 88200);
   Getmem(FConvertBuffer, 44100 * SizeOf(Single));
@@ -679,12 +671,6 @@ begin
     FWSOLAStretcher.Free;
   if Assigned(FWave) then
     FWave.Free;
-  if Assigned(FLoopStart) then
-    FLoopStart.Free;
-  if Assigned(FLoopEnd) then
-    FLoopEnd.Free;
-  if Assigned(FLoopLength) then
-    FLoopLength.Free;
 {  if Assigned(FDiskWriterThread) then
     FDiskWriterThread.Free;}
 //  if Assigned(FDiskReaderThread) then
@@ -983,21 +969,17 @@ begin
   case AValue of
   paSoundTouchEco:
     begin
-      TimeStretch.flush;
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 1);
-      TimeStretch.setSetting(SETTING_USE_AA_FILTER, 1);
-      TimeStretch.setPitch(1);
+      TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
 
-      //FLatency := 0; {TimeStretch.GetLatency;}
+      FLatency := Round((GSettings.SampleRate / 1000) * TimeStretch.getSetting(SETTING_SEEKWINDOW_MS)); {TimeStretch.GetLatency;}
     end;
   paSoundTouch:
     begin
-      TimeStretch.flush;
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 0);
-      TimeStretch.setSetting(SETTING_USE_AA_FILTER, 1);
-      TimeStretch.setPitch(1);
+      TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
 
-      //FLatency := 0; {TimeStretch.GetLatency;}
+      FLatency := Round((GSettings.SampleRate / 1000) * TimeStretch.getSetting(SETTING_SEEKWINDOW_MS)); {TimeStretch.GetLatency;}
     end;
   paRubberband:
     begin
@@ -1010,13 +992,27 @@ begin
     begin
       FPitchAlgorithm := paNone;
 
-      //FLatency := 0;
+      FLatency := 0;
     end;
   end;
 
   // Wait until here until setting it as the jack callback might
   // check state earlier
   FPitchAlgorithm := AValue;
+end;
+
+procedure TWavePattern.Flush;
+begin
+  case FPitchAlgorithm of
+    paSoundTouch, paSoundTouchEco:
+    begin
+      TimeStretch.flush;
+    end;
+    paRubberband:
+    begin
+      rubberband_reset(FRubberbandStretcher);
+    end;
+  end;
 end;
 
 function TWavePattern.NextSlice: TMarker;
@@ -1112,13 +1108,16 @@ end;
   AStartIndex: The index at which you should start, cached by StartVirtualLocation
   ALocation: Location in the timeline
   AFrameData: Structure returned with info about the sampleframe
+
 }
-procedure TWavePattern.VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData);
+function TWavePattern.VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
 var
   i: Integer;
   lSliceStart: TMarker;
   lSliceEnd: TMarker;
 begin
+  Result := True;
+
   AFrameData.Location := ALocation;
   AFrameData.Ramp := 1;
 
@@ -1129,12 +1128,25 @@ begin
 
     if (ALocation >= lSliceStart.Location) and (ALocation < lSliceEnd.Location) then
     begin
-      AFrameData.Location :=
-        lSliceStart.OrigLocation +
-        (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
+      if PitchAlgorithm = paPitched then
+      begin
+        AFrameData.Location :=
+          lSliceStart.OrigLocation +
+          (Pitch * GAudioStruct.BPMScaleInv * (ALocation - lSliceStart.Location));
+
+        // Return false if cursor in next slice
+        Result := (AFrameData.Location < lSliceEnd.Location);
+      end
+      else
+      begin
+        AFrameData.Location :=
+          lSliceStart.OrigLocation +
+          (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
+      end;
 
       AFrameData.Ramp := lSliceStart.DecayRate;
       AFrameData.Pitch := lSliceStart.PitchRate;
+      AFrameData.Index := i;
       break;
     end;
   end;
@@ -1166,17 +1178,17 @@ end;
 
 function TWavePattern.CalculateSampleCursor: Boolean;
 begin
-  Result := (FPatternCursor >= FSampleStart.Location) and (FPatternCursor < FSampleEnd.Location);
+  Result := (PatternCursor >= FSampleStart.Value) and (PatternCursor < FSampleEnd.Value);
   if Result then
   begin
-    FSampleCursor := (FPatternCursor - FSampleStart.Location) * FSampleScale;
+    FSampleCursor := (PatternCursor - FSampleStart.Value) * FSampleScale;
   end;
 end;
 
 procedure TWavePattern.UpdateSampleScale;
 begin
-  FSampleScale := FWave.Frames / (FSampleEnd.Location - FSampleStart.Location);
-  FSampleScaleInverse := (FSampleEnd.Location - FSampleStart.Location) / FWave.Frames;
+  FSampleScale := FWave.Frames / (FSampleEnd.Value - FSampleStart.Value);
+  FSampleScaleInverse := (FSampleEnd.Value - FSampleStart.Value) / FWave.Frames;
 end;
 
 procedure TWavePattern.UpdateBPMScale;
@@ -1216,99 +1228,114 @@ begin
 
   if lInSample then
   begin
-    VirtualLocation(StartingSliceIndex, FSampleCursor, lFramePacket);
-
-    CursorAdder := lFramePacket.Location;
-    CursorRamp := lFramePacket.Ramp;
-    if PitchAlgorithm = paPitched then
-      CursorRamp := Pitch;
-
-    // Put sound in buffer
-    lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
-    frac_pos := Frac(CursorAdder);
-    buf_offset := (Round(CursorAdder + FLatency) * Wave.ChannelCount);
-
-    if Trunc(CursorAdder) < (Wave.Frames - FLatency * FWave.ChannelCount) then
+    if VirtualLocation(StartingSliceIndex, FSampleCursor, lFramePacket) then
     begin
-      // Interpolate with Hermite interpolation
-      if buf_offset <= 0 then
-        xm1 := 0
-      else
-        xm1 := lBuffer[buf_offset - 1];
-      x0 := lBuffer[buf_offset];
-      x1 := lBuffer[buf_offset + 1];
-      x2 := lBuffer[buf_offset + 2];
-      WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
+      CursorAdder := lFramePacket.Location;
+      CursorRamp := lFramePacket.Ramp;
 
-      // Scale buffer up to now when the scaling-factor has changed or
-      // the end of the buffer has been reached.
-      if PitchAlgorithm <> paNone then
+      // Put sound in buffer
+      lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
+      frac_pos := Frac(CursorAdder);
+      buf_offset := (Round(CursorAdder + FLatency) * Wave.ChannelCount);
+
+      if Trunc(CursorAdder) < (Wave.Frames - FLatency * FWave.ChannelCount) then
       begin
-        if (CursorRamp <> psLastScaleValue) or
-          (FBPMscaleOld <> FBPMscale) or
-          (FSampleScaleOld <> FSampleScale) or
-          (AFrameIndex = (AFrameCount - 1)) then
+        // Interpolate with Hermite interpolation
+        if buf_offset <= 0 then
+          xm1 := 0
+        else
+          xm1 := lBuffer[buf_offset - 1];
+        x0 := lBuffer[buf_offset];
+        x1 := lBuffer[buf_offset + 1];
+        x2 := lBuffer[buf_offset + 2];
+        WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
+
+        // Scale buffer up to now when the scaling-factor has changed or
+        // the end of the buffer has been reached.
+        if PitchAlgorithm in [paSoundTouch, paSoundTouchEco, paRubberband, paFFT] then
         begin
-          psEndLocation := AFrameIndex;
-          CalculatedPitch := Pitch * ((1 / (CursorRamp * FBPMscale)) / FSampleScale);
-          if CalculatedPitch > MAX_STRETCH then CalculatedPitch := MAX_STRETCH;
-          if CalculatedPitch < MIN_STRETCH then CalculatedPitch := MIN_STRETCH;
+          if (CursorRamp <> psLastScaleValue) or
+            (FBPMscaleOld <> FBPMscale) or
+            (FSampleScaleOld <> FSampleScale) or
+            (FLastSliceIndex <> lFramePacket.Index) or
+            (AFrameIndex = (AFrameCount - 1)) then
+          begin
+            psEndLocation := AFrameIndex;
+            CalculatedPitch := Pitch * ((1 / (CursorRamp * FBPMscale)) / FSampleScale);
+            if CalculatedPitch > MAX_STRETCH then CalculatedPitch := MAX_STRETCH;
+            if CalculatedPitch < MIN_STRETCH then CalculatedPitch := MIN_STRETCH;
 
-          // Frames to process this window
-          lFrames := (psEndLocation - psBeginLocation) + 1;
+            // Frames to process this window
+            lFrames := (psEndLocation - psBeginLocation) + 1;
 
-          case PitchAlgorithm of
-            paSoundTouch, paSoundTouchEco:
-            begin
-              TimeStretch.setPitch(CalculatedPitch);
-              TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
-              TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
-            end;
-            paFFT:
-            begin
-              FFFTStretcher.Pitch := CalculatedPitch;
-              FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
-            end;
-            paRubberband:
-            begin
-              for k := 0 to Pred(lFrames) do
+            case PitchAlgorithm of
+              paSoundTouch, paSoundTouchEco:
               begin
-                FConvertBuffer[k] := WorkBuffer[psBeginLocation + k];
+                if FLastSliceIndex <> lFramePacket.Index then
+                begin
+                  TimeStretch.setSetting(SETTING_USE_TRANSIENT_DETECTION, 1);
+                end;
+
+                TimeStretch.setPitch(CalculatedPitch);
+                FLatency := Round((GSettings.SampleRate / 1000) * TimeStretch.getSetting(SETTING_SEQUENCE_MS));
+                TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
+                TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
               end;
-              DBLog(Format('LatencyRB %d LatencySys %d', [rubberband_get_latency(FRubberbandStretcher), FLatency]));
-              rubberband_set_pitch_scale(FRubberbandStretcher, CalculatedPitch);
-              //FLatency := rubberband_get_latency(FRubberbandStretcher) * Wave.ChannelCount;
-
-              rubberband_process(
-                FRubberbandStretcher,
-                @FConvertBuffer,
-                lFrames,
-                0);
-
-              rubberband_retrieve(
-                FRubberbandStretcher,
-                @FConvertBuffer,
-                lFrames);
-
-              for k := 0 to Pred(lFrames) do
+              paFFT:
               begin
-                ABuffer[psBeginLocation + k] := FConvertBuffer[k];
+                FFFTStretcher.Pitch := CalculatedPitch;
+                FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
+              end;
+              paRubberband:
+              begin
+                for k := 0 to Pred(lFrames) do
+                begin
+                  FConvertBuffer[k] := WorkBuffer[psBeginLocation + k];
+                end;
+                rubberband_set_pitch_scale(FRubberbandStretcher, CalculatedPitch);
+                FLatency := 8 * rubberband_get_latency(FRubberbandStretcher) * Wave.ChannelCount;
+
+                rubberband_process(
+                  FRubberbandStretcher,
+                  @FConvertBuffer,
+                  lFrames,
+                  0);
+
+                rubberband_retrieve(
+                  FRubberbandStretcher,
+                  @FConvertBuffer,
+                  lFrames);
+
+                for k := 0 to Pred(lFrames) do
+                begin
+                  ABuffer[psBeginLocation + k] := FConvertBuffer[k];
+                end;
               end;
             end;
+
+            // Remember last change
+            psBeginLocation := AFrameIndex;
+            psLastScaleValue := CursorRamp;
+            FBPMscaleOld := FBPMscale;
+            FSampleScaleOld := FSampleScale;
           end;
-
-          // Remember last change
-          psBeginLocation := AFrameIndex;
-          psLastScaleValue := CursorRamp;
-          FBPMscaleOld := FBPMscale;
-          FSampleScaleOld := FSampleScale;
+        end
+        else
+        begin
+          ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
         end;
       end
       else
       begin
-        ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
+        ABuffer[AFrameIndex] := 0;
       end;
+    end
+    else
+    begin
+      ABuffer[AFrameIndex] := 0;
     end;
+
+    FLastSliceIndex := lFramePacket.Index;
   end
   else
   begin
@@ -1320,33 +1347,44 @@ procedure TWavePattern.ProcessAdvance;
 begin
   UpdateBPMScale;
 
-  // Advance cursors for midi and tsPattern
-  RealCursorPosition := Round(PatternCursor);
-  PatternCursor := PatternCursor + FBPMscale;
-
-  // Synchronize with global quantize track
-  if (PatternCursor >= LoopEnd.Location) or SyncQuantize then
+  if Looped then
   begin
-    SyncQuantize := False;
-    PatternCursor := LoopEnd.Location - (LoopEnd.Location - LoopStart.Location);
+    Looped := False;
+    Flush;
   end;
+
+  inherited;
 end;
 
 procedure TWavePattern.CalculateLoopMarkers;
 begin
-  RealBPM := 120;
+  if RealBPM = 0 then
+  begin
+    RealBPM := 120;
+  end
+  else
+  begin
+    if RealBPM < 90 then
+    begin
+      RealBPM := RealBPM * 2;
+    end
+    else if RealBPM > 190 then
+    begin
+      RealBPM := RealBPM / 2;
+    end;
+  end;
 
   // Determine bars
   BarCount := FWave.Frames div (2 * FWave.SampleRate);
   BarLength := BarCount * FWave.SampleRate * 2;
 
-  LoopStart.Location := 0;
-  LoopEnd.Location := BarLength;
+  LoopStart.Value := 0;
+  LoopEnd.Value := BarLength;
 
-  LoopLength.Location := LoopEnd.Location - LoopStart.Location;
+  LoopLength.Value := LoopEnd.Value - LoopStart.Value;
 
-  SampleStart.Location := 0;
-  SampleEnd.Location := LoopEnd.Location;
+  SampleStart.Value := 0;
+  SampleEnd.Value := LoopEnd.Value;
 
   UpdateSampleScale;
 
@@ -1383,7 +1421,13 @@ begin
   SortSlices;
   Notify;
 
-  for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
+  for i := 0 to Pred(Round(FWave.ReadCount / FWave.ChannelCount / Round(GSettings.SampleRate / 16))) do
+  begin
+
+    AddSlice(Round(i * GSettings.SampleRate / 16), SLICE_VIRTUAL, True);
+  end;
+ { BeatDetect.setThresHold(0.1);}
+(*  for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
   begin
     BeatDetect.AudioProcess(TChannel(Wave.ChannelList[0]).Buffer[i * FWave.ChannelCount]);
     if BeatDetect.BeatPulse then
@@ -1393,10 +1437,10 @@ begin
         WindowLength := 0;
       end;
 
-      lCurrentSlice := AddSlice(i, SLICE_VIRTUAL, True);
+      lCurrentSlice := AddSlice(i - 250, SLICE_VIRTUAL, True);
       if lFirstSlice then
       begin
-        LoopStart.Location := i;
+        //LoopStart.Value := i;
         lFirstSlice := False;
       end;
     end;
@@ -1410,7 +1454,7 @@ begin
       Inc(WindowLength);
     end;
   end;
-
+  *)
   Notify;
 
   GLogger.PushMessage('EndAutoMarkerProcess');
@@ -1647,8 +1691,8 @@ begin
   begin
     // Save state
     case FDataType of
-    stStart: FOldLocation := FWavePattern.SampleStart.Location;
-    stEnd: FOldLocation := FWavePattern.SampleEnd.Location;
+    stStart: FOldLocation := FWavePattern.SampleStart.Value;
+    stEnd: FOldLocation := FWavePattern.SampleEnd.Value;
     end;
   end;
 
@@ -1657,12 +1701,12 @@ begin
     stStart:
     begin
       if FLocation < 0 then FLocation := 0;
-      FWavePattern.SampleStart.Location := FLocation;
+      FWavePattern.SampleStart.Value := FLocation;
     end;
     stEnd:
     begin
       if FLocation < 0 then FLocation := 0;
-      FWavePattern.SampleEnd.Location := FLocation;
+      FWavePattern.SampleEnd.Value := FLocation;
     end;
   end;
 
@@ -1682,12 +1726,12 @@ begin
   DBLog('start TUpdateWaveSampleMarkerCommand.DoRollback');
 
   // Retrieve state
-  FWavePattern.SampleStart.Location := FOldLocation;
+  FWavePattern.SampleStart.Value := FOldLocation;
 
   // Assign
   case FDataType of
-    stStart: FWavePattern.SampleStart.Location := FOldLocation;
-    stEnd: FWavePattern.SampleEnd.Location := FOldLocation;
+    stStart: FWavePattern.SampleStart.Value := FOldLocation;
+    stEnd: FWavePattern.SampleEnd.Value := FOldLocation;
   end;
 
   FWavePattern.UpdateSampleScale;
@@ -1704,6 +1748,8 @@ end;
 { TUpdateWaveSampleCommand }
 
 procedure TUpdateWaveLoopMarkerCommand.DoExecute;
+var
+  lQuantize: Integer;
 begin
   DBLog('start TUpdateWaveLoopMarkerCommand.DoExecute');
 
@@ -1711,25 +1757,28 @@ begin
   begin
     // Save state
     case FDataType of
-    ltStart: FOldLocation := FWavePattern.LoopStart.Location;
-    ltEnd: FOldLocation := FWavePattern.LoopEnd.Location;
-    ltLength: FOldLocation := FWavePattern.LoopLength.Location;
+    ltStart: FOldLocation := FWavePattern.LoopStart.Value;
+    ltEnd: FOldLocation := FWavePattern.LoopEnd.Value;
+    ltLength: FOldLocation := FWavePattern.LoopLength.Value;
     end;
   end;
+
+  lQuantize := Round(GSettings.SampleRate / 8);
 
   // Assign
   case FDataType of
   ltStart:
   begin
     if FLocation < 0 then FLocation := 0;
-    FWavePattern.LoopStart.Location := FLocation;
+
+    FWavePattern.LoopStart.Value := (FLocation div lQuantize) * lQuantize;
   end;
   ltEnd:
   begin
     if FLocation < 0 then FLocation := 0;
-    FWavePattern.LoopEnd.Location := FLocation;
+    FWavePattern.LoopEnd.Value := (FLocation div lQuantize) * lQuantize;;
   end;
-  ltLength: FWavePattern.LoopLength.Location := FLocation;
+  ltLength: FWavePattern.LoopLength.Value := (FLocation div lQuantize) * lQuantize;
   end;
 
   // Update observers
@@ -1746,13 +1795,13 @@ begin
   DBLog('start TUpdateWaveLoopStartCommand.DoRollback');
 
   // Retrieve state
-  FWavePattern.LoopStart.Location := FOldLocation;
+  FWavePattern.LoopStart.Value := FOldLocation;
 
   // Assign
   case FDataType of
-  ltStart: FWavePattern.LoopStart.Location := FOldLocation;
-  ltEnd: FWavePattern.LoopEnd.Location := FOldLocation;
-  ltLength: FWavePattern.LoopLength.Location := FOldLocation;
+  ltStart: FWavePattern.LoopStart.Value := FOldLocation;
+  ltEnd: FWavePattern.LoopEnd.Value := FOldLocation;
+  ltLength: FWavePattern.LoopLength.Value := FOldLocation;
   end;
 
   // Update observers

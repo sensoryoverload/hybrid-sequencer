@@ -536,7 +536,7 @@ begin
       19);
 
     // Full background
-    FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
     FBitmap.Canvas.FillRect(
       0,
       FTransportBarHeight,
@@ -544,7 +544,7 @@ begin
       Height);
 
     // Sample overlay background
-    FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
     FBitmap.Canvas.FillRect(
       SliceLeft,
       FTransportBarHeight,
@@ -563,14 +563,15 @@ begin
     begin
       if TimeMarker and 3 = 0 then
       begin
-        FBitmap.Canvas.Pen.Color := GRAYSCALE_100;
-      end
+        FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
+      {end
       else
       begin
         FBitmap.Canvas.Pen.Color := GRAYSCALE_90;
-      end;
+      end;}
       TimeMarkerLocation := Round((TimeMarker * QuarterBeatMarkerSpacing) - FOffset);
       FBitmap.Canvas.Line(TimeMarkerLocation, FTransportBarHeight, TimeMarkerLocation, Height);
+      end;
     end;
 
     if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and
@@ -591,6 +592,7 @@ begin
         ChannelZeroLine := ChannelHeight div 2;
         FBitmap.Canvas.Pen.Color := RGBToColor(35, 40, 52);
         FBitmap.Canvas.Pen.Width := 1;
+        FBitmap.Canvas.Line(0, ChannelZeroLine + ChannelScreenOffset, Width, ChannelZeroLine + ChannelScreenOffset);
         FBitmap.Canvas.MoveTo(Round(FSampleStartLocation * FZoomFactorToScreen) - FOffset, ChannelScreenOffset);
 
         for SliceLoop := 0 to SliceListGUI.Count - 2 do
@@ -758,7 +760,7 @@ begin
   SliceLeft := Round(FModel.RealCursorPosition * FZoomFactorToScreen - FOffset);
   if FOldCursorPosition <> SliceLeft then
   begin
-    Canvas.Pen.Color := clWhite;
+    Canvas.Pen.Color := clRed;
     Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, TrackHeight);
     //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
 
@@ -1034,8 +1036,6 @@ var
 begin
   FMouseX := X;
 
-  UpdateSampleScale;
-
   lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
   if Assigned(FSelectedLoopMarkerGUI) then
@@ -1044,6 +1044,7 @@ begin
   end
   else if Assigned(FSelectedSampleMarkerGUI) then
   begin
+    UpdateSampleScale;
     FSelectedSampleMarkerGUI.Location := lXRelative;
   end
   else if FDragSlice then
@@ -1107,8 +1108,8 @@ end;
 function TWaveGUI.SampleMarkerAt(Location: Integer; AMargin: Single
   ): TSampleMarkerGUI;
 begin
-  SampleStart.Location := FModel.SampleStart.Location;
-  SampleEnd.Location := FModel.SampleEnd.Location;
+  SampleStart.Location := FModel.SampleStart.Value;
+  SampleEnd.Location := FModel.SampleEnd.Value;
 
   Result := nil;
 
@@ -1228,9 +1229,9 @@ end;
 
 function TWaveGUI.LoopMarkerAt(Location: Integer; AMargin: Single): TLoopMarkerGUI;
 begin
-  LoopStart.Location := FModel.LoopStart.Location;
-  LoopEnd.Location := FModel.LoopEnd.Location;
-  LoopLength.Location := FModel.LoopLength.Location;
+  LoopStart.Location := FModel.LoopStart.Value;
+  LoopEnd.Location := FModel.LoopEnd.Value;
+  LoopLength.Location := FModel.LoopLength.Value;
 
   Result := nil;
 
@@ -1286,9 +1287,7 @@ begin
   lMarkerGUI := TMarkerGUI(Data);
   if Assigned(lMarkerGUI) then
   begin
-//    GLogger.PushMessage('start Remove found');
     FSliceListGUI.Remove(lMarkerGUI);
-//    GLogger.PushMessage('end Remove found');
   end;
 
   Invalidate;
@@ -1308,9 +1307,7 @@ begin
     begin
       if lMarkerGUI.ObjectID = AObjectID then
       begin
-//        GLogger.PushMessage('object found');
         Application.QueueAsyncCall(@ReleaseMarker, PtrInt(lMarkerGUI));
-//        break;
       end;
     end;
   end;

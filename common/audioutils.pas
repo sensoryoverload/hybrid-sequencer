@@ -146,7 +146,7 @@ constructor TParamSmooth.Create;
 begin
   inherited Create;
 
-  a := 0.999; // Slow tracking
+  a := 0.999; // 0.999 Slow tracking
   b := 1.0 - a;
   z := 0;
 end;

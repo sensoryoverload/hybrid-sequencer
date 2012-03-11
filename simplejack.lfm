@@ -3,7 +3,6 @@ object MainApp: TMainApp
   Height = 679
   Top = 95
   Width = 1095
-  ActiveControl = pnlTop
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
   ClientHeight = 679
@@ -26,19 +25,21 @@ object MainApp: TMainApp
     Top = 0
     Width = 1095
     Align = alTop
+    BevelOuter = bvNone
     Caption = 'pnlTop'
     ClientHeight = 340
     ClientWidth = 1095
     TabOrder = 0
     object sbTracks: TScrollBox
-      Left = 263
-      Height = 298
-      Top = 41
-      Width = 831
+      Left = 258
+      Height = 297
+      Top = 43
+      Width = 837
       HorzScrollBar.Page = 621
       VertScrollBar.Page = 507
       Align = alClient
       AutoScroll = False
+      BorderStyle = bsNone
       PopupMenu = pupScrollBox
       TabOrder = 0
       OnDragDrop = sbTracksDragDrop
@@ -46,73 +47,63 @@ object MainApp: TMainApp
       OnResize = sbTracksResize
     end
     object gbTrackDetail: TGroupBox
-      Left = 1
-      Height = 298
-      Top = 41
+      Left = 0
+      Height = 297
+      Top = 43
       Width = 254
       Align = alLeft
-      Caption = 'Track'
-      ClientHeight = 287
+      Caption = 'Files'
+      ClientHeight = 286
       ClientWidth = 250
       TabOrder = 1
-      object pnlFileManager: TPanel
+      object TreeView1: TTreeView
         Left = 0
-        Height = 287
+        Height = 286
         Top = 0
         Width = 250
         Align = alClient
-        Anchors = [akTop, akLeft, akRight]
-        ClientHeight = 287
-        ClientWidth = 250
+        Anchors = []
+        BorderStyle = bsNone
+        DefaultItemHeight = 16
+        Images = ilGlobalImages
+        ParentColor = True
+        ReadOnly = True
         TabOrder = 0
-        object TreeView1: TTreeView
-          Left = 1
-          Height = 285
-          Top = 1
-          Width = 248
-          Align = alClient
-          BorderStyle = bsNone
-          DefaultItemHeight = 16
-          ExpandSignType = tvestPlusMinus
-          Images = ilGlobalImages
-          ReadOnly = True
-          TabOrder = 0
-          OnChange = TreeView1Change
-          OnCollapsed = TreeView1Collapsed
-          OnDeletion = TreeView1Deletion
-          OnDragDrop = TreeView1DragDrop
-          OnDragOver = TreeView1DragOver
-          OnExpanding = TreeView1Expanding
-          OnMouseDown = TreeView1MouseDown
-          Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips]
-        end
+        OnChange = TreeView1Change
+        OnCollapsed = TreeView1Collapsed
+        OnDeletion = TreeView1Deletion
+        OnDragDrop = TreeView1DragDrop
+        OnDragOver = TreeView1DragOver
+        OnExpanding = TreeView1Expanding
+        OnMouseDown = TreeView1MouseDown
+        Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips]
+        TreeLinePenStyle = psSolid
       end
     end
     object LeftSplitter: TCollapseSplitter
-      Left = 255
-      Height = 298
-      Top = 41
-      Width = 8
+      Left = 254
+      Height = 297
+      Top = 43
+      Width = 4
       OnDblClick = LeftSplitterDblClick
     end
     object pnlToolbar: TPanel
-      Left = 1
-      Height = 40
-      Top = 1
-      Width = 1093
+      Left = 0
+      Height = 43
+      Top = 0
+      Width = 1095
       Align = alTop
-      BevelOuter = bvNone
-      ClientHeight = 40
-      ClientWidth = 1093
+      ClientHeight = 43
+      ClientWidth = 1095
       TabOrder = 3
       object ToolBar1: TToolBar
         Left = 1
-        Height = 37
+        Height = 40
         Top = 1
-        Width = 118
+        Width = 120
         Align = alNone
         Anchors = [akTop, akLeft, akRight, akBottom]
-        Caption = 'ToolBar1'
+        EdgeBorders = []
         EdgeInner = esNone
         EdgeOuter = esNone
         Images = ilGlobalImages
@@ -160,10 +151,10 @@ object MainApp: TMainApp
         end
       end
       object DialControl1: TDialControl
-        Left = 120
+        Left = 116
         Height = 40
         Hint = 'BPM Rate'
-        Top = -1
+        Top = 0
         Width = 36
         Value = 0
         Caption = 'BPM'
@@ -173,13 +164,17 @@ object MainApp: TMainApp
         OnStartChange = DialControl1StartChange
         Enabled = True
         ValueVisible = True
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
     end
   end
   object BottomSplitter: TCollapseSplitter
     Cursor = crVSplit
     Left = 0
-    Height = 9
+    Height = 4
     Top = 340
     Width = 1095
     Align = alTop
@@ -187,17 +182,17 @@ object MainApp: TMainApp
   end
   object pnlBottom: TPanel
     Left = 0
-    Height = 330
-    Top = 349
+    Height = 335
+    Top = 344
     Width = 1095
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 330
+    ClientHeight = 335
     ClientWidth = 1095
     TabOrder = 2
     object pnlVarious: TPanel
       Left = 0
-      Height = 330
+      Height = 335
       Top = 0
       Width = 170
       Align = alLeft
@@ -206,9 +201,42 @@ object MainApp: TMainApp
     end
     object Splitter1: TSplitter
       Left = 170
-      Height = 330
+      Height = 335
       Top = 0
       Width = 5
+    end
+    object pcEditor: TPageControl
+      Left = 175
+      Height = 335
+      Top = 0
+      Width = 920
+      ActivePage = tsPlugins
+      Align = alClient
+      TabIndex = 0
+      TabOrder = 2
+      TabPosition = tpLeft
+      object tsPlugins: TTabSheet
+        Caption = 'Plugins'
+        ClientHeight = 331
+        ClientWidth = 881
+        object lbPluginList: TListBox
+          Left = 0
+          Height = 331
+          Top = 0
+          Width = 100
+          Align = alLeft
+          ItemHeight = 0
+          ScrollWidth = 98
+          TabOrder = 0
+          TopIndex = -1
+        end
+      end
+      object tsMIDI: TTabSheet
+        Caption = 'Pattern'
+      end
+      object tsWave: TTabSheet
+        Caption = 'Pattern'
+      end
     end
   end
   object MainMenu1: TMainMenu
@@ -922,7 +950,7 @@ object MainApp: TMainApp
   end
   object ScreenUpdater: TTimer
     Enabled = False
-    Interval = 50
+    Interval = 40
     OnTimer = ScreenUpdaterTimer
     left = 320
     top = 64

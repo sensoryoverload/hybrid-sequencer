@@ -128,7 +128,7 @@ procedure TMidiPatternGUI.Paint;
 var
   lCursorPos: Integer;
 begin
-  if FCacheIsDirty then
+  //if FCacheIsDirty then
   begin
     bmp.Canvas.Clear;
 
@@ -137,27 +137,25 @@ begin
     bmp.Height := Height;
     bmp.Width := Width;
 
-    if Playing then
+    bmp.Canvas.Brush.Color := clLtGray;
+    bmp.Canvas.Rectangle(0, 0, 15, Height);
+
+    bmp.Canvas.Pen.Color := clGray;
+    bmp.Canvas.Brush.Color := clGray;
+
+    if FModel.Playing then
     begin
-      bmp.Canvas.Brush.Color := clGreen
+      bmp.Canvas.Rectangle(3, 3, 12, Height - 3);
     end
     else
     begin
-      if Scheduled then
-        bmp.Canvas.Brush.Color := clYellow
-      else
-        bmp.Canvas.Brush.Color := clBlue
+      bmp.Canvas.Polygon([Point(3, 2), Point(12, Height div 2), Point(3, Height - 3)]);
     end;
-
-    bmp.Canvas.Clipping := False;
-    bmp.Canvas.Rectangle(0, 0, 15, Height);
 
     bmp.Canvas.Brush.Color := clLtGray;
     bmp.Canvas.Clipping := False;
     bmp.Canvas.Rectangle(15, 0, Width, Height);
 
-    bmp.Canvas.Font.Color := clRed;
-    bmp.Canvas.TextOut(3, 2, 'P');
     bmp.Canvas.TextOut(17, 2, Text);
     FCacheIsDirty := False;
   end;
@@ -215,7 +213,7 @@ begin
 
     FCacheIsDirty := True;
 
-    DoPatternRefreshGUI;
+    //DoPatternRefreshGUI;
   end
   else if Button = mbRight then
   begin
@@ -232,6 +230,9 @@ begin
   FCacheIsDirty := True;
 
   inherited MouseUp(Button, Shift, X, Y);
+
+  //DoPatternRefreshGUI;
+
 end;
 
 procedure TMidiPatternGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
@@ -306,7 +307,9 @@ begin
   DBLog('start TPatternGUI.Update');
 
   Position := TMidiPattern(Subject).Position;
-  PatternLength := TMidiPattern(Subject).LoopEnd.Location;  //todo Use global patternlength
+  PatternLength := TMidiPattern(Subject).LoopEnd.Value;  //todo Use global patternlength
+  Scheduled := TMidiPattern(Subject).Scheduled;
+  Playing := TMidiPattern(Subject).Playing;
 //  PatternControls.RealBPM := Model.WavePattern.RealBPM;
 //  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
 

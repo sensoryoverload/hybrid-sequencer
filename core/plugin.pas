@@ -25,7 +25,8 @@ unit plugin;
 interface
 
 uses
-  Classes, SysUtils, ContNrs, globalconst, utils, global_command, global;
+  Classes, SysUtils, ContNrs, globalconst, utils, global_command, global,
+  ladspaloader;
 
 type
   TPluginNodeType = (pntSource, pntSink, pntPlugin);
@@ -64,6 +65,10 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
+    procedure Instantiate; virtual;
+    procedure Activate; virtual;
+    procedure Deactivate; virtual;
+    procedure Clean; virtual;
     procedure ApplyToAll(AApplyProc: TApplyProc);
     function Execute(AFrames: Integer): PSingle;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
@@ -97,6 +102,12 @@ type
 
   TLADSPAPlugin = class(TPluginNode)
   public
+    procedure Instantiate; override;
+    procedure Activate; override;
+    procedure Deactivate; override;
+    procedure Clean; override;
+    procedure LoadByID(AId: Integer);
+    procedure LoadByName(AName: string);
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
@@ -164,9 +175,41 @@ uses
 
 { TPlugin }
 
+procedure TLADSPAPlugin.Instantiate;
+begin
+  //  FLADSPA.Instantiate
+end;
+
+procedure TLADSPAPlugin.Activate;
+begin
+  inherited Activate;
+
+//  FLADSPA.Activate
+end;
+
+procedure TLADSPAPlugin.Deactivate;
+begin
+  inherited Deactivate;
+end;
+
+procedure TLADSPAPlugin.Clean;
+begin
+  //  FLADSPA.Clean
+end;
+
+procedure TLADSPAPlugin.LoadByID(AId: Integer);
+begin
+  // Load by LADSPA ID, these should be unique
+end;
+
+procedure TLADSPAPlugin.LoadByName(AName: string);
+begin
+  // GLadspaPluginFactory.Discover;
+end;
+
 procedure TLADSPAPlugin.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
-  // TODO implement DSP stuff
+  //  FLADSPA.Run
 end;
 
 { TPluginAudioOut }
@@ -308,6 +351,26 @@ begin
 end;
 
 procedure TPluginNode.Finalize;
+begin
+  //
+end;
+
+procedure TPluginNode.Instantiate;
+begin
+  //
+end;
+
+procedure TPluginNode.Activate;
+begin
+  //
+end;
+
+procedure TPluginNode.Deactivate;
+begin
+  //
+end;
+
+procedure TPluginNode.Clean;
 begin
   //
 end;

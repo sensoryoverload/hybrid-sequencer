@@ -107,6 +107,9 @@ Type
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     property Color;
+    property Align;
+    property Anchors;
+    property Constraints;
   protected
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
@@ -142,6 +145,9 @@ Type
     property CaptionOff: string read FCaptionOff write SetCaptionOff;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property Color;
+    property Align;
+    property Anchors;
+    property Constraints;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -337,6 +343,9 @@ Type
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property OnStartChange: TNotifyEvent read FOnStartChange write FOnStartChange;
     property OnEndChange: TNotifyEvent read FOnEndChange write FOnEndChange;
+    property Align;
+    property Anchors;
+    property Constraints;
   end;
 
   { TFilteredShellTreeView }
@@ -535,7 +544,6 @@ begin
 
   ControlStyle := ControlStyle + [csDisplayDragImage];
 
-
   //ParentColor := True;
 
   Constraints.MinHeight := 40;
@@ -552,7 +560,7 @@ begin
   Enabled := True;
   FValueVisible := False;
 
-  //DoubleBuffered:= True;
+  DoubleBuffered:= True;
 
   FDialMoving := False;
 

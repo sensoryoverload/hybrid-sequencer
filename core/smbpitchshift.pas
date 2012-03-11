@@ -95,7 +95,7 @@ type
 implementation
 
 function squareroot_sse_11bits(x: single): single; forward; inline;
-function arctan2x(y, x: single): single; forward; inline;
+function arctan2x(y, x: double): double; forward; inline;
 
 // Routine smbPitchShift(). See top of file for explanation
 // Purpose: doing pitch shifting while maintaining duration using the Short
@@ -103,10 +103,10 @@ function arctan2x(y, x: single): single; forward; inline;
 // Author: (c)1999-2009 Stephan M. Bernsee <smb@dspdimension.com>
 procedure TSmbPitchShifter.Process(indata, outdata: PSingle; AFrames: Longint);
 var
-  magn, phase, tmp, window, real, imag: single;
-  freqPerBin, freqPerBin_inverse, expct: single;
-  oversampling_inverse: single;
-  fftFrameSizeMulOverSampling: single;
+  magn, phase, tmp, window, real, imag: double;
+  freqPerBin, freqPerBin_inverse, expct: double;
+  oversampling_inverse: double;
+  fftFrameSizeMulOverSampling: double;
   lCos, lSin: Extended;
   i,k, qpd, index, inFifoLatency, stepSize, fftFrameSize2: Longint;
 begin
@@ -258,14 +258,14 @@ begin
   end;
 end;
 
-function arctan2x(y, x: single): single;
+function arctan2x(y, x: double): double;
 const
   M_PI_COEF1 = M_PI / 4;
   M_PI_COEF2 = 3 * M_PI_COEF1;
 var
-  abs_y: single;
-  r: single;
-  angle: single;
+  abs_y: double;
+  r: double;
+  angle: double;
 begin
    abs_y := abs(y) + 1e-10 ;     // kludge to prevent 0/0 condition
    if x >= 0 then
@@ -294,6 +294,17 @@ begin
     movss z, xmm0            // z ~= sqrt(x) to 0.038%
   end;
   Result := z;
+end;
+
+function fastroot(i:single;n:integer):single;
+var
+  l: longint;
+begin
+  l := longint((@i)^);
+  l := l - $3F800000;
+  l := l shr (n-1);
+  l := l + $3F800000;
+  result := single((@l)^);
 end;
 
 { TSmbPitchShifter }

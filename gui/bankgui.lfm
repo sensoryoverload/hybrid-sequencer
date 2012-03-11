@@ -1,27 +1,29 @@
 object BankView: TBankView
   Left = 0
-  Height = 141
+  Height = 190
   Top = 0
   Width = 922
   Align = alClient
-  ClientHeight = 141
+  ClientHeight = 190
   ClientWidth = 922
+  Constraints.MaxHeight = 190
+  Constraints.MinHeight = 190
   TabOrder = 0
   DesignLeft = 233
   DesignTop = 260
   object gbSampleSelect: TGroupBox
     Left = 0
-    Height = 141
+    Height = 190
     Top = 0
     Width = 91
     Align = alLeft
     Caption = 'Samples'
-    ClientHeight = 126
+    ClientHeight = 175
     ClientWidth = 87
     TabOrder = 0
     object lbSampleSelector: TListBox
       Left = 0
-      Height = 126
+      Height = 175
       Top = 0
       Width = 87
       Align = alClient

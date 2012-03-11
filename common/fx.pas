@@ -30,7 +30,7 @@ lTrack.FXFilter.Frequency:= Random(22050);
 interface
 
 uses
-  Classes, SysUtils, plugin, midi, global_command, math;
+  Classes, SysUtils, plugin, global_command, math;
   
 type
 
@@ -120,6 +120,9 @@ type
   function saturate(x: single; t: single): single;
 
 implementation
+
+var RandSeed:Integer=$DEAD;
+
 
 { TDecimateFX }
 
@@ -306,6 +309,124 @@ begin
     ABuffer[i] := Process(ABuffer[i]);
   end;
 end;
+(*
+function TMoogFilter.Process(const I : Single):Single; assembler;
+asm
+ fld I.Single
+ imul edx,RandSeed,08088405H
+ inc edx
+ mov RandSeed,edx
+ fld noi
+ push 0
+ push edx
+ fild qword ptr [esp]
+ add esp,8
+ fmulp st(1), st(0)
+ faddp
+ fld mTwo.Single
+ fmul self.fQ.Double
+ fmul self.fOld.Double
+ fmul self.fAcr.Double
+ faddp
+ fmul i2v.Double
+ call tanh2
+ fld [fA].Double
+ fmul i2v.Double
+ fld st(0)
+ fabs
+ fld c3
+ fadd st(0),st(1)
+ fmul st(0),st(1)
+ fadd c6
+ fmul st(0),st(1)
+ fadd c12
+ fmul st(2),st(0)
+ fmulp st(1),st(0)
+ fadd c24
+ fdivp st(1),st(0)
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA].Double
+ fst [fA].Double
+ fmul i2v.Double
+ call tanh2
+ fld [fA+8].Double
+ fmul i2v.Double
+ call tanh2
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA+8].Double
+ fst [fA+8].Double
+ fmul i2v.Double
+ call tanh2
+ fld [fA+16].Double
+ fmul i2v.Double
+ call tanh2
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA+16].Double
+ fst [fA+16].Double
+ fmul i2v.Double
+ call tanh2
+ fld [fA+24].Double
+ fmul i2v.Double
+ call tanh2
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA+24].Double
+ fst [fA+24].Double
+ fld st(0)
+ fadd [fA+32].Double
+ fstp [fOld].Double
+ fstp [fA+32].Double
+ fld mTwo.Single
+ fmul self.fQ.Double
+ fmul self.fOld.Double
+ fmul self.fAcr.Double
+ fmul i2v.Double
+ call tanh2
+ fld [fA].Double
+ fmul i2v.Double
+ call tanh2
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA].Double
+ fst [fA].Double
+ fmul i2v.Double
+ call tanh2
+ fld [fA+8].Double
+ fmul i2v.Double
+ call tanh2
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA+8].Double
+ fst [fA+8].Double
+ fmul i2v.Double
+ call tanh2
+ fld [fA+16].Double
+ fmul i2v.Double
+ call tanh2
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA+16].Double
+ fst [fA+16].Double
+ fmul i2v.Double
+ call tanh2
+ fld [fA+24].Double
+ fmul i2v.Double
+ call tanh2
+ fsubp
+ fmul self.f2vg.Double
+ fadd [fA+24].Double
+ fst [fA+24].Double
+ fld [fA+32].Double
+ fxch
+ fst [fA+32].Double
+ faddp
+ fst [fOld].Double
+end;
+*)
+
 
 
 constructor TLFO.Create(AObjectOwnerID: string);

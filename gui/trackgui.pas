@@ -28,7 +28,7 @@ uses
   Classes, SysUtils, FileUtil, LResources, Forms, StdCtrls, ExtCtrls, ComCtrls,
   dialcontrol, Controls, LCLType, Graphics, globalconst, ContNrs, global, track,
   global_command, ShellCtrls, pattern, LCLIntf, Menus, ActnList,
-  audiostructure, patterngui;
+  audiostructure, patterngui, patternlistgui;
 
 type
   TPatternChangeEvent = procedure of object;
@@ -85,6 +85,7 @@ type
     FShuffling: Boolean;
     FOnTracksRefreshGUI: TTracksRefreshGUIEvent;
     FOnPatternRefreshGUI: TPatternRefreshGUIEvent;
+    FOnApplicationGUIEvent: TApplicationGUIEvent;
     FPatternListGUI: TObjectList;
     FObjectID: string;
     FOnUpdateTrackControls: TNotifyEvent;
@@ -100,6 +101,7 @@ type
     procedure SetSelected(const AValue: Boolean);
     procedure CreatePatternGUI(AObjectID: string);
     procedure DeletePatternGUI(AObjectID: string);
+    procedure DoApplicationGUI;
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -116,6 +118,7 @@ type
     property Selected: Boolean read FSelected write SetSelected;
     property OnTracksRefreshGUI: TTracksRefreshGUIEvent read FOnTracksRefreshGUI write FOnTracksRefreshGUI;
     property OnPatternRefreshGUI: TPatternRefreshGUIEvent read FOnPatternRefreshGUI write FOnPatternRefreshGUI;
+    property OnApplicationGUIEvent: TApplicationGUIEvent read FOnApplicationGUIEvent write FOnApplicationGUIEvent;
     property IsShuffling: Boolean read FShuffling write FShuffling;
     property Shuffle: TShuffle read FShuffle write FShuffle;
     property OnUpdateTrackControls: TNotifyEvent read FOnUpdateTrackControls write FOnUpdateTrackControls;
@@ -305,15 +308,29 @@ begin
   DBLog('end TTrack.CreatePatternGUI');
 end;
 
+procedure TTrackGUI.DoApplicationGUI;
+begin
+  if Assigned(FOnApplicationGUIEvent) then
+    FOnApplicationGUIEvent(Self);
+end;
+
 procedure TTrackGUI.ReleasePattern(Data: PtrInt);
 var
   lPatternGUI: TPatternGUI;
 begin
-  GSettings.SelectedPatternGUI := nil;
-
+  //GSettings.SelectedPatternGUI := nil;
+  //GSettings.OldSelectedPatternGUI := nil;
   lPatternGUI := TPatternGUI(Data);
-  lPatternGUI.Parent := nil;
-  PatternListGUI.Remove(lPatternGUI);
+  if lPatternGUI.ClassType = TWavePatternGUI then
+  begin
+    TWavePatternGUI(Data).Parent := nil;
+    PatternListGUI.Remove(TWavePatternGUI(Data));
+  end
+  else if lPatternGUI.ClassType = TMidiPatternGUI then
+  begin
+    TMidiPatternGUI(Data).Parent := nil;
+    PatternListGUI.Remove(TMidiPatternGUI(Data));
+  end;
 end;
 
 procedure TTrackGUI.DeletePatternGUI(AObjectID: string);
@@ -324,14 +341,17 @@ var
   lIndex: Integer;
 begin
   // update track gui
-  GSettings.SelectedPatternGUI := nil;
+  //GSettings.SelectedPatternGUI := nil;
 
   for lIndex := Pred(PatternListGUI.Count) downto 0 do
   begin
     lPatternGUI := TPatternGUI(PatternListGUI[lIndex]);
-    if lPatternGUI.ObjectID = AObjectID then
+    if Assigned(lPatternGUI) then
     begin
-      Application.QueueAsyncCall(@ReleasePattern, PtrInt(TMidiPatternGUI(lPatternGUI)));
+      if lPatternGUI.ObjectID = AObjectID then
+      begin
+        Application.QueueAsyncCall(@ReleasePattern, PtrInt(PatternListGUI[lIndex]));
+      end;
     end;
   end;
 end;
@@ -421,6 +441,8 @@ begin
     end
     else
     begin
+      DoApplicationGUI;
+
       // SourceTrack was original track containing pattern
       lMovePatternToTrackCommand := TMovePatternToTrackCommand.Create(Self.ObjectID);
       try
@@ -428,6 +450,7 @@ begin
         lMovePatternToTrackCommand.TargetTrackID := ObjectID;
         lMovePatternToTrackCommand.PatternID := lPatternGUI.ObjectID;
         lMovePatternToTrackCommand.Position := lPosition;
+
         GCommandQueue.PushCommand(lMovePatternToTrackCommand);
       except
         lMovePatternToTrackCommand.Free;

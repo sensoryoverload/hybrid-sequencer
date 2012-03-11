@@ -133,6 +133,8 @@ function hermite4(frac_pos, xm1, x0, x1, x2: single): single; inline;
 function DumpExceptionCallStack(E: Exception): string;
 function DumpCallStack: string;
 
+function fmod(AValue, AModulo: Double): Double; inline;
+
 var
   FLogging: Boolean;
   GLogger: TLogMessageThread;
@@ -592,6 +594,14 @@ begin
   for I := 0 to ExceptFrameCount - 1 do
     Report := Report + LineEnding + BackTraceStrFunc(Frames[I]);
   Result := Report;
+end;
+
+function fmod(AValue, AModulo: Double): Double;
+var
+  lDivision: Double;
+begin
+  lDivision := AValue / AModulo;
+  Result := (lDivision - Trunc(lDivision)) * AModulo;
 end;
 
 initialization

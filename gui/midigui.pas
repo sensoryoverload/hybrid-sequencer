@@ -184,6 +184,7 @@ type
     function ConvertNoteToScreen(ANote: Integer): Integer;
     function ConvertScreenToNote(AY: Integer): Integer;
     procedure ReleaseNote(Data: PtrInt);
+    procedure SetQuantizeSetting(AValue: Integer);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
   public
@@ -213,7 +214,7 @@ type
     property LoopStart: TLoopMarkerGUI read FLoopStart write FLoopStart;
     property LoopEnd: TLoopMarkerGUI read FLoopEnd write FLoopEnd;
     property LoopLength: TLoopMarkerGUI read FLoopLength write FLoopLength;
-    property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
+    property QuantizeSetting: Integer read FQuantizeSetting write SetQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 22050;
     property RootNote: Integer read FRootNote write FRootNote default 0;
     property MidiChannel: Integer read FMidiChannel write FMidiChannel;
@@ -726,7 +727,7 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-  if FCacheIsDirty then
+  //if FCacheIsDirty then
   begin
     FBitmap.Canvas.Clear;
     FBitmap.Height := Height;
@@ -952,7 +953,6 @@ begin
     begin
       Canvas.Pen.Color := clBlack;
       Canvas.Line(x, 0, x, Height);
-      Canvas.TextOut(x + 10, 10, Format('BPMScale %f', [FModel.BPMScale]));
     end;
 
     FOldCursorPosition := x;
@@ -994,6 +994,8 @@ begin
   FLoopStart.Update(TMidiPattern(Subject).LoopStart);
   FLoopEnd.Update(TMidiPattern(Subject).LoopEnd);
   FLoopLength.Update(TMidiPattern(Subject).LoopLength);
+
+  QuantizeSetting := TMidiPattern(Subject).QuantizeSetting;
 
   FCacheIsDirty := True;
   Invalidate;
@@ -1068,6 +1070,25 @@ begin
 
   FCacheIsDirty := True;
   Invalidate;
+end;
+
+procedure TMidiPatternGUI.SetQuantizeSetting(AValue: Integer);
+begin
+  if FQuantizeSetting = AValue then Exit;
+  FQuantizeSetting := AValue;
+  case FQuantizeSetting of
+  0: FQuantizeValue := -1;
+  1: FQuantizeValue := 22050 * 4;
+  2: FQuantizeValue := 22050 * 2;
+  3: FQuantizeValue := 22050;
+  4: FQuantizeValue := 22050 / 2;
+  5: FQuantizeValue := 22050 / 3;
+  6: FQuantizeValue := 22050 / 4;
+  7: FQuantizeValue := 22050 / 6;
+  8: FQuantizeValue := 22050 / 8;
+  9: FQuantizeValue := 22050 / 16;
+  10: FQuantizeValue := 22050 / 32;
+  end;
 end;
 
 procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
@@ -1311,13 +1332,13 @@ end;
 
 function TMidiPatternGUI.QuantizeLocation(ALocation: Integer): Integer;
 begin
-  if FQuantizeSetting = 0 then
+  if FModel.QuantizeSetting = 0 then
   begin
     Result := Round(Trunc(ALocation / 22050) * 22050);
   end
   else
   begin
-    Result := Round(Trunc(ALocation / FQuantizeValue) * FQuantizeValue);
+    Result := Round(Trunc(ALocation / FModel.QuantizeValue) * FModel.QuantizeValue);
   end;
 end;
 
@@ -1325,12 +1346,11 @@ function TMidiPatternGUI.LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerG
 var
   lLocation: Integer;
 begin
-  LoopStart.Location := FModel.LoopStart.Location;
-  LoopEnd.Location := FModel.LoopEnd.Location;
-  LoopLength.Location := FModel.LoopLength.Location;
+  LoopStart.Location := FModel.LoopStart.Value;
+  LoopEnd.Location := FModel.LoopEnd.Value;
+  LoopLength.Location := FModel.LoopLength.Value;
 
   Result := nil;
-dblog('screen %d',abs(X - ConvertTimeToScreen(LoopEnd.Location) - FLocationOffset));
   if Abs(X - ConvertTimeToScreen(LoopStart.Location) - FLocationOffset) < AMargin then
   begin
     Result := LoopStart;

@@ -474,8 +474,8 @@ begin
     // raise Exception.Create('SoundTouch : Number of channels not defined');
   end
   // Transpose the rate of the new samples if necessary
-  (* Bypass the nominal setting - can introduce a click in sound when tempo/pitch control crosses the nominal value...
-  if rate = 1.0 then
+  (* Bypass the nominal setting - can introduce a click in sound when tempo/pitch control crosses the nominal value...*)
+  else if rate = 1.0 then
   begin
       // The rate value is same as the original, simply evaluate the tempo changer.
       assert(output = pTDStretch);
@@ -485,9 +485,8 @@ begin
         // (may happen if 'rate' changes from a non-zero value to zero)
         pTDStretch.moveSamples(pRateTransposer);
       end;
-      pTDStretch.putSamples(samples, nSamples);
-  end;
-  *)
+      pTDStretch.putSamples(samples, anumSamples);
+  end
   else if rate <= 1.0 then
   begin
     // transpose the rate down, output the transposed sound to tempo changer buffer
@@ -591,7 +590,7 @@ begin
     begin
             // change time-stretch overlap length parameter
             pTDStretch.enableTransientDetection(value);
-            Result := TRUE;
+            Result := False;
     end
     else
     begin

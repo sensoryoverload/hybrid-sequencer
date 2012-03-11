@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, ExtCtrls, StdCtrls,
-  globalconst, midipatterngui, midi, midigui, sampler, samplegui, bankgui;
+  PairSplitter, globalconst, midipatterngui, midi, midigui, sampler, samplegui,
+  bankgui;
 
 type
 
@@ -17,6 +18,9 @@ type
     cbQuantize: TComboBox;
     lblMidiChannel: TLabel;
     lblQuantize: TLabel;
+    PairSplitter1: TPairSplitter;
+    PairSplitterSide1: TPairSplitterSide;
+    PairSplitterSide2: TPairSplitterSide;
     pnlMidiGrid: TPanel;
     pnlMidigridOverview: TPanel;
     pnlMidiSettings: TPanel;
@@ -35,6 +39,7 @@ type
     FRootNote: Integer;
     FMidiChannel: Integer;
 
+    FConnected: Boolean;
     FObjectOwnerID: string;
     FObjectID: string;
     FModel: TMidiPattern;
@@ -54,6 +59,7 @@ type
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
 
+    property Connected: Boolean read FConnected;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     property MidiPatternGUI: TMidiPatternGUI read FMidiPatternGUI write FMidiPatternGUI;
@@ -72,6 +78,8 @@ uses utils, global_command;
 constructor TMidiPatternControlGUI.Create(AOwner: TComponent);
 begin
   Inherited Create(AOwner);
+
+  FConnected := False;
 
   FMidiPatternGUI := TMidiPatternGUI.Create(nil);
   FSampleBankGUI := TBankView.Create(nil);
@@ -111,9 +119,13 @@ begin
 
   {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 
+  pnlMidiGrid.Align := alNone;
+
   FSampleBankGUI.Align := alBottom;
   FSampleBankGUI.Parent := nil;
   FSampleBankGUI.Parent := Self;
+
+  pnlMidiGrid.Align := alClient;
 
   FMidigridOverview.Parent := nil;
   FMidigridOverview.Align := alClient;
@@ -123,9 +135,6 @@ begin
   FMidiPatternGUI.Parent := nil;
   FMidiPatternGUI.Parent := pnlMidiGrid;
 
-  pnlMidiGrid.Parent := nil;
-  pnlMidiGrid.Align := alClient;
-  pnlMidiGrid.Parent := Self;
 end;
 
 destructor TMidiPatternControlGUI.Destroy;
@@ -151,6 +160,10 @@ begin
 
     FMidiPatternGUI.ZoomFactorX := 1000;
     FMidiPatternGUI.ZoomFactorY := 1000;
+    FMidiPatternGUI.QuantizeSetting := FModel.QuantizeSetting;
+    FMidiPatternGUI.MidiChannel := FModel.MidiChannel;
+
+    FConnected := True;
   end;
 end;
 
@@ -166,6 +179,8 @@ begin
 
     FMidiPatternGUI.Disconnect;
     FModel.Detach(FMidiPatternGUI);
+
+    FConnected := False;
   end;
 end;
 
@@ -176,6 +191,11 @@ begin
   if cbMidiChannel.ItemIndex <> TMidiPattern(Subject).MidiChannel then
   begin
     cbMidiChannel.ItemIndex := TMidiPattern(Subject).MidiChannel;
+  end;
+
+  if cbQuantize.ItemIndex <> TMidiPattern(Subject).QuantizeSetting then
+  begin
+    cbQuantize.ItemIndex :=  TMidiPattern(Subject).QuantizeSetting;
   end;
 
   DBLog('end TPatternControls.Update');
@@ -265,7 +285,6 @@ begin
     lChangeMidiChannelCommand.Free;
   end;
 end;
-
 
 initialization
   {$I midipatterncontrolgui.lrs}

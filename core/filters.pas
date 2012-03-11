@@ -55,7 +55,7 @@ type
 
   end;
 
-  TEnumFilterTypes = (ftLowpass, ftHighpass, ftBandpass, ftBandreject);
+  TEnumFilterTypes = (ftLowpass, ftHighpass, ftBandpass, ftBandreject, ftMoog);
 
   { TFilter }
 
@@ -151,7 +151,11 @@ type
     b0,b1,b2,b3,b4: single;
     t1,t2,t3: single;
     f,p,q: single;
-    procedure SetFrequency(AValue: Single);
+
+    t, x, k, r,
+    y1, y2, y3, y4,
+    oldx, oldy1, oldy2, oldy3,
+    _kd: Single;       procedure SetFrequency(AValue: Single);
     procedure SetResonance(AValue: Single);
   public
     constructor Create(AFrames: Integer); override;
@@ -263,64 +267,115 @@ begin
   if AInput < -0.999 then AInput := -0.999;
 
   // filter work
-  AInput -= q * b4;
-  t1 := b1 + p4;
-  b1 := (AInput + b0) * p - b1 * f;
-  t2 := b2 + p4;
-  b2 := (b1 + t1) * p - b2 * f;
-  t1 := b3 + p4;
-  b3 := (b2 + t2) * p - b3 * f;
-  b4 := (b3 + t1) * p - b4 * f;
+  case FFilter.FilterType of
+    ftLowpass, ftHighpass, ftBandpass, ftBandreject:
+    begin
+      AInput -= q * b4;
+      t1 := b1 + p4;
+      b1 := (AInput + b0) * p - b1 * f;
+      t2 := b2 + p4;
+      b2 := (b1 + t1) * p - b2 * f;
+      t1 := b3 + p4;
+      b3 := (b2 + t2) * p - b3 * f;
+      b4 := (b3 + t1) * p - b4 * f;
 
-  // update
-  b0 := AInput;
+      // update
+      b0 := AInput;
 
-  if FFilter.FilterType = ftLowpass then
-    Result := b4                     // lowpass output
-  else if FFilter.FilterType = ftHighpass then
-    Result := AInput - b4            // hipass output
-  else if FFilter.FilterType = ftBandpass then
-    Result := 3 * (b3 - b4)          // bandpass output
-  else if FFilter.FilterType = ftBandreject then
-    Result := 3 * (b3 - b4) - AInput // band reject
-  else
-    Result := 0;
+      if FFilter.FilterType = ftLowpass then
+        Result := b4                     // lowpass output
+      else if FFilter.FilterType = ftHighpass then
+        Result := AInput - b4            // hipass output
+      else if FFilter.FilterType = ftBandpass then
+        Result := 3 * (b3 - b4)          // bandpass output
+      else if FFilter.FilterType = ftBandreject then
+        Result := 3 * (b3 - b4) - AInput // band reject
+      else
+        Result := 0;
+    end;
+    ftMoog:
+    begin
+      // Lowpass stage
+      x := AInput - r * y4;
+      y1:= x  * p + oldx * p - k * y1;
+      y2:= y1 * p + oldy1 * p - k * y2;
+      y3:= y2 * p + oldy2 * p - k * y3;
+      y4:= y3 * p + oldy3 * p - k * y4;
+      y4 := y4 - ((y4 * y4 * y4) * divby6);
+      oldx := x;
+      oldy1 := y1 +_kd;
+      oldy2 := y2 +_kd;
+      oldy3 := y3 +_kd;
+      Result := y4;
+    end;
+  end;
 end;
 
 procedure TDspFilter.Calc;
 begin
-  if ModAmount > 0 then
-  begin
-    FFrequency := FFrequency + Modifier^ * log_approx(ModAmount);
-  end;
-
   if FFrequency > 0.999 then FFrequency := 0.999;
   if FFrequency < 0.001 then FFrequency := 0.001;
   if FResonance > 0.999 then FResonance := 0.999;
   if FResonance < 0.0 then FResonance := 0.0;
 
-  // filter coeffs
-  q := 1 - FFrequency;
-  p := FFrequency + 0.8 * FFrequency * q;
-  f := p + p - 1;
-  q := 0.89 * FResonance * (1 + 0.5 * q * (1 - q + 5.6 * q * q));
+  case FFilter.FilterType of
+    ftLowpass, ftHighpass, ftBandpass, ftBandreject:
+    begin
+      // filter coeffs
+      q := 1 - FFrequency;
+      p := FFrequency + 0.8 * FFrequency * q;
+      f := p + p - 1;
+      q := 0.89 * FResonance * (1 + 0.5 * q * (1 - q + 5.6 * q * q));
+    end;
+    ftMoog:
+    begin
+      // Original lowpass
+      p := FFrequency * (1.8 - 0.8 * FFrequency);
+      k := p + p - 1.0;
+      t := (1.0 - p) * 1.386249;
+      t2 := 12.0 + t * t;
+      t3 := 6.0 * t;
+      r := FResonance * (t2 + t3) / (t2 - t3);
+    end;
+  end;
+  if ModAmount > 0 then
+  begin
+    FFrequency := FFrequency + Modifier^ * log_approx(ModAmount);
+  end;
 end;
 
 procedure TDspFilter.Initialize;
 begin
   inherited Initialize;
 
-  b0 := 0;
-  b1 := 0;
-  b2 := 0;
-  b3 := 0;
-  b4 := 0;
-  t1 := 0;
-  t2 := 0;
-  t3 := 0;
-  f := 0;
-  p := 0;
-  q := 0;
+  case FFilter.FilterType of
+    ftLowpass, ftHighpass, ftBandpass, ftBandreject:
+    begin
+      b0 := 0;
+      b1 := 0;
+      b2 := 0;
+      b3 := 0;
+      b4 := 0;
+      t1 := 0;
+      t2 := 0;
+      t3 := 0;
+      f := 0;
+      p := 0;
+      q := 0;
+    end;
+    ftMoog:
+    begin
+      y1 := 0;
+      y2 := 0;
+      y3 := 0;
+      y4 := 0;
+      oldx := 0;
+      oldy1 := 0;
+      oldy2 := 0;
+      oldy3 := 0;
+      _kd := 1E-20;
+    end;
+  end;
 
   Calc;
 end;

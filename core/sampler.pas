@@ -2599,7 +2599,7 @@ begin
       end;
 
       // Virtual note of when FLength <= 0
-      FLength := FLength - GAudioStruct.BPMAdder;
+      FLength := FLength - GAudioStruct.BPMScale;
     end;
 
     // Debug statistics

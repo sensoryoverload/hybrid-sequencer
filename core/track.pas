@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, globalconst, ContNrs, pattern, jacktypes, utils,
-  sndfile, Dialogs, bpm, global_command, global, plugin, pluginhost;
+  sndfile, Dialogs, bpm, global_command, global, plugin, pluginhost,
+  math;
 
 type
   { TTrack }
@@ -50,7 +51,8 @@ type
 
     FSelected: Boolean;
     FPitched: Boolean;
-    FLevel: jack_default_audio_sample_t;
+    FLeftLevel: Single;
+    FRightLevel: Single;
     FLatency: Word;
     FDevValue: shortstring;
     FBooleanStack: Integer;
@@ -69,10 +71,16 @@ type
     FOutputBuffer: pjack_default_audio_sample_t;
     FPreFadeBuffer: pjack_default_audio_sample_t;
 
+    FAttack_coef: Single;
+    FAttack_in_ms: Single;
+    FRelease_coef: Single;
+    FRelease_in_ms: Single;
+
     function GetDevValue: shortstring;
     function GetVolume: single;
     procedure SetDevValue(const AValue: shortstring);
-    procedure SetLevel(const AValue: jack_default_audio_sample_t);
+    procedure SetLeftLevel(const AValue: Single);
+    procedure SetRightLevel(const AValue: Single);
     function GetPlaying: Boolean;
     procedure SetPlaying(const AValue: Boolean);
     procedure SetVolume(const AValue: single);
@@ -83,6 +91,7 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
+    procedure Process(ABuffer: PSingle; AFrameCount: Integer);
     function ClearSample: Boolean;
     procedure Assign(Source: TPersistent); override;
     property SelectedPattern: TPattern read FSelectedPattern write FSelectedPattern;
@@ -95,7 +104,8 @@ type
   published
     property PatternList: TObjectList read FPatternList write FPatternList;
     //property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
-    property Level: jack_default_audio_sample_t read FLevel write SetLevel default 0;
+    property LeftLevel: Single read FLeftLevel write SetLeftLevel;
+    property RightLevel: Single read FRightLevel write SetRightLevel;
     property Selected: Boolean read FSelected write FSelected;
     property Volume: single read GetVolume write SetVolume;
     property VolumeMultiplier: Single read FVolumeMultiplier write FVolumeMultiplier;
@@ -318,6 +328,34 @@ begin
   //
 end;
 
+{
+  1. Calculate vu meter
+  2. ..
+  3. ..
+}
+procedure TTrack.Process(ABuffer: PSingle; AFrameCount: Integer);
+var
+  i: Integer;
+  TempLeftLevel: Single;
+  TempRightLevel: Single;
+begin
+  for i := 0 to Pred(AFrameCount) do
+  begin
+    TempLeftLevel := Abs(ABuffer[i] * FVolumeMultiplier);
+    if TempLeftLevel > FLeftLevel then
+      FLeftLevel := (FAttack_coef * (FLeftLevel - TempLeftLevel)) + TempLeftLevel
+    else
+      FLeftLevel := (FRelease_coef * (FLeftLevel - TempLeftLevel)) + TempLeftLevel;
+
+    // TODO! Buffer is still in MONO so this code does exactly the same as above
+    TempRightLevel := Abs(ABuffer[i] * FVolumeMultiplier);
+    if TempRightLevel > FRightLevel then
+      FRightLevel := (FAttack_coef * (FRightLevel - TempRightLevel)) + TempRightLevel
+    else
+      FRightLevel := (FRelease_coef * (FRightLevel - TempRightLevel)) + TempRightLevel;
+  end;
+end;
+
 constructor TTrack.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   DBLog('start TwaveformTrack.Create');
@@ -345,6 +383,11 @@ begin
   begin
     SelectedPattern.Pitch := 1;
   end;
+
+  FAttack_in_ms := 20;
+  FRelease_in_ms := 1000;
+  FAttack_coef := power(0.01, 1.0/( FAttack_in_ms * GAudioStruct.MainSampleRate * 0.001));
+  FRelease_coef := power(0.01, 1.0/( FRelease_in_ms * GAudioStruct.MainSampleRate * 0.001));
 
   DBLog('end TwaveformTrack.Create');
 end;
@@ -379,11 +422,18 @@ begin
   inherited Assign(Source);
 end;
 
-procedure TTrack.SetLevel(const AValue: jack_default_audio_sample_t);
+procedure TTrack.SetLeftLevel(const AValue: Single);
 begin
-  if FLevel > 2 then FLevel := 2;
-  if FLevel < 0 then FLevel := 0;
-  FLevel:= AValue;
+  if FLeftLevel > 2 then FLeftLevel := 2;
+  if FLeftLevel < 0 then FLeftLevel := 0;
+  FLeftLevel := AValue;
+end;
+
+procedure TTrack.SetRightLevel(const AValue: Single);
+begin
+  if FRightLevel > 2 then FRightLevel := 2;
+  if FRightLevel < 0 then FRightLevel := 0;
+  FRightLevel := AValue;
 end;
 
 function TTrack.GetVolume: single;
@@ -684,17 +734,19 @@ begin
 
   if Assigned(lSourceTrack) and Assigned(lTargetTrack) and Assigned(lPattern) then
   begin
+    // Disconnect from source track
+    //lSourceTrack.Disconnect;
     lSourceTrack.PatternList.Extract(lPattern);
-
-    // Update gui's of both tracks
-    lSourceTrack.Notify;
+//    lSourceTrack.Notify;
 
     // Change pattern owner
     lPattern.ObjectOwnerID := TargetTrackID;
     lPattern.Position := Position;
-    lTargetTrack.PatternList.Add(lPattern);
 
-    lTargetTrack.Notify;
+    // Connect to target track
+    lTargetTrack.PatternList.Add(lPattern);
+    //lTargetTrack.Connect;
+//    lTargetTrack.Notify;
   end;
 
   DBLog('end TMovePatternToTrackCommand.DoExecute');

@@ -11,34 +11,27 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
   DesignTop = 333
   object pnlMidiGrid: TPanel
     Left = 0
-    Height = 216
+    Height = 133
     Top = 0
     Width = 779
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 216
+    ClientHeight = 133
     ClientWidth = 779
+    FullRepaint = False
     TabOrder = 0
-    object pnlMidigridOverview: TPanel
-      Left = 0
-      Height = 35
-      Top = 181
-      Width = 779
-      Align = alBottom
-      BevelWidth = 2
-      TabOrder = 0
-    end
     object pnlMidiSettings: TPanel
       Left = 0
       Height = 27
       Top = 0
       Width = 779
       Align = alTop
+      BevelOuter = bvNone
       ClientHeight = 27
       ClientWidth = 779
       Constraints.MaxHeight = 27
       Constraints.MinHeight = 27
-      TabOrder = 1
+      TabOrder = 0
       object lblQuantize: TLabel
         Left = 1
         Height = 14
@@ -77,6 +70,16 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         Style = csDropDownList
         TabOrder = 1
       end
+    end
+    object pnlMidigridOverview: TPanel
+      Left = 0
+      Height = 25
+      Top = 108
+      Width = 779
+      Align = alBottom
+      BevelOuter = bvNone
+      BevelWidth = 2
+      TabOrder = 1
     end
   end
 end

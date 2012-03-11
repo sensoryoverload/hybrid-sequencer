@@ -344,6 +344,7 @@ type
   TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
   TTracksRefreshGUIEvent = procedure(TrackObject: TObject) of object;
   TPatternRefreshGUIEvent = procedure(TrackObject: TObject) of object;
+  TApplicationGUIEvent = procedure(AObject: TObject) of object;
 
   { TFrameData }
 
@@ -352,6 +353,7 @@ type
     Location: Single;  // Virtual location due to warping
     Ramp: Single;      // Current warp ramp
     Pitch: Single;     // Pitch rate for slice
+    Index: Integer;
   end;
 
   { TLoopMarker }
@@ -359,14 +361,14 @@ type
   TLoopMarker = class(THybridPersistentModel)
   private
     FDataType: TLoopMarkerType;
-    FLocation: Integer;
+    FValue: Integer;
   public
     constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType);
     procedure Initialize; override;
     procedure Finalize; override;
   published
     property DataType: TLoopMarkerType read FDataType write FDataType;
-    property Location: Integer read FLocation write FLocation;
+    property Value: Integer read FValue write FValue;
   end;
 
   { TSampleMarker }
@@ -374,14 +376,14 @@ type
   TSampleMarker = class(THybridPersistentModel)
   private
     FDataType: TSampleMarkerType;
-    FLocation: Integer;
+    FValue: Integer;
   public
     constructor Create(AObjectOwner: string; ADataType: TSampleMarkerType);
     procedure Initialize; override;
     procedure Finalize; override;
   published
     property DataType: TSampleMarkerType read FDataType write FDataType;
-    property Location: Integer read FLocation write FLocation;
+    property Value: Integer read FValue write FValue;
   end;
 
   { TMarker }
@@ -1504,7 +1506,7 @@ end;
 
 procedure TLoopMarkerGUI.Update(Subject: THybridPersistentModel);
 begin
-  Self.Location := TLoopMarker(Subject).Location;
+  Self.Location := TLoopMarker(Subject).Value;
 end;
 
 { TSampleMarkerGUI }
@@ -1518,7 +1520,7 @@ end;
 
 procedure TSampleMarkerGUI.Update(Subject: THybridPersistentModel);
 begin
-  Self.Location := TSampleMarker(Subject).Location;
+  Self.Location := TSampleMarker(Subject).Value;
 end;
 
 

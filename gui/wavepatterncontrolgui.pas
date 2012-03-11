@@ -54,6 +54,7 @@ type
     FModel: TWavePattern;
     FWavePatternGUI: TWaveGUI;
 
+    FConnected: Boolean;
     FObjectOwnerID: string;
     FObjectID: string;
     FObjectOwner: TObject;
@@ -75,8 +76,9 @@ type
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
-    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
 
+    property Connected: Boolean read FConnected;
+    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     property WavePatternGUI: TWaveGUI read FWavePatternGUI write FWavePatternGUI;
 
@@ -106,6 +108,8 @@ begin
 
 //    FWavePatternGUI.ZoomFactorX := 5;
 //    FWavePatternGUI.ZoomFactorY := 1;
+
+    FConnected := True;
   end;
   DBLog(Format('End Connect waveform (%s)', [FModel.ObjectID]));
 end;
@@ -117,6 +121,8 @@ begin
   begin
     FWavePatternGUI.Disconnect;
     FModel.Detach(FWavePatternGUI);
+
+    FConnected := False;
   end;
   DBLog(Format('End Disconnect waveform (%s)', [FModel.ObjectID]));
 end;
@@ -303,6 +309,8 @@ end;
 constructor TWavePatternControlGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+
+  FConnected := False;
 
   cbPitchAlgo.Items.Add('None');
   cbPitchAlgo.Items.Add('SoundTouch Eco');

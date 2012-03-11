@@ -266,11 +266,14 @@ end;
 
 function TPluginProcessor.Execute(AFrames: Integer; ABuffer: PSingle): PSingle;
 begin
-  Move(ABuffer[0], FAudioIn.Buffer[0], AFrames * sizeof(single));
+  // Push audio into pluginchain
+  Move(ABuffer^, FAudioIn.Buffer^, AFrames * sizeof(single));
 
+  // Process the complete chain
   Result := FAudioOut.Execute(AFrames);
 
-  Move(FAudioOut.MixBuffer[0], FBuffer[0], AFrames * sizeof(single));
+  // Pull audio from pluginchain
+  Move(FAudioOut.MixBuffer^, ABuffer^, AFrames * sizeof(single));
 end;
 
 procedure TPluginProcessor.AddChild(AParentNode, ANode: TPluginNode);

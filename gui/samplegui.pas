@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, ExtCtrls, globalconst,
   dialcontrol, utils, contnrs, LCLType, Controls, Graphics,
-  StdCtrls, ComCtrls, Spin, sampler, global_command;
+  StdCtrls, ComCtrls, Spin, PairSplitter, sampler, global_command;
 
 type
 
@@ -87,6 +87,7 @@ type
     dcSaturateDrivePreFilter: TDialControl;
     dcSaturateDrivePostFilter: TDialControl;
     gbLFO: TGroupBox;
+    gbWaveform: TGroupBox;
     lblBaseNote: TLabel;
     lblLowNote: TLabel;
     lblHighNote: TLabel;
@@ -109,6 +110,10 @@ type
     lblOSC2ModAmount: TLabel;
     lblOSC3: TLabel;
     lblOSC3ModAmount: TLabel;
+    PairSplitter1: TPairSplitter;
+    PairSplitterSide1: TPairSplitterSide;
+    PairSplitterSide2: TPairSplitterSide;
+    pnlControls: TPanel;
     tcFilterSwith: TToggleControl;
     procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
@@ -337,6 +342,7 @@ constructor TSampleView.Create(AOwner: TComponent);
     AComboBox.Items.Add('Highpass');
     AComboBox.Items.Add('Bandpass');
     AComboBox.Items.Add('Notch');
+    AComboBox.Items.Add('Moog');
     AComboBox.Tag := Integer(ASampleParamter);
     AComboBox.OnChange := @DoSelectionChange;
   end;

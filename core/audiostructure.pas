@@ -119,9 +119,8 @@ type
     FActive: Boolean;
     FMidiMapping: TMidiControlMap;
     //FModelThread: TModelThread;
-
-    FMainSyncCounter: Single;
-    FMainSyncLength: Single;
+    FMainSyncCounter: Single; // 1 bar loop
+    FMainSyncLength: Single; // 1 bar length
     FMainSyncSignal: Boolean;
     FMainQuantizeLength: Integer;
 
@@ -130,22 +129,27 @@ type
     FMainTimeLine: Single;
     FBPM: Single;
     FBPMScale: Single;
-    FBPMAdder: Single;
+    FBPMScaleInv: Single;
     FMainSampleRate: Single;
     FPlayState: Integer;
     FSelectedBank: TSampleBank;
     FOldSelectedBank: TSampleBank;
     FMasterTrack: TTrack;
+    FSync: Boolean;
 
     procedure SetBPM(const AValue: Single);
     procedure RecalculateSynchronize;
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
     procedure SetSelectedBank(const AValue: TSampleBank);
   public
+    MainCounter: Double;
+
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
+    procedure ProcessAdvance;
+    function Sync: Boolean;
     function IndexOfTrack(AObjectID: string): Integer;
 
     property Active: Boolean read FActive write FActive;
@@ -159,7 +163,7 @@ type
     property MainSyncSignal: Boolean read FMainSyncSignal write FMainSyncSignal;
     property BPM: Single read FBPM write SetBPM;
     property BPMScale: Single read FBPMScale;
-    property BPMAdder: Single read FBPMAdder;
+    property BPMScaleInv: Single read FBPMScaleInv;
     property PlayState: Integer read FPlayState write FPlayState;
     property MainSampleRate: Single read FMainSampleRate write FMainSampleRate;
     property MainQuantizeLength: Integer read FMainQuantizeLength write FMainQuantizeLength;
@@ -186,11 +190,13 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FMainQuantizeLength := 8; // Syncronize at a 1 bar quantization
+  FMainQuantizeLength := 44100 * 2; // Syncronize at a 1 bar quantization
   FMainTimeLine := 10000; // Default 1 bar (4 beat) length
   FMainSyncCounter := 0;
+  MainCounter := 0; // Should be longer than 1 bar
   MainSyncSignal := True;
   FBPM := 120;
+  FSync := True;
 end;
 
 destructor TAudioStructure.Destroy;
@@ -215,6 +221,25 @@ begin
   //
 end;
 
+procedure TAudioStructure.ProcessAdvance;
+begin
+  MainCounter += FBPMScale;
+  if MainCounter >= MainQuantizeLength then
+  begin
+    FSync := True;
+    MainCounter -= MainQuantizeLength;
+  end
+  else
+  begin
+    FSync := False;
+  end;
+end;
+
+function TAudioStructure.Sync: Boolean;
+begin
+  Result := FSync;
+end;
+
 function TAudioStructure.IndexOfTrack(AObjectID: string): Integer;
 var
   i: Integer;
@@ -236,9 +261,8 @@ begin
   FBPM := AValue;
   if FBPM < 1 then FBPM := 1;
 
-  FBPMAdder := FBPM * DIVIDE_BY_120_MULTIPLIER;
-// ?
-  FBPMscale := FBPM * DIVIDE_BY_120_MULTIPLIER;
+  FBPMScale := FBPM * DIVIDE_BY_120_MULTIPLIER;
+  FBPMScaleInv := 1 / FBPMScale;
 
   RecalculateSynchronize;
 end;
@@ -256,7 +280,8 @@ begin
 
   lTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
   lTrack.Selected:= True;
-  lTrack.Level:= 0;
+  lTrack.LeftLevel:= 0;
+  lTrack.RightLevel:= 0;
 
   Tracks.Add(lTrack);
 
@@ -378,7 +403,8 @@ begin
 
   lTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
   lTrack.Selected:= True;
-  lTrack.Level:= 0;
+  lTrack.LeftLevel:= 0;
+  lTrack.RightLevel:= 0;
 
   GAudioStruct.Tracks.Add(lTrack);
 

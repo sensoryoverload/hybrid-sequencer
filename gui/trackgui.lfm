@@ -1,27 +1,27 @@
 object TrackGUI: TTrackGUI
   Left = 0
-  Height = 667
+  Height = 505
   Top = 0
   Width = 80
   Align = alCustom
   Anchors = [akTop]
-  ClientHeight = 667
+  ClientHeight = 505
   ClientWidth = 80
   Constraints.MaxWidth = 80
   Constraints.MinWidth = 80
   PopupMenu = pmTrack
   TabOrder = 0
   DesignLeft = 767
-  DesignTop = 38
+  DesignTop = 200
   object pnlTrackControls: TPanel
     Left = 0
-    Height = 251
-    Top = 416
+    Height = 224
+    Top = 281
     Width = 80
     Align = alBottom
-    BevelInner = bvLowered
-    BevelOuter = bvNone
-    ClientHeight = 251
+    Anchors = [akLeft, akBottom]
+    BevelInner = bvRaised
+    ClientHeight = 224
     ClientWidth = 80
     Color = clBtnFace
     ParentColor = False
@@ -31,19 +31,22 @@ object TrackGUI: TTrackGUI
     OnMouseMove = TrackControlsMouseMove
     OnMouseUp = TrackControlsMouseUp
     object tcOn: TToggleControl
-      Left = 46
+      Left = 38
       Height = 14
-      Top = 115
+      Top = 74
       Width = 30
       SwitchedOn = True
       OnChange = tcOnChange
+      Anchors = [akLeft, akBottom]
+      Constraints.MaxHeight = 14
+      Constraints.MinHeight = 14
     end
     object ComboBox1: TComboBox
-      Left = 2
+      Left = 0
       Height = 22
-      Top = 46
+      Top = 13
       Width = 78
-      Anchors = [akLeft, akRight]
+      Anchors = [akLeft, akRight, akBottom]
       AutoSize = False
       Font.Height = 7
       ItemHeight = 0
@@ -57,11 +60,11 @@ object TrackGUI: TTrackGUI
       Text = 'None'
     end
     object cbOutput: TComboBox
-      Left = 2
+      Left = 0
       Height = 22
-      Top = 67
+      Top = 36
       Width = 78
-      Anchors = [akLeft, akRight]
+      Anchors = [akLeft, akRight, akBottom]
       AutoSize = False
       Font.Height = 7
       ItemHeight = 0
@@ -75,17 +78,18 @@ object TrackGUI: TTrackGUI
       Text = 'Master'
     end
     object vcLevel: TVolumeControl
-      Left = 6
+      Left = 2
       Height = 119
-      Top = 130
+      Top = 100
       Width = 36
       OnChange = vcLevelChange
       OnStartChange = vcLevelStartChange
+      Anchors = [akLeft, akBottom]
     end
     object DialControl1: TDialControl
-      Left = 5
+      Left = 1
       Height = 40
-      Top = 89
+      Top = 58
       Width = 36
       Value = 0
       Caption = 'Balance'
@@ -93,11 +97,16 @@ object TrackGUI: TTrackGUI
       Highest = 100
       Enabled = True
       ValueVisible = True
+      Anchors = [akLeft, akBottom]
+      Constraints.MaxHeight = 40
+      Constraints.MaxWidth = 36
+      Constraints.MinHeight = 40
+      Constraints.MinWidth = 36
     end
     object dcLowLevel: TDialControl
-      Left = 44
+      Left = 40
       Height = 40
-      Top = 210
+      Top = 179
       Width = 36
       Value = 0
       Caption = 'Low Level'
@@ -105,11 +114,16 @@ object TrackGUI: TTrackGUI
       Highest = 1
       Enabled = True
       ValueVisible = True
+      Anchors = [akLeft, akBottom]
+      Constraints.MaxHeight = 40
+      Constraints.MaxWidth = 36
+      Constraints.MinHeight = 40
+      Constraints.MinWidth = 36
     end
     object dcMidLevel: TDialControl
-      Left = 44
+      Left = 40
       Height = 40
-      Top = 170
+      Top = 139
       Width = 36
       Value = 0
       Caption = 'Mid Level'
@@ -117,11 +131,16 @@ object TrackGUI: TTrackGUI
       Highest = 1
       Enabled = True
       ValueVisible = True
+      Anchors = [akLeft, akBottom]
+      Constraints.MaxHeight = 40
+      Constraints.MaxWidth = 36
+      Constraints.MinHeight = 40
+      Constraints.MinWidth = 36
     end
     object dcHighLevel: TDialControl
-      Left = 44
+      Left = 40
       Height = 40
-      Top = 130
+      Top = 99
       Width = 36
       Value = 0
       Caption = 'Hi Level'
@@ -129,17 +148,22 @@ object TrackGUI: TTrackGUI
       Highest = 1
       Enabled = True
       ValueVisible = True
+      Anchors = [akLeft, akBottom]
+      Constraints.MaxHeight = 40
+      Constraints.MaxWidth = 36
+      Constraints.MinHeight = 40
+      Constraints.MinWidth = 36
     end
   end
   object pnlPatterns: TPanel
     Left = 0
-    Height = 399
+    Height = 264
     Hint = 'Drop patterns here'
     Top = 17
     Width = 80
     Align = alClient
-    BevelInner = bvLowered
-    BevelOuter = bvNone
+    Anchors = []
+    BevelInner = bvRaised
     ParentShowHint = False
     PopupMenu = pupPatternList
     ShowHint = True
@@ -154,13 +178,14 @@ object TrackGUI: TTrackGUI
     Top = 0
     Width = 80
     Align = alTop
+    AutoSelect = False
     BorderStyle = bsNone
     TabOrder = 2
     Text = 'Trackname'
   end
   object pmTrack: TPopupMenu
     left = 33
-    top = 246
+    top = 146
     object miDeleteTrack: TMenuItem
       Action = acDeleteTrack
       OnClick = miDeleteTrackClick
@@ -168,7 +193,7 @@ object TrackGUI: TTrackGUI
   end
   object ActionList1: TActionList
     left = 34
-    top = 201
+    top = 89
     object acDeleteTrack: TAction
       Caption = 'Delete track'
       OnExecute = acDeleteTrackExecute
@@ -183,8 +208,8 @@ object TrackGUI: TTrackGUI
     end
   end
   object pupPatternList: TPopupMenu
-    left = 38
-    top = 77
+    left = 30
+    top = 39
     object miCreateWavePattern: TMenuItem
       Action = acCreateWavePattern
     end

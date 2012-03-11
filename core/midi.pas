@@ -242,11 +242,8 @@ type
     FNoteRecordList: Array[0..127] of TNoteRecord;
 
     // Engine
-    FRealCursorPosition: Integer;
-    FCursorAdder: Single;
     FMidiDataCursor: TMidiData;
     FStartingMidiDataCursor: TMidiData;
-    FBPMScale: Single;
     FWindowStart: Single;
     FWindowEnd: Single;
     FLooped: Boolean;
@@ -260,6 +257,7 @@ type
 
     function GetEnabled: Boolean;
     function NoteByObjectID(AObjectID: string): TMidiNote;
+    procedure SetQuantizeSetting(AValue: Integer);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -275,9 +273,6 @@ type
 
     property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
     property Enabled: Boolean read GetEnabled write FEnabled default True;
-    property BPMScale: Single read FBPMScale write FBPMScale;
-    property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
-    property CursorAdder: Single read FCursorAdder write FCursorAdder;
     property MidiDataCursor: TMidiData read FMidiDataCursor write FMidiDataCursor;
 
     {
@@ -288,11 +283,8 @@ type
   published
     property SampleBank: TSampleBank read FSampleBank write FSampleBank;
     property NoteList: TObjectList read FNoteList write FNoteList;
-    property QuantizeSetting: Integer read FQuantizeSetting write FQuantizeSetting default 1;
+    property QuantizeSetting: Integer read FQuantizeSetting write SetQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 1;
-    property LoopStart: TLoopMarker read FLoopStart write FLoopStart;
-    property LoopEnd: TLoopMarker read FLoopEnd write FLoopEnd;
-    property LoopLength: TLoopMarker read FLoopLength write FLoopLength;
   end;
 
   TMidiGridEngine = class
@@ -327,8 +319,6 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FRealCursorPosition:= LoopStart.Location;
-
   for lIndex := Low(FNoteRecordList) to High(FNoteRecordList) do
   begin
     FNoteRecordList[lIndex].Mute := False;
@@ -342,26 +332,23 @@ begin
 
   FMidiBuffer := TMidiBuffer.Create;
 
-  FQuantizeSetting := 3;
-  FQuantizeValue := 100;
+  QuantizeSetting := 3;
 
   FSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
   FSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
 
   FSample := TSample.Create(AObjectOwner, AMapped);
-  FSample.LoadSample('kick.wav');
+  FSample.LoadSample('Default');
   FSample.Initialize;
 
-  LoopStart.Location := 0;
-  LoopLength.Location := 22050 * 4;
-  LoopEnd.Location := LoopStart.Location + LoopLength.Location;
+  LoopStart.Value := 0;
+  LoopLength.Value := Round(GSettings.SampleRate * 2);
+  LoopEnd.Value := LoopStart.Value + LoopLength.Value;
   FLooped := False;
 
   FSampleBank.SampleList.Add(FSample);
 
   FSampleBankEngine.SampleBank := FSampleBank;
-
-  DBLog('KICK.WAV loading');
 
   DBLog('end TMidiGrid.Create');
 end;
@@ -418,7 +405,6 @@ procedure TMidiPattern.ProcessInit;
 begin
   // Reset buffer at beginning of callback
   FMidiBuffer.Reset;
-  FBPMScale := GAudioStruct.BPMAdder;
 end;
 
 {
@@ -433,14 +419,14 @@ begin
     In the first frame this first midinote of the window has to be found.
     later notes within this window can be found be walking the list
   }
-  if (AFrameIndex = 0) or FLooped then
+  if (AFrameIndex = 0) or Looped then
   begin
-    FLooped := False;
+    Looped := False;
     {
       Determine window
     }
-    FWindowStart := CursorAdder;
-    FWindowEnd := CursorAdder + AFrameCount * GAudioStruct.BPMScale;
+    FWindowStart := PatternCursor - 5;
+    FWindowEnd := PatternCursor + AFrameCount * GAudioStruct.BPMScale;
 
     {
       Look for first midi event in the window if any
@@ -463,7 +449,7 @@ begin
   if Assigned(FStartingMidiDataCursor) then
   begin
     MidiDataCursor := FStartingMidiDataCursor;
-    while CursorAdder > MidiDataCursor.Location do
+    while PatternCursor > MidiDataCursor.Location do
     begin
       {
         Put event in buffer
@@ -485,15 +471,7 @@ end;
 
 procedure TMidiPattern.ProcessAdvance;
 begin
-  RealCursorPosition := Round(CursorAdder);
-  CursorAdder := CursorAdder + GAudioStruct.BPMScale;
-
-  if (CursorAdder >= LoopEnd.Location) or SyncQuantize then
-  begin
-    SyncQuantize := False;
-    FLooped := True;
-    CursorAdder := LoopEnd.Location - (LoopEnd.Location - LoopStart.Location);
-  end;
+  Inherited;
 end;
 
 function TMidiPattern.NoteByObjectID(AObjectID: string): TMidiNote;
@@ -508,6 +486,30 @@ begin
     begin
       Result := TMidiNote(NoteList[lIndex]);
     end;
+  end;
+end;
+
+procedure TMidiPattern.SetQuantizeSetting(AValue: Integer);
+var
+  lBeat: Single;
+begin
+  if FQuantizeSetting = AValue then Exit;
+  FQuantizeSetting := AValue;
+
+  lBeat := (GSettings.SampleRate / 2);
+
+  case FQuantizeSetting of
+  0: FQuantizeValue := -1;
+  1: FQuantizeValue := lBeat * 4;
+  2: FQuantizeValue := lBeat * 2;
+  3: FQuantizeValue := lBeat;
+  4: FQuantizeValue := lBeat / 2;
+  5: FQuantizeValue := lBeat / 3;
+  6: FQuantizeValue := lBeat / 4;
+  7: FQuantizeValue := lBeat / 6;
+  8: FQuantizeValue := lBeat / 8;
+  9: FQuantizeValue := lBeat / 16;
+  10: FQuantizeValue := lBeat / 32;
   end;
 end;
 
@@ -698,7 +700,7 @@ begin
   lMidiNote := TMidiNote.Create(FMidiPattern.ObjectID, MAPPED);
   lMidiNote.Note := Note;
   lMidiNote.NoteLocation := Location;
-  lMidiNote.NoteLength := Round(FMidiPattern.QuantizeValue);
+  lMidiNote.NoteLength := NoteLength;//Round(FMidiPattern.QuantizeValue);
   lMidiNote.NoteVelocity := DEFAULT_NOTE_VELOCITY;
   FMidiPattern.NoteList.Add(lMidiNote);
   FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
@@ -1160,16 +1162,20 @@ end;
 { TUpdateLoopMarkerCommand }
 
 procedure TUpdateLoopMarkerCommand.DoExecute;
+var
+  lQuantize: Integer;
 begin
   DBLog('start TUpdateWaveLoopMarkerCommand.DoExecute');
+
+  lQuantize := Round(GSettings.SampleRate / 4);
 
   if Persist then
   begin
     // Save state
     case FDataType of
-    ltStart: FOldLocation := FMidiPattern.LoopStart.Location;
-    ltEnd: FOldLocation := FMidiPattern.LoopEnd.Location;
-    ltLength: FOldLocation := FMidiPattern.LoopLength.Location;
+    ltStart: FOldLocation := FMidiPattern.LoopStart.Value;
+    ltEnd: FOldLocation := FMidiPattern.LoopEnd.Value;
+    ltLength: FOldLocation := FMidiPattern.LoopLength.Value;
     end;
   end;
 
@@ -1178,21 +1184,27 @@ begin
   ltStart:
   begin
     if FLocation < 0 then FLocation := 0;
-    FMidiPattern.LoopStart.Location := FLocation;
-    FMidiPattern.LoopEnd.Location :=
-      FMidiPattern.LoopStart.Location + FMidiPattern.LoopLength.Location;
+    FMidiPattern.LoopStart.Value := (FLocation div lQuantize) * lQuantize;
+    FMidiPattern.LoopEnd.Value :=
+      FMidiPattern.LoopStart.Value + FMidiPattern.LoopLength.Value;
+
+    FMidiPattern.LoopEnd.Value := (FMidiPattern.LoopEnd.Value div lQuantize) * lQuantize;
   end;
   ltEnd:
   begin
     if FLocation < 0 then FLocation := 0;
-    FMidiPattern.LoopEnd.Location := FLocation;
-    FMidiPattern.LoopLength.Location :=
-      FMidiPattern.LoopEnd.Location - FMidiPattern.LoopStart.Location;
+    FMidiPattern.LoopEnd.Value := (FLocation div lQuantize) * lQuantize;
+
+    FMidiPattern.LoopLength.Value :=
+      FMidiPattern.LoopEnd.Value - FMidiPattern.LoopStart.Value;
+
+    FMidiPattern.LoopLength.Value := (FMidiPattern.LoopLength.Value div lQuantize) * lQuantize;
   end;
   ltLength:
   begin
-    FMidiPattern.LoopLength.Location := FLocation;
-    FMidiPattern.LoopEnd.Location := FMidiPattern.LoopStart.Location + FLocation;
+    FMidiPattern.LoopLength.Value := (FLocation div lQuantize) * lQuantize;
+    FMidiPattern.LoopEnd.Value := FMidiPattern.LoopStart.Value + FLocation;
+    FMidiPattern.LoopEnd.Value := (FMidiPattern.LoopEnd.Value div lQuantize) * lQuantize;
   end;
   end;
 
@@ -1210,13 +1222,13 @@ begin
   DBLog('start TUpdateWaveLoopStartCommand.DoRollback');
 
   // Retrieve state
-  FMidiPattern.LoopStart.Location := FOldLocation;
+  FMidiPattern.LoopStart.Value := FOldLocation;
 
   // Assign
   case FDataType of
-  ltStart: FMidiPattern.LoopStart.Location := FOldLocation;
-  ltEnd: FMidiPattern.LoopEnd.Location := FOldLocation;
-  ltLength: FMidiPattern.LoopLength.Location := FOldLocation;
+  ltStart: FMidiPattern.LoopStart.Value := FOldLocation;
+  ltEnd: FMidiPattern.LoopEnd.Value := FOldLocation;
+  ltLength: FMidiPattern.LoopLength.Value := FOldLocation;
   end;
 
   // Update observers
