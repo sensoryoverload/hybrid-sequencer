@@ -182,7 +182,7 @@ procedure TWavePatternGUI.Paint;
 var
   lCursorPos: Integer;
 begin
-  //if FCacheIsDirty then
+  if FCacheIsDirty then
   begin
     bmp.Canvas.Clear;
 
@@ -262,7 +262,7 @@ begin
       Selected := True;
     end;
 
-    GSettings.SelectedPatternGUI := Self;
+    GSettings.SelectedPattern := Self;
 
     FCacheIsDirty := True;
 

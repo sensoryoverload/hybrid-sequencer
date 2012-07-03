@@ -144,10 +144,55 @@ type
   published
   end;
 
+  { TInsertPluginCommand }
+
+  TInsertPluginCommand = class(TPatternCommand)
+  private
+    FPluginName: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property PluginName: string read FPluginName write FPluginName;
+  end;
+
+  TRemovePluginCommand = class(TPatternCommand)
+  private
+    FPluginName: string;
+  protected
+  public
+    property PluginName: string read FPluginName write FPluginName;
+  end;
+
 implementation
 
 uses
   utils, DOM, XMLWrite, XMLRead, audiostructure;
+
+{ TInsertPluginCommand }
+
+procedure TInsertPluginCommand.DoExecute;
+var
+  i: Integer;
+//  lParentNode: T
+begin
+  // Create Node By PluginID (0, 1, 2, ..) and PluginType (LADSPA, Internal, etc)
+
+  // Find left node
+//  FParentID := FPattern.PluginProcessor.NodeByID(FParentID);
+
+  // Find right node
+//  FChildID := FPattern.PluginProcessor.NodeByID(FChildID);
+
+  // Insert new node
+//  FPattern.PluginProcessor.InsertNode();
+end;
+
+procedure TInsertPluginCommand.DoRollback;
+begin
+  //
+end;
+
 (*
 { TUpdateLoopMarkerCommand }
 

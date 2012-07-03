@@ -209,7 +209,7 @@ begin
       Selected := True;
     end;
 
-    GSettings.SelectedPatternGUI := Self;
+    GSettings.SelectedPattern := Self;
 
     FCacheIsDirty := True;
 

@@ -1,11 +1,11 @@
 object MainApp: TMainApp
   Left = 183
   Height = 679
-  Top = 95
+  Top = 100
   Width = 1095
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 679
+  ClientHeight = 660
   ClientWidth = 1095
   Font.Height = 7
   KeyPreview = True
@@ -16,9 +16,8 @@ object MainApp: TMainApp
   OnKeyDown = FormKeyDown
   OnKeyPress = FormKeyPress
   OnKeyUp = FormKeyUp
-  OnResize = FormResize
   OnShow = FormShow
-  LCLVersion = '0.9.31'
+  LCLVersion = '1.1'
   object pnlTop: TPanel
     Left = 0
     Height = 340
@@ -30,22 +29,6 @@ object MainApp: TMainApp
     ClientHeight = 340
     ClientWidth = 1095
     TabOrder = 0
-    object sbTracks: TScrollBox
-      Left = 258
-      Height = 297
-      Top = 43
-      Width = 837
-      HorzScrollBar.Page = 621
-      VertScrollBar.Page = 507
-      Align = alClient
-      AutoScroll = False
-      BorderStyle = bsNone
-      PopupMenu = pupScrollBox
-      TabOrder = 0
-      OnDragDrop = sbTracksDragDrop
-      OnDragOver = sbTracksDragOver
-      OnResize = sbTracksResize
-    end
     object gbTrackDetail: TGroupBox
       Left = 0
       Height = 297
@@ -55,7 +38,7 @@ object MainApp: TMainApp
       Caption = 'Files'
       ClientHeight = 286
       ClientWidth = 250
-      TabOrder = 1
+      TabOrder = 0
       object TreeView1: TTreeView
         Left = 0
         Height = 286
@@ -95,7 +78,7 @@ object MainApp: TMainApp
       Align = alTop
       ClientHeight = 43
       ClientWidth = 1095
-      TabOrder = 3
+      TabOrder = 2
       object ToolBar1: TToolBar
         Left = 1
         Height = 40
@@ -182,17 +165,17 @@ object MainApp: TMainApp
   end
   object pnlBottom: TPanel
     Left = 0
-    Height = 335
+    Height = 316
     Top = 344
     Width = 1095
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 335
+    ClientHeight = 316
     ClientWidth = 1095
     TabOrder = 2
     object pnlVarious: TPanel
       Left = 0
-      Height = 335
+      Height = 316
       Top = 0
       Width = 170
       Align = alLeft
@@ -201,27 +184,27 @@ object MainApp: TMainApp
     end
     object Splitter1: TSplitter
       Left = 170
-      Height = 335
+      Height = 316
       Top = 0
       Width = 5
     end
     object pcEditor: TPageControl
       Left = 175
-      Height = 335
+      Height = 316
       Top = 0
       Width = 920
-      ActivePage = tsPlugins
+      ActivePage = tsWave
       Align = alClient
-      TabIndex = 0
+      TabIndex = 2
       TabOrder = 2
       TabPosition = tpLeft
       object tsPlugins: TTabSheet
         Caption = 'Plugins'
-        ClientHeight = 331
-        ClientWidth = 881
+        ClientHeight = 314
+        ClientWidth = 885
         object lbPluginList: TListBox
           Left = 0
-          Height = 331
+          Height = 314
           Top = 0
           Width = 100
           Align = alLeft

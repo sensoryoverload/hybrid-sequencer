@@ -34,6 +34,8 @@ type
 
   TTrackType = (ttMaster, ttGroup, ttNormal);
 
+  TScheduleType = (stIdle, stStart, stStop, stPause);
+
   TTrack = class(THybridPersistentModel)
   private
     FPatternList: TObjectList;
@@ -62,6 +64,7 @@ type
     FVolumeMultiplier: Single;
     FTrackType: TTrackType;
     FTrackName: string;
+    FScheduledTo: TScheduleType;
 
     //FPluginProcessor: TPluginProcessor;
 
@@ -116,6 +119,16 @@ type
     property DevValue: shortstring read GetDevValue write SetDevValue;
     property TrackType: TTrackType read FTrackType write FTrackType;
     property TrackName: string read FTrackName write FTrackName;
+    property ScheduledTo: TScheduleType read FScheduledTo write FScheduledTo;
+  end;
+
+  TTrackList = class(TObjectList)
+  private
+    function GetTrack(AIndex: Integer): TTrack;
+    procedure SetTrack(AIndex: Integer; const Value: TTrack);
+  public
+    property Items[AIndex: Integer] : TTrack read GetTrack write SetTrack; default;
+    function Add(ATrack: TTrack): integer;
   end;
 
   PWaveFormTrack = ^TTrack;
@@ -134,11 +147,13 @@ type
   TSchedulePatternCommand = class(TTrackCommand)
   private
     FTrackID: string;
+    FScheduledTo: TScheduleType;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   published
     property TrackID: string read FTrackID write FTrackID;
+    property ScheduledTo: TScheduleType read FScheduledTo write FScheduledTo;
   end;
 
   { TCreatePatternCommand }
@@ -178,6 +193,7 @@ type
   TMovePatternToTrackCommand = class(TTrackCommand)
   private
     FPosition: Integer;
+    FOldPosition: Integer;
     FSourceTrackID: string;
     FTargetTrackID: string;
     FPatternID: string;
@@ -230,6 +246,21 @@ implementation
 
 uses
   audiostructure, wave, midi;
+
+function TTrackList.Add(ATrack: TTrack): integer;
+begin
+  Result := inherited Add(ATrack);
+end;
+
+function TTrackList.GetTrack(AIndex: integer): TTrack;
+begin
+  result := inherited Items[aindex] as TTrack;
+end;
+
+procedure TTrackList.SetTrack(AIndex: integer; const Value: TTrack);
+begin
+  inherited Items[AIndex] := Value;
+end;
 
 procedure TTrack.SetPlaying(const AValue: Boolean);
 begin
@@ -339,7 +370,7 @@ var
   TempLeftLevel: Single;
   TempRightLevel: Single;
 begin
-  for i := 0 to Pred(AFrameCount) do
+  {for i := 0 to Pred(AFrameCount) do
   begin
     TempLeftLevel := Abs(ABuffer[i] * FVolumeMultiplier);
     if TempLeftLevel > FLeftLevel then
@@ -353,7 +384,27 @@ begin
       FRightLevel := (FAttack_coef * (FRightLevel - TempRightLevel)) + TempRightLevel
     else
       FRightLevel := (FRelease_coef * (FRightLevel - TempRightLevel)) + TempRightLevel;
+  end; }
+
+  for i := 0 to Pred(AFrameCount) do
+  begin
+    // Left
+    TempLeftLevel := Abs(ABuffer[i]);
+    if TempLeftLevel > FLeftLevel then
+    begin
+      FLeftLevel := TempLeftLevel;
+    end;
+
+    // Right
+    TempRightLevel := Abs(ABuffer[i]);
+    if TempRightLevel > FRightLevel then
+    begin
+      FRightLevel := TempRightLevel;
+    end;
   end;
+
+  FLeftLevel := FLeftLevel * 0.95;
+  FRightLevel := FRightLevel * 0.95;
 end;
 
 constructor TTrack.Create(AObjectOwner: string; AMapped: Boolean = True);
@@ -468,6 +519,8 @@ var
   lIteratePattern: TPattern;
   i: Integer;
 begin
+  DBLog('start TSchedulePatternCommand.DoExecute');
+
   // Only one pattern per track can be scheduled
   lPattern := TPattern(GObjectMapper.GetModelObject(ObjectIdList[0]));
   lTrack := TTrack(GObjectMapper.GetModelObject(lPattern.ObjectOwnerID));
@@ -483,7 +536,12 @@ begin
         if lPattern.ObjectID = lIteratePattern.ObjectID then
         begin
           lTrack.ScheduledPattern := lIteratePattern;
+
+          lTrack.ScheduledTo := FScheduledTo;
+
+          // Make shure track allow audio
           lTrack.Playing := True;
+
           lIteratePattern.Scheduled := True;
         end
         else
@@ -493,6 +551,8 @@ begin
 
     lTrack.EndUpdate;
   end;
+
+  DBLog('end TSchedulePatternCommand.DoExecute');
 end;
 
 procedure TSchedulePatternCommand.DoRollback;
@@ -725,28 +785,30 @@ var
 begin
   DBLog('start TMovePatternToTrackCommand.DoExecute');
 
-  DBLog(format('lSourceTrack: %s, lTargetTrack: %s, lPattern: %s', [SourceTrackID, TargetTrackID, PatternID]));
-
   // Get source track
   lSourceTrack := TTrack(GObjectMapper.GetModelObject(SourceTrackID));
   lTargetTrack := TTrack(GObjectMapper.GetModelObject(TargetTrackID));
   lPattern := TPattern(GObjectMapper.GetModelObject(PatternID));
 
+  DBLog(format('lSourceTrack: %s, lTargetTrack: %s, lPattern: %s', [SourceTrackID, TargetTrackID, PatternID]));
+
   if Assigned(lSourceTrack) and Assigned(lTargetTrack) and Assigned(lPattern) then
   begin
     // Disconnect from source track
-    //lSourceTrack.Disconnect;
-    lSourceTrack.PatternList.Extract(lPattern);
-//    lSourceTrack.Notify;
+    if SourceTrackID <> TargetTrackID then
+    begin
+      lSourceTrack.PatternList.Extract(lPattern);
+      lSourceTrack.Notify;
 
-    // Change pattern owner
-    lPattern.ObjectOwnerID := TargetTrackID;
-    lPattern.Position := Position;
+      // Change pattern owner
+      lPattern.ObjectOwnerID := TargetTrackID;
+      FOldPosition := lPattern.Position;
+      lPattern.Position := FPosition;
 
-    // Connect to target track
-    lTargetTrack.PatternList.Add(lPattern);
-    //lTargetTrack.Connect;
-//    lTargetTrack.Notify;
+      // Connect to target track
+      lTargetTrack.PatternList.Add(lPattern);
+      lTargetTrack.Notify;
+    end;
   end;
 
   DBLog('end TMovePatternToTrackCommand.DoExecute');
@@ -767,17 +829,19 @@ begin
 
   if Assigned(lSourceTrack) and Assigned(lTargetTrack) and Assigned(lPattern) then
   begin
-    lTargetTrack.PatternList.Extract(lPattern);
-
     // Update gui's of both tracks
-    lTargetTrack.Notify;
+    if SourceTrackID <> TargetTrackID then
+    begin
+      lTargetTrack.PatternList.Extract(lPattern);
+      lTargetTrack.Notify;
 
-    // Change pattern owner
-    lPattern.ObjectOwnerID := SourceTrackID;
-    lPattern.Position := Position;
-    lSourceTrack.PatternList.Add(lPattern);
+      // Change pattern owner
+      lPattern.ObjectOwnerID := SourceTrackID;
+      lPattern.Position := FOldPosition;
 
-    lSourceTrack.Notify;
+      lSourceTrack.PatternList.Add(lPattern);
+      lSourceTrack.Notify;
+    end;
   end;
 
   DBLog('end TMovePatternToTrackCommand.DoRollback');

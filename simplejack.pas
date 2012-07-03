@@ -33,7 +33,7 @@ uses
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
   ringbuffer, optionsgui, wavepatterncontrolgui, midipatterncontrolgui,
-  wavepatterngui, midipatterngui, patterngui, sampler;
+  wavepatterngui, midipatterngui, patterngui, sampler, sessiongrid;
 
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
@@ -130,7 +130,6 @@ type
     SaveTrack: TMenuItem;
     gbTrackDetail: Tgroupbox;
     pnlTop: Tpanel;
-    Sbtracks: Tscrollbox;
     ScreenUpdater: TTimer;
     Splitter1: TSplitter;
     tsPlugins: TTabSheet;
@@ -151,12 +150,7 @@ type
     procedure acStopExecute(Sender: TObject);
     procedure acUndoExecute(Sender: TObject);
     procedure acUndoUpdate(Sender: TObject);
-    procedure btnCompileClick(Sender: TObject);
-    procedure btnCreateTrackClick(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure cbPitchedChange(Sender: TObject);
     procedure DialControl1StartChange(Sender: TObject);
-    procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure LeftSplitterDblClick(Sender: TObject);
     procedure DialControl1Change(Sender: TObject);
@@ -174,18 +168,11 @@ type
     procedure SavePatternClick(Sender: TObject);
     procedure MenuItem4Click(Sender: TObject);
     procedure OptionMenuClick(Sender: TObject);
-    procedure rgEditModeClick(Sender: TObject);
     procedure SaveSessionClick(Sender: TObject);
     procedure SaveTrackClick(Sender: TObject);
-    procedure sbTracksDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure sbTracksDragOver(Sender, Source: TObject; X, Y: Integer;
-      State: TDragState; var Accept: Boolean);
-    procedure sbTracksResize(Sender: TObject);
     procedure ScreenUpdaterTimer(Sender: TObject);
     procedure Formdestroy(Sender: Tobject);
     procedure Formcreate(Sender: Tobject);
-    procedure Btndeletetrackclick(Sender: Tobject);
-    procedure ShuffleProc(Sender: Tobject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure TreeView1Collapsed(Sender: TObject; Node: TTreeNode);
     procedure TreeView1Deletion(Sender: TObject; Node: TTreeNode);
@@ -196,12 +183,9 @@ type
       var AllowExpansion: Boolean);
     procedure TreeView1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-
-    procedure UpdateTrackControls(Sender: TObject);
   private
     { private Declarations }
-    FShuffleList: TObjectList;
-    Tracks: TObjectList;
+    FSessionGrid: TSessionGrid;
     FSimpleWaveForm: TSimpleWaveForm;
     FOutputWaveform: Boolean;
     FMappingMonitor: TfmMappingMonitor;
@@ -216,20 +200,10 @@ type
     FModel: TAudioStructure;
 
     procedure CustomExceptionHandler(Sender: TObject; E: Exception);
-    procedure ReleaseTrack(Data: PtrInt);
-    function TrackExists(AObjectID: string): Boolean;
-    function IndexOfTrack(AObjectId: string): Integer;
-    procedure DoTracksRefreshEvent(TrackObject: TObject);
     procedure DoPatternRefreshEvent(TrackObject: TObject);
-    procedure DoApplicationEvent(AObject: TObject);
-    function ShuffleByObject(TrackObject: TObject): TShuffle;
     procedure UpdateTracks(TrackObject: TTrack);
-    procedure DeleteShuffleByObject(TrackObject: TObject);
-    procedure ArrangeShuffleObjects;
 
     function CreateTrack(AFileLocation: string; ATrackType: Integer = 0): TTrackGUI;
-    procedure CreateTrackGUI(AObjectID: string);
-    procedure DeleteTrackGUI(AObjectID: string);
 
     function HasSubFolder(const Directory: string): Boolean;
     procedure LoadTreeDirectory;
@@ -348,25 +322,6 @@ begin
   Result := Report;
 end;
 
-
-
-function compareByLocation(Item1 : Pointer; Item2 : Pointer) : Integer;
-var
-  location1, location2 : TShuffle;
-begin
-  // We start by viewing the object pointers as TShuffle objects
-  location1 := TShuffle(TTrackGUI(Item1).Shuffle);
-  location2 := TShuffle(TTrackGUI(Item2).Shuffle);
-
-  // Now compare by location
-  if location1.x > location2.x then
-    Result := 1
-  else if location1.x = location2.x then
-    Result := 0
-  else
-    Result := -1;
-end;
-
 { TMainApp }
 
 procedure calc_note_frqs(srate : jack_default_audio_sample_t);
@@ -465,16 +420,12 @@ var
   event_count : jack_nframes_t;
   transport_state : jack_transport_state_t;
   lTrack: TTrack;
-  TempLevel: jack_default_audio_sample_t;
   lPlayingPattern: TPattern;
   buffer_size: Integer;
   sync_frame: Integer;
-  lMainSyncCounter: Single;
 begin
-
   buffer_size := nframes * SizeOf(Single);
 
-  // Get pgPattern-input and pgAudio-output buffers
   midi_in_buf := jack_port_get_buffer(midi_input_port, nframes);
   midi_out_buf := jack_port_get_buffer(midi_output_port, nframes);
 	output_left := jack_port_get_buffer(audio_output_port_left, nframes);
@@ -606,9 +557,19 @@ begin
               end;
             end;
 
-            lTrack.PlayingPattern.Playing := True;
+            if lTrack.ScheduledTo = stStart then
+            begin
+              lTrack.PlayingPattern.Playing := True;
+            end
+            else if lTrack.ScheduledTo = stStop then
+            begin
+              lTrack.PlayingPattern.Playing := False;
+            end;
+
+            lTrack.ScheduledTo := stIdle;
             lTrack.PlayingPattern.Scheduled := False;
             lTrack.PlayingPattern.SyncQuantize := True;
+
             lTrack.ScheduledPattern := nil;
           end;
         end;
@@ -618,7 +579,7 @@ begin
         begin
           lPlayingPattern := lTrack.PlayingPattern;
 
-          if lPlayingPattern.OkToPlay then
+          if lPlayingPattern.OkToPlay and lPlayingPattern.Playing then
           begin
             lPlayingPattern.Process(lTrack.OutputBuffer, i, nframes);
           end;
@@ -661,7 +622,7 @@ begin
               end;
 
               // 1. Execute per pattern plugins
-              lPlayingPattern.PluginProcessor.Execute(nframes, lTrack.OutputBuffer);
+              //lPlayingPattern.PluginProcessor.Execute(nframes, lTrack.OutputBuffer);
               {
               // 2. Execute per track plugins
               lTrack.PluginProcessor.Execute(nframes, lPlayingPattern.PluginProcessor.Buffer);
@@ -730,8 +691,8 @@ end;
 
 procedure TMainApp.CustomExceptionHandler(Sender: TObject; E: Exception);
 begin
-  {DumpExceptionCallStack(E);}
-  {DumpCallStack;}
+  DumpExceptionCallStack(E);
+  DumpCallStack;
   {Halt; // End of program execution   }
 end;
 
@@ -806,51 +767,6 @@ begin
   tbUndo.Enabled := ((GHistoryIndex > -1) and (GHistoryIndex < GHistoryQueue.Count));
 end;
 
-procedure TMainApp.btnCompileClick(Sender: TObject);
-{var
-  lLine: Integer;
-  lMessage: string;}
-begin
-  DBLog('start Compile');
-
-  // Link editor to the scriptengine
-{  FPascalScript.Script := ScriptEditor.Lines;
-
-  if FPascalScript.Compile then
-  begin
-    for lLine := 0 to Pred(FPascalScript.CompilerMessageCount) do
-    begin
-      lMessage := lMessage + FPascalScript.CompilerMessages[lLine].MessageToString + #13#10;
-    end;
-  end
-  else
-  begin
-    lMessage := 'Compile failed!';
-  end;
-
-  ScriptMessages.Lines.Text := lMessage;}
-
-  DBLog('end Compile');
-end;
-
-procedure TMainApp.btnCreateTrackClick(Sender: TObject);
-var
-  lCommandCreateTrack: TCreateTrackCommand;
-begin
-  lCommandCreateTrack := TCreateTrackCommand.Create(GAudioStruct.ObjectID);
-  try
-    GCommandQueue.PushCommand(lCommandCreateTrack);
-
-  except
-    lCommandCreateTrack.Free;
-  end;
-End;
-
-procedure TMainApp.Button1Click(Sender: TObject);
-begin
-  DoPatternRefreshEvent(GSettings.SelectedPatternGUI);
-end;
-
 procedure TMainApp.acPlayExecute(Sender: TObject);
 var
   i: Integer;
@@ -901,15 +817,6 @@ begin
   //
 end;
 
-procedure TMainApp.cbPitchedChange(Sender: TObject);
-begin
-  {if Assigned(GAudioStruct.SelectedTrack) then
-  begin
-    //   Put command object
-    GAudioStruct.SelectedTrack.SelectedPattern.Pitched := cbPitched.Checked;
-  end;}
-end;
-
 procedure TMainApp.DialControl1StartChange(Sender: TObject);
 var
   lBPMChangeCommand: TBPMChangeCommand;
@@ -919,11 +826,6 @@ begin
   lBPMChangeCommand.Persist := True;
 
   GCommandQueue.PushCommand(lBPMChangeCommand);
-end;
-
-procedure TMainApp.FormResize(Sender: TObject);
-begin
-  Invalidate;
 end;
 
 procedure TMainApp.FormShow(Sender: TObject);
@@ -1056,11 +958,6 @@ begin
 
 end;
 
-procedure TMainApp.rgEditModeClick(Sender: TObject);
-begin
-  GSettings.EditMode := 0;
-end;
-
 procedure TMainApp.SaveSessionClick(Sender: TObject);
 begin
   SaveGlobalSession;
@@ -1071,46 +968,10 @@ begin
 
 end;
 
-procedure TMainApp.sbTracksDragDrop(Sender, Source: TObject; X, Y: Integer);
-var
-  lTreeView: TTreeView;
-begin
-  DBLog('start TMainApp.sbTracksDragDrop');
-
-  if Source is TTreeView then
-  begin
-    lTreeView := TTreeView(Source);
-    CreateTrack(TTreeFolderData(lTreeView.Selected.Data).Path, 0);
-  end;
-
-  Invalidate;
-
-  DBLog('end TMainApp.sbTracksDragDrop');
-end;
-
-procedure TMainApp.sbTracksDragOver(Sender, Source: TObject; X, Y: Integer;
-  State: TDragState; var Accept: Boolean);
-begin
-  // TODO can be wav, track or
-  Accept := True;
-end;
-
-procedure TMainApp.sbTracksResize(Sender: TObject);
-var
-  i: Integer;
-begin
-  for i:= 0 to Pred(GAudioStruct.Tracks.Count) do
-  begin
-    TTrackGUI(Tracks.Items[i]).Height := Sbtracks.Height;
-  end;
-end;
-
 procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
 var
   i, j: Integer;
   lTrack: TTrack;
-  lMidiPatternGUI: TMidiPatternGUI;
-  lWavePatternGUI: TWavePatternGUI;
 begin
   Application.ProcessMessages;
   try
@@ -1118,12 +979,6 @@ begin
 
     acUndoUpdate(Self);
     acRedoUpdate(Self);
-
-    // Handle update of objects
-    if FHighPriorityInterval = 0 then
-    begin
-      MainApp.ArrangeShuffleObjects;
-    end;
 
       // Update object mapping
     if FShowMapping then
@@ -1134,48 +989,19 @@ begin
       end;
     end;
 
-    DoPatternRefreshEvent(GSettings.SelectedPatternGUI);
-
     // Update session grid
-    for i := 0 to Pred(MainApp.Tracks.Count) do
+    //FSessionGrid.JustDrawCursors := True;
+    FSessionGrid.Invalidate;
+    for i := 0 to Pred(FSessionGrid.TrackViewList.Count) do
     begin
-      lTrack := TTrackGUI(MainApp.Tracks[i]).Track;
+      lTrack := TTrack(FSessionGrid.TrackViewList[i].Model);
 
       if Assigned(lTrack) then
       begin
-        TTrackGUI(MainApp.Tracks[i]).vcLevel.LevelLeft := lTrack.LeftLevel;
-        TTrackGUI(MainApp.Tracks[i]).vcLevel.LevelRight := lTrack.RightLevel;
-        TTrackGUI(MainApp.Tracks[i]).vcLevel.Invalidate;
-
-        if Assigned(lTrack.PlayingPattern) then
-        begin
-          for j := 0 to Pred(TTrackGUI(MainApp.Tracks[i]).PatternListGUI.Count) do
-          begin
-            if TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j] is TMidiPatternGUI then
-            begin
-              lMidiPatternGUI := TMidiPatternGUI(TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j]);
-
-              if lMidiPatternGUI.ObjectID = lTrack.PlayingPattern.ObjectID then
-              begin
-                lMidiPatternGUI.CursorPosition := lTrack.PlayingPattern.RealCursorPosition;
-                lMidiPatternGUI.CacheIsDirty := True;
-              end;
-            end
-            else if TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j] is TWavePatternGUI then
-            begin
-              lWavePatternGUI := TWavePatternGUI(TTrackGUI(MainApp.Tracks[i]).PatternListGUI[j]);
-
-              if lWavePatternGUI.ObjectID = lTrack.PlayingPattern.ObjectID then
-              begin
-                lWavePatternGUI.CursorPosition := lTrack.PlayingPattern.RealCursorPosition;
-                lWavePatternGUI.CacheIsDirty := True;
-              end;
-            end;
-          end;
-        end;
+        FSessionGrid.TrackViewList[i].VolumeFader.LevelLeft := lTrack.LeftLevel;
+        FSessionGrid.TrackViewList[i].VolumeFader.LevelRight := lTrack.RightLevel;
+        FSessionGrid.TrackViewList[i].VolumeFader.Invalidate;
       end;
-
-      TTrackGUI(MainApp.Tracks[i]).Invalidate;
     end;
 
     // Update patterneditor grid
@@ -1186,8 +1012,8 @@ begin
     end
     else if pcEditor.ActivePage = tsWave then
     begin
-      FWavePatternControlGUI.WavePatternGUI.CacheIsDirty := True;
-      FWavePatternControlGUI.WavePatternGUI.Invalidate;
+      FWavePatternControlGUI.WaveGUI.CacheIsDirty := True;
+      FWavePatternControlGUI.WaveGUI.Invalidate;
     end;
 
     Inc(FLowPriorityInterval);
@@ -1238,14 +1064,11 @@ begin
   if Assigned(buffer_allocate2) then
     Freemem(buffer_allocate2);
 
-  if Assigned(FShuffleList) then
-    FShuffleList.Free;
-
   if Assigned(FSimpleWaveForm) then
     FSimpleWaveForm.Free;
 
-  if Assigned(Tracks) then
-    Tracks.Free;
+  if Assigned(FSessionGrid) then
+    FSessionGrid.Free;
 
   if Assigned(FMappingMonitor) then
     FMappingMonitor.Free;
@@ -1262,25 +1085,37 @@ var
   input_ports: ppchar;
   output_ports: ppchar;
 begin
-  Application.OnException := @CustomExceptionHandler;
+  DBLog('start TMainApp.FormCreate');
+
+  //Application.OnException := @CustomExceptionHandler;
 
   FNoJackMode := FindCmdLineSwitch('nojack', ['/', '-'], True);
 
-  MainApp.DoubleBuffered := True;
-  Sbtracks.DoubleBuffered := True;
-
-  Tracks:= TObjectList.create(True);
+  //MainApp.DoubleBuffered := True;
 
   LoadTreeDirectory;
 
+  GAudioStruct := TAudioStructure.Create('{D6DDECB0-BA12-4448-BBAE-3A96EEC90BFB}', MAPPED);
+  GAudioStruct.Initialize;
+  GAudioStruct.MainSampleRate := samplerate;
+  GAudioStruct.BPM := 120;
+
+  FSessionGrid := TSessionGrid.Create(nil);
+  FSessionGrid.Parent := pnlTop;
+  FSessionGrid.Align := alClient;
+  FSessionGrid.OnPatternRefreshGUI := @DoPatternRefreshEvent;
+  GAudioStruct.Attach(FSessionGrid);
+
+  pcEditor.ActivePage := tsPlugins;
+
   FWavePatternControlGUI := TWavePatternControlGUI.Create(nil);
-  FWavePatternControlGUI.Parent := tsWave;
   FWavePatternControlGUI.Align := alClient;
+  FWavePatternControlGUI.Parent := tsWave;
   tsWave.TabVisible := False;
 
   FMidiPatternControlGUI := TMidiPatternControlGUI.Create(nil);
-  FMidiPatternControlGUI.Parent := tsMIDI;
   FMidiPatternControlGUI.Align := alClient;
+  FMidiPatternControlGUI.Parent := tsMIDI;
   tsMIDI.TabVisible := False;
 
   if not FNoJackMode then
@@ -1356,12 +1191,6 @@ begin
     GSettings.Frames := 512;
   end;
 
-
-  GAudioStruct := TAudioStructure.Create('{D6DDECB0-BA12-4448-BBAE-3A96EEC90BFB}', MAPPED);
-  GAudioStruct.Initialize;
-  GAudioStruct.MainSampleRate := samplerate;
-  GAudioStruct.BPM := 120;
-
   attack_in_ms := 20;
   release_in_ms := 1000;
   attack_coef := power(0.01, 1.0/( attack_in_ms * GAudioStruct.MainSampleRate * 0.001));
@@ -1372,9 +1201,6 @@ begin
   FOutputWaveform:= False;
 
   Getmem(buffer_allocate2, 200000 * SizeOf(jack_default_audio_sample_t));
-
-  FShuffleList := TObjectList.create(False);
-  FShuffleList.Sort(@compareByLocation);
 
   FSimpleWaveForm := TSimpleWaveForm.Create(Self);
   FSimpleWaveForm.Data := buffer_allocate2;
@@ -1399,38 +1225,9 @@ begin
   ScreenUpdater.Enabled := True;
 
   pnlVarious.Width := 0;
-End;
 
-procedure TMainApp.Btndeletetrackclick(Sender: Tobject);
-var
-  lCommandDeleteTrack: TDeleteTrackCommand;
-  lTrackIndex: Integer;
-begin
-  if Assigned(GSettings.SelectedTrackGUI) then
-  begin
-    lCommandDeleteTrack := TDeleteTrackCommand.Create(GAudioStruct.ObjectID);
-    try
-      for lTrackIndex := 0 to Pred(Tracks.Count) do
-      begin
-        if Assigned(Tracks[lTrackIndex]) then
-        begin
-          if TTrackGUI(Tracks[lTrackIndex]).Selected then
-          begin
-            lCommandDeleteTrack.ObjectIdList.Add(TTrackGUI(GSettings.SelectedTrackGUI).ObjectID);
-          end;
-        end;
-      end;
-      GCommandQueue.PushCommand(lCommandDeleteTrack);
-    except
-      lCommandDeleteTrack.Free;
-    end;
-  end;
+  DBLog('end TMainApp.FormCreate');
 End;
-
-procedure TMainApp.ShuffleProc(Sender: Tobject);
-begin
-  ArrangeShuffleObjects;
-end;
 
 procedure TMainApp.TreeView1Change(Sender: TObject; Node: TTreeNode);
 begin
@@ -1537,83 +1334,6 @@ begin
 
 end;
 
-procedure TMainApp.UpdateTrackControls(Sender: TObject);
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(Tracks.Count) do
-  begin
-
-    if Sender <> Tracks[i] then
-    begin
-
-    end;
-  end;
-  Sbtracks.Invalidate;
-end;
-
-function TMainApp.TrackExists(AObjectID: string): Boolean;
-var
-  i: Integer;
-begin
-  Result := False;
-
-  for i := 0 to Pred(Tracks.Count) do
-  begin
-    if TTrackGUI(Tracks[i]).ObjectID = AObjectID then
-    begin
-      Result := True;
-    end;
-  end;
-end;
-
-function TMainApp.IndexOfTrack(AObjectId: string): Integer;
-var
-  i: Integer;
-begin
-  Result := -1;
-
-  for i := 0 to Tracks.Count - 1 do
-  begin
-    if TTrackGUI(Tracks[i]).ObjectID = AObjectID then
-    begin
-      Result := i;
-      break;
-    end;
-  end;
-end;
-
-procedure TMainApp.DoTracksRefreshEvent(TrackObject: TObject);
-var
-  lTrackIndex: Integer;
-begin
-  if not Assigned(TrackObject) then
-  begin
-    // TODO Should be more intelligence in here...
-
-    FMidiPatternControlGUI.Parent := nil;
-    FWavePatternControlGUI.Parent := nil;
-    GSettings.OldSelectedPatternGUI := nil;
-    GSettings.SelectedPatternGUI := nil;
-  end
-  else if TrackObject is TTrackGUI then
-  begin
-    GSettings.SelectedTrackGUI := TrackObject;
-    for lTrackIndex := 0 to Pred(Tracks.Count) do
-    begin
-      if ssCtrl in GSettings.Modifier then
-        TTrackGUI(Tracks[lTrackIndex]).Selected := not TTrackGUI(Tracks[lTrackIndex]).Selected
-      else
-        TTrackGUI(Tracks[lTrackIndex]).Selected := (TrackObject = Tracks[lTrackIndex]);
-    end;
-
-    if GSettings.OldSelectedTrackGUI <> GSettings.SelectedTrackGUI then
-    begin
-      GSettings.OldSelectedTrackGUI := GSettings.SelectedTrackGUI;
-    end;
-  end;
-end;
-
 procedure TMainApp.DoPatternRefreshEvent(TrackObject: TObject);
 var
   lWavePattern: TWavePattern;
@@ -1624,22 +1344,22 @@ begin
     // TODO Should be more intelligence in here...
     tsMIDI.TabVisible := False;
     tsWave.TabVisible := False;
-    GSettings.OldSelectedPatternGUI := nil;
-    GSettings.SelectedPatternGUI := nil;
+    GSettings.OldSelectedPattern := nil;
+    GSettings.SelectedPattern := nil;
   end
-  else if TrackObject is TWavePatternGUI then
+  else if TrackObject is TWavePattern then
   begin
-    if GSettings.OldSelectedPatternGUI <> GSettings.SelectedPatternGUI then
+    if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
     begin
       // Detach if old pattern is visible
-      if Assigned(GSettings.OldSelectedPatternGUI) then
+      if Assigned(GSettings.OldSelectedPattern) then
       begin
-        if GSettings.OldSelectedPatternGUI is TMidiPatternGUI then
+        if GSettings.OldSelectedPattern is TMidiPattern then
         begin
           // Last selected pattern of different type;
           // - detach
           // - set parent to new pattern type
-          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
           if Assigned(lMidiPattern) then
           begin
             FMidiPatternControlGUI.Disconnect;
@@ -1651,17 +1371,17 @@ begin
           pcEditor.ActivePage := tsWave;
 
           // Attach new pattern
-          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lWavePattern := TWavePattern(GSettings.SelectedPattern);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
             FWavePatternControlGUI.Connect;
           end;
         end
-        else if GSettings.OldSelectedPatternGUI is TWavePatternGUI then
+        else if GSettings.OldSelectedPattern is TWavePattern then
         begin
           // Last selected pattern of same type; just detach
-          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
           if Assigned(lWavePattern) then
           begin
             FWavePatternControlGUI.Disconnect;
@@ -1669,7 +1389,7 @@ begin
           end;
 
           // Attach new pattern
-          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lWavePattern := TWavePattern(GSettings.SelectedPattern);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
@@ -1685,14 +1405,14 @@ begin
       end
       else
       begin
-        if Assigned(GSettings.SelectedPatternGUI) then
+        if Assigned(GSettings.SelectedPattern) then
         begin
           tsMIDI.TabVisible := False;
           tsWave.TabVisible := True;
           pcEditor.ActivePage := tsWave;
 
           // Attach new pattern
-          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lWavePattern := TWavePattern(GSettings.SelectedPattern);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
@@ -1706,22 +1426,22 @@ begin
         end;
       end;
 
-      GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
+      GSettings.OldSelectedPattern := GSettings.SelectedPattern;
     end;
   end
-  else if TrackObject is TMidiPatternGUI then
+  else if TrackObject is TMidiPattern then
   begin
-    if GSettings.OldSelectedPatternGUI <> GSettings.SelectedPatternGUI then
+    if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
     begin
       // Detach if old pattern is visible
-      if Assigned(GSettings.OldSelectedPatternGUI) then
+      if Assigned(GSettings.OldSelectedPattern) then
       begin
-        if GSettings.OldSelectedPatternGUI is TWavePatternGUI then
+        if GSettings.OldSelectedPattern is TWavePattern then
         begin
           // Last selected pattern of different type;
           // - detach
           // - set parent to new pattern type
-          lWavePattern := TWavePattern(GObjectMapper.GetModelObject(TWavePatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
           if Assigned(lWavePattern) then
           begin
             FWavePatternControlGUI.Disconnect;
@@ -1729,27 +1449,28 @@ begin
           end;
 
           tsWave.TabVisible := False;
-          tsMIDI.TabVisible := True;
-          pcEditor.ActivePage := tsMIDI;
 
-          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
             FMidiPatternControlGUI.Connect;
           end;
+
+          tsMIDI.TabVisible := True;
+          pcEditor.ActivePage := tsMIDI;
         end
-        else if GSettings.OldSelectedPatternGUI is TMidiPatternGUI then
+        else if GSettings.OldSelectedPattern is TMidiPattern then
         begin
           // Last selected pattern of same type; just detach
-          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.OldSelectedPatternGUI).ObjectID));
+          lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
           if Assigned(lMidiPattern) then
           begin
             FMidiPatternControlGUI.Disconnect;
             lMidiPattern.Detach(FMidiPatternControlGUI);
           end;
 
-          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
@@ -1766,18 +1487,19 @@ begin
       end
       else
       begin
-        if Assigned(GSettings.SelectedPatternGUI) then
+        if Assigned(GSettings.SelectedPattern) then
         begin
           tsWave.TabVisible := False;
-          tsMIDI.TabVisible := True;
-          pcEditor.ActivePage := tsMIDI;
 
-          lMidiPattern := TMidiPattern(GObjectMapper.GetModelObject(TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID));
+          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
             FMidiPatternControlGUI.Connect;
           end;
+
+          tsMIDI.TabVisible := True;
+          pcEditor.ActivePage := tsMIDI;
         end
         else
         begin
@@ -1785,27 +1507,7 @@ begin
         end;
       end;
 
-      GSettings.OldSelectedPatternGUI := GSettings.SelectedPatternGUI;
-    end;
-  end;
-end;
-
-procedure TMainApp.DoApplicationEvent(AObject: TObject);
-begin
-  if AObject is TTrackGUI then
-  begin
-    if Assigned(FMidiPatternControlGUI.Parent) then
-    begin
-      if FMidiPatternControlGUI.Connected then
-      begin
-        FMidiPatternControlGUI.Disconnect;
-      end;
-    end else if Assigned(FWavePatternControlGUI.Parent) then
-    begin
-      if FWavePatternControlGUI.Connected then
-      begin
-        FWavePatternControlGUI.Disconnect;
-      end;
+      GSettings.OldSelectedPattern := GSettings.SelectedPattern;
     end;
   end;
 end;
@@ -1830,114 +1532,6 @@ begin
       for j := 0 to Pred(TTrack(GAudioStruct.Tracks.Items[i]).PatternList.Count) do
       begin
 //         TWavePattern(TTrack(GAudioStruct.Tracks.Items[i]).PatternList[j]).Repaint;
-      end;
-    end;
-  end;
-  for i := 0 to Pred(GAudioStruct.Tracks.Count) do
-  begin
-    TTrackGUI(Tracks.Items[i]).Repaint;
-  end;
-end;
-
-procedure TMainApp.DeleteShuffleByObject(TrackObject: TObject);
-var
-  i: Integer;
-begin
-  for i:= 0 to Pred(FShuffleList.Count) do
-  begin
-    if TrackObject = TShuffle(FShuffleList.Items[i]).trackobject then
-    begin
-      FShuffleList.Delete(i);
-      break;
-    end;
-  end;
-end;
-
-function TMainApp.ShuffleByObject(TrackObject: TObject): TShuffle;
-var
-  i: Integer;
-begin
-  Result := nil;
-  for i:= 0 to Pred(FShuffleList.Count) do
-  begin
-    if TrackObject = TShuffle(FShuffleList.Items[i]).trackobject then
-    begin
-      Result := TShuffle(FShuffleList.Items[i]);
-      break;
-    end;
-  end;
-end;
-
-procedure TMainApp.ArrangeShuffleObjects;
-var
-  i: Integer;
-  lDiff: Single;
-  Location: Integer;
-  lLeftOffset: Integer;
-  lTrack: TTrackGUI;
-begin
-
-  if Assigned(GSettings.SelectedTrackGUI) then
-  begin
-    FShuffleList.Clear;
-    for i:= 0 to Pred(MainApp.Tracks.Count) do
-    begin
-      FShuffleList.Add(MainApp.Tracks[i]);
-    end;
-    FShuffleList.Sort(@compareByLocation);
-    FShuffleList.Pack;
-    lLeftOffset:= 0;
-
-    // Target Locations
-    for i := 0 to Pred(FShuffleList.Count) do
-    begin
-      lTrack := TTrackGUI(FShuffleList[i]);
-
-      if TTrackGUI(GSettings.SelectedTrackGUI) <> lTrack then
-        lTrack.Shuffle.x := lLeftOffset
-      else
-        if not TTrackGUI(GSettings.SelectedTrackGUI).IsShuffling then
-          lTrack.Shuffle.x := lLeftOffset;
-
-      Inc(lLeftOffset, lTrack.Width);
-    end;
-
-    // Intermediate floating locations
-    for i := 0 to Pred(FShuffleList.Count) do
-    begin
-      lTrack := TTrackGUI(FShuffleList[i]);
-
-      if TTrackGUI(GSettings.SelectedTrackGUI) <> lTrack then
-      begin
-        if lTrack.Shuffle.step >= 10 then
-          lTrack.Shuffle.oldx := lTrack.Shuffle.x;
-
-        lDiff:= lTrack.Shuffle.x - lTrack.Shuffle.oldx;
-
-        // End reached!
-        if lDiff = 0 then
-        begin
-          lTrack.Shuffle.step:= 0;
-          lTrack.Shuffle.oldx:= lTrack.Shuffle.x;
-          Location:= lTrack.Shuffle.x;
-        end
-        else
-        begin
-          Location:= lTrack.Shuffle.oldx + Round(lTrack.Shuffle.step * (lDiff / 10));
-        end;
-
-        if lTrack.Left <> Location then
-          lTrack.Left:= Location;
-
-        Inc(lTrack.Shuffle.step, 2);
-      end
-      else
-      begin
-        if not TTrackGUI(GSettings.SelectedTrackGUI).IsShuffling then
-        begin
-          if lTrack.Left <> lTrack.Shuffle.x then
-            lTrack.Left:= lTrack.Shuffle.x;
-        end;
       end;
     end;
   end;
@@ -1976,94 +1570,6 @@ begin
       lCreateTrack.Free;
     end;
   end;
-end;
-
-procedure TMainApp.ReleaseTrack(Data: PtrInt);
-var
-  lTrackGUI: TTrackGUI;
-begin
-
-  //also like this but for patterns
-
-  lTrackGUI := TTrackGUI(Data);
-  lTrackGUI.Parent := nil;
-  Tracks.Remove(lTrackGUI);
-
-  //DoTracksRefreshEvent(nil);
-end;
-
-procedure TMainApp.CreateTrackGUI(AObjectID: string);
-var
-  lTrackGUI: TTrackGUI;
-  lTrack: TTrack;
-  lTrackTotalWidth: Integer;
-  lTrackIndex: Integer;
-begin
-  DBLog('start TMainApp.CreateTrackGUI: ' + AObjectID);
-
-  lTrack := TTrack(GObjectMapper.GetModelObject(AObjectID));
-
-  // Create track with remote ObjectID
-  lTrackGUI := TTrackGUI.Create(nil);
-  lTrackGUI.Parent := MainApp.Sbtracks;
-  lTrackGUI.Height := Sbtracks.Height;
-  lTrackGUI.OnUpdateTrackControls := @UpdateTrackControls;
-  lTrackGUI.OnTracksRefreshGUI := @DoTracksRefreshEvent;
-  lTrackGUI.OnPatternRefreshGUI := @DoPatternRefreshEvent;
-  lTrackGUI.OnApplicationGUIEvent := @DoApplicationEvent;
-  case lTrack.TrackType of
-  ttNormal: lTrackGUI.Align := alNone;
-  ttMaster: lTrackGUI.Align := alRight;
-  ttGroup: lTrackGUI.Align := alNone;
-  end;
-
-  lTrackGUI.Track := lTrack;
-  Tracks.Add(lTrackGUI);
-
-  lTrack.Attach(lTrackGUI);
-
-  // Calculate x, y for track inside sbTracks
-  lTrackTotalWidth := 0;
-  for lTrackIndex := 0 to Pred(Tracks.Count) do
-    Inc(lTrackTotalWidth, TTrackGUI(Tracks.Items[lTrackIndex]).Width);
-
-  lTrackGUI.Left:= lTrackTotalWidth - lTrackGUI.Width;
-
-  lTrackGUI.Shuffle.trackobject := lTrackGUI;
-  lTrackGUI.Shuffle.x := lTrackGUI.Left;
-  lTrackGUI.Shuffle.oldx:= lTrackGUI.Shuffle.x;
-  lTrackGUI.Shuffle.step:= 0;
-  GSettings.SelectedTrackGUI := lTrackGUI;
-
-  for lTrackIndex := 0 to Pred(Tracks.Count) do
-  begin
-    if Tracks.Items[lTrackIndex] <> lTrackGUI then
-      TTrackGUI(Tracks.Items[lTrackIndex]).Selected:= False;
-  end;
-
-  DBLog('end TMainApp.CreateTrackGUI ' + lTrackGUI.ObjectID);
-end;
-
-
-procedure TMainApp.DeleteTrackGUI(AObjectID: string);
-var
-  lIndex: Integer;
-  lTrackGUI: TTrackGUI;
-begin
-  DBLog('start TMainApp.DeleteTrackGUI');
-
-  for lIndex := Pred(Tracks.Count) downto 0 do
-  begin
-    lTrackGUI := TTrackGUI(Tracks[lIndex]);
-    if lTrackGUI.ObjectID = AObjectID then
-    begin
-      GSettings.SelectedPatternGUI := nil;
-
-      Application.QueueAsyncCall(@ReleaseTrack, PtrInt(lTrackGUI));
-    end;
-  end;
-
-  DBLog('end TMainApp.DeleteTrackGUI');
 end;
 
 function TMainApp.HasSubFolder(const Directory: string): Boolean;
@@ -2215,12 +1721,6 @@ procedure TMainApp.Update(Subject: THybridPersistentModel);
 begin
   DBLog('MainApp.Update');
 
-  DiffLists(
-    TAudioStructure(Subject).Tracks,
-    Tracks,
-    @CreateTrackGUI,
-    @DeleteTrackGUI);
-
   DialControl1.Value := GAudioStruct.BPM;
 end;
 
@@ -2292,10 +1792,10 @@ begin
       lMidiMap := TMidiMap(GCommandQueue.MidiMappingTable.Objects[lMidiMapIndex]);
       lGenericCommand := TSampleParameterCommand.Create(lMidiMap.ObjectOwnerID);
       try
-        if GSettings.MapToVisible and (GSettings.SelectedPatternGUI is TMidiPatternGUI) then
+        if GSettings.MapToVisible and (GSettings.SelectedPattern is TMidiPatternGUI) then
         begin
           // Mapped to visible pattern
-          lGenericCommand.ObjectID := TMidiPatternGUI(GSettings.SelectedPatternGUI).ObjectID;
+          lGenericCommand.ObjectID := TMidiPatternGUI(GSettings.SelectedPattern).ObjectID;
         end
         else
         begin

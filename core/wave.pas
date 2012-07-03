@@ -631,12 +631,12 @@ begin
 
   Pitch := 1;
 
-  FFFTStretcher := TSmbPitchShifter.Create;
+{  FFFTStretcher := TSmbPitchShifter.Create;
   FFFTStretcher.FFTFrameSize := 512;
   FFFTStretcher.OverSampling := 8;
-  FFFTStretcher.SampleRate := GSettings.SampleRate;
+  FFFTStretcher.SampleRate := GSettings.SampleRate;}
 
-  FRubberbandStretcher := rubberband_new(
+{  FRubberbandStretcher := rubberband_new(
     Round(GSettings.SampleRate),
     1,
     RubberBandOptionProcessRealTime or
@@ -645,7 +645,7 @@ begin
     1,
     1);
   rubberband_set_debug_level(FRubberbandStretcher, 0);
-  FLatency := rubberband_get_latency(FRubberbandStretcher);
+  FLatency := rubberband_get_latency(FRubberbandStretcher); }
 
   PitchAlgorithm := paNone;
 
@@ -680,9 +680,9 @@ begin
   if Assigned(FSampleEnd) then
     FSampleEnd.Free;
 
-  FFFTStretcher.Free;
+//  FFFTStretcher.Free;
 
-  rubberband_delete(FRubberbandStretcher);
+{  rubberband_delete(FRubberbandStretcher);  }
 
   Freemem(FConvertBuffer);
 
@@ -986,7 +986,7 @@ begin
       rubberband_reset(FRubberbandStretcher);
       rubberband_set_pitch_scale(FRubberbandStretcher, 1);
 
-      //FLatency := Rubberband_get_latency(FRubberbandStretcher);
+      FLatency := Rubberband_get_latency(FRubberbandStretcher);
     end
   else
     begin
@@ -1283,12 +1283,12 @@ begin
               end;
               paFFT:
               begin
-                FFFTStretcher.Pitch := CalculatedPitch;
-                FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
+//                FFFTStretcher.Pitch := CalculatedPitch;
+//                FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
               end;
               paRubberband:
               begin
-                for k := 0 to Pred(lFrames) do
+(*                for k := 0 to Pred(lFrames) do
                 begin
                   FConvertBuffer[k] := WorkBuffer[psBeginLocation + k];
                 end;
@@ -1309,7 +1309,7 @@ begin
                 for k := 0 to Pred(lFrames) do
                 begin
                   ABuffer[psBeginLocation + k] := FConvertBuffer[k];
-                end;
+                end;*)
               end;
             end;
 

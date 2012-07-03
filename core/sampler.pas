@@ -22,7 +22,7 @@ unit sampler;
 
 {$mode objfpc}{$H+}
 
-{$fputype sse}
+(*{$fputype sse}*)
 
 interface
 
@@ -197,6 +197,7 @@ type
 
 const
   WFStrings: array[0..5] of string = ('sinus', 'triangle', 'sawtooth', 'square', 'exponent', 'off');
+  LUT_SIZE = 4096 * 4;
 
 type
   TOscWaveform = (triangle, sinus, sawtooth, square, exponent, off);
@@ -240,12 +241,19 @@ type
     property PulseWidth: single read FPulseWidth write SetPulseWidth;
   end;
 
+  { TOscillatorWaveformCache }
+
+  TOscillatorWaveformCache = class
+  public
+    Table: array[Low(TOscWaveform)..High(TOscWaveform), 0..LUT_SIZE + 1] of Single; // 1 more for linear interpolation
+    procedure Initialize;
+  end;
+
   { TOscillatorEngine }
 
   TOscillatorEngine = class(TBaseEngine)
   private
     FRate: single;
-    FTable: array[Low(TOscWaveform)..High(TOscWaveform), 0..513] of Single; // 1 more for linear interpolation
     FPhase,
     FInc: single;
     FOscillator: TOscillator;
@@ -256,7 +264,6 @@ type
     FSynchronized: Boolean;
 
     procedure SetOscillator(const AValue: TOscillator);
-    procedure CalculateWaveform;
     procedure SetRate(const AValue: single);
   public
     // increments the phase and outputs the new LFO value.
@@ -404,7 +411,7 @@ type
 
   { TPluginSampleBank }
 
-  TPluginSampleBank = class(TInternalPlugin)
+  TPluginSampleBank = class(TInternalNode)
   private
   public
     constructor Create(AObjectOwnerID: string);
@@ -574,7 +581,7 @@ type
     FOsc2Engine: TOscillatorEngine;
     FOsc3Engine: TOscillatorEngine;
 
-    FFilterEngine: {TLP24DB;}TDspFilter;
+    FFilterEngine: TDspFilter;
 
     FLFO1Engine: TOscillatorEngine;
     FLFO2Engine: TOscillatorEngine;
@@ -656,7 +663,8 @@ type
     property SampleBank: TSampleBank read FSampleBank write SetSampleBank;
   end;
 
-
+var
+  GWaveformTable: TOscillatorWaveformCache;
 
 implementation
 
@@ -678,6 +686,52 @@ begin
     Result := 0
   else
     Result := -1;
+end;
+
+{ TOscillatorWaveformCache }
+
+procedure TOscillatorWaveformCache.Initialize;
+var
+  i: Integer;
+begin
+  for i := 0 to LUT_SIZE + 1 do
+  begin
+    Table[sinus, i] := sin(2*pi*(i/LUT_SIZE));
+  end;
+
+  for i := 0 to Pred(LUT_SIZE div 4) do
+  begin
+    Table[triangle, i] := i / (LUT_SIZE * 0.25);
+    Table[triangle, i+Round(LUT_SIZE * 0.25)] := ((LUT_SIZE * 0.25)-i) / (LUT_SIZE * 0.25);
+    Table[triangle, i+Round(LUT_SIZE * 0.5)] := - i / (LUT_SIZE * 0.25);
+    Table[triangle, i+Round(LUT_SIZE * 0.75)] := - ((LUT_SIZE * 0.25)-i) / (LUT_SIZE * 0.25);
+  end;
+  Table[triangle, LUT_SIZE] := 0;
+  Table[triangle, LUT_SIZE + 1] := 1 / (LUT_SIZE * 0.25);
+
+  for i:= 0 to LUT_SIZE - 1 do
+  begin
+    Table[sawtooth, i] := 2 * (i / LUT_SIZE) - 1;
+  end;
+  Table[sawtooth, LUT_SIZE] := -1;
+  Table[sawtooth, LUT_SIZE + 1] := 2 * (1 / LUT_SIZE) - 1;
+
+  for i := 0 to LUT_SIZE div 2 do
+  begin
+    Table[square, i]     :=  1;
+    Table[square, i + Round(LUT_SIZE * 0.5)] := -1;
+  end;
+  Table[square, LUT_SIZE] := 1;
+  Table[square, LUT_SIZE + 1] := 1;
+
+  // symetric exponent similar to triangle
+  for i:=0 to Pred(LUT_SIZE div 2) do
+  begin
+    Table[exponent, i] := 2 * ((exp(i / (LUT_SIZE / 2)) - 1) / (exp(1) - 1)) - 1  ;
+    Table[exponent, i + (LUT_SIZE div 2)] := 2 * ((exp(((LUT_SIZE / 2) - i) / (LUT_SIZE / 2)) - 1) / (exp(1) - 1)) - 1  ;
+  end;
+  Table[exponent, LUT_SIZE] := -1;
+  Table[exponent, LUT_SIZE + 1] := 2 * ((exp(1 / (LUT_SIZE / 2)) - 1) / (exp(1) - 1)) - 1  ;;
 end;
 
 
@@ -1210,17 +1264,17 @@ begin
   begin
     i := Round(Fphase);
     lFrac :=  Frac(FPhase);
-    lAddSub := Finc + (Modifier^ * FOscillator.ModAmount);
+    lAddSub := Finc + (Modifier^ * FOscillator.ModAmount * 64);
 
     // Limit the maximum else it'll run outside the array
-    if lAddSub > 511 then
+    if lAddSub > LUT_SIZE - 1 then
     begin
-      lAddSub := 512;
+      lAddSub := LUT_SIZE;
     end;
     Fphase := FPhase + lAddSub;
-    if FPhase > 512 then
+    if FPhase > LUT_SIZE then
     begin
-      FPhase := FPhase - 512;
+      FPhase := FPhase - LUT_SIZE;
 
       // Hardsync linked oscillator
       if Assigned(FSyncOscillator) then
@@ -1233,7 +1287,7 @@ begin
     if FOscillator.WaveForm = square then
     begin
       // PulseWidth varies from 0..1, scaled to tablewidth 1-50%
-      if i < (FOscillator.PulseWidth * 256) then
+      if i < (FOscillator.PulseWidth * (LUT_SIZE * 0.5)) then
       begin
         Result := 1;
       end
@@ -1244,28 +1298,28 @@ begin
     end
     else
     begin
-      { table needs overflowextension
-
-      lMod := i - 1;
-      lMod := lMod shl 7;
-      lMod := lMod shr 7;
-      xm1 := Ftable[FOscillator.WaveForm, i - 1];
-      x0 := Ftable[FOscillator.WaveForm, i];
-      lMod := i + 1;
-      lMod := lMod shl 7;
-      lMod := lMod shr 7;
-      x1 := Ftable[FOscillator.WaveForm, i + 1];
-      lMod := i + 2;
-      lMod := lMod shl 7;
-      lMod := lMod shr 7;
-      x2 := Ftable[FOscillator.WaveForm, i + 2];
-      Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;}
     end;
+    { table needs overflowextension }
+
+    {lMod := i - 1;
+    lMod := lMod shl 7;
+    lMod := lMod shr 7;
+    xm1 := GWaveformTable.Table[FOscillator.WaveForm, i - 1];
+    x0 := GWaveformTable.Table[FOscillator.WaveForm, i];
+    lMod := i + 1;
+    lMod := lMod shl 7;
+    lMod := lMod shr 7;
+    x1 := GWaveformTable.Table[FOscillator.WaveForm, i + 1];
+    lMod := i + 2;
+    lMod := lMod shl 7;
+    lMod := lMod shr 7;
+    x2 := GWaveformTable.Table[FOscillator.WaveForm, i + 2];
+    Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;}
 
     // linear interpolation (low vs high quality setting)
     Result :=
-      (Ftable[FOscillator.WaveForm, i] * (1 - lFrac) +
-      Ftable[FOscillator.WaveForm, i + 1] * lFrac) *
+      (GWaveformTable.Table[FOscillator.WaveForm, i] * (1 - lFrac) +
+      GWaveformTable.Table[FOscillator.WaveForm, i + 1] * lFrac) *
       FOscillator.Level;
 
     FLevel := Result;
@@ -1284,51 +1338,6 @@ begin
   FDivBySamplerate := 1 / SampleRate;
   FPulseWidth := 1;
   FPhase := 0;
-  CalculateWaveform;
-end;
-
-procedure TOscillatorEngine.CalculateWaveform;
-var
-  i: Integer;
-begin
-  for i := 0 to 513 do
-  begin
-    FTable[sinus, i] := sin(2*pi*(i/512));
-  end;
-
-  for i := 0 to 127 do
-  begin
-    FTable[triangle, i] := i / 128;
-    FTable[triangle, i+128] := (128-i) / 128;
-    FTable[triangle, i+256] := - i / 128;
-    FTable[triangle, i+384] := - (128-i) / 128;
-  end;
-  FTable[triangle, 512] := 0;
-  FTable[triangle, 513] := 1 / 128;
-
-  for i:= 0 to 511 do
-  begin
-    FTable[sawtooth, i] := 2 * (i / 512) - 1;
-  end;
-  FTable[sawtooth, 512] := -1;
-  FTable[sawtooth, 513] := 2 * (1 / 512) - 1;
-
-  for i := 0 to 255 do
-  begin
-    FTable[square, i]     :=  1;
-    FTable[square, i + 256] := -1;
-  end;
-  FTable[square, 512] := 1;
-  FTable[square, 513] := 1;
-
-  // symetric exponent similar to triangle
-  for i:=0 to 255 do
-  begin
-    FTable[exponent, i] := 2 * ((exp(i / 256) - 1) / (exp(1) - 1)) - 1  ;
-    FTable[exponent, i + 256] := 2 * ((exp((256 - i) / 256) - 1) / (exp(1) - 1)) - 1  ;
-  end;
-  FTable[exponent, 512] := -1;
-  FTable[exponent, 512] := 2 * ((exp(1 / 256) - 1) / (exp(1) - 1)) - 1  ;;
 end;
 
 procedure TOscillatorEngine.SetRate(const AValue: single);
@@ -1338,11 +1347,11 @@ begin
 
   if FOscillator.FMode = omOsc then
   begin
-    Finc := 512 * Frate * FDivBySamplerate;
+    Finc := LUT_SIZE * Frate * FDivBySamplerate;
   end
   else
   begin
-    Finc := log_approx4(Frate) * 524288 * FDivBySamplerate;
+    Finc := log_approx4(Frate) * LUT_SIZE * 2048 * FDivBySamplerate;
   end;
 end;
 
@@ -2390,7 +2399,7 @@ begin
   FLFO1Engine := TOscillatorEngine.Create(Frames);
   FLFO2Engine := TOscillatorEngine.Create(Frames);
   FLFO3Engine := TOscillatorEngine.Create(Frames);
-  FFilterEngine := {TLP24DB}TDspFilter.Create(Frames);
+  FFilterEngine := TDspFilter.Create(Frames);
 
   FLFOPhase := 0;
   FRunning := False;
@@ -2641,7 +2650,9 @@ procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer; 
     if ANote > 127 then
       Result := 127
     else if ANote < 0 then
-      Result := 0;
+      Result := 0
+    else
+      Result := ANote;
   end;
 
 begin
@@ -2872,6 +2883,13 @@ begin
     end;
   end;
 end;
+
+initialization
+  GWaveformTable := TOscillatorWaveformCache.Create;
+  GWaveformTable.Initialize;
+
+finalization
+  GWaveformTable.Free;
 
 end.
 

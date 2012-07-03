@@ -115,7 +115,7 @@ type
 
   TAudioStructure = class(THybridPersistentModel)
   private
-    FTrack: TObjectList;
+    FTrack: TTrackList;
     FActive: Boolean;
     FMidiMapping: TMidiControlMap;
     //FModelThread: TModelThread;
@@ -157,7 +157,7 @@ type
     property SelectedBank: TSampleBank read FSelectedBank write SetSelectedBank;
     property OldSelectedBank: TSampleBank read FOldSelectedBank write FOldSelectedBank;
   published
-    property Tracks: TObjectList read FTrack write FTrack;
+    property Tracks: TTrackList read FTrack write FTrack;
     property MainSyncCounter: Single read FMainSyncCounter write FMainSyncCounter;
     property MainSyncLength: Single read FMainSyncLength write FMainSyncLength;
     property MainSyncSignal: Boolean read FMainSyncSignal write FMainSyncSignal;
@@ -183,7 +183,7 @@ constructor TAudioStructure.Create(AObjectOwner: string; AMapped: Boolean = True
 begin
   inherited Create(AObjectOwner, AMapped);
 
-  FTrack := TObjectList.create(True);
+  FTrack := TTrackList.create(True);
 
   FSelectedBank := nil;
   FOldSelectedBank := nil;

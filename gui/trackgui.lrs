@@ -5,7 +5,7 @@ LazarusResources.Add('TTrackGUI','FORMDATA',[
   +'dth'#2'P'#5'Align'#7#8'alCustom'#7'Anchors'#11#5'akTop'#0#12'ClientHeight'#3
   +#249#1#11'ClientWidth'#2'P'#20'Constraints.MaxWidth'#2'P'#20'Constraints.Min'
   +'Width'#2'P'#9'PopupMenu'#7#7'pmTrack'#8'TabOrder'#2#0#10'DesignLeft'#3#255#2
-  +#9'DesignTop'#3#200#0#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2#0#6'Height'
+  +#9'DesignTop'#3#206#0#0#6'TPanel'#16'pnlTrackControls'#4'Left'#2#0#6'Height'
   +#3#224#0#3'Top'#3#25#1#5'Width'#2'P'#5'Align'#7#8'alBottom'#7'Anchors'#11#6
   +'akLeft'#8'akBottom'#0#10'BevelInner'#7#8'bvRaised'#12'ClientHeight'#3#224#0
   +#11'ClientWidth'#2'P'#5'Color'#7#9'clBtnFace'#11'ParentColor'#8#9'PopupMenu'

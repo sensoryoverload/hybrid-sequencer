@@ -81,8 +81,6 @@ type
   private
     { private declarations }
     FSelected: Boolean;
-    FShuffleOldPos: TPoint;
-    FShuffling: Boolean;
     FOnTracksRefreshGUI: TTracksRefreshGUIEvent;
     FOnPatternRefreshGUI: TPatternRefreshGUIEvent;
     FOnApplicationGUIEvent: TApplicationGUIEvent;
@@ -90,7 +88,6 @@ type
     FObjectID: string;
     FOnUpdateTrackControls: TNotifyEvent;
     FSelectedPattern: TPatternGUI;
-    FShuffle: TShuffle;
     FTrack: TTrack;
     FObjectOwnerID: string;
     FObjectOwner: TObject;
@@ -119,8 +116,6 @@ type
     property OnTracksRefreshGUI: TTracksRefreshGUIEvent read FOnTracksRefreshGUI write FOnTracksRefreshGUI;
     property OnPatternRefreshGUI: TPatternRefreshGUIEvent read FOnPatternRefreshGUI write FOnPatternRefreshGUI;
     property OnApplicationGUIEvent: TApplicationGUIEvent read FOnApplicationGUIEvent write FOnApplicationGUIEvent;
-    property IsShuffling: Boolean read FShuffling write FShuffling;
-    property Shuffle: TShuffle read FShuffle write FShuffle;
     property OnUpdateTrackControls: TNotifyEvent read FOnUpdateTrackControls write FOnUpdateTrackControls;
     property PanelPatterns: TPanel read pnlPatterns write pnlPatterns;
     property PatternListGUI: TObjectList read FPatternListGUI write FPatternListGUI;
@@ -207,11 +202,11 @@ begin
   // Retrieve state
   DBLog('start TTrack.Update');
 
-  DiffLists(
+{  DiffLists(
     TTrack(Subject).PatternList,
     PatternListGUI,
     @CreatePatternGUI,
-    @DeletePatternGUI);
+    @DeletePatternGUI);}
 
   tcOn.SwitchedOn := TTrack(Subject).Active;
   vcLevel.Position := TTrack(Subject).Volume;
@@ -318,8 +313,8 @@ procedure TTrackGUI.ReleasePattern(Data: PtrInt);
 var
   lPatternGUI: TPatternGUI;
 begin
-  //GSettings.SelectedPatternGUI := nil;
-  //GSettings.OldSelectedPatternGUI := nil;
+  //GSettings.SelectedPattern := nil;
+  //GSettings.OldSelectedPattern := nil;
   lPatternGUI := TPatternGUI(Data);
   if lPatternGUI.ClassType = TWavePatternGUI then
   begin
@@ -341,7 +336,7 @@ var
   lIndex: Integer;
 begin
   // update track gui
-  //GSettings.SelectedPatternGUI := nil;
+  //GSettings.SelectedPattern := nil;
 
   for lIndex := Pred(PatternListGUI.Count) downto 0 do
   begin
@@ -363,7 +358,6 @@ begin
   inherited Create(AOwner);
 
   FPatternListGUI := TObjectList.create(True);
-  FShuffle := TShuffle.Create;
   tcOn.OnChange := @tcOnChange;
 
   {ChangeControlStyle(Self, [csDisplayDragImage], [], True);  }
@@ -375,9 +369,6 @@ destructor TTrackGUI.Destroy;
 begin
   if Assigned(FPatternListGUI) then
     FPatternListGUI.Free;
-
-  if Assigned(FShuffle) then
-    FShuffle.Free;
 
   inherited Destroy;
 end;
@@ -466,12 +457,6 @@ procedure TTrackGUI.TrackControlsMouseDown(Sender: TObject; Button: TMouseButton
 begin
   Selected:= True;
 
-  FShuffling:= True;
-  FShuffleOldPos.X:= X;
-  FShuffleOldPos.Y:= Y;
-
-  FShuffle.trackobject := Self;
-
   if Assigned(OnTracksRefreshGUI) then
     OnTracksRefreshGUI(Self);
 
@@ -557,13 +542,6 @@ procedure TTrackGUI.TrackControlsMouseMove(Sender: TObject; Shift: TShiftState; 
   Y: Integer);
 begin
   inherited MouseMove(Shift, X, Y);
-
-  if FShuffling then
-  begin
-    Self.Left:= Self.Left + (X - FShuffleOldPos.X);
-
-    Shuffle.x := Self.Left;
-  end;
 end;
 
 procedure TTrackGUI.TrackControlsMouseUp(Sender: TObject; Button: TMouseButton;
@@ -571,7 +549,6 @@ procedure TTrackGUI.TrackControlsMouseUp(Sender: TObject; Button: TMouseButton;
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
-  FShuffling:= False;
 end;
 
 { TSelectPatternUpdate }
@@ -596,7 +573,7 @@ begin
 
         if lPatternGUI.ObjectID = ObjectIDList[lIndexID] then
         begin
-          GSettings.SelectedPatternGUI := lPatternGUI;
+          GSettings.SelectedPattern := lPatternGUI;
           lTrackGUI.OnTracksRefreshGUI(lTrackGUI);
         end;
       end;

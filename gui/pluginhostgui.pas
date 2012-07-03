@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, StdCtrls, globalconst, global,
-  plugin, utils, Controls, LCLType, Graphics, contnrs, pluginhost, plugingui;
+  plugin, utils, Controls, LCLType, Graphics, contnrs, pluginhost, pluginnodegui;
 
 type
   TInterConnectPort = record
@@ -65,8 +65,8 @@ type
       State: TDragState; var Accept: Boolean);
   private
     { private declarations }
-    FAudioOutGUI: TPluginNodeGUI;
-    FAudioInGUI: TPluginNodeGUI;
+    FAudioOutGUI: TGenericPluginGUI;
+    FAudioInGUI: TGenericPluginGUI;
 
     FObjectOwnerID: string;
     FObjectID: string;
@@ -78,8 +78,6 @@ type
     FTempConnection: TInterConnectGUI;
     FBusyConnecting: Boolean;
   protected
-    function NodeByObjectID(AObjectID: string): TPluginNodeGUI;
-    function NodeByName(APluginName: string): TPluginNodeGUI;
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -106,8 +104,8 @@ type
     property NodeListGUI: TObjectList read FNodeListGUI write FNodeListGUI;
     property ConnectionListGUI: TObjectList read FConnectionListGUI write FConnectionListGUI;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
-    property AudioOutGUI: TPluginNodeGUI read FAudioOutGUI write FAudioOutGUI;
-    property AudioInGUI: TPluginNodeGUI read FAudioInGUI write FAudioInGUI;
+    property AudioOutGUI: TGenericPluginGUI read FAudioOutGUI write FAudioOutGUI;
+    property AudioInGUI: TGenericPluginGUI read FAudioInGUI write FAudioInGUI;
   end;
 
 implementation
@@ -147,36 +145,6 @@ begin
   Accept := True;
 end;
 
-function TPluginProcessorGUI.NodeByObjectID(AObjectID: string): TPluginNodeGUI;
-var
-  lIndex: Integer;
-begin
-  Result := nil;
-
-  for lIndex := 0 to Pred(NodeListGUI.Count) do
-  begin
-    if TPluginNodeGUI(NodeListGUI[lIndex]).ObjectID = AObjectID then
-    begin
-      Result := TPluginNodeGUI(NodeListGUI[lIndex]);
-    end;
-  end;
-end;
-
-function TPluginProcessorGUI.NodeByName(APluginName: string): TPluginNodeGUI;
-var
-  lIndex: Integer;
-begin
-  Result := nil;
-
-  for lIndex := 0 to Pred(NodeListGUI.Count) do
-  begin
-    if TPluginNodeGUI(NodeListGUI[lIndex]).PluginName = APluginName then
-    begin
-      Result := TPluginNodeGUI(NodeListGUI[lIndex]);
-    end;
-  end;
-end;
-
 constructor TPluginProcessorGUI.Create(AOwner: TComponent);
 begin
   DBLog('start TPluginProcessorGUI.Create');
@@ -187,17 +155,11 @@ begin
   FConnectionListGUI := TObjectList.create(True);
   FTempConnection := TInterConnectGUI.Create(Self.ObjectID);
 
-  FAudioInGUI := TPluginNodeGUI.Create(Self);
+  FAudioInGUI := TGenericPluginGUI.Create(Self);
   FAudioInGUI.Parent := sbPluginGraph;
-  FAudioInGUI.XLocation := 50;
-  FAudioInGUI.YLocation := 50;
-  FAudioInGUI.OnConnection := @DoConnection;
 
-  FAudioOutGUI := TPluginNodeGUI.Create(Self);
+  FAudioOutGUI := TGenericPluginGUI.Create(Self);
   FAudioOutGUI.Parent := sbPluginGraph;
-  FAudioOutGUI.XLocation := sbPluginGraph.Width - 50;
-  FAudioOutGUI.YLocation := 50;
-  FAudioOutGUI.OnConnection := @DoConnection;
 
   DBLog('end TPluginProcessorGUI.Create');
 end;
@@ -231,15 +193,6 @@ begin
     @CreateNodeGUI,
     @DeleteNodeGUI);
 
-  // Create or Delete connections between pluginnodes
-  DBLog('DiffLists ConnectionListGUI');
-
-  DiffLists(
-    TPluginProcessor(Subject).ConnectionList,
-    ConnectionListGUI,
-    @CreateConnectionGUI,
-    @DeleteConnectionGUI);
-
   DBLog('end TPluginProcessorGUI.Update');
 end;
 
@@ -252,11 +205,11 @@ procedure TPluginProcessorGUI.Paint;
 var
   i: Integer;
   lPoints: array of TPoint;
-  lFromPluginNode: TPluginNodeGUI;
-  lToPluginNode: TPluginNodeGUI;
+  lFromPluginNode: TGenericPluginGUI;
+  lToPluginNode: TGenericPluginGUI;
   lBitmap: TBitmap;
 
-  function GetObjectFromList(AObjectID: string): TPluginNodeGUI;
+  function GetObjectFromList(AObjectID: string): TGenericPluginGUI;
   var
     i: Integer;
   begin
@@ -275,9 +228,9 @@ var
 
     for i := 0 to Pred(FNodeListGUI.Count) do
     begin
-      if AObjectID = TPluginNodeGUI(FNodeListGUI[i]).ObjectID then
+      if AObjectID = TGenericPluginGUI(FNodeListGUI[i]).ObjectID then
       begin
-        Result := TPluginNodeGUI(FNodeListGUI[i]);
+        Result := TGenericPluginGUI(FNodeListGUI[i]);
         break;
       end;
     end;
@@ -367,22 +320,19 @@ end;
 procedure TPluginProcessorGUI.CreateNodeGUI(AObjectID: string);
 var
   lPluginNode: TPluginNode;
-  lPluginNodeGUI: TPluginNodeGUI;
+  lPluginNodeGUI: TGenericPluginGUI;
 begin
   DBLog('start TPluginProcessorGUI.CreateNodeGUI ' + AObjectID);
 
   lPluginNode := TPluginNode(GObjectMapper.GetModelObject(AObjectID));
   if Assigned(lPluginNode) then
   begin
-    lPluginNodeGUI := TPluginNodeGUI.Create(Self);
+    lPluginNodeGUI := TGenericPluginGUI.Create(Self);
     lPluginNodeGUI.ObjectID := AObjectID;
     lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
     lPluginNodeGUI.Model := lPluginNode;
     lPluginNodeGUI.PluginName := lPluginNode.PluginName;
-    lPluginNodeGUI.XLocation := lPluginNode.XLocation;
-    lPluginNodeGUI.YLocation := lPluginNode.YLocation;
     lPluginNodeGUI.Parent := Self.sbPluginGraph;
-    lPluginNodeGUI.OnConnection := @DoConnection;
 
     FNodeListGUI.Add(lPluginNodeGUI);
     lPluginNode.Attach(lPluginNodeGUI);
@@ -393,14 +343,14 @@ end;
 
 procedure TPluginProcessorGUI.DeleteNodeGUI(AObjectID: string);
 var
-  lPluginNodeGUI: TPluginNodeGUI;
+  lPluginNodeGUI: TGenericPluginGUI;
   lIndex: Integer;
 begin
   DBLog('start TPluginProcessorGUI.DeleteNodeGUI ' + AObjectID);
 
   for lIndex := Pred(FNodeListGUI.Count) downto 0 do
   begin
-    lPluginNodeGUI := TPluginNodeGUI(FNodeListGUI[lIndex]);
+    lPluginNodeGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
 
     if lPluginNodeGUI.ObjectID = AObjectID then
     begin

@@ -7,7 +7,8 @@ unit filters;
 interface
 
 uses
-  Classes, SysUtils, globalconst, baseengine, audioutils;
+  Classes, SysUtils, globalconst, baseengine, audioutils, diode_ladder_filter,
+  transistor_ladder;
 
 const
   divby6 = 1 / 6;
@@ -55,7 +56,7 @@ type
 
   end;
 
-  TEnumFilterTypes = (ftLowpass, ftHighpass, ftBandpass, ftBandreject, ftMoog);
+  TEnumFilterTypes = (ftLowpass, ftHighpass, ftBandpass, ftBandreject, ftMoog, ft303, ftTransistorLadder);
 
   { TFilter }
 
@@ -145,6 +146,11 @@ type
   }
   TDspFilter = class(TBaseFilterTypeEngine)
   private
+    // Filtertypes
+    FDiodeLadderFilter: TDiodeLadderFilter;
+    FLP24DB: TLP24DB;
+    FTransistorLadderFilter: TTransistorLadder;
+
     FFrequency: Single;
     FResonance: Single;
     FSmoothCutoff: TParamSmooth;
@@ -155,7 +161,8 @@ type
     t, x, k, r,
     y1, y2, y3, y4,
     oldx, oldy1, oldy2, oldy3,
-    _kd: Single;       procedure SetFrequency(AValue: Single);
+    _kd: Single;
+    procedure SetFrequency(AValue: Single);
     procedure SetResonance(AValue: Single);
   public
     constructor Create(AFrames: Integer); override;
@@ -171,67 +178,10 @@ type
     Taken and converted from the Open303 project
   }
 
-  { TTeeBeeFilter }
-
-  TTeeBeeFilter = class(TBaseFilterTypeEngine)
-  private
-    FFrequency: Single;
-    FResonance: Single;
-    FSmoothCutoff: TParamSmooth;
-
-    procedure SetFrequency(AValue: Single);
-    procedure SetResonance(AValue: Single);
-  public
-    constructor Create(AFrames: Integer); override;
-    destructor Destroy; override;
-    function Process(AInput: Single): Single; override;
-    procedure Calc;
-    procedure Initialize; override;
-    property Frequency: Single read FFrequency write SetFrequency;
-    property Resonance: Single read FResonance write SetResonance;
-  end;
-
 implementation
 
 uses
   fx;
-
-{ TTeeBeeFilter }
-
-procedure TTeeBeeFilter.SetFrequency(AValue: Single);
-begin
-  //
-end;
-
-procedure TTeeBeeFilter.SetResonance(AValue: Single);
-begin
-  //
-end;
-
-constructor TTeeBeeFilter.Create(AFrames: Integer);
-begin
-  inherited Create(AFrames);
-end;
-
-destructor TTeeBeeFilter.Destroy;
-begin
-  inherited Destroy;
-end;
-
-function TTeeBeeFilter.Process(AInput: Single): Single;
-begin
-  //
-end;
-
-procedure TTeeBeeFilter.Calc;
-begin
-  //
-end;
-
-procedure TTeeBeeFilter.Initialize;
-begin
-  inherited Initialize;
-end;
 
 { TDspFilter }
 
@@ -252,17 +202,26 @@ begin
   inherited Create(AFrames);
 
   FSmoothCutoff := TParamSmooth.Create;
+
+  FDiodeLadderFilter := TDiodeLadderFilter.Create;
+  FLP24DB := TLP24DB.Create(AFrames);
+  FTransistorLadderFilter := TTransistorLadder.Create;
 end;
 
 destructor TDspFilter.Destroy;
 begin
   FSmoothCutoff.Free;
 
+  FDiodeLadderFilter.Free;
+  FLP24DB.Free;
+  FTransistorLadderFilter.Free;
+
   inherited Destroy;
 end;
 
 function TDspFilter.Process(AInput: Single): Single;
 begin
+  // Keep between valid range!
   if AInput > 0.999 then AInput := 0.999;
   if AInput < -0.999 then AInput := -0.999;
 
@@ -295,52 +254,61 @@ begin
     end;
     ftMoog:
     begin
-      // Lowpass stage
-      x := AInput - r * y4;
-      y1:= x  * p + oldx * p - k * y1;
-      y2:= y1 * p + oldy1 * p - k * y2;
-      y3:= y2 * p + oldy2 * p - k * y3;
-      y4:= y3 * p + oldy3 * p - k * y4;
-      y4 := y4 - ((y4 * y4 * y4) * divby6);
-      oldx := x;
-      oldy1 := y1 +_kd;
-      oldy2 := y2 +_kd;
-      oldy3 := y3 +_kd;
-      Result := y4;
+      Result := FLP24DB.Process(AInput);
+    end;
+    ft303:
+    begin
+      Result := FDiodeLadderFilter.Process(AInput);
+    end;
+    ftTransistorLadder:
+    begin
+      Result := FTransistorLadderFilter.Process(AInput);
     end;
   end;
 end;
 
 procedure TDspFilter.Calc;
+var
+  lInternalFrequency: single;
+  lInternalResonance: single;
 begin
-  if FFrequency > 0.999 then FFrequency := 0.999;
-  if FFrequency < 0.001 then FFrequency := 0.001;
-  if FResonance > 0.999 then FResonance := 0.999;
-  if FResonance < 0.0 then FResonance := 0.0;
+  lInternalFrequency := FFrequency;
+  lInternalResonance := FResonance;
+
+  if ModAmount > 0 then
+  begin
+    lInternalFrequency := lInternalFrequency + Modifier^ * log_approx(ModAmount);
+  end;
+
+  if lInternalFrequency > 0.999 then lInternalFrequency := 0.999;
+  if lInternalFrequency < 0.001 then lInternalFrequency := 0.001;
+  if lInternalResonance > 0.999 then lInternalResonance := 0.999;
+  if lInternalResonance < 0.1 then lInternalResonance := 0.1;
 
   case FFilter.FilterType of
     ftLowpass, ftHighpass, ftBandpass, ftBandreject:
     begin
       // filter coeffs
-      q := 1 - FFrequency;
-      p := FFrequency + 0.8 * FFrequency * q;
+      q := 1 - lInternalFrequency;
+      p := lInternalFrequency + 0.8 * lInternalFrequency * q;
       f := p + p - 1;
-      q := 0.89 * FResonance * (1 + 0.5 * q * (1 - q + 5.6 * q * q));
+      q := 0.89 * lInternalResonance * (1 + 0.5 * q * (1 - q + 5.6 * q * q));
     end;
     ftMoog:
     begin
-      // Original lowpass
-      p := FFrequency * (1.8 - 0.8 * FFrequency);
-      k := p + p - 1.0;
-      t := (1.0 - p) * 1.386249;
-      t2 := 12.0 + t * t;
-      t3 := 6.0 * t;
-      r := FResonance * (t2 + t3) / (t2 - t3);
+      FLP24DB.Frequency := lInternalFrequency;
+      FLP24DB.Resonance := lInternalResonance;
     end;
-  end;
-  if ModAmount > 0 then
-  begin
-    FFrequency := FFrequency + Modifier^ * log_approx(ModAmount);
+    ft303:
+    begin
+      FDiodeLadderFilter.set_frequency(lInternalFrequency);
+      FDiodeLadderFilter.set_q(lInternalResonance);
+    end;
+    ftTransistorLadder:
+    begin
+      FTransistorLadderFilter.set_frequency(lInternalFrequency);
+      FTransistorLadderFilter.set_q(lInternalResonance);
+    end;
   end;
 end;
 
@@ -365,7 +333,8 @@ begin
     end;
     ftMoog:
     begin
-      y1 := 0;
+      FLP24DB.Initialize;
+      {y1 := 0;
       y2 := 0;
       y3 := 0;
       y4 := 0;
@@ -373,7 +342,15 @@ begin
       oldy1 := 0;
       oldy2 := 0;
       oldy3 := 0;
-      _kd := 1E-20;
+      _kd := 1E-20; }
+    end;
+    ft303:
+    begin
+      FDiodeLadderFilter.Reset;
+    end;
+    ftTransistorLadder:
+    begin
+      FTransistorLadderFilter.Reset;
     end;
   end;
 
@@ -407,7 +384,8 @@ end;
 
 procedure TLP24DB.SetFrequency(AValue: Single);
 begin
-  FFrequency := FSmoothCutoff.Process(AValue);
+  if FFrequency = AValue then Exit;
+  FFrequency := AValue;
 
   Calc;
 end;
@@ -422,32 +400,17 @@ end;
 
 procedure TLP24DB.Calc;
 begin
-  if ModAmount > 0 then
-  begin
-    FFrequency := FFrequency + Modifier^ * log_approx(ModAmount);
-  end;
-
-  if FFrequency > 0.99 then FFrequency := 0.99;
-  if FFrequency < 0.001 then FFrequency := 0.001;
-  if FResonance > 0.95 then FResonance := 0.95;
-  if FResonance < 0.0 then FResonance := 0.0;
-
-  // Original lowpass
   p := FFrequency * (1.8 - 0.8 * FFrequency);
   k := p + p - 1.0;
   t := (1.0 - p) * 1.386249;
   t2 := 12.0 + t * t;
   t3 := 6.0 * t;
   r := FResonance * (t2 + t3) / (t2 - t3);
-
-  // Additional highpass
 end;
 
 constructor TLP24DB.Create(AFrames: Integer);
 begin
   inherited Create(AFrames);
-
-  FSmoothCutoff := TParamSmooth.Create;
 
   y1 := 0;
   y2 := 0;
@@ -462,7 +425,6 @@ end;
 
 destructor TLP24DB.Destroy;
 begin
-  FSmoothCutoff.Free;
 
   inherited Destroy;
 end;
@@ -488,10 +450,6 @@ end;
 
 function TLP24DB.Process(I: Single): Single;
 begin
-  // Keep between valid range!
-  if I > 0.999 then I := 0.999;
-  if I < -0.999 then I := -0.999;
-
   // Lowpass stage
   x := I - r * y4;
   y1:= x  * p + oldx * p - k * y1;
@@ -504,9 +462,6 @@ begin
   oldy2 := y2 +_kd;
   oldy3 := y3 +_kd;
   Result := y4;
-
-  // Highpass stage
-
 end;
 
 procedure TFilter.SetFilterType(const AValue: TEnumFilterTypes);

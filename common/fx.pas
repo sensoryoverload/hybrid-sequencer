@@ -36,7 +36,7 @@ type
 
   { TDummyFilter }
 
-  TDummyFilter = class(TInternalPlugin)
+  TDummyFilter = class(TInternalNode)
   public
     constructor Create(AObjectOwnerID: string);
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
@@ -47,7 +47,7 @@ type
   // Bit/Samplerate -reducer
   // bits: 1..32
   // rate: 0..1 (1 is original samplerate)
-  TDecimateFX = class(TInternalPlugin)
+  TDecimateFX = class(TInternalNode)
   private
     m: longint;
     y,
@@ -62,7 +62,7 @@ type
 
   { TMoogFilter }
 
-  TMoogFilter = class(TInternalPlugin)
+  TMoogFilter = class(TInternalNode)
   private
     fA   : array[1..5] of single;
     fOld : single;
@@ -86,7 +86,7 @@ type
   
   TLFOType = (lfoTriangle, lfoSine);
 
-  TLFO = class(TInternalPlugin)
+  TLFO = class(TInternalNode)
   private
     iSpeed     : Integer;
     fSpeed     : Single;

@@ -17,26 +17,14 @@ type
     btnHalf: TButton;
     cbPitchAlgo: TComboBox;
     edtFilename: TLabeledEdit;
-    fspnPitch: TFloatSpinEditControl;
+    fspnPitch: TFloatSpinEdit;
     gbAudioTrackSettings: TGroupBox;
     Label1: TLabel;
     lblPitch: TLabel;
-    lblLoopEnd: TLabel;
-    lblLoopLength: TLabel;
-    lblLoopStart: TLabel;
+    spnBeatsPerMinute: TSpinEdit;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
     TrackBar1: TTrackBar;
-    tbLatency: TTrackBar;
-    vcLoopEndBar: TValueControl;
-    vcLoopEndBeat: TValueControl;
-    vcLoopEndFrac: TValueControl;
-    vcLoopLengthBar: TValueControl;
-    vcLoopLengthBeat: TValueControl;
-    vcLoopLengthFrac: TValueControl;
-    vcLoopStartBar: TValueControl;
-    vcLoopStartBeat: TValueControl;
-    vcLoopStartFrac: TValueControl;
 
     procedure btnDoubleClick(Sender: TObject);
     procedure btnHalfClick(Sender: TObject);
@@ -52,7 +40,7 @@ type
   private
     { private declarations }
     FModel: TWavePattern;
-    FWavePatternGUI: TWaveGUI;
+    FWaveGUI: TWaveGUI;
 
     FConnected: Boolean;
     FObjectOwnerID: string;
@@ -80,7 +68,7 @@ type
     property Connected: Boolean read FConnected;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
-    property WavePatternGUI: TWaveGUI read FWavePatternGUI write FWavePatternGUI;
+    property WaveGUI: TWaveGUI read FWaveGUI write FWaveGUI;
 
     property Pitch: Single read FPitch write SetPitch default 1;
     property Pitched: Boolean read FPitched write FPitched default False;
@@ -104,10 +92,7 @@ begin
   DBLog(Format('Start Connect waveform (%s)', [FModel.ObjectID]));
   if Assigned(FModel) then
   begin
-    FModel.Attach(FWavePatternGUI);
-
-//    FWavePatternGUI.ZoomFactorX := 5;
-//    FWavePatternGUI.ZoomFactorY := 1;
+    FModel.Attach(FWaveGUI);
 
     FConnected := True;
   end;
@@ -119,8 +104,8 @@ begin
   DBLog(Format('Start Disconnect waveform (%s)', [FModel.ObjectID]));
   if Assigned(FModel) then
   begin
-    FWavePatternGUI.Disconnect;
-    FModel.Detach(FWavePatternGUI);
+    FWaveGUI.Disconnect;
+    FModel.Detach(FWaveGUI);
 
     FConnected := False;
   end;
@@ -131,8 +116,15 @@ procedure TWavePatternControlGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TWavePatternControl.Update');
 
-  //spnBeatsPerMinute.Value := TWavePattern(Subject).RealBPM;
-  cbPitchAlgo.ItemIndex := Integer(TWavePattern(Subject).PitchAlgorithm);
+  if spnBeatsPerMinute.Value <> TWavePattern(Subject).RealBPM then
+  begin
+    spnBeatsPerMinute.Value := TWavePattern(Subject).RealBPM;
+  end;
+
+  if cbPitchAlgo.ItemIndex <> Integer(TWavePattern(Subject).PitchAlgorithm) then
+  begin
+    cbPitchAlgo.ItemIndex := Integer(TWavePattern(Subject).PitchAlgorithm);
+  end;
 
   DBLog('end TWavePatternControl.Update');
 end;
@@ -212,11 +204,11 @@ end;
 
 procedure TWavePatternControlGUI.TrackBar1Change(Sender: TObject);
 begin
-  if Assigned(GSettings.SelectedPatternGUI) then
+  if Assigned(GSettings.SelectedPattern) then
   begin
-    FWavePatternGUI.ZoomFactorX := TrackBar1.Position;
-    FWavePatternGUI.CacheIsDirty := True;
-    FWavePatternGUI.Invalidate;
+    FWaveGUI.ZoomFactorX := TrackBar1.Position;
+    FWaveGUI.CacheIsDirty := True;
+    FWaveGUI.Invalidate;
   end;
 end;
 
@@ -257,7 +249,8 @@ begin
   // Double the length of the loop
   FChangeLatencyCommand := TChangeLatencyCommand.Create(FObjectID);
   try
-    FChangeLatencyCommand.Latency := tbLatency.Position;
+    //FChangeLatencyCommand.Latency := tbLatency.Position;
+
     GCommandQueue.PushCommand(FChangeLatencyCommand);
   except
     FChangeLatencyCommand.Free;
@@ -319,14 +312,14 @@ begin
   cbPitchAlgo.Items.Add('Rubberband');
   cbPitchAlgo.Items.Add('Pitched');
 
-  FWavePatternGUI := TWaveGUI.Create(nil);
-  FWavePatternGUI.Align := alClient;
-  FWavePatternGUI.Parent := Self;
+  FWaveGUI := TWaveGUI.Create(nil);
+  FWaveGUI.Align := alClient;
+  FWaveGUI.Parent := Self;
 end;
 
 destructor TWavePatternControlGUI.Destroy;
 begin
-  FWavePatternGUI.Free;
+  FWaveGUI.Free;
 
   inherited Destroy;
 end;

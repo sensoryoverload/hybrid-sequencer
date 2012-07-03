@@ -26,8 +26,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, Math, Spin,
-  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources, BGRABitmap, BGRABitmapTypes{,
-  globalconst};
+  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources, BGRABitmap, BGRABitmapTypes;
 
 const
   M_PI = 3.14159265358979323846;
@@ -116,8 +115,6 @@ Type
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
   end;
 
-  { TButtonControl }
-
   { TToggleControl }
 
   TToggleControl = class(TCustomControl, IFeedBack)
@@ -151,6 +148,54 @@ Type
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+  end;
+
+  TOrientation = (oHorizontal, oVertical);
+
+  { TParameterControl }
+
+  TParameterControl = class(TCustomControl)
+  private
+    FMax: Single;
+    FMin: Single;
+    FOrientation: TOrientation;
+    FSize: Integer;
+    FValue: Single;
+    FScreenValue: Integer;
+    FCaption: string;
+    FOnStartChange: TNotifyEvent;
+    FOnChange: TNotifyEvent;
+    FChanging: Boolean;
+    procedure SetCaption(AValue: string);
+    procedure SetMax(AValue: Single);
+    procedure SetMin(AValue: Single);
+    procedure SetOrientation(AValue: TOrientation);
+    procedure SetSize(AValue: Integer);
+    procedure SetValue(const AValue: Single);
+    procedure UpdateScreenValue(X, Y: Integer);
+  public
+    constructor Create(AOwner : TComponent); override;
+    destructor Destroy; override;
+    procedure EraseBackground(DC: HDC); override;
+    procedure Paint; override;
+  published
+    property Value: Single read FValue write SetValue;
+    property Min: Single read FMin write SetMin;
+    property Max: Single read FMax write SetMax;
+    property Caption: string read FCaption write SetCaption;
+    property Orientation: TOrientation read FOrientation write SetOrientation;
+    property Size: Integer read FSize write SetSize;
+
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    property OnStartChange: TNotifyEvent read FOnStartChange write FOnStartChange;
+    property Color;
+    property Align;
+    property Anchors;
+    property Constraints;
+  protected
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
   end;
 
   { TValueControl }
@@ -454,7 +499,198 @@ procedure Register;
 begin
   RegisterComponents('HybridComponentPack', [TDialControl, TTimeControl,
     TValueControl, TToggleControl, TVolumeControl, TFilteredShellTreeView,
-    TCollapseSplitter, TFloatSpinEditControl]);
+    TCollapseSplitter, TFloatSpinEditControl, TParameterControl]);
+end;
+
+{ TParameterControl }
+
+procedure TParameterControl.SetValue(const AValue: Single);
+begin
+  FValue := AValue;
+  FScreenValue := Round((Size / (FMax - FMin)) * FValue);
+
+  Invalidate;
+end;
+
+procedure TParameterControl.SetMax(AValue: Single);
+begin
+  if FMax = AValue then Exit;
+  FMax := AValue;
+end;
+
+procedure TParameterControl.SetCaption(AValue: string);
+begin
+  if FCaption = AValue then Exit;
+  FCaption := AValue;
+end;
+
+procedure TParameterControl.SetMin(AValue: Single);
+begin
+  if FMin = AValue then Exit;
+  FMin := AValue;
+end;
+
+procedure TParameterControl.SetOrientation(AValue: TOrientation);
+begin
+  FOrientation := AValue;
+  if Orientation = oHorizontal then
+  begin
+    Height := 13;
+    Width := Size;
+  end
+  else
+  begin
+    Width := 13;
+    Height := Size;
+  end;
+end;
+
+procedure TParameterControl.SetSize(AValue: Integer);
+begin
+  if FSize = AValue then Exit;
+  FSize := AValue;
+end;
+
+constructor TParameterControl.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  ParentColor := True;
+  Size := 100;
+
+  FChanging := False;
+end;
+
+destructor TParameterControl.Destroy;
+begin
+  inherited Destroy;
+end;
+
+procedure TParameterControl.EraseBackground(DC: HDC);
+begin
+  inherited EraseBackground(DC);
+end;
+
+procedure TParameterControl.Paint;
+var
+  Bitmap: TBitmap;
+begin
+  Bitmap := TBitmap.Create;
+  try
+    // Initializes the Bitmap Size
+    Bitmap.Height := Height;
+    Bitmap.Width := Width;
+
+    // Outline color
+    Bitmap.Canvas.Pen.Style := psSolid;
+    Bitmap.Canvas.Pen.Color := clBlack;
+    Bitmap.Canvas.Font.Size:= 7;
+
+    if Orientation = oHorizontal then
+    begin
+      Bitmap.Canvas.Brush.Color := clLtGray;
+      Bitmap.Canvas.Rectangle(0, 0, Width, Height);
+
+      Bitmap.Canvas.Brush.Color:= clGray;
+      Bitmap.Canvas.Rectangle(0, 0, FScreenValue, Height);
+      Bitmap.Canvas.TextOut(1, 1, FCaption + ' ' + FormatFloat('#.#', FValue));
+    end
+    else if Orientation = oVertical then
+    begin
+      Bitmap.Canvas.Brush.Color := clLtGray;
+      Bitmap.Canvas.Rectangle(0, 0, Width, Height);
+
+      Bitmap.Canvas.Brush.Color:= clGray;
+      Bitmap.Canvas.Rectangle(0, FScreenValue, Width, Height);
+      Bitmap.Canvas.TextOut(1, 1, FormatFloat('#.#', FValue));
+    end;
+
+    Canvas.Draw(0, 0, Bitmap);
+  finally
+    Bitmap.Free;
+  end;
+end;
+
+procedure TParameterControl.MouseDown(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
+begin
+  FChanging := True;
+
+  UpdateScreenValue(X, Y);
+
+  if Assigned(FOnStartChange) then
+  begin
+    FOnStartChange(Self);
+  end;
+
+  Invalidate;
+
+  inherited MouseDown(Button, Shift, X, Y);
+end;
+
+procedure TParameterControl.MouseUp(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
+begin
+  UpdateScreenValue(X, Y);
+
+  Invalidate;
+
+  FChanging := False;
+
+  inherited MouseUp(Button, Shift, X, Y);
+end;
+
+procedure TParameterControl.UpdateScreenValue(X, Y: Integer);
+begin
+  if FChanging then
+  begin
+    if Orientation = oHorizontal then
+    begin
+      if X > Width then
+      begin
+        FScreenValue := Width;
+      end
+      else if X < 0 then
+      begin
+        FScreenValue := 0;
+      end
+      else
+      begin
+        FScreenValue := X;
+      end;
+      FValue := ((FMax - FMin) / Size) * FScreenValue + FMin;
+    end
+    else if Orientation = oVertical then
+    begin
+      if Y > Height then
+      begin
+        FScreenValue := Height;
+      end
+      else if Y < 0 then
+      begin
+        FScreenValue := 0;
+      end
+      else
+      begin
+        FScreenValue := Y;
+      end;
+      FValue := FMax - ((FMax - FMin) / Size) * FScreenValue;
+    end;
+  end;
+end;
+
+procedure TParameterControl.MouseMove(Shift: TShiftState; X, Y: Integer);
+begin
+  UpdateScreenValue(X, Y);
+
+  if Assigned(FOnChange) then
+  begin
+    FOnChange(Self);
+  end;
+
+  Invalidate;
+
+  inherited MouseMove(Shift, X, Y);
 end;
 
 procedure TDialControl.CalcInternals(AOffset: Integer);
@@ -1229,7 +1465,7 @@ constructor TFloatSpinEditControl.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  ControlStyle := ControlStyle + [csDisplayDragImage];
+  //ControlStyle := ControlStyle + [csDisplayDragImage];
 
   FDragging:= False;
 end;

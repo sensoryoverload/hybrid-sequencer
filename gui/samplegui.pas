@@ -343,6 +343,8 @@ constructor TSampleView.Create(AOwner: TComponent);
     AComboBox.Items.Add('Bandpass');
     AComboBox.Items.Add('Notch');
     AComboBox.Items.Add('Moog');
+    AComboBox.Items.Add('303ish');
+    AComboBox.Items.Add('Trans');
     AComboBox.Tag := Integer(ASampleParamter);
     AComboBox.OnChange := @DoSelectionChange;
   end;

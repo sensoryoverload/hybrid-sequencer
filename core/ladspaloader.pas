@@ -6,7 +6,10 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ShellCtrls,
-  StdCtrls, ladspa, dynlibs;
+  StdCtrls, contnrs, ladspa, dynlibs;
+
+const
+  LADPSA_PATH = 'LADPSA_PATH';
 
 type
   TLadspaPluginLib = class;
@@ -55,13 +58,9 @@ type
     property LadspaDescriptor: TLadspaDescriptor read FLadspaDescriptor write FLadspaDescriptor;
   end;
 
-  TBasePlugin = class
-    //procedure Run(AFrames: Integer); virtual; abstract;
-  end;
-
   { TLadspaPlugin }
 
-  TLadspaPlugin = class(TBasePlugin)
+  TLadspaPlugin = class
   private
   public
     FileName: string;
@@ -74,11 +73,30 @@ type
     procedure Process(AFrames: Integer);
   end;
 
+  TPluginCatalogRecord = class
+    Caption: string;
+    Path: string;
+    AudioInCount: Integer;
+    AudioOutCount: Integer;
+  end;
+
+  { TPluginCatalog }
+
+  TPluginCatalog = class(TObjectList)
+  protected
+    function GetPlugins(I: Integer): TPluginCatalogRecord;
+    procedure SetPlugins(I: Integer; APluginCatalogRecord: TPluginCatalogRecord
+      );
+  public
+    property Plugins[I: Integer]: TPluginCatalogRecord read GetPlugins write SetPlugins;
+  end;
+
   { TLadspaPluginFactory }
 
   TLadspaPluginFactory = class
   private
     FPluginList: TStringList;
+    FPluginCatalog: TPluginCatalog;
   public
     instantiate: TInstantiate;
     cleanup: TCleanup;
@@ -86,37 +104,29 @@ type
     constructor Create;
     destructor Destroy; override;
 
+    procedure Discover;
     function LoadPlugin(AFileName: string): TLadspaDescriptor;
     function UnloadPlugin(AFileName: string): Boolean;
+
+    property PluginCatalog: TPluginCatalog read FPluginCatalog;
   end;
-
-(*
-  { TForm1 }
-
-  TForm1 = class(TForm)
-    Memo1: TMemo;
-    ShellListView1: TShellListView;
-    ShellTreeView1: TShellTreeView;
-
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
-    procedure ShellListView1DblClick(Sender: TObject);
-  private
-    FAmpPlugin: TLadspaPlugin;
-
-    procedure FreeDLL;
-    procedure InitDLL(AFile: string);
-    { private declarations }
-  public
-    { public declarations }
-    property Memo: TMemo read Memo1;
-  end;
-*)
 
 var
   GLadspaPluginFactory: TLadspaPluginFactory;
 
 implementation
+
+{ TPluginCatalog }
+
+procedure TPluginCatalog.SetPlugins(I: Integer; APluginCatalogRecord: TPluginCatalogRecord);
+begin
+  Items[i] := APluginCatalogRecord;
+end;
+
+function TPluginCatalog.GetPlugins(I: Integer): TPluginCatalogRecord;
+begin
+  Result := TPluginCatalogRecord( Items[i] );
+end;
 
 { TLadspaPluginLib }
 
@@ -224,13 +234,116 @@ end;
 constructor TLadspaPluginFactory.Create;
 begin
   FPluginList := TStringList.Create;
+  FPluginCatalog := TPluginCatalog.create(True);
+
+  Discover;
 end;
 
 destructor TLadspaPluginFactory.Destroy;
 begin
   FPluginList.Free;
+  FPluginCatalog.Free;
 
   inherited Destroy;
+end;
+
+{
+  Discover all ladspa plugins in the environment path LADSPA_PATH
+}
+procedure TLadspaPluginFactory.Discover;
+var
+  i, j: Integer;
+  lEnvironmentVars: TStringList;
+  lLadspaPaths: TStringList;
+  lPluginCatalogRecord: TPluginCatalogRecord;
+  lFullPathAndFilename: string;
+  lSearchRec: TSearchRec;
+  lAttributes: Integer;
+  lTempLadspaDescriptor: TLadspaDescriptor;
+  lAudioOutPortCount: Integer;
+  lAudioInPortCount: Integer;
+  lPortDescriptor: LADSPA_PortDescriptor;
+begin
+  // Iterate found paths
+  lEnvironmentVars := TStringList.Create;
+  lLadspaPaths := TStringList.Create;
+  try
+    for i := 1 to GetEnvironmentVariableCount do
+    begin
+      lEnvironmentVars.Add(GetEnvironmentString(i));
+    end;
+
+    // Retrieve set paths
+    if lEnvironmentVars.IndexOfName(LADPSA_PATH) <> -1 then
+    begin
+      lLadspaPaths.Delimiter := ';';
+      lLadspaPaths.DelimitedText := lEnvironmentVars.Values[LADPSA_PATH];
+    end
+    else
+    begin
+      // Not set so use the default locations
+      lLadspaPaths.Add('/usr/lib/ladspa');
+      lLadspaPaths.Add('/usr/local/lib/ladspa');
+      lLadspaPaths.Add('~/.ladspa');
+    end;
+
+    // Iterate plugin paths
+    for i := 0 to Pred(lLadspaPaths.Count) do
+    begin
+      writeln(Format('LADSPA Path %s', [lLadspaPaths[i]]));
+      if DirectoryExists(lLadspaPaths[i]) then
+      begin
+        // Iterate folder and store references
+        lAttributes := faAnyFile;
+        if FindFirst(IncludeTrailingPathDelimiter(lLadspaPaths[i]) + '*.so',
+          lAttributes, lSearchRec) = 0 then
+        begin
+          repeat
+            lFullPathAndFilename := IncludeTrailingPathDelimiter(lLadspaPaths[i]) + lSearchRec.Name;
+            lTempLadspaDescriptor := LoadPlugin(lFullPathAndFilename);
+            if Assigned(lTempLadspaDescriptor) then
+            begin
+              lAudioInPortCount := 0;
+              lAudioOutPortCount := 0;
+
+              // Discover audio with inputs AND outputs.
+              for j := 0 to Pred(lTempLadspaDescriptor.LadspaDescriptor^.PortCount) do
+              begin
+                lPortDescriptor := lTempLadspaDescriptor.LadspaDescriptor^.PortDescriptors[j];
+                Inc(lAudioInPortCount, Integer(LADSPA_IS_PORT_INPUT(lPortDescriptor) and LADSPA_IS_PORT_AUDIO(lPortDescriptor)));
+                Inc(lAudioOutPortCount, Integer(LADSPA_IS_PORT_OUTPUT(lPortDescriptor) and LADSPA_IS_PORT_AUDIO(lPortDescriptor)));
+              end;
+
+              if (lAudioInPortCount > 0) and (lAudioOutPortCount > 0) then
+              begin
+                lPluginCatalogRecord := TPluginCatalogRecord.Create;
+                lPluginCatalogRecord.Caption := lTempLadspaDescriptor.LadspaDescriptor^.Name;
+                lPluginCatalogRecord.Path := lFullPathAndFilename;
+                lPluginCatalogRecord.AudioInCount := lAudioInPortCount;
+                lPluginCatalogRecord.AudioOutCount := lAudioOutPortCount;
+                FPluginCatalog.Add(lPluginCatalogRecord);
+              end;
+
+              UnloadPlugin(lFullPathAndFilename);
+            end;
+          until FindNext(lSearchRec) <> 0;
+          FindClose(lSearchRec);
+        end;
+      end;
+    end;
+  finally
+    lLadspaPaths.Free;
+    lEnvironmentVars.Free;
+  end;
+
+  // Fill plugin list
+  for i := 0 to Pred(FPluginCatalog.Count) do
+  begin
+    writeln(Format('Node %s Inputs %d Outputs %d',
+      [FPluginCatalog.Plugins[i].Caption,
+      FPluginCatalog.Plugins[i].AudioInCount,
+      FPluginCatalog.Plugins[i].AudioOutCount]));
+  end;
 end;
 
 function TLadspaPluginFactory.LoadPlugin(AFileName: string): TLadspaDescriptor;
@@ -239,6 +352,8 @@ var
   lLadspaLibHandle: TLibHandle;
   lLadspaPluginLib: TLadspaPluginLib;
 begin
+  Result := nil;
+
   lLibIndex := FPluginList.IndexOf(AFileName);
 
   if lLibIndex <> -1 then
@@ -273,12 +388,13 @@ begin
 
   if lLibIndex <> -1 then
   begin
-    lLadspaPluginLib := TLadspaPluginLib(FPluginList[lLibIndex]);
+    lLadspaPluginLib := TLadspaPluginLib(FPluginList.Objects[lLibIndex]);
 
     FreeLibrary(lLadspaPluginLib.LadspaLibHandle);
     lLadspaPluginLib.LadspaLibHandle := 0;
 
     lLadspaPluginLib.Free;
+    FPluginList.Delete(lLibIndex);
   end;
 end;
 
@@ -386,9 +502,9 @@ end;
 *)
 
 initialization
-  GLadspaPluginFactory := TLadspaPluginFactory.Create;
+  //GLadspaPluginFactory := TLadspaPluginFactory.Create;
 finalization
-  GLadspaPluginFactory.Free;
+  //GLadspaPluginFactory.Free;
 
 end.
 

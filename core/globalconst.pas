@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, LCLIntf, LMessages, Controls, Forms, jacktypes, ContNrs,
-  typinfo, variants, DOM, XMLWrite, XMLRead;
+  ExtCtrls, typinfo, variants, DOM, XMLWrite, XMLRead;
 
 const
   MAX_LATENCY = 20000;
@@ -215,7 +215,7 @@ type
   THybridPersistentView = class(THybridPersistent, IObserver)
   private
   public
-    constructor Create(AObjectOwner: string);
+    constructor Create(AObjectOwner: string); virtual;
     destructor Destroy; override;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
@@ -308,9 +308,9 @@ type
     procedure SetModel(AModel: THybridPersistentModel);
   end;
 
-  { TPersistentFrame }
+  { TPersistentPanel }
 
-  TPersistentFrame = class(TFrame, IObserver)
+  TPersistentPanel = class(TPanel, IObserver)
   private
     FObjectOwnerID: string;
     FObjectID: string;
@@ -929,11 +929,19 @@ var
 begin
   DBLog(Format('start %s.Notify', [Self.ClassName]));
 
-  if FObservers <> nil then
-  begin
-    for i := 0 to Pred(FObservers.Count) do
+  try
+    if FObservers <> nil then
     begin
-      (FObservers[i] as IObserver).Update(Self);
+      for i := 0 to Pred(FObservers.Count) do
+      begin
+        (FObservers[i] as IObserver).Update(Self);
+      end;
+    end;
+
+  except
+    on e: exception do
+    begin
+      DBLog(e.Message);
     end;
   end;
 
@@ -1369,7 +1377,7 @@ end;
 
 { TPersistentPanel }
 
-destructor TPersistentFrame.Destroy;
+destructor TPersistentPanel.Destroy;
 begin
   if Assigned(FModel) then
   begin
@@ -1379,47 +1387,47 @@ begin
   inherited Destroy;
 end;
 
-procedure TPersistentFrame.Update(Subject: THybridPersistentModel);
+procedure TPersistentPanel.Update(Subject: THybridPersistentModel);
 begin
   // Virtual base method
 end;
 
-procedure TPersistentFrame.Connect;
+procedure TPersistentPanel.Connect;
 begin
   Model := GObjectMapper.GetModelObject(ObjectID);
 end;
 
-procedure TPersistentFrame.Disconnect;
+procedure TPersistentPanel.Disconnect;
 begin
   // Virtual base method
 end;
 
-function TPersistentFrame.GetObjectID: string;
+function TPersistentPanel.GetObjectID: string;
 begin
   Result := FObjectID;
 end;
 
-procedure TPersistentFrame.SetObjectID(AObjectID: string);
+procedure TPersistentPanel.SetObjectID(AObjectID: string);
 begin
   FObjectID := AObjectID;
 end;
 
-function TPersistentFrame.GetObjectOwnerID: string;
+function TPersistentPanel.GetObjectOwnerID: string;
 begin
   Result := FObjectOwnerID;
 end;
 
-procedure TPersistentFrame.SetObjectOwnerID(const AObjectOwnerID: string);
+procedure TPersistentPanel.SetObjectOwnerID(const AObjectOwnerID: string);
 begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
-function TPersistentFrame.GetModel: THybridPersistentModel;
+function TPersistentPanel.GetModel: THybridPersistentModel;
 begin
   Result := FModel;
 end;
 
-procedure TPersistentFrame.SetModel(AModel: THybridPersistentModel);
+procedure TPersistentPanel.SetModel(AModel: THybridPersistentModel);
 begin
   FModel := AModel;
 end;

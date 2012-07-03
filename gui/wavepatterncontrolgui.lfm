@@ -1,58 +1,34 @@
 object WavePatternControlGUI: TWavePatternControlGUI
   Left = 0
-  Height = 273
+  Height = 303
   Top = 0
   Width = 1083
-  ClientHeight = 273
+  ClientHeight = 303
   ClientWidth = 1083
   TabOrder = 0
   DesignLeft = 195
-  DesignTop = 187
+  DesignTop = 193
   object gbAudioTrackSettings: TGroupBox
     Left = 0
-    Height = 273
+    Height = 45
     Top = 0
-    Width = 285
-    Align = alLeft
+    Width = 1083
+    Align = alTop
     Caption = 'Settings'
-    ClientHeight = 258
-    ClientWidth = 281
+    ClientHeight = 30
+    ClientWidth = 1079
     TabOrder = 0
     object Label1: TLabel
-      Left = 6
+      Left = 208
       Height = 14
-      Top = 30
+      Top = 7
       Width = 22
       Caption = 'bpm'
       ParentColor = False
     end
-    object lblLoopEnd: TLabel
-      Left = 108
-      Height = 14
-      Top = 31
-      Width = 45
-      Caption = 'Loop end'
-      ParentColor = False
-    end
-    object lblLoopStart: TLabel
-      Left = 108
-      Height = 14
-      Top = 6
-      Width = 50
-      Caption = 'Loop start'
-      ParentColor = False
-    end
-    object lblLoopLength: TLabel
-      Left = 108
-      Height = 14
-      Top = 55
-      Width = 58
-      Caption = 'Loop length'
-      ParentColor = False
-    end
     object edtFilename: TLabeledEdit
-      Left = 30
-      Height = 23
+      Left = 23
+      Height = 25
       Top = 1
       Width = 75
       EditLabel.AnchorSideTop.Control = edtFilename
@@ -60,196 +36,103 @@ object WavePatternControlGUI: TWavePatternControlGUI
       EditLabel.AnchorSideRight.Control = edtFilename
       EditLabel.AnchorSideBottom.Control = edtFilename
       EditLabel.AnchorSideBottom.Side = asrBottom
-      EditLabel.Left = 10
+      EditLabel.Left = 3
       EditLabel.Height = 14
-      EditLabel.Top = 5
+      EditLabel.Top = 6
       EditLabel.Width = 17
       EditLabel.Caption = 'file'
       EditLabel.ParentColor = False
       LabelPosition = lpLeft
       TabOrder = 0
     end
-    object vcLoopEndBar: TValueControl
-      Left = 166
-      Height = 23
-      Hint = 'Bar'
-      Top = 26
-      Width = 50
-      TabOrder = 1
-      Value = 1
-    end
-    object vcLoopEndBeat: TValueControl
-      Left = 216
-      Height = 23
-      Hint = 'Beat'
-      Top = 26
-      Width = 30
-      MaxValue = 4
-      MinValue = 1
-      TabOrder = 2
-      Value = 1
-    end
-    object vcLoopEndFrac: TValueControl
-      Left = 247
-      Height = 23
-      Hint = 'Fraction'
-      Top = 26
-      Width = 31
-      MaxValue = 128
-      TabOrder = 3
-      Value = 1
-    end
-    object vcLoopStartBar: TValueControl
-      Left = 166
-      Height = 23
-      Hint = 'Bar'
-      Top = 1
-      Width = 50
-      TabOrder = 4
-      Value = 1
-    end
-    object vcLoopStartBeat: TValueControl
-      Left = 216
-      Height = 23
-      Hint = 'Beat'
-      Top = 1
-      Width = 30
-      MaxValue = 4
-      MinValue = 1
-      TabOrder = 5
-      Value = 1
-    end
-    object vcLoopStartFrac: TValueControl
-      Left = 247
-      Height = 23
-      Hint = 'Fraction'
-      Top = 1
-      Width = 31
-      MaxValue = 128
-      TabOrder = 6
-      Value = 1
-    end
-    object vcLoopLengthBar: TValueControl
-      Left = 166
-      Height = 23
-      Hint = 'Bar'
-      Top = 50
-      Width = 50
-      TabOrder = 7
-      Value = 1
-    end
-    object vcLoopLengthBeat: TValueControl
-      Left = 216
-      Height = 23
-      Hint = 'Beat'
-      Top = 50
-      Width = 30
-      MaxValue = 4
-      MinValue = 1
-      TabOrder = 8
-      Value = 1
-    end
-    object vcLoopLengthFrac: TValueControl
-      Left = 247
-      Height = 23
-      Hint = 'Fraction'
-      Top = 50
-      Width = 31
-      MaxValue = 128
-      TabOrder = 9
-      Value = 1
-    end
     object ToggleControl1: TToggleControl
-      Left = 165
+      Left = 627
       Height = 14
-      Top = 74
+      Top = 6
       Width = 48
       SwitchedOn = False
       CaptionOn = 'Loop'
       CaptionOff = 'Loop'
+      Constraints.MaxHeight = 14
+      Constraints.MinHeight = 14
     end
     object tbThreshold: TTrackBar
-      Left = 236
-      Height = 100
-      Top = 101
-      Width = 42
+      Left = 110
+      Height = 42
+      Top = -4
+      Width = 100
       Max = 100
       Min = 1
-      Orientation = trVertical
       Position = 1
       ScalePos = trRight
       OnMouseUp = tbThresholdMouseUp
-      TabOrder = 11
+      TabOrder = 2
+      Visible = False
     end
     object TrackBar1: TTrackBar
-      Left = -2
+      Left = 377
       Height = 42
-      Top = 101
-      Width = 226
+      Top = -7
+      Width = 135
       Max = 1000
       Min = 2
       OnChange = TrackBar1Change
       Position = 10
       ScalePos = trLeft
-      TabOrder = 12
-    end
-    object cbPitchAlgo: TComboBox
-      Left = 5
-      Height = 27
-      Top = 74
-      Width = 148
-      ItemHeight = 0
-      OnChange = cbPitchAlgoChange
-      Style = csDropDownList
-      TabOrder = 13
-    end
-    object fspnPitch: TFloatSpinEditControl
-      Left = 30
-      Height = 23
-      Top = 48
-      Width = 75
-      Increment = 1
-      MaxValue = 4
-      MinValue = 0.25
-      OnChange = spnPitchChange
-      TabOrder = 14
-      Value = 1
+      TabOrder = 3
     end
     object lblPitch: TLabel
-      Left = 3
+      Left = 295
       Height = 14
-      Top = 53
+      Top = 6
       Width = 25
       Caption = 'pitch'
       ParentColor = False
     end
     object btnDouble: TButton
-      Left = 222
+      Left = 683
       Height = 25
-      Top = 75
+      Top = 1
       Width = 25
       Caption = '* 2'
       OnClick = btnDoubleClick
-      TabOrder = 15
+      TabOrder = 4
     end
     object btnHalf: TButton
-      Left = 249
+      Left = 710
       Height = 25
-      Top = 75
+      Top = 1
       Width = 25
       Caption = '/ 2'
       OnClick = btnHalfClick
-      TabOrder = 16
+      TabOrder = 5
     end
-    object tbLatency: TTrackBar
-      Left = 25
-      Height = 42
-      Top = 136
-      Width = 197
-      Max = 10000
-      OnChange = tbLatencyChange
-      Position = 0
-      TabOrder = 17
+    object cbPitchAlgo: TComboBox
+      Left = 519
+      Height = 27
+      Top = 1
+      Width = 100
+      ItemHeight = 0
+      Style = csDropDownList
+      TabOrder = 6
+    end
+    object fspnPitch: TFloatSpinEdit
+      Left = 323
+      Height = 25
+      Top = 1
+      Width = 50
+      Increment = 1
+      MaxValue = 100
+      MinValue = 0
+      TabOrder = 7
+      Value = 1
+    end
+    object spnBeatsPerMinute: TSpinEdit
+      Left = 233
+      Height = 25
+      Top = 1
+      Width = 59
+      TabOrder = 8
     end
   end
 end

@@ -7,7 +7,7 @@ object PluginProcessorGUI: TPluginProcessorGUI
   ClientWidth = 687
   TabOrder = 0
   DesignLeft = 446
-  DesignTop = 473
+  DesignTop = 479
   object gbPlugin: TGroupBox
     Left = 0
     Height = 304

@@ -70,8 +70,8 @@ type
 
   TPluginProcessor = class(THybridPersistentModel)
   private
-    FAudioOut: TPluginAudioOut;
-    FAudioIn: TPluginAudioIn;
+    FAudioOut: TAudioOutNode;
+    FAudioIn: TAudioInNode;
     FConnectionList: TObjectList;
     FBuffer: PSingle;
     FEnabled: Boolean;
@@ -91,8 +91,8 @@ type
     function FindConnection(APluginId1, APluginId2: TPluginNode): TInterConnect;
     procedure Clear;
     property Buffer: PSingle read FBuffer write FBuffer;
-    property AudioOut: TPluginAudioOut read FAudioOut write FAudioOut;
-    property AudioIn: TPluginAudioIn read FAudioIn write FAudioIn;
+    property AudioOut: TAudioOutNode read FAudioOut write FAudioOut;
+    property AudioIn: TAudioInNode read FAudioIn write FAudioIn;
   published
     property Enabled: Boolean read FEnabled write FEnabled;
     property NodeList: TObjectList read FNodeList write FNodeList;
@@ -100,9 +100,9 @@ type
     property Frames: Integer read FFrames write FFrames;
   end;
 
-  { TPluginPluginProcessorCommand }
+  { TPluginProcessorCommand }
 
-  TPluginPluginProcessorCommand = class(TCommand)
+  TPluginProcessorCommand = class(TCommand)
   private
     FPluginProcessor: TPluginProcessor;
   protected
@@ -111,15 +111,29 @@ type
 
   { TDeleteNodesCommand }
 
-  TDeleteNodesCommand = class(TPluginPluginProcessorCommand)
+  TDeleteNodesCommand = class(TPluginProcessorCommand)
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   end;
 
+  { TInsertNodeCommand }
+
+  TInsertNodeCommand = class(TPluginProcessorCommand)
+  private
+    FParentID: string;
+    FChildID: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property ParentID: string read FParentID write FParentID;
+    property ChildID: string read FChildID write FChildID;
+  end;
+
   { TCreateNodesCommand }
 
-  TCreateNodesCommand = class(TPluginPluginProcessorCommand)
+  TCreateNodesCommand = class(TPluginProcessorCommand)
   private
     FXLocation: Integer;
     FYLocation: Integer;
@@ -135,7 +149,7 @@ type
 
   { TCreateConnectionCommand }
 
-  TCreateConnectionCommand = class(TPluginPluginProcessorCommand)
+  TCreateConnectionCommand = class(TPluginProcessorCommand)
   private
     FFromPluginNode: string;
     FToPluginNode: string;
@@ -149,13 +163,25 @@ type
 
   { TDeleteConnectionCommand }
 
-  TDeleteConnectionCommand = class(TPluginPluginProcessorCommand)
+  TDeleteConnectionCommand = class(TPluginProcessorCommand)
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   end;
 
 implementation
+
+{ TInsertNodeCommand }
+
+procedure TInsertNodeCommand.DoExecute;
+begin
+  //
+end;
+
+procedure TInsertNodeCommand.DoRollback;
+begin
+  //
+end;
 
 procedure TPluginProcessor.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
@@ -166,23 +192,23 @@ begin
 
   writeln('Construction: ' + AClassName);
 
-  if AClassName = 'TScriptPlugin' then
+  if AClassName = 'TScriptNode' then
   begin
-    lPluginNode := TScriptPlugin.Create(ObjectID, MAPPED);
+    lPluginNode := TScriptNode.Create(ObjectID, MAPPED);
     lPluginNode.ObjectOwnerID := ObjectID;
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
   end
-  else if AClassName = 'TLADSPAPlugin' then
+  else if AClassName = 'TLADSPANode' then
   begin
-    lPluginNode := TLADSPAPlugin.Create(ObjectID, MAPPED);
+    lPluginNode := TLADSPANode.Create(ObjectID, MAPPED);
     lPluginNode.ObjectOwnerID := ObjectID;
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
   end
-  else if AClassName = 'TPluginExternal' then
+  else if AClassName = 'TExternalNode' then
   begin
-    lPluginNode := TPluginExternal.Create(ObjectID);
+    lPluginNode := TExternalNode.Create(ObjectID);
     lPluginNode.ObjectOwnerID := ObjectID;
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
@@ -217,10 +243,10 @@ begin
 
   FFrames := AFrames;
 
-  FAudioOut := TPluginAudioOut.Create(ObjectID);
+  FAudioOut := TAudioOutNode.Create(ObjectID);
   FAudioOut.PluginName := 'AudioOut';
 
-  FAudioIn := TPluginAudioIn.Create(ObjectID);
+  FAudioIn := TAudioInNode.Create(ObjectID);
   FAudioIn.PluginName := 'AudioIn';
 
   FBuffer := GetMem(FFrames * SizeOf(Single));
@@ -406,7 +432,7 @@ procedure TDeleteNodesCommand.DoExecute;
 var
   i: Integer;
   lPluginNode: TPluginNode;
-  lMementoNode: TMementoPlugin;
+  lMementoNode: TMementoNode;
 begin
   DBLog('start TDeleteNodesCommand.DoExecute');
 
@@ -418,7 +444,7 @@ begin
 
     if lPluginNode.Selected or (lPluginNode.ObjectID = ObjectID) then
     begin
-      lMementoNode := TMementoPlugin.Create(FPluginProcessor.ObjectID);
+      lMementoNode := TMementoNode.Create(FPluginProcessor.ObjectID);
       lMementoNode.ObjectID := lPluginNode.ObjectID;
       lMementoNode.ObjectOwnerID := lPluginNode.ObjectOwnerID;
     end;
@@ -433,7 +459,7 @@ procedure TDeleteNodesCommand.DoRollback;
 var
   i: integer;
   lPluginNode: TPluginNode;
-  lMementoNode: TMementoPlugin;
+  lMementoNode: TMementoNode;
 begin
   DBLog('start TDeleteNodesCommand.DoRollback');
 
@@ -443,7 +469,7 @@ begin
 
     for i := 0 to Pred(Memento.Count) do
     begin
-      lMementoNode := TMementoPlugin(Memento[i]);
+      lMementoNode := TMementoNode(Memento[i]);
       lPluginNode := TPluginNode.Create(FPluginProcessor.ObjectID, NOT_MAPPED);
       lPluginNode.ObjectID := lMementoNode.ObjectID;
       lPluginNode.ObjectOwnerID := lMementoNode.ObjectOwnerID;
@@ -469,8 +495,6 @@ begin
 
   lPluginNode := TPluginNode.Create(FPluginProcessor.ObjectID, MAPPED);
   lPluginNode.PluginName := FPluginName;
-  lPluginNode.XLocation := XLocation;
-  lPluginNode.YLocation := YLocation;
 
   FPluginProcessor.NodeList.Add(lPluginNode);
 
@@ -535,9 +559,9 @@ begin
 
 end;
 
-{ TPluginPluginProcessorCommand }
+{ TPluginProcessorCommand }
 
-procedure TPluginPluginProcessorCommand.Initialize;
+procedure TPluginProcessorCommand.Initialize;
 begin
   FPluginProcessor := TPluginProcessor(GObjectMapper.GetModelObject(ObjectOwner));
 end;

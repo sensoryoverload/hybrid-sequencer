@@ -10,7 +10,7 @@ object MidiPatternGUI: TMidiPatternGUI
   OnResize = FrameResize
   TabOrder = 0
   DesignLeft = 370
-  DesignTop = 342
+  DesignTop = 348
   object pmNoteMenu: TPopupMenu
     left = 93
     top = 123

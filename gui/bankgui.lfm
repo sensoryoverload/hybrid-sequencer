@@ -10,7 +10,7 @@ object BankView: TBankView
   Constraints.MinHeight = 190
   TabOrder = 0
   DesignLeft = 233
-  DesignTop = 260
+  DesignTop = 266
   object gbSampleSelect: TGroupBox
     Left = 0
     Height = 190

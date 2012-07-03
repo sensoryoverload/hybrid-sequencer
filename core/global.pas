@@ -110,8 +110,8 @@ type
     property CursorPosition: Integer read FCursorPosition write FCursorPosition;
     property SelectedTrackGUI: TObject read FSelectedTrackGUI write FSelectedTrackGUI;
     property OldSelectedTrackGUI: TObject read FOldSelectedTrackGUI write FOldSelectedTrackGUI;
-    property SelectedPatternGUI: TObject read FSelectedPatternGUI write SetSelectedPatternGUI;
-    property OldSelectedPatternGUI: TObject read FOldSelectedPatternGUI write FOldSelectedPatternGUI;
+    property SelectedPattern: TObject read FSelectedPatternGUI write SetSelectedPatternGUI;
+    property OldSelectedPattern: TObject read FOldSelectedPatternGUI write FOldSelectedPatternGUI;
     property EditMode: Byte read FEditMode write FEditMode;
     property Modifier: TShiftState read FModifier write SetModifier;
     property Frames: Integer read FFrames write SetFrames;

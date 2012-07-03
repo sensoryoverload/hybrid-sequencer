@@ -9,8 +9,8 @@ object SampleView: TSampleView
   Constraints.MaxHeight = 193
   Constraints.MinHeight = 193
   TabOrder = 0
-  DesignLeft = 323
-  DesignTop = 399
+  DesignLeft = 285
+  DesignTop = 405
   object pnlControls: TPanel
     Left = 0
     Height = 140
@@ -45,7 +45,11 @@ object SampleView: TSampleView
         Highest = 2
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object lblLowNote: TLabel
         Left = 41
@@ -109,6 +113,10 @@ object SampleView: TSampleView
         Highest = 25
         Enabled = True
         ValueVisible = False
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
     end
     object gbLFO: TGroupBox
@@ -133,6 +141,10 @@ object SampleView: TSampleView
         Enabled = True
         ValueVisible = True
         Color = clBtnFace
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcLFO2Rate: TDialControl
         Left = 2
@@ -146,6 +158,10 @@ object SampleView: TSampleView
         Enabled = True
         ValueVisible = True
         Color = clBtnFace
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcLFO3Rate: TDialControl
         Left = 2
@@ -159,6 +175,10 @@ object SampleView: TSampleView
         Enabled = True
         ValueVisible = True
         Color = clBtnFace
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object cbLFO1WaveSelector: TComboBox
         Left = 38
@@ -239,7 +259,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcFilterEnvelopeDecay: TDialControl
         Left = 70
@@ -252,7 +276,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcFilterEnvelopeSustain: TDialControl
         Left = 106
@@ -265,7 +293,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcFilterEnvelopeRelease: TDialControl
         Left = 141
@@ -278,7 +310,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcAmpEnvelopeAttack: TDialControl
         Left = 34
@@ -291,7 +327,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcAmpEnvelopeDecay: TDialControl
         Left = 70
@@ -304,7 +344,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcAmpEnvelopeSustain: TDialControl
         Left = 106
@@ -317,7 +361,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcAmpEnvelopeRelease: TDialControl
         Left = 140
@@ -330,7 +378,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcPitchEnvelopeAttack: TDialControl
         Left = 34
@@ -343,7 +395,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcPitchEnvelopeDecay: TDialControl
         Left = 70
@@ -356,7 +412,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcPitchEnvelopeSustain: TDialControl
         Left = 106
@@ -369,7 +429,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcPitchEnvelopeRelease: TDialControl
         Left = 141
@@ -382,7 +446,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object lblFilter: TLabel
         Left = 7
@@ -436,7 +504,11 @@ object SampleView: TSampleView
         Highest = 20000
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcLpResonance: TDialControl
         Left = 32
@@ -449,7 +521,11 @@ object SampleView: TSampleView
         Highest = 100
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object cbCutoffModSource: TComboBox
         Left = 2
@@ -481,7 +557,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcEnvModAmount: TDialControl
         Left = 71
@@ -494,7 +574,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcSaturateDrivePreFilter: TDialControl
         Left = 71
@@ -507,6 +591,11 @@ object SampleView: TSampleView
         Highest = 25
         Enabled = True
         ValueVisible = False
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object tcFilterSwith: TToggleControl
         Left = 104
@@ -518,6 +607,8 @@ object SampleView: TSampleView
         CaptionOff = 'OFF'
         OnChange = tcFilterSwithChange
         Color = clLime
+        Constraints.MaxHeight = 14
+        Constraints.MinHeight = 14
       end
       object cbFilterType: TComboBox
         Left = 2
@@ -550,7 +641,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = True
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcOsc1ModAmount: TDialControl
         Left = 199
@@ -563,7 +658,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object cbOsc1WaveSelector: TComboBox
         Left = 3
@@ -633,7 +732,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = True
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object cbOsc2ModSource: TComboBox
         Left = 134
@@ -665,7 +768,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object lblOSC3: TLabel
         Left = 4
@@ -697,7 +804,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = True
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object cbOsc3ModSource: TComboBox
         Left = 134
@@ -729,7 +840,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcOSC1Level: TDialControl
         Left = 234
@@ -742,7 +857,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcOSC3Level: TDialControl
         Left = 234
@@ -755,7 +874,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcOSC2Level: TDialControl
         Left = 234
@@ -768,7 +891,11 @@ object SampleView: TSampleView
         Highest = 1
         Enabled = True
         ValueVisible = False
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcOsc1PW: TDialControl
         Left = 97
@@ -781,7 +908,11 @@ object SampleView: TSampleView
         Highest = 100
         Enabled = True
         ValueVisible = True
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcOsc2PW: TDialControl
         Left = 97
@@ -794,7 +925,11 @@ object SampleView: TSampleView
         Highest = 100
         Enabled = True
         ValueVisible = True
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
       object dcOsc3PW: TDialControl
         Left = 97
@@ -807,7 +942,11 @@ object SampleView: TSampleView
         Highest = 100
         Enabled = True
         ValueVisible = True
-        Color = clNone
+        Color = clForm
+        Constraints.MaxHeight = 40
+        Constraints.MaxWidth = 36
+        Constraints.MinHeight = 40
+        Constraints.MinWidth = 36
       end
     end
   end

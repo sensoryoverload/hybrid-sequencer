@@ -38,6 +38,23 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
   end;
 
+  { TPluginParameter }
+
+  TPluginParameter = class
+    Name: string;
+    Hint: string;
+  end;
+
+  { TPluginParameterList }
+
+  TPluginParameterList = class(TObjectList)
+  protected
+    function GetPluginParameters(I: Integer): TPluginParameter;
+    procedure SetPluginParameters(I: Integer; APluginParameter: TPluginParameter);
+  public
+    property PluginParameters[I: Integer]: TPluginParameter read GetPluginParameters write SetPluginParameters;
+  end;
+
   { TPluginNode }
 
   TPluginNode = class(THybridPersistentModel)
@@ -55,9 +72,6 @@ type
     FPluginName: string;
     FCached: Boolean;
     FSelected: Boolean;
-    FXLocation: Integer;
-    FYLocation: Integer;
-    FPlugin: TBasePlugin;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -79,18 +93,15 @@ type
     property NodeType: TPluginNodeType read FNodeType write FNodeType;
     property Buffer: psingle read FBuffer write FBuffer;
     property Childs: TObjectList read FChilds write FChilds;
-    property Plugin: TBasePlugin read FPlugin write FPlugin;
   published
     property PluginName: string read FPluginName write FPluginName;
     property Frames: Integer read FFrames write FFrames;
     property Selected: Boolean read FSelected write FSelected;
-    property XLocation: Integer read FXLocation write FXLocation;
-    property YLocation: Integer read FYLocation write FYLocation;
   end;
 
-  { TScriptPlugin }
+  { TScriptNode }
 
-  TScriptPlugin = class(TPluginNode)
+  TScriptNode = class(TPluginNode)
   private
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
   public
@@ -98,9 +109,9 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TLADSPAPlugin }
+  { TLADSPANode }
 
-  TLADSPAPlugin = class(TPluginNode)
+  TLADSPANode = class(TPluginNode)
   public
     procedure Instantiate; override;
     procedure Activate; override;
@@ -111,57 +122,57 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TMementoPlugin }
+  { TMementoNode }
 
-  TMementoPlugin = class(TPluginNode)
+  TMementoNode = class(TPluginNode)
   public
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TInternalPlugin }
+  { TInternalNode }
 
-  TInternalPlugin = class(TPluginNode)
+  TInternalNode = class(TPluginNode)
   end;
 
-  { TPluginExternal }
+  { TExternalNode }
 
-  TPluginExternal = class(TInternalPlugin)
+  TExternalNode = class(TInternalNode)
   private
   public
     constructor Create(AObjectOwnerID: string);
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TPluginAudioOut }
+  { TAudioOutNode }
 
-  TPluginAudioOut = class(TInternalPlugin)
+  TAudioOutNode = class(TInternalNode)
   private
   public
     constructor Create(AObjectOwnerID: string);
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TPluginAudioIn }
+  { TAudioInNode }
 
-  TPluginAudioIn = class(TInternalPlugin)
+  TAudioInNode = class(TInternalNode)
   private
   public
     constructor Create(AObjectOwnerID: string);
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TPluginMidiOut }
+  { TMidiOutNode }
 
-  TPluginMidiOut = class(TInternalPlugin)
+  TMidiOutNode = class(TInternalNode)
   private
   public
     constructor Create(AObjectOwnerID: string);
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TPluginMidiIn }
+  { TMidiInNode }
 
-  TPluginMidiIn = class(TInternalPlugin)
+  TMidiInNode = class(TInternalNode)
   private
   public
     constructor Create(AObjectOwnerID: string);
@@ -171,50 +182,62 @@ type
 implementation
 
 uses
-  pluginhostgui, pluginhost;
+  pluginhost;
+
+{ TPluginCatalog }
+
+procedure TPluginParameterList.SetPluginParameters(I: Integer; APluginParameter: TPluginParameter);
+begin
+  Items[i] := APluginParameter;
+end;
+
+function TPluginParameterList.GetPluginParameters(I: Integer): TPluginParameter;
+begin
+  Result := TPluginParameter( Items[i] );
+end;
 
 { TPlugin }
 
-procedure TLADSPAPlugin.Instantiate;
+procedure TLADSPANode.Instantiate;
 begin
   //  FLADSPA.Instantiate
 end;
 
-procedure TLADSPAPlugin.Activate;
+procedure TLADSPANode.Activate;
 begin
   inherited Activate;
 
 //  FLADSPA.Activate
 end;
 
-procedure TLADSPAPlugin.Deactivate;
+procedure TLADSPANode.Deactivate;
 begin
   inherited Deactivate;
 end;
 
-procedure TLADSPAPlugin.Clean;
+procedure TLADSPANode.Clean;
 begin
   //  FLADSPA.Clean
 end;
 
-procedure TLADSPAPlugin.LoadByID(AId: Integer);
+procedure TLADSPANode.LoadByID(AId: Integer);
 begin
   // Load by LADSPA ID, these should be unique
 end;
 
-procedure TLADSPAPlugin.LoadByName(AName: string);
+procedure TLADSPANode.LoadByName(AName: string);
 begin
   // GLadspaPluginFactory.Discover;
 end;
 
-procedure TLADSPAPlugin.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TLADSPANode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //  FLADSPA.Run
 end;
 
-{ TPluginAudioOut }
+{ TAudioOutNode }
 
-constructor TPluginAudioOut.Create(AObjectOwnerID: string);
+constructor TAudioOutNode.Create(AObjectOwnerID: string);
 begin
   inherited Create(AObjectOwnerID);
 
@@ -223,14 +246,14 @@ begin
   NodeType := pntSink;
 end;
 
-procedure TPluginAudioOut.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TAudioOutNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
 
-{ TPluginMidiIn }
+{ TMidiInNode }
 
-constructor TPluginMidiIn.Create(AObjectOwnerID: string);
+constructor TMidiInNode.Create(AObjectOwnerID: string);
 begin
   inherited Create(AObjectOwnerID);
 
@@ -239,14 +262,14 @@ begin
   NodeType := pntSource;
 end;
 
-procedure TPluginMidiIn.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TMidiInNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
 
-{ TPluginMidiOut }
+{ TMidiOutNode }
 
-constructor TPluginMidiOut.Create(AObjectOwnerID: string);
+constructor TMidiOutNode.Create(AObjectOwnerID: string);
 begin
   inherited Create(AObjectOwnerID);
 
@@ -255,7 +278,7 @@ begin
   NodeType := pntSink;
 end;
 
-procedure TPluginMidiOut.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TMidiOutNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -265,9 +288,9 @@ begin
   end;
 end;
 
-{ TPluginAudioIn }
+{ TAudioInNode }
 
-constructor TPluginAudioIn.Create(AObjectOwnerID: string);
+constructor TAudioInNode.Create(AObjectOwnerID: string);
 begin
   inherited Create(AObjectOwnerID);
 
@@ -275,7 +298,7 @@ begin
   NodeType := pntSource;
 end;
 
-procedure TPluginAudioIn.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TAudioInNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -323,7 +346,7 @@ begin
   FreeMem(FMixBuffer);
 
   {
-    TPluginAudioIn takes it's audio buffer from TWaveForm, TWaveFormTrack and as such should not
+    TAudioInNode takes it's audio buffer from TWaveForm, TWaveFormTrack and as such should not
     free this buffer. An other alternative would be to copy the buffer.
   }
   if not ClassNameIs('TPluginAudioIn') then
@@ -454,40 +477,40 @@ begin
 end;
 
 
-{ TPluginExternal }
+{ TExternalNode }
 
-constructor TPluginExternal.Create(AObjectOwnerID: string);
+constructor TExternalNode.Create(AObjectOwnerID: string);
 begin
   //
 end;
 
-procedure TPluginExternal.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TExternalNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
 
-{ TMementoPlugin }
+{ TMementoNode }
 
-procedure TMementoPlugin.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TMementoNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 begin
   // Virtual base method
 end;
 
-{ TScriptPlugin }
+{ TScriptNode }
 
-constructor TScriptPlugin.Create(AObjectOwnerID: string; AMapped: Boolean);
+constructor TScriptNode.Create(AObjectOwnerID: string; AMapped: Boolean);
 begin
   inherited Create(AObjectOwnerID, AMapped);
 
 end;
 
-destructor TScriptPlugin.Destroy;
+destructor TScriptNode.Destroy;
 begin
 
   inherited Destroy;
 end;
 
-procedure TScriptPlugin.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle;
+procedure TScriptNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle;
   AFrames: Integer);
 begin
   //
