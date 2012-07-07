@@ -1421,13 +1421,13 @@ begin
   SortSlices;
   Notify;
 
-  for i := 0 to Pred(Round(FWave.ReadCount / FWave.ChannelCount / Round(GSettings.SampleRate / 16))) do
+  {for i := 0 to Pred(Round(FWave.ReadCount / FWave.ChannelCount / Round(GSettings.SampleRate / 16))) do
   begin
 
     AddSlice(Round(i * GSettings.SampleRate / 16), SLICE_VIRTUAL, True);
-  end;
- { BeatDetect.setThresHold(0.1);}
-(*  for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
+  end;}
+  BeatDetect.setThresHold(0.1);
+  for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
   begin
     BeatDetect.AudioProcess(TChannel(Wave.ChannelList[0]).Buffer[i * FWave.ChannelCount]);
     if BeatDetect.BeatPulse then
@@ -1454,7 +1454,7 @@ begin
       Inc(WindowLength);
     end;
   end;
-  *)
+
   Notify;
 
   GLogger.PushMessage('EndAutoMarkerProcess');

@@ -836,7 +836,7 @@ begin
   lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
   // Where are we in this control?
-  lMousePosition := Y - Top;
+  lMousePosition := Y{ - Top};
   if (lMousePosition >= 0) and (lMousePosition < 10) then
   begin
     FMouseArea := maLoopMarkers;

@@ -184,7 +184,6 @@ type
     FMouseY: Integer;
     FMouseDownL: Boolean;
     FMouseDownR: Boolean;
-    FTrackView: TTrackView;
     FMenuCreateMidiPattern: TMenuItem;
     FMenuDeletePattern: TMenuItem;
     FMenuCreateTrack: TMenuItem;
@@ -275,6 +274,7 @@ class procedure TPatternFlyWeight.Render(X, Y: Integer;
   ABGRABitmap: TBGRABitmap; APattern: TPattern);
 var
   pts: array of TPointF;
+  lTrimmedPatternName: string;
 begin
   ABGRABitmap.Rectangle(
     X,
@@ -304,10 +304,11 @@ begin
       ABGRABitmap.FillPolyAntialias(pts, ColorToBGRA(clBlue));
     end;
 
+    lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
     ABGRABitmap.FontHeight := 12;
     ABGRABitmap.TextOut(
       X + 24, Y + 1,
-      Format('%s', [APattern.PatternName]),
+      Format('%s', [lTrimmedPatternName]),
       ColorToBGRA(clBtnText));
   end;
 end;
@@ -318,6 +319,7 @@ class procedure TWavePatternFlyWeight.Render(X, Y: Integer;
   ABGRABitmap: TBGRABitmap; APattern: TPattern);
 var
   pts: array of TPointF;
+  lTrimmedPatternName: string;
 begin
   ABGRABitmap.Rectangle(
     X,
@@ -347,10 +349,11 @@ begin
       ABGRABitmap.FillPolyAntialias(pts, ColorToBGRA(clBlue));
     end;
 
+    lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
     ABGRABitmap.FontHeight := 12;
     ABGRABitmap.TextOut(
       X + 24, Y + 1,
-      Format('%s', [APattern.PatternName]),
+      Format('%s', [lTrimmedPatternName]),
       ColorToBGRA(clBtnText));
   end;
 end;
@@ -361,13 +364,24 @@ class procedure TMidiPatternFlyWeight.Render(X, Y: Integer;
   ABGRABitmap: TBGRABitmap; APattern: TPattern);
 var
   pts: array of TPointF;
+  lTrimmedPatternName: string;
+  lColor: TColor;
 begin
+  // Give selected pattern a white color
+  if Assigned(APattern) and (APattern = GSettings.SelectedPattern) then
+  begin
+    lColor := clWhite;
+  end
+  else
+  begin
+    lColor := clYellow;
+  end;
   ABGRABitmap.Rectangle(
     X,
     Y,
     X + TRACK_WIDTH,
     Y + PATTERN_HEIGHT,
-    ColorToBGRA(clBlue), ColorToBGRA(clYellow), dmset);
+    ColorToBGRA(clBlue), ColorToBGRA(lColor), dmset);
 
   ABGRABitmap.DrawVertLine(X + 15, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clBlue));
 
@@ -388,10 +402,11 @@ begin
     ABGRABitmap.FillPolyAntialias(pts, ColorToBGRA(clBlue));
   end;
 
+  lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
   ABGRABitmap.FontHeight := 12;
   ABGRABitmap.TextOut(
     X + 24, Y + 1,
-    Format('%s', [APattern.PatternName]),
+    Format('%s', [lTrimmedPatternName]),
     ColorToBGRA(clBtnText));
 end;
 
@@ -413,8 +428,6 @@ end;
 { TTrackView }
 
 procedure TTrackView.Update(Subject: THybridPersistentModel);
-var
-  lTrack: TTrack;
 begin
   DBLog('start TTrackView.Update');
 
@@ -647,7 +660,6 @@ end;
 procedure TTrackView.ActiveSwitchChange(Sender: TObject);
 var
   lActivateTrack: TActivateTrackCommand;
-  ActiveState: Boolean;
 begin
   // Send Channel On/Off command
   lActivateTrack := TActivateTrackCommand.Create(ObjectID);
@@ -911,7 +923,6 @@ end;
 }
 function TSessionGrid.GetTrack(X, Y: Integer): TTrack;
 var
-  lIndex: Integer;
   lTrackView: TTrackView;
 begin
   Result := nil;
@@ -1029,7 +1040,7 @@ begin
     lTreeView := TTreeView(Source);
 
     // Create new pattern when there's is not pattern under mousecursor else nothing
-    lTrack := GetTrack(FMouseX, FMouseY);
+    lTrack := GetTrack(X, Y);
 
     if Assigned(lTrack) then
     begin
@@ -1037,7 +1048,7 @@ begin
       try
         lCreatePattern.SourceLocation := TTreeFolderData(lTreeView.Selected.Data).Path;
         lCreatePattern.PatternName := ExtractFileNameWithoutExt(TTreeFolderData(lTreeView.Selected.Data).Path);
-        lCreatePattern.Position := (FMouseY div PATTERN_HEIGHT) + ScrollIndex;
+        lCreatePattern.Position := (Y div PATTERN_HEIGHT) + ScrollIndex;
 
         GCommandQueue.PushCommand(lCreatePattern);
       except
@@ -1242,7 +1253,7 @@ begin
   FMouseY := Y;
 
   // Detect start of dragging
-  if FMouseDownL and (not FDragging) then
+  if FMouseDownL and (not FDragging) and Assigned(FSelectedPattern) then
   begin
     FDragging :=
       (abs(FMouseDownX - X) > 5) or (abs(FMouseDownY - Y) > 5);

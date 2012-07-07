@@ -782,6 +782,7 @@ var
   lPattern: TPattern;
   lSourceTrack: TTrack;
   lTargetTrack: TTrack;
+  lSchedulePattern: TSchedulePatternCommand;
 begin
   DBLog('start TMovePatternToTrackCommand.DoExecute');
 
@@ -797,6 +798,20 @@ begin
     // Disconnect from source track
     if SourceTrackID <> TargetTrackID then
     begin
+      if lPattern.Playing then
+      begin
+        lSchedulePattern := TSchedulePatternCommand.Create(ObjectID);
+        try
+          lSchedulePattern.ObjectIdList.Add(lPattern.ObjectID);
+          lSchedulePattern.TrackID := lSourceTrack.ObjectID;
+          lSchedulePattern.ScheduledTo := stStop;
+          lSchedulePattern.Persist := False;
+          GCommandQueue.PushCommand(lSchedulePattern);
+        except
+          lSchedulePattern.Free;
+        end;
+      end;
+
       lSourceTrack.PatternList.Extract(lPattern);
       lSourceTrack.Notify;
 
