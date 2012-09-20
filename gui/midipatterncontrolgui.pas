@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, ExtCtrls, StdCtrls,
   PairSplitter, globalconst, midipatterngui, midi, midigui, sampler, samplegui,
-  bankgui;
+  bankgui, global;
 
 type
 
@@ -58,7 +58,6 @@ type
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
-
     property Connected: Boolean read FConnected;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
@@ -71,7 +70,7 @@ type
 
 implementation
 
-uses utils, global_command;
+uses utils, global_command, track;
 
 { TMidiPatternControlGUI }
 
@@ -187,6 +186,11 @@ end;
 procedure TMidiPatternControlGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TPatternControls.Update');
+
+  if TTrack(Subject.ObjectOwner).PatternList.IndexOf(Subject) = -1 then
+  begin
+    //Parent := nil;
+  end;
 
   if cbMidiChannel.ItemIndex <> TMidiPattern(Subject).MidiChannel then
   begin

@@ -11,11 +11,11 @@ LazarusResources.Add('TMidiPatternControlGUI','FORMDATA',[
   +'idth'#3#11#3#5'Align'#7#5'alTop'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'
   +#2#27#11'ClientWidth'#3#11#3#21'Constraints.MaxHeight'#2#27#21'Constraints.M'
   +'inHeight'#2#27#8'TabOrder'#2#0#0#6'TLabel'#11'lblQuantize'#4'Left'#2#1#6'He'
-  +'ight'#2#14#3'Top'#2#6#5'Width'#2'-'#7'Caption'#6#8'Quantize'#11'ParentColor'
+  +'ight'#2#13#3'Top'#2#6#5'Width'#2','#7'Caption'#6#8'Quantize'#11'ParentColor'
   +#8#0#0#9'TComboBox'#10'cbQuantize'#4'Left'#2')'#6'Height'#2#22#3'Top'#2#2#5
   +'Width'#2'C'#8'AutoSize'#8#10'ItemHeight'#2#0#8'OnChange'#7#16'cbQuantizeCha'
   +'nge'#5'Style'#7#14'csDropDownList'#8'TabOrder'#2#0#0#0#6'TLabel'#14'lblMidi'
-  +'Channel'#4'Left'#2'p'#6'Height'#2#14#3'Top'#2#6#5'Width'#2'>'#7'Caption'#6
+  +'Channel'#4'Left'#2'p'#6'Height'#2#13#3'Top'#2#6#5'Width'#2'='#7'Caption'#6
   +#11'MidiChannel'#11'ParentColor'#8#0#0#9'TComboBox'#13'cbMidiChannel'#4'Left'
   +#3#167#0#6'Height'#2#22#3'Top'#2#2#5'Width'#2'A'#8'AutoSize'#8#10'ItemHeight'
   +#2#0#8'OnChange'#7#19'cbMidiChannelChange'#5'Style'#7#14'csDropDownList'#8'T'

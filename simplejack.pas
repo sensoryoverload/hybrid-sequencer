@@ -32,8 +32,8 @@ uses
   ShellCtrls, Grids, TrackGUI, wavegui, global, track, pattern,
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
-  ringbuffer, optionsgui, wavepatterncontrolgui, midipatterncontrolgui,
-  wavepatterngui, midipatterngui, patterngui, sampler, sessiongrid;
+  ringbuffer, optionsgui, wavepatterngui, midipatterngui, patterngui, sampler,
+  sessiongrid, patternview;
 
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
@@ -132,6 +132,7 @@ type
     pnlTop: Tpanel;
     ScreenUpdater: TTimer;
     Splitter1: TSplitter;
+    tsEmpty: TTabSheet;
     tsPlugins: TTabSheet;
     tsWave: TTabSheet;
     tsMIDI: TTabSheet;
@@ -186,6 +187,7 @@ type
   private
     { private Declarations }
     FSessionGrid: TSessionGrid;
+    FPatternView: TPatternView;
     FSimpleWaveForm: TSimpleWaveForm;
     FOutputWaveform: Boolean;
     FMappingMonitor: TfmMappingMonitor;
@@ -194,13 +196,10 @@ type
     FLowPriorityInterval: Integer;
     FMediumPriorityInterval: Integer;
     FHighPriorityInterval: Integer;
-    FWavePatternControlGUI: TWavePatternControlGUI;
-    FMidiPatternControlGUI: TMidiPatternControlGUI;
     FNoJackMode: Boolean;
     FModel: TAudioStructure;
 
     procedure CustomExceptionHandler(Sender: TObject; E: Exception);
-    procedure DoPatternRefreshEvent(TrackObject: TObject);
     procedure UpdateTracks(TrackObject: TTrack);
 
     function CreateTrack(AFileLocation: string; ATrackType: Integer = 0): TTrackGUI;
@@ -972,6 +971,7 @@ procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
 var
   i, j: Integer;
   lTrack: TTrack;
+  lEnabled: Boolean;
 begin
   Application.ProcessMessages;
   try
@@ -980,7 +980,11 @@ begin
     acUndoUpdate(Self);
     acRedoUpdate(Self);
 
-      // Update object mapping
+{    for i := 0 to Pred
+    if GSettings.SelectedPattern;
+   DoPatternRefreshEvent(nil);}
+
+    // Update object mapping
     if FShowMapping then
     begin
       if FLowPriorityInterval = 0 then
@@ -1004,17 +1008,7 @@ begin
       end;
     end;
 
-    // Update patterneditor grid
-    if pcEditor.ActivePage = tsMIDI then
-    begin
-      FMidiPatternControlGUI.MidiPatternGUI.CacheIsDirty := True;
-      FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
-    end
-    else if pcEditor.ActivePage = tsWave then
-    begin
-      FWavePatternControlGUI.WaveGUI.CacheIsDirty := True;
-      FWavePatternControlGUI.WaveGUI.Invalidate;
-    end;
+    FPatternView.UpdateScreen;
 
     Inc(FLowPriorityInterval);
     if FLowPriorityInterval > 10 then
@@ -1070,14 +1064,14 @@ begin
   if Assigned(FSessionGrid) then
     FSessionGrid.Free;
 
+  if Assigned(FPatternView) then
+    FPatternView.Free;
+
   if Assigned(FMappingMonitor) then
     FMappingMonitor.Free;
 
   if Assigned(GAudioStruct) then
     GAudioStruct.Free;
-
-  FWavePatternControlGUI.Free;
-  FMidiPatternControlGUI.Free;
 End;
 
 procedure TMainApp.Formcreate(Sender: Tobject);
@@ -1100,15 +1094,20 @@ begin
   GAudioStruct.MainSampleRate := samplerate;
   GAudioStruct.BPM := 120;
 
+  FPatternView := TPatternView.Create(nil);
+  FPatternView.Parent := pnlBottom;
+  FPatternView.Align := alClient;
+  GAudioStruct.Attach(FPatternView);
+
   FSessionGrid := TSessionGrid.Create(nil);
   FSessionGrid.Parent := pnlTop;
   FSessionGrid.Align := alClient;
-  FSessionGrid.OnPatternRefreshGUI := @DoPatternRefreshEvent;
+  FSessionGrid.OnPatternRefreshGUI := @FPatternView.DoPatternRefreshEvent;
   GAudioStruct.Attach(FSessionGrid);
 
   pcEditor.ActivePage := tsPlugins;
 
-  FWavePatternControlGUI := TWavePatternControlGUI.Create(nil);
+  {FWavePatternControlGUI := TWavePatternControlGUI.Create(nil);
   FWavePatternControlGUI.Align := alClient;
   FWavePatternControlGUI.Parent := tsWave;
   tsWave.TabVisible := False;
@@ -1116,7 +1115,7 @@ begin
   FMidiPatternControlGUI := TMidiPatternControlGUI.Create(nil);
   FMidiPatternControlGUI.Align := alClient;
   FMidiPatternControlGUI.Parent := tsMIDI;
-  tsMIDI.TabVisible := False;
+  tsMIDI.TabVisible := False; }
 
   if not FNoJackMode then
   begin
@@ -1330,185 +1329,6 @@ begin
   if Button = mbLeft then
   begin
     TreeView1.BeginDrag(False);
-  end;
-
-end;
-
-procedure TMainApp.DoPatternRefreshEvent(TrackObject: TObject);
-var
-  lWavePattern: TWavePattern;
-  lMidiPattern: TMidiPattern;
-begin
-  if not Assigned(TrackObject) then
-  begin
-    // TODO Should be more intelligence in here...
-    tsMIDI.TabVisible := False;
-    tsWave.TabVisible := False;
-    GSettings.OldSelectedPattern := nil;
-    GSettings.SelectedPattern := nil;
-  end
-  else if TrackObject is TWavePattern then
-  begin
-    if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
-    begin
-      // Detach if old pattern is visible
-      if Assigned(GSettings.OldSelectedPattern) then
-      begin
-        if GSettings.OldSelectedPattern is TMidiPattern then
-        begin
-          // Last selected pattern of different type;
-          // - detach
-          // - set parent to new pattern type
-          lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
-          if Assigned(lMidiPattern) then
-          begin
-            FMidiPatternControlGUI.Disconnect;
-            lMidiPattern.Detach(FMidiPatternControlGUI);
-          end;
-
-          tsMIDI.TabVisible := False;
-          tsWave.TabVisible := True;
-          pcEditor.ActivePage := tsWave;
-
-          // Attach new pattern
-          lWavePattern := TWavePattern(GSettings.SelectedPattern);
-          if Assigned(lWavePattern) then
-          begin
-            lWavePattern.Attach(FWavePatternControlGUI);
-            FWavePatternControlGUI.Connect;
-          end;
-        end
-        else if GSettings.OldSelectedPattern is TWavePattern then
-        begin
-          // Last selected pattern of same type; just detach
-          lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
-          if Assigned(lWavePattern) then
-          begin
-            FWavePatternControlGUI.Disconnect;
-            lWavePattern.Detach(FWavePatternControlGUI);
-          end;
-
-          // Attach new pattern
-          lWavePattern := TWavePattern(GSettings.SelectedPattern);
-          if Assigned(lWavePattern) then
-          begin
-            lWavePattern.Attach(FWavePatternControlGUI);
-            FWavePatternControlGUI.Connect;
-          end;
-        end
-        else
-        begin
-          // unknown pattern
-          tsMIDI.TabVisible := False;
-          tsWave.TabVisible := False;
-        end;
-      end
-      else
-      begin
-        if Assigned(GSettings.SelectedPattern) then
-        begin
-          tsMIDI.TabVisible := False;
-          tsWave.TabVisible := True;
-          pcEditor.ActivePage := tsWave;
-
-          // Attach new pattern
-          lWavePattern := TWavePattern(GSettings.SelectedPattern);
-          if Assigned(lWavePattern) then
-          begin
-            lWavePattern.Attach(FWavePatternControlGUI);
-            FWavePatternControlGUI.Connect;
-          end;
-        end
-        else
-        begin
-          tsMIDI.TabVisible := False;
-          tsWave.TabVisible := False;
-        end;
-      end;
-
-      GSettings.OldSelectedPattern := GSettings.SelectedPattern;
-    end;
-  end
-  else if TrackObject is TMidiPattern then
-  begin
-    if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
-    begin
-      // Detach if old pattern is visible
-      if Assigned(GSettings.OldSelectedPattern) then
-      begin
-        if GSettings.OldSelectedPattern is TWavePattern then
-        begin
-          // Last selected pattern of different type;
-          // - detach
-          // - set parent to new pattern type
-          lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
-          if Assigned(lWavePattern) then
-          begin
-            FWavePatternControlGUI.Disconnect;
-            lWavePattern.Detach(FWavePatternControlGUI);
-          end;
-
-          tsWave.TabVisible := False;
-
-          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
-          if Assigned(lMidiPattern) then
-          begin
-            lMidiPattern.Attach(FMidiPatternControlGUI);
-            FMidiPatternControlGUI.Connect;
-          end;
-
-          tsMIDI.TabVisible := True;
-          pcEditor.ActivePage := tsMIDI;
-        end
-        else if GSettings.OldSelectedPattern is TMidiPattern then
-        begin
-          // Last selected pattern of same type; just detach
-          lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
-          if Assigned(lMidiPattern) then
-          begin
-            FMidiPatternControlGUI.Disconnect;
-            lMidiPattern.Detach(FMidiPatternControlGUI);
-          end;
-
-          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
-          if Assigned(lMidiPattern) then
-          begin
-            lMidiPattern.Attach(FMidiPatternControlGUI);
-            FMidiPatternControlGUI.Connect;
-          end;
-        end
-        else
-        begin
-          // unknown pattern
-          tsMIDI.TabVisible := False;
-          tsWave.TabVisible := False;
-        end;
-
-      end
-      else
-      begin
-        if Assigned(GSettings.SelectedPattern) then
-        begin
-          tsWave.TabVisible := False;
-
-          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
-          if Assigned(lMidiPattern) then
-          begin
-            lMidiPattern.Attach(FMidiPatternControlGUI);
-            FMidiPatternControlGUI.Connect;
-          end;
-
-          tsMIDI.TabVisible := True;
-          pcEditor.ActivePage := tsMIDI;
-        end
-        else
-        begin
-          // Should hide
-        end;
-      end;
-
-      GSettings.OldSelectedPattern := GSettings.SelectedPattern;
-    end;
   end;
 end;
 

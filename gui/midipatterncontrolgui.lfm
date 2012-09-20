@@ -34,9 +34,9 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
       TabOrder = 0
       object lblQuantize: TLabel
         Left = 1
-        Height = 14
+        Height = 13
         Top = 6
-        Width = 45
+        Width = 44
         Caption = 'Quantize'
         ParentColor = False
       end
@@ -53,9 +53,9 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
       end
       object lblMidiChannel: TLabel
         Left = 112
-        Height = 14
+        Height = 13
         Top = 6
-        Width = 62
+        Width = 61
         Caption = 'MidiChannel'
         ParentColor = False
       end

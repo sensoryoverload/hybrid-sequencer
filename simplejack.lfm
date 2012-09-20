@@ -1,7 +1,7 @@
 object MainApp: TMainApp
-  Left = 183
+  Left = 513
   Height = 679
-  Top = 100
+  Top = 120
   Width = 1095
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
@@ -193,9 +193,9 @@ object MainApp: TMainApp
       Height = 316
       Top = 0
       Width = 920
-      ActivePage = tsWave
+      ActivePage = tsMIDI
       Align = alClient
-      TabIndex = 2
+      TabIndex = 1
       TabOrder = 2
       TabPosition = tpLeft
       object tsPlugins: TTabSheet
@@ -219,6 +219,8 @@ object MainApp: TMainApp
       end
       object tsWave: TTabSheet
         Caption = 'Pattern'
+      end
+      object tsEmpty: TTabSheet
       end
     end
   end
