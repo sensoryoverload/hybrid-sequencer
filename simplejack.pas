@@ -106,12 +106,10 @@ type
     BottomSplitter: TCollapseSplitter;
     DialControl1: TDialControl;
     ilGlobalImages: TImageList;
-    lbPluginList: TListBox;
     MainMenu1: TMainMenu;
     HelpMenu: TMenuItem;
     MenuItem3: TMenuItem;
     miCreateTrack: TMenuItem;
-    pcEditor: TPageControl;
     pnlToolbar: TPanel;
     pnlVarious: TPanel;
     pnlBottom: TPanel;
@@ -132,10 +130,6 @@ type
     pnlTop: Tpanel;
     ScreenUpdater: TTimer;
     Splitter1: TSplitter;
-    tsEmpty: TTabSheet;
-    tsPlugins: TTabSheet;
-    tsWave: TTabSheet;
-    tsMIDI: TTabSheet;
     ToolBar1: TToolBar;
     tbPlay: TToolButton;
     tbStop: TToolButton;
@@ -980,10 +974,6 @@ begin
     acUndoUpdate(Self);
     acRedoUpdate(Self);
 
-{    for i := 0 to Pred
-    if GSettings.SelectedPattern;
-   DoPatternRefreshEvent(nil);}
-
     // Update object mapping
     if FShowMapping then
     begin
@@ -1085,8 +1075,6 @@ begin
 
   FNoJackMode := FindCmdLineSwitch('nojack', ['/', '-'], True);
 
-  //MainApp.DoubleBuffered := True;
-
   LoadTreeDirectory;
 
   GAudioStruct := TAudioStructure.Create('{D6DDECB0-BA12-4448-BBAE-3A96EEC90BFB}', MAPPED);
@@ -1104,18 +1092,6 @@ begin
   FSessionGrid.Align := alClient;
   FSessionGrid.OnPatternRefreshGUI := @FPatternView.DoPatternRefreshEvent;
   GAudioStruct.Attach(FSessionGrid);
-
-  pcEditor.ActivePage := tsPlugins;
-
-  {FWavePatternControlGUI := TWavePatternControlGUI.Create(nil);
-  FWavePatternControlGUI.Align := alClient;
-  FWavePatternControlGUI.Parent := tsWave;
-  tsWave.TabVisible := False;
-
-  FMidiPatternControlGUI := TMidiPatternControlGUI.Create(nil);
-  FMidiPatternControlGUI.Align := alClient;
-  FMidiPatternControlGUI.Parent := tsMIDI;
-  tsMIDI.TabVisible := False; }
 
   if not FNoJackMode then
   begin
@@ -1217,8 +1193,6 @@ begin
   end;
 
   GAudioStruct.Attach(MainApp);
-
-  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 
   ScreenUpdater.Interval := 40;
   ScreenUpdater.Enabled := True;
@@ -1347,11 +1321,6 @@ begin
       else
       begin
         TTrack(GAudioStruct.Tracks.Items[i]).Selected:= False;
-      end;
-
-      for j := 0 to Pred(TTrack(GAudioStruct.Tracks.Items[i]).PatternList.Count) do
-      begin
-//         TWavePattern(TTrack(GAudioStruct.Tracks.Items[i]).PatternList[j]).Repaint;
       end;
     end;
   end;

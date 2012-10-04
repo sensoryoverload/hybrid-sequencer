@@ -311,8 +311,6 @@ type
     FLFO2: TOscillator;
     FLFO3: TOscillator;
 
-    FDistortDrive: single;
-
     FKey: Integer;
     FLowNote: Integer;
     FHighNote: Integer;
@@ -1255,10 +1253,10 @@ end;
 function TOscillatorEngine.Process: Single; inline;
 var
   i: word;
-  lMod: word;
+  {lMod: word;}
   lFrac: Single;
   lAddSub: Single;
-  xm1, x0, x1, x2: single;
+  {xm1, x0, x1, x2: single;}
 begin
   if FOscillator.Active and (FOscillator.WaveForm <> off) then
   begin
@@ -1958,7 +1956,6 @@ end;
 procedure TCreateSampleCommand.DoExecute;
 var
   lSample: TSample;
-  lSampleBankEngine: TSampleBankEngine;
 begin
   DBLog('start TCreateSampleCommand.DoExecute');
 
@@ -2314,6 +2311,7 @@ begin
           if lStealVoice then
           begin
             // Sort just before stealing, only needed when stealing
+            // TODO hmm maybe a performance penalty sorting?
             FSampleVoiceEngineList.Sort(@SortVoicePriority);
 
             lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[Pred(FSampleVoiceEngineList.Count)]);
@@ -2344,34 +2342,23 @@ begin
   end;
 
   // Mix all voices into buffer
-  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-  begin
-    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-    if not lVoice.Idle then
-    begin
-      for lBufferIndex := 0 to Pred(Frames) do
-      begin
-        {lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
-        lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
-        ABuffer[lBufferIndex] := lSampleAdd - lSampleMul;}
-        ABuffer[lBufferIndex] := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
-      end;
-    end;
-  end;
-
   if FSample.GlobalLevel > DENORMAL_KILLER then
   begin
-    for lBufferIndex := 0 to Pred(Frames) do
+    for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
     begin
-      ABuffer[lBufferIndex] := ABuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
-    end;
-  end
-  else
-  begin
-    for lBufferIndex := 0 to Pred(Frames) do
-    begin
-      ABuffer[lBufferIndex] := 0;
+      lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+
+      if not lVoice.Idle then
+      begin
+        for lBufferIndex := 0 to Pred(Frames) do
+        begin
+          { Is this a better sample mixing algorithm?
+          lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
+          lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
+          ABuffer[lBufferIndex] := lSampleAdd - lSampleMul * log_approx(FSample.GlobalLevel);}
+          ABuffer[lBufferIndex] := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
+        end;
+      end;
     end;
   end;
 end;
@@ -2473,7 +2460,6 @@ var
   lSample, lSampleA, lSampleB, lSampleC: single;
   lChannel: TChannel;
   lHasSample: Boolean;
-  lCufoff: single;
 begin
   try
     lHasSample := False;
@@ -2769,9 +2755,6 @@ begin
 end;
 
 procedure TSampleBankEngine.SetSampleBank(const AValue: TSampleBank);
-var
-  lSampleEngineIndex: Integer;
-  lSampleEngine: TSampleEngine;
 begin
   FSampleBank := AValue;
 

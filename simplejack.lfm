@@ -188,41 +188,6 @@ object MainApp: TMainApp
       Top = 0
       Width = 5
     end
-    object pcEditor: TPageControl
-      Left = 175
-      Height = 316
-      Top = 0
-      Width = 920
-      ActivePage = tsMIDI
-      Align = alClient
-      TabIndex = 1
-      TabOrder = 2
-      TabPosition = tpLeft
-      object tsPlugins: TTabSheet
-        Caption = 'Plugins'
-        ClientHeight = 314
-        ClientWidth = 885
-        object lbPluginList: TListBox
-          Left = 0
-          Height = 314
-          Top = 0
-          Width = 100
-          Align = alLeft
-          ItemHeight = 0
-          ScrollWidth = 98
-          TabOrder = 0
-          TopIndex = -1
-        end
-      end
-      object tsMIDI: TTabSheet
-        Caption = 'Pattern'
-      end
-      object tsWave: TTabSheet
-        Caption = 'Pattern'
-      end
-      object tsEmpty: TTabSheet
-      end
-    end
   end
   object MainMenu1: TMainMenu
     left = 555

@@ -36,9 +36,19 @@ type
 
   TScheduleType = (stIdle, stStart, stStop, stPause);
 
+  TPatternList = class(TObjectList)
+  private
+    function GetPattern(AIndex: Integer): TPattern;
+    procedure SetPattern(AIndex: Integer; const Value: TPattern);
+  public
+    property Items[AIndex: Integer] : TPattern read GetPattern write SetPattern; default;
+    function Add(APattern: TPattern): integer;
+  end;
+
+
   TTrack = class(THybridPersistentModel)
   private
-    FPatternList: TObjectList;
+    FPatternList: TPatternList;
     FSelectedPattern: TPattern;
     FPlayingPattern: TPattern;
     FScheduledPattern: TPattern;
@@ -105,7 +115,7 @@ type
     property BooleanStack: Integer read FBooleanStack;
     property Recording: Boolean read FRecording write FRecording;
   published
-    property PatternList: TObjectList read FPatternList write FPatternList;
+    property PatternList: TPatternList read FPatternList write FPatternList;
     //property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property LeftLevel: Single read FLeftLevel write SetLeftLevel;
     property RightLevel: Single read FRightLevel write SetRightLevel;
@@ -173,6 +183,16 @@ type
     property Position: Integer read FPosition write FPosition;
     property SourceType: TFileSourceTypes read FSourceType write FSourceType;
     property SourceLocation: string read FSourceLocation write FSourceLocation;
+  end;
+
+  { TDeletePatternCommand }
+
+  TDeletePatternCommand = class(TTrackCommand)
+  private
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
   end;
 
   { TRepositonPatternCommand }
@@ -247,6 +267,59 @@ implementation
 uses
   audiostructure, wave, midi;
 
+{ TDeletePatternCommand }
+
+procedure TDeletePatternCommand.DoExecute;
+var
+  lIndex: Integer;
+  lPattern: TPattern;
+begin
+  DBLog('start TDeletePatternCommand.DoExecute');
+  for lIndex := 0 to Pred(FTrack.PatternList.Count) do
+  begin
+    lPattern := FTrack.PatternList[lIndex];
+
+    if lPattern.ObjectID = ObjectID then
+    begin
+      lPattern.Playing := False;
+      lPattern.OkToPlay := False;
+
+      FTrack.BeginUpdate;
+      FTrack.PatternList.Extract(lPattern);
+
+      GObjectMapper.DeleteMapping(lPattern.ObjectID);
+
+      Memento.Add(lPattern);
+
+      FTrack.EndUpdate;
+    end;
+  end;
+  DBLog('end TDeletePatternCommand.DoExecute');
+end;
+
+procedure TDeletePatternCommand.DoRollback;
+var
+  lPattern: TPattern;
+  i: Integer;
+begin
+  DBLog('start TDeletePatternCommand.DoRollback');
+
+  FTrack.BeginUpdate;
+
+  for i := 0 to Pred(Memento.Count) do
+  begin
+    lPattern := TPattern(Memento[i]);
+
+    GObjectMapper.AddMapping(lPattern);
+    FTrack.PatternList.Add(lPattern);
+  end;
+
+  FTrack.EndUpdate;
+
+  DBLog('end TDeletePatternCommand.DoRollback');
+end;
+
+
 function TTrackList.Add(ATrack: TTrack): integer;
 begin
   Result := inherited Add(ATrack);
@@ -320,7 +393,7 @@ begin
 
   for i := 0 to Pred(PatternList.Count) do
   begin
-    if PatternList[i].ClassType = TWavePattern then
+    if PatternList[i] is TWavePattern then
     begin
       lWavePattern := TWavePattern(PatternList[i]);
 
@@ -334,7 +407,7 @@ begin
         lWavePattern.Notify;
       end;
     end
-    else if PatternList[i].ClassType = TMidiPattern then
+    else if PatternList[i] is TMidiPattern then
     begin
       lMidiPattern := TMidiPattern(PatternList[i]);
 
@@ -417,7 +490,7 @@ begin
 
   Getmem(FOutputBuffer, 88200);
 
-  FPatternList := TObjectList.create(True);
+  FPatternList := TPatternList.create(True);
   ObjectOwnerID := AObjectOwner;
 
   FBooleanStack:= 1; // Start with off
@@ -868,6 +941,21 @@ end;
 procedure TTrackCommand.Initialize;
 begin
   FTrack := TTrack(GObjectMapper.GetModelObject(ObjectOwner));
+end;
+
+function TPatternList.Add(APattern: TPattern): integer;
+begin
+  Result := inherited Add(APattern);
+end;
+
+function TPatternList.GetPattern(AIndex: integer): TPattern;
+begin
+  result := inherited Items[aindex] as TPattern;
+end;
+
+procedure TPatternList.SetPattern(AIndex: integer; const Value: TPattern);
+begin
+  inherited Items[AIndex] := Value;
 end;
 
 initialization

@@ -5,11 +5,7 @@ LazarusResources.Add('TPatternView','FORMDATA',[
   +#0#5'Width'#3#208#3#12'ClientHeight'#3't'#2#11'ClientWidth'#3#208#3#8'TabOrd'
   +'er'#2#0#10'DesignLeft'#3'G'#2#9'DesignTop'#3#169#0#0#12'TPageControl'#8'pcE'
   +'ditor'#4'Left'#2#0#6'Height'#3't'#2#3'Top'#2#0#5'Width'#3#208#3#10'ActivePa'
-  +'ge'#7#6'tsWave'#5'Align'#7#8'alClient'#8'TabIndex'#2#2#8'TabOrder'#2#0#11'T'
-  +'abPosition'#7#6'tpLeft'#0#9'TTabSheet'#9'tsPlugins'#7'Caption'#6#7'Plugins'
-  +#12'ClientHeight'#3'r'#2#11'ClientWidth'#3#162#3#0#8'TListBox'#12'lbPluginLi'
-  +'st'#4'Left'#2#0#6'Height'#3':'#1#3'Top'#2#0#5'Width'#2'd'#5'Align'#7#6'alLe'
-  +'ft'#10'ItemHeight'#2#0#11'ScrollWidth'#2'b'#8'TabOrder'#2#0#8'TopIndex'#2
-  +#255#0#0#0#9'TTabSheet'#6'tsMIDI'#7'Caption'#6#7'Pattern'#0#0#9'TTabSheet'#6
-  +'tsWave'#7'Caption'#6#7'Pattern'#0#0#0#0
+  +'ge'#7#6'tsMIDI'#5'Align'#7#8'alClient'#8'TabIndex'#2#0#8'TabOrder'#2#0#11'T'
+  +'abPosition'#7#6'tpLeft'#0#9'TTabSheet'#6'tsMIDI'#7'Caption'#6#7'Pattern'#0#0
+  +#9'TTabSheet'#6'tsWave'#7'Caption'#6#7'Pattern'#0#0#0#0
 ]);

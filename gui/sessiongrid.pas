@@ -892,10 +892,28 @@ begin
 end;
 
 procedure TSessionGrid.DoDeletePattern(Sender: TObject);
+var
+  lDeletePatternCommand: TDeletePatternCommand;
+  lTrack: TTrack;
+  lPattern: TPattern;
 begin
-  {
-    Not yet implemented
-  }
+  lTrack := GetTrack(FMouseX, FMouseY);
+  if Assigned(lTrack) then
+  begin
+    if Assigned(FSelectedPattern) then
+    begin
+      lDeletePatternCommand := TDeletePatternCommand.Create(lTrack.ObjectID);
+      try
+        lDeletePatternCommand.ObjectID := FSelectedPattern.ObjectID;
+
+        GCommandQueue.PushCommand(lDeletePatternCommand);
+      except
+        lDeletePatternCommand.Free;
+      end;
+
+      Invalidate;
+    end;
+  end;
 end;
 
 procedure TSessionGrid.DoCreateTrack(Sender: TObject);
@@ -1229,6 +1247,14 @@ begin
                 FOnPatternRefreshGUI(GSettings.SelectedPattern);
               end;
             end;
+          end;
+        end
+        else
+        begin
+          // Empty slot clicked so hide pattern view
+          if Assigned(FOnPatternRefreshGUI) then
+          begin
+            FOnPatternRefreshGUI(nil);
           end;
         end;
       end

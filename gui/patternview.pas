@@ -40,10 +40,8 @@ type
   { TPatternView }
 
   TPatternView = class(TFrame, IObserver)
-    lbPluginList: TListBox;
     pcEditor: TPageControl;
     tsMIDI: TTabSheet;
-    tsPlugins: TTabSheet;
     tsWave: TTabSheet;
   private
     FObjectOwnerID: string;
@@ -87,7 +85,7 @@ constructor TTrackSettings.Create(AObjectOwner: string; TheOwner: TComponent);
 begin
   inherited Create(AObjectOwner);
 
-  FPatternView := TPatternView(TheOwner)
+  FPatternView := TPatternView(TheOwner);
 end;
 
 destructor TTrackSettings.Destroy;
@@ -320,7 +318,8 @@ constructor TPatternView.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
-  pcEditor.ActivePage := tsMIDI;{tsPlugins;}
+  pcEditor.ActivePage := tsMIDI;
+  pcEditor.ShowTabs := False;
 
   FTracks := TTrackSettingsList.create(True);
 

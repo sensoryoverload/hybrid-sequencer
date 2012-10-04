@@ -457,7 +457,7 @@ end;
 procedure TPattern.ProcessAdvance;
 begin
   // Advance cursor
-  FPatternCursor := FPatternCursor + GAudioStruct.BPMScale;
+  (*FPatternCursor := FPatternCursor + GAudioStruct.BPMScale;
   if FSyncQuantize then
   begin
     FPatternCursor := FLoopStart.Value + fmod(FPatternCursor - FLoopStart.Value, GAudioStruct.MainQuantizeLength);
@@ -467,11 +467,16 @@ begin
   begin
     FPatternCursor := FPatternCursor - FLoopLength.Value;
     FLooped := True;
+  end;*)
+
+  FPatternCursor := FPatternCursor + GAudioStruct.BPMScale;
+  if FPatternCursor > FLoopEnd.Value then
+  begin
+    FPatternCursor := FPatternCursor - FLoopLength.Value;
+    FLooped := True;
   end;
 
   RealCursorPosition := Round(PatternCursor);
-
-  FFilter2.Frequency := ((RealCursorPosition div 20) mod 15000) + 100;
 end;
 
 { TPatternCommand }
