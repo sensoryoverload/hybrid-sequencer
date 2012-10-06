@@ -943,7 +943,8 @@ begin
 
     if lFmOptions.ShowModal = mrOK then
     begin
-
+      GSettings.Save('config.xml');
+      LoadTreeDirectory;
     end;
   finally
     lFmOptions.Free;
@@ -1388,6 +1389,7 @@ procedure TMainApp.LoadTreeDirectory;
 var
   RootNode: TTreeNode;
   lFilterNode: TTreeNode;
+  lFilterRootNode: TTreeNode;
   TreeFolderData: TTreeFolderData;
 begin
   TreeView1.Items.BeginUpdate;
@@ -1401,13 +1403,20 @@ begin
     RootNode.Data := TreeFolderData;
 
     // Add FileTree
-    AddSubFolders(ExtractFilePath(Application.ExeName), RootNode);
+    if GSettings.SampleMap = '' then
+    begin
+      AddSubFolders(ExtractFilePath(Application.ExeName), RootNode);
+    end
+    else
+    begin
+      AddSubFolders(GSettings.SampleMap, RootNode);
+    end;
 
     // Add plugins
-    lFilterNode := TreeView1.Items.Add(RootNode, 'Plugins');
-    lFilterNode.ImageIndex := 17;
-    lFilterNode := TreeView1.Items.AddChild(lFilterNode, 'BitReducer');
-    lFilterNode := TreeView1.Items.AddChild(lFilterNode, 'Moog filter');
+    lFilterRootNode := TreeView1.Items.Add(RootNode, 'Plugins');
+    lFilterRootNode.ImageIndex := 17;
+    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'BitReducer');
+    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Moog filter');
 
     // Add presets (TODO should be added to above per plugin)
 
@@ -1436,34 +1445,37 @@ begin
       Attributes, SearchRec) = 0 then
     begin
       repeat
-        //if (SearchRec.Attr and faDirectory) > 0 then
+        if (SearchRec.Name <> '.') and (SearchRec.Name <> '..') then
         begin
-
-          if (SearchRec.Name <> '.') and (SearchRec.Name <> '..') then
+          if SameText(ExtractFileExt(SearchRec.Name), '.wav') or
+            SameText(ExtractFileExt(SearchRec.Name), '.xml') or
+            ((SearchRec.Attr and faDirectory) > 0) then
           begin
-            if SameText(ExtractFileExt(SearchRec.Name), '.wav') or
-              SameText(ExtractFileExt(SearchRec.Name), '.xml') or
-              ((SearchRec.Attr and faDirectory) > 0) then
+
+            NewNode := TreeView1.Items.AddChild(ParentNode, SearchRec.Name);
+            if (SearchRec.Attr and faDirectory) > 0 then
             begin
-
-              NewNode := TreeView1.Items.AddChild(ParentNode, SearchRec.Name);
-              if (SearchRec.Attr and faDirectory) > 0 then
-                NewNode.ImageIndex := 17
-              else
-              begin
-                NewNode.ImageIndex := -1;
-              end;
-              TreeFolderData := TTreeFolderData.Create(
-                IncludeTrailingPathDelimiter(Directory) + SearchRec.Name);
-              NewNode.Data := TreeFolderData;
-
-              if HasSubFolder(TreeFolderData.Path) then
-              begin
-                TreeFolderData.HasSubFolders := True;
-                // Add a fake child so the + appears
-                TreeView1.Items.AddChild(newNode, '').ImageIndex := 17;
-              end
+              NewNode.ImageIndex := 17
+            end
+            else if SameText(ExtractFileExt(SearchRec.Name), '.wav') then
+            begin
+              NewNode.ImageIndex := 19;
+            end
+            else if SameText(ExtractFileExt(SearchRec.Name), '.xml') then
+            begin
+              NewNode.ImageIndex := 20;
             end;
+            TreeFolderData := TTreeFolderData.Create(
+              IncludeTrailingPathDelimiter(Directory) + SearchRec.Name);
+            NewNode.Data := TreeFolderData;
+
+            if HasSubFolder(TreeFolderData.Path) then
+            begin
+              TreeFolderData.HasSubFolders := True;
+
+              // Add a fake child so the + appears
+              TreeView1.Items.AddChild(newNode, '').ImageIndex := 17;
+            end
           end;
         end;
       until FindNext(SearchRec) <> 0;

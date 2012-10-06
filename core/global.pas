@@ -24,7 +24,8 @@ unit global;
 interface
 
 uses
-  Classes, SysUtils, ContNrs, globalconst, jacktypes, sndfile;
+  Classes, SysUtils, ContNrs, globalconst, jacktypes, sndfile,
+  XMLConf;
 
 type
   TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
@@ -105,6 +106,8 @@ type
 
     constructor Create;
     destructor Destroy; override;
+    function Load(AFileLocation: string): Boolean;
+    function Save(AFileLocation: string): Boolean;
     function NextID: Integer;
     procedure Update(Subject: THybridPersistentModel);
     property CursorPosition: Integer read FCursorPosition write FCursorPosition;
@@ -183,7 +186,7 @@ var
 implementation
 
 uses
-  utils;
+  utils, xmlread, xmlwrite, dom;
 
 { TObjectMapper }
 
@@ -308,6 +311,42 @@ destructor TSettings.Destroy;
 begin
 
   inherited Destroy;
+end;
+
+function TSettings.Load(AFileLocation: string): Boolean;
+var
+  lXMLConfig: TXMLConfig;
+begin
+  if FileExists(AFileLocation) then
+  begin
+    lXMLConfig := TXMLConfig.Create(nil);
+    try
+      lXMLConfig.Filename := AFileLocation;
+
+      GSettings.SampleMap := lXMLConfig.GetValue('samplemap', '');
+    finally
+      lXMLConfig.Free;
+    end;
+    Result := True;
+  end
+  else
+  begin
+    Result := False;
+  end;
+end;
+
+function TSettings.Save(AFileLocation: string): Boolean;
+var
+  lXMLConfig: TXMLConfig;
+begin
+  lXMLConfig := TXMLConfig.Create(nil);
+  try
+    lXMLConfig.Filename := AFileLocation;
+    lXMLConfig.SetValue('samplemap', GSettings.SampleMap);
+    lXMLConfig.Flush;
+  finally
+    lXMLConfig.Free;
+  end;
 end;
 
 function TSettings.NextID: Integer;
@@ -472,9 +511,11 @@ end;
 initialization
   GObjectMapper := TObjectMapper.Create;
   GSettings := TSettings.Create;
+  GSettings.Load('config.xml');
 
 finalization
   GObjectMapper.Free;
+  GSettings.Save('config.xml');
   GSettings.Free;
 
 end.
