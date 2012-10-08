@@ -236,7 +236,7 @@ type
   TWaveFormCommand = class(TCommand)
   private
     FWavePattern: TWavePattern;
-  protected
+  public
     procedure Initialize; override;
     procedure Finalize; override;
   end;
@@ -1209,9 +1209,7 @@ end;
 
 procedure TWavePattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
 var
-  lAvailSamples: longint;
   lInSample: Boolean;
-  k: Integer;
 begin
   if AFrameIndex = 0 then
   begin
@@ -1400,7 +1398,6 @@ var
   WindowLength: Integer;
   lCurrentSlice: TMarker;
   lFirstSlice: Boolean;
-  lSample: Integer;
 begin
   GLogger.PushMessage('StartAutoMarkerProcess');
 

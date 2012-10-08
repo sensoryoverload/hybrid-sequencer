@@ -137,7 +137,6 @@ type
     FPitch: Single;
     FRealBPM: Single;
     FPitched: Boolean;
-    FMouseXRelative: Integer;
     FMargin: single;
     FMouseArea: TMouseArea;
     FBpmFactor: Single;
@@ -455,8 +454,6 @@ var
   ChannelHeight: Integer;
   ChannelZeroLine: Integer;
   TrackHeight: Integer;
-  TempRubberbandX: Integer;
-  Ramp: Single;
   Adder: Single;
   AdderFactor: Single;
   DataValue: Single;

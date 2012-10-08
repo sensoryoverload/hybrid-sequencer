@@ -111,8 +111,6 @@ end;
   linear 0..1 to log 0..1 approx. adds denormal killer
 }
 function log_approx(val: single): single; inline;
-var
-  lNormVal: single;
 begin
   //lNormVal := val + 1E-20;
   Result := val * val;
@@ -122,8 +120,6 @@ end;
   steep function
 }
 function log_approx3(val: single): single; inline;
-var
-  lNormVal: single;
 begin
   //lNormVal := val + 1E-20;
   Result := val * val * val;
@@ -133,8 +129,6 @@ end;
   supersteep function
 }
 function log_approx4(val: single): single; inline;
-var
-  lNormVal: single;
 begin
   //lNormVal := val + 1E-20;
   Result := val * val * val * val;

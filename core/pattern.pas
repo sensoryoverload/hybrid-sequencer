@@ -36,7 +36,6 @@ type
   private
     FPatternColor: TColor;
     FPatternCursor: Double;
-    FPatternCursorOld: Double;
     FRealCursorPosition: Integer;
     FPitched: Boolean;
     FPosition: Integer; // Vertical position in the patterngrid
@@ -106,7 +105,7 @@ type
   TPatternCommand = class(TCommand)
   private
     FPattern: TPattern;
-  protected
+  public
     procedure Initialize; override;
   end;
 
@@ -172,8 +171,6 @@ uses
 { TInsertPluginCommand }
 
 procedure TInsertPluginCommand.DoExecute;
-var
-  i: Integer;
 //  lParentNode: T
 begin
   // Create Node By PluginID (0, 1, 2, ..) and PluginType (LADSPA, Internal, etc)

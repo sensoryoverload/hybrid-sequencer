@@ -331,8 +331,6 @@ end;
 procedure TTrackGUI.DeletePatternGUI(AObjectID: string);
 var
   lPatternGUI: TPatternGUI;
-  lWavePatternGUI: TWavePatternGUI;
-  lMidiPatternGUI: TMidiPatternGUI;
   lIndex: Integer;
 begin
   // update track gui

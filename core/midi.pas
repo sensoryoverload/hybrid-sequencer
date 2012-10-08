@@ -42,7 +42,7 @@ type
   TMidiCommand = class(TCommand)
   private
     FMidiPattern: TMidiPattern;
-  protected
+  public
     procedure Initialize; override;
     procedure Finalize; override;
   end;
@@ -532,6 +532,12 @@ begin
 
   NoteList.Add(lMidiNote);
 
+  FNoteList.Add(lMidiNote);
+  FMidiDataList.Add(lMidiNote.MidiNoteStart);
+  FMidiDataList.Add(lMidiNote.MidiNoteEnd);
+
+  FMidiDataList.IndexList;
+
   DBLog('end TMidiGrid.DoCreateInstance');
 end;
 
@@ -702,6 +708,7 @@ begin
   lMidiNote.NoteLocation := Location;
   lMidiNote.NoteLength := NoteLength;//Round(FMidiPattern.QuantizeValue);
   lMidiNote.NoteVelocity := DEFAULT_NOTE_VELOCITY;
+
   FMidiPattern.NoteList.Add(lMidiNote);
   FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
   FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);

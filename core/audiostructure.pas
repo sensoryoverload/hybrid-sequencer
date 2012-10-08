@@ -47,7 +47,7 @@ type
   TAudioStructureCommand = class(TCommand)
   private
     FAudioStructure: TAudioStructure;
-  protected
+  public
     procedure Initialize; override;
   end;
 
@@ -117,15 +117,12 @@ type
   private
     FTrack: TTrackList;
     FActive: Boolean;
-    FMidiMapping: TMidiControlMap;
     //FModelThread: TModelThread;
     FMainSyncCounter: Single; // 1 bar loop
     FMainSyncLength: Single; // 1 bar length
     FMainSyncSignal: Boolean;
     FMainQuantizeLength: Integer;
 
-    FMainCursor: Single;
-    FMainScale: Single;
     FMainTimeLine: Single;
     FBPM: Single;
     FBPMScale: Single;

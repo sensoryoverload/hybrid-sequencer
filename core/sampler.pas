@@ -423,8 +423,7 @@ type
   private
     FSample: TSample;
     FSampleBank: TSampleBank;
-//    FParameter: TSampeParameter;
-  protected
+  public
     procedure Initialize; override;
   end;
 
@@ -510,7 +509,7 @@ type
   TSampleBankCommand = class(TCommand)
   private
     FSampleBank: TSampleBank;
-  protected
+  public
     procedure Initialize; override;
   end;
 
@@ -568,13 +567,10 @@ type
     FEnvelopeFollowerEngine: TEnvelopeFollowerEngine;
 
     FFilterEnvelopeEngine: TEnvelopeEngine;
-    FFilterEnvelopeLevel: single;
 
     FAmpEnvelopeEngine: TEnvelopeEngine;
-    FAmpEnvelopeLevel: single;
 
     FPitchEnvelopeEngine: TEnvelopeEngine;
-    FPitchEnvelopeLevel: single;
 
     FOsc1Engine: TOscillatorEngine;
     FOsc2Engine: TOscillatorEngine;
@@ -1844,8 +1840,9 @@ begin
   if SameText(AClassName, 'TSAMPLE') then
   begin
     lSample := TSample.Create(ObjectID, MAPPED);
-
     lSample.ObjectOwnerID := ObjectID;
+    lSample.Initialize;
+
     AObject := lSample;
 
     SampleList.Add(lSample);

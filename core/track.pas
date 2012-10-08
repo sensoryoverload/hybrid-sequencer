@@ -148,7 +148,7 @@ type
   TTrackCommand = class(TCommand)
   private
     FTrack: TTrack;
-  protected
+  public
     procedure Initialize; override;
   end;
 

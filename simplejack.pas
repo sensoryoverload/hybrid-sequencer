@@ -415,7 +415,6 @@ var
   lTrack: TTrack;
   lPlayingPattern: TPattern;
   buffer_size: Integer;
-  sync_frame: Integer;
 begin
   buffer_size := nframes * SizeOf(Single);
 
@@ -447,9 +446,6 @@ begin
 	event_index := 0;
 
 	jack_midi_event_get(@in_event, midi_in_buf, 0, nframes);
-
-  // Default to no-sync
-  sync_frame := -1;
 
   for i := 0 to Pred(nframes) do
   begin
@@ -964,9 +960,8 @@ end;
 
 procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
 var
-  i, j: Integer;
+  i: Integer;
   lTrack: TTrack;
-  lEnabled: Boolean;
 begin
   Application.ProcessMessages;
   try
@@ -1309,7 +1304,7 @@ end;
 
 procedure TMainApp.UpdateTracks(TrackObject: TTrack);
 var
-  i, j: Integer;
+  i: Integer;
 begin
   for i := 0 to Pred(GAudioStruct.Tracks.Count) do
   begin
@@ -1388,8 +1383,8 @@ end;
 procedure TMainApp.LoadTreeDirectory;
 var
   RootNode: TTreeNode;
-  lFilterNode: TTreeNode;
   lFilterRootNode: TTreeNode;
+  lFilterNode: TTreeNode;
   TreeFolderData: TTreeFolderData;
 begin
   TreeView1.Items.BeginUpdate;

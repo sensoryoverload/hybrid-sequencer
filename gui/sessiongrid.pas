@@ -895,7 +895,6 @@ procedure TSessionGrid.DoDeletePattern(Sender: TObject);
 var
   lDeletePatternCommand: TDeletePatternCommand;
   lTrack: TTrack;
-  lPattern: TPattern;
 begin
   lTrack := GetTrack(FMouseX, FMouseY);
   if Assigned(lTrack) then

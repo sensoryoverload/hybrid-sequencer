@@ -102,9 +102,8 @@ type
   { TScriptNode }
 
   TScriptNode = class(TPluginNode)
-  private
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
   public
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   end;

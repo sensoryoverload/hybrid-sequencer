@@ -310,8 +310,6 @@ end;
 { TSmbPitchShifter }
 
 constructor TSmbPitchShifter.Create;
-var
-  i: Integer;
 begin
   Initialize;
 end;

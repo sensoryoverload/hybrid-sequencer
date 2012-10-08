@@ -1,9 +1,9 @@
 { This is an automatically generated lazarus resource file }
 
 LazarusResources.Add('TMainApp','FORMDATA',[
-  'TPF0'#8'TMainApp'#7'MainApp'#4'Left'#3#1#2#6'Height'#3#167#2#3'Top'#2'x'#5'W'
-  +'idth'#3'G'#4#14'AllowDropFiles'#9#7'Caption'#6#11'Hybrid 2009'#12'ClientHei'
-  +'ght'#3#148#2#11'ClientWidth'#3'G'#4#11'Font.Height'#2#7#10'KeyPreview'#9#4
+  'TPF0'#8'TMainApp'#7'MainApp'#4'Left'#3#183#0#6'Height'#3#167#2#3'Top'#2'd'#5
+  +'Width'#3'G'#4#14'AllowDropFiles'#9#7'Caption'#6#11'Hybrid 2009'#12'ClientHe'
+  +'ight'#3#148#2#11'ClientWidth'#3'G'#4#11'Font.Height'#2#7#10'KeyPreview'#9#4
   +'Menu'#7#9'MainMenu1'#8'OnCreate'#7#10'FormCreate'#9'OnDestroy'#7#11'FormDes'
   +'troy'#11'OnDropFiles'#7#13'FormDropFiles'#9'OnKeyDown'#7#11'FormKeyDown'#10
   +'OnKeyPress'#7#12'FormKeyPress'#7'OnKeyUp'#7#9'FormKeyUp'#6'OnShow'#7#8'Form'

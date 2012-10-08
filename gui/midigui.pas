@@ -1094,7 +1094,6 @@ end;
 procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
 var
   lMidiNoteGUI: TMidiNoteGUI;
-  lMidiNote: TMidiNote;
   lIndex: Integer;
 begin
   DBLog('start TMidiGridGUI.DeleteNoteGUI');
@@ -1343,8 +1342,6 @@ begin
 end;
 
 function TMidiPatternGUI.LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerGUI;
-var
-  lLocation: Integer;
 begin
   LoopStart.Location := FModel.LoopStart.Value;
   LoopEnd.Location := FModel.LoopEnd.Value;
@@ -1368,8 +1365,6 @@ begin
 end;
 
 procedure TMidiPatternGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
-var
-  lSelectObjectListCommand: TSelectObjectListCommand;
 begin
   inherited MouseMove(Shift, X, Y);
 
@@ -1756,7 +1751,6 @@ end;
 
 procedure TMidigridOverview.DeleteOverviewNoteGUI(AObjectID: string);
 var
-  lMidiNote: TMidiNote;
   lMidiNoteOverview: TMidiNoteOverview;
   lIndex: Integer;
 begin
