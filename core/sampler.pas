@@ -389,6 +389,7 @@ type
     FSelectedSample: TSample;
     FEngine: TSampleBankEngine;
     procedure AssignBank(Source: TSampleBank);
+    procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
@@ -1835,11 +1836,31 @@ begin
   Self.ObjectOwnerID := Source.ObjectOwnerID;
 end;
 
+procedure TSampleBank.DoCreateInstance(var AObject: TObject; AClassName: string
+  );
+var
+  lSample: TSample;
+begin
+  if SameText(AClassName, 'TSAMPLE') then
+  begin
+    lSample := TSample.Create(ObjectID, MAPPED);
+
+    lSample.ObjectOwnerID := ObjectID;
+    AObject := lSample;
+
+    SampleList.Add(lSample);
+
+    Engine.RefreshEngine;
+  end;
+end;
+
 constructor TSampleBank.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   inherited Create(AObjectOwner, AMapped);
 
   FSampleList := TObjectList.create(False);
+
+  FOnCreateInstanceCallback := @DoCreateInstance;
 end;
 
 destructor TSampleBank.Destroy;
