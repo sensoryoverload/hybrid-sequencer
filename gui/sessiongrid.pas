@@ -187,10 +187,12 @@ type
     FMenuCreateMidiPattern: TMenuItem;
     FMenuDeletePattern: TMenuItem;
     FMenuCreateTrack: TMenuItem;
+    FMenuDeleteTrack: TMenuItem;
     FActionList: TActionList;
     FActionCreateMidiPattern: TAction;
     FActionDeletePattern: TAction;
     FActionCreateTrack: TAction;
+    FActionDeleteTrack: TAction;
 
     procedure DrawCursors(ACanvas: TCanvas);
     procedure DrawTrackList(ABGRABitmap: TBGRABitmap);
@@ -198,6 +200,7 @@ type
     procedure DoCreateMidiPattern(Sender: TObject);
     procedure DoDeletePattern(Sender: TObject);
     procedure DoCreateTrack(Sender: TObject);
+    procedure DoDeleteTrack(Sender: TObject);
     function GetTrack(X, Y: Integer): TTrack;
     function GetPatternState(ATrack: TTrack; Y: Integer): TPattern;
     procedure CreateTrackGUI(AObjectID: string);
@@ -711,11 +714,18 @@ begin
   FActionCreateTrack.ActionList := FActionList;
   FActionCreateTrack.OnExecute := @DoCreateTrack;
 
+  FActionDeleteTrack := TAction.Create(nil);
+  FActionDeleteTrack.Enabled := True;
+  FActionDeleteTrack.Caption := 'Delete track';
+  FActionDeleteTrack.ActionList := FActionList;
+  FActionDeleteTrack.OnExecute := @DoDeleteTrack;
+
   FPopupMenu := TPopupMenu.Create(nil);
 
   FMenuCreateMidiPattern := TMenuItem.Create(nil);
   FMenuCreateTrack := TMenuItem.Create(nil);
   FMenuDeletePattern := TMenuItem.Create(nil);
+  FMenuDeleteTrack := TMenuItem.Create(nil);
 
   FPopupMenu.Items.Add(FMenuCreateMidiPattern);
   FMenuCreateMidiPattern.Action := FActionCreateMidiPattern;
@@ -725,6 +735,9 @@ begin
 
   FPopupMenu.Items.Add(FMenuCreateTrack);
   FMenuCreateTrack.Action := FActionCreateTrack;
+
+  FPopupMenu.Items.Add(FMenuDeleteTrack);
+  FMenuDeleteTrack.Action := FActionDeleteTrack;
 end;
 
 destructor TSessionGrid.Destroy;
@@ -933,6 +946,26 @@ begin
   end;
 
   Invalidate;
+end;
+
+procedure TSessionGrid.DoDeleteTrack(Sender: TObject);
+var
+  lTrack: TTrack;
+  lDeleteTrackCommand: TDeleteTrackCommand;
+begin
+  lTrack := GetTrack(FMouseX, FMouseY);
+
+  if Assigned(lTrack) then
+  begin
+    lDeleteTrackCommand := TDeleteTrackCommand.Create(GAudioStruct.ObjectID);
+    try
+      lDeleteTrackCommand.ObjectIdList.Add(lTrack.ObjectID);
+
+      GCommandQueue.PushCommand(lDeleteTrackCommand);
+    except
+      GCommandQueue.Free;
+    end;
+  end;
 end;
 
 {
@@ -1148,6 +1181,7 @@ begin
       FActionCreateTrack.Visible := False;
       FActionCreateMidiPattern.Visible := True;
       FActionDeletePattern.Visible := True;
+      FActionDeleteTrack.Visible := True;
     end
     else
     begin
@@ -1155,6 +1189,7 @@ begin
       FActionCreateTrack.Visible := True;
       FActionCreateMidiPattern.Visible := False;
       FActionDeletePattern.Visible := False;
+      FActionDeleteTrack.Visible := False;
     end;
 
     FPopupMenu.PopUp;

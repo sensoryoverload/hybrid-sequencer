@@ -534,6 +534,9 @@ begin
   begin
     GAudioStruct.Tracks.Remove(GAudioStruct.Tracks[i]);
   end;
+  //FAudioStructure.EndUpdate;
+
+  //FAudioStructure.BeginUpdate;
   ReadXMLFile(xDoc, 'teste.xml');
   try
     RootNode := xDoc.DocumentElement.FirstChild;
