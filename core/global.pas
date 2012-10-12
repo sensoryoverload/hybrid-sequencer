@@ -103,7 +103,6 @@ type
     procedure SetModifier(const AValue: TShiftState);
     procedure SetSelectedPatternGUI(const AValue: TObject);
   public
-
     constructor Create;
     destructor Destroy; override;
     function Load(AFileLocation: string): Boolean;
@@ -205,8 +204,6 @@ end;
 
 procedure TObjectMapper.AddMapping(AObject: TObject);
 begin
-  DBLog('Add model to mapping: ' + THybridPersistentModel(AObject).ObjectID);
-
   FMaps.AddObject(THybridPersistentModel(AObject).ObjectID, AObject);
 end;
 
@@ -225,19 +222,11 @@ procedure TObjectMapper.DeleteMapping(AGUID: string);
 var
   lIndex: Integer;
 begin
-  // Always go from high to low when deleting elements
   lIndex := FMaps.IndexOf(AGUID);
   if lIndex <> -1 then
   begin
     FMaps.Delete(lIndex);
   end;
-  {for lIndex := Pred(FMaps.Count) downto 0 do
-  begin
-    if THybridPersistentModel(FMaps[lIndex]).ObjectID = AGUID then
-    begin
-      break;
-    end;
-  end;}
 end;
 
 function TObjectMapper.GetModelObject(AGUID: string): THybridPersistentModel;
@@ -246,32 +235,13 @@ var
 begin
   Result := nil;
 
-  if AGUID = '' then
-  begin
-    DBLog('Internal error: empty AGUID in TObjectMapper.GetModelObject(AGUID: string)');
-  end
-  else
+  if AGUID <> '' then
   begin
     lIndex := FMaps.IndexOf(AGUID);
     if lIndex <> -1 then
     begin
       Result := THybridPersistentModel(FMaps.Objects[lIndex]);
     end;
-
-    {for lIndex := 0 to Pred(FMaps.Count) do
-    begin
-      if THybridPersistentModel(FMaps[lIndex]).ObjectID = AGUID then
-      begin
-        Result := THybridPersistentModel(FMaps[lIndex]);
-        break;
-      end;
-    end; }
-  end;
-
-  if Result = nil then
-  begin
-    // Model not found! Could be the topmost node as it has no parent
-    // or it is just missing
   end;
 end;
 
@@ -299,12 +269,9 @@ end;
 
 constructor TSettings.Create;
 begin
-  //inherited Create;
-
-  FIDCounter:= 0;
+  FIDCounter := 0;
   CursorPosition := 0;
   FMapToVisible := False;
-  //RecalculateSynchronize;
 end;
 
 destructor TSettings.Destroy;
@@ -357,10 +324,8 @@ end;
 
 procedure TSettings.Update(Subject: THybridPersistentModel);
 begin
-  //inherited UpdateGUI;
+  //
 end;
-
-{ TObjectLoader }
 
 { TWaveFile }
 

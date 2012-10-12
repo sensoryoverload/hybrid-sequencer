@@ -37,6 +37,24 @@ type
 
   TSampleKeyboardControl = class;
 
+  { TWaveEdit }
+
+  TWaveEdit = class(TCustomControl)
+  private
+    FData: PSingle;
+    FDataSize: Integer;
+    FZoom: Single;
+  protected
+    procedure EraseBackground(DC: HDC); override;
+    procedure Paint; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property Data: PSingle read FData write FData;
+    property DataSize: Integer read FDataSize write FDataSize;
+    property Zoom: Single read FZoom write FZoom;
+  end;
+
   { TSampleView }
 
   TSampleView = class(TFrame, IObserver)
@@ -127,8 +145,9 @@ type
     FModel: TSample;
     FObjectOwner: TObject;
     FEnabled: Boolean;
+    FWaveEdit: TWaveEdit;
 
-    FKeyboard: TSampleKeyboardControl;
+    //FKeyboard: TSampleKeyboardControl;
     procedure SetEnableControls(const AValue: Boolean);
   public
     { public declarations }
@@ -371,9 +390,13 @@ constructor TSampleView.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FKeyboard := TSampleKeyboardControl.Create(nil);
+  FWaveEdit := TWaveEdit.Create(Self);
+  FWaveEdit.Align := alClient;
+  FWaveEdit.Parent := gbWaveform;
+
+{  FKeyboard := TSampleKeyboardControl.Create(Self);
   FKeyboard.OnKeyChange := @DoKeyChange;
-  FKeyboard.Height := 50;
+  FKeyboard.Height := 50;}
 
 //  FKeyboard.Parent := Self;
  // FKeyboard.Align := alBottom;
@@ -452,15 +475,42 @@ end;
 
 destructor TSampleView.Destroy;
 begin
-  if Assigned(FKeyboard) then
-    FKeyboard.Free;
 
   inherited Destroy;
 end;
 
 procedure TSampleView.Update(Subject: THybridPersistentModel);
+var
+  lHasSample: Boolean;
 begin
   DBLog('start TSampleView.Update');
+
+  lHasSample := False;
+  if Assigned(TSample(Subject).Wave) then
+  begin
+    if Assigned(TSample(Subject).Wave.ChannelList) then
+    begin
+      if TSample(Subject).Wave.ChannelCount > 0 then
+      begin
+        if Assigned(TChannel(TSample(Subject).Wave.ChannelList[0])) then
+        begin
+          lHasSample := True;
+        end;
+      end;
+    end;
+  end;
+
+  if lHasSample then
+  begin
+    FWaveEdit.Data := TChannel(TSample(Subject).Wave.ChannelList[0]).Buffer;
+    FWaveEdit.DataSize := TChannel(TSample(Subject).Wave.ChannelList[0]).BufferSize;
+  end
+  else
+  begin
+    FWaveEdit.Data := GWaveformTable.Table[TSample(Subject).Osc1.WaveForm];
+    FWaveEdit.DataSize := LUT_SIZE;
+  end;
+  FWaveEdit.Invalidate;
 
   dcLpCutoff.Value := TSample(Subject).Filter.Frequency;
   dcLpResonance.Value := TSample(Subject).Filter.Resonance;
@@ -712,6 +762,63 @@ procedure TSampleKeyboardControl.MouseUp(Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   inherited MouseUp(Button, Shift, X, Y);
+end;
+
+{ TWaveEdit }
+
+constructor TWaveEdit.Create(Aowner: Tcomponent);
+begin
+  inherited Create(Aowner);
+
+  FZoom := 4;
+end;
+
+destructor TWaveEdit.Destroy;
+begin
+  inherited Destroy;
+end;
+
+procedure TWaveEdit.Erasebackground(Dc: Hdc);
+begin
+  //inherited Erasebackground(Dc);
+end;
+
+procedure TWaveEdit.Paint;
+var
+  bmp: TBitmap;
+  screenloop: integer;
+  zeroline: integer;
+begin
+  if (FDataSize > 0) and Assigned(FData) then
+  begin
+    bmp := TBitmap.Create;
+    try
+      bmp.Height := Height;
+      bmp.Width := Width;
+      zeroline := Height div 2;
+
+      bmp.Canvas.Pen.Color := clBlack;
+      bmp.Canvas.Clipping := False;
+      bmp.Canvas.Rectangle(0, 0, Width, Height);
+
+      bmp.Canvas.Pen.Color := clBlack;
+      bmp.Canvas.Line(0, zeroline, Width, zeroline);
+
+      bmp.Canvas.Pen.Color := clBlue;
+      bmp.Canvas.MoveTo(0, zeroline);
+
+      FZoom := (FDataSize / SizeOf(Single)) / bmp.Width;
+
+      for ScreenLoop := 0 to Pred(bmp.Width) do
+        bmp.Canvas.LineTo(ScreenLoop, Round(FData[Trunc(ScreenLoop * FZoom)] * zeroline) + zeroline);
+
+      Canvas.Draw(0, 0, bmp);
+    finally
+      bmp.Free;
+    end;
+  end;
+
+  inherited Paint;
 end;
 
 initialization

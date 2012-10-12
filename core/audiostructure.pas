@@ -111,6 +111,15 @@ type
   published
   end;
 
+  { TClearSessionCommand }
+
+  TClearSessionCommand = class(TAudioStructureCommand)
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+  end;
+
   { TAudioStructure }
 
   TAudioStructure = class(THybridPersistentModel)
@@ -173,6 +182,30 @@ implementation
 
 uses
   SimpleJack, sndfile, Wave, DOM, XMLWrite, XMLRead;
+
+{ TClearSessionCommand }
+
+procedure TClearSessionCommand.DoExecute;
+var
+  lTrackIndex: Integer;
+begin
+  FAudioStructure.BeginUpdate;
+
+  for lTrackIndex := Pred(GAudioStruct.Tracks.Count) downto 0 do
+  begin
+    if GAudioStruct.Tracks[lTrackIndex].TrackType <> ttMaster then
+    begin
+      GAudioStruct.Tracks.Remove(GAudioStruct.Tracks[lTrackIndex]);
+    end;
+  end;
+
+  FAudioStructure.EndUpdate;
+end;
+
+procedure TClearSessionCommand.DoRollback;
+begin
+  //
+end;
 
 { TAudioStructure }
 
@@ -534,9 +567,11 @@ begin
   begin
     GAudioStruct.Tracks.Remove(GAudioStruct.Tracks[i]);
   end;
-  //FAudioStructure.EndUpdate;
 
-  //FAudioStructure.BeginUpdate;
+  FAudioStructure.EndUpdate;
+
+  FAudioStructure.BeginUpdate;
+
   ReadXMLFile(xDoc, 'teste.xml');
   try
     RootNode := xDoc.DocumentElement.FirstChild;

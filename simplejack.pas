@@ -205,6 +205,7 @@ type
 
     procedure LoadGlobalSession;
     procedure SaveGlobalSession;
+    procedure ClearGlobalSession;
   protected
   public
     { public Declarations }
@@ -897,7 +898,7 @@ end;
 
 procedure TMainApp.MenuItem1Click(Sender: TObject);
 begin
-
+  ClearGlobalSession;
 end;
 
 procedure TMainApp.MenuItem2Click(Sender: TObject);
@@ -1509,6 +1510,22 @@ begin
     begin
       DBLog('HybridError: ' + e.Message);
       lSaveSession.Free;
+    end;
+  end;;
+end;
+
+procedure TMainApp.ClearGlobalSession;
+var
+  lClearSession: TClearSessionCommand;
+begin
+  lClearSession := TClearSessionCommand.Create('');
+  try
+    GCommandQueue.PushCommand(lClearSession);
+  except
+    on e: Exception do
+    begin
+      DBLog('HybridError: ' + e.Message);
+      lClearSession.Free;
     end;
   end;;
 end;

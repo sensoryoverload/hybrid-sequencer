@@ -53,25 +53,25 @@ object SampleView: TSampleView
       end
       object lblLowNote: TLabel
         Left = 41
-        Height = 14
+        Height = 13
         Top = -2
-        Width = 45
+        Width = 44
         Caption = 'Low note'
         ParentColor = False
       end
       object lblHighNote: TLabel
         Left = 43
-        Height = 14
+        Height = 13
         Top = 40
-        Width = 48
+        Width = 47
         Caption = 'High note'
         ParentColor = False
       end
       object lblBaseNote: TLabel
         Left = 99
-        Height = 14
+        Height = 13
         Top = -1
-        Width = 49
+        Width = 48
         Caption = 'Base note'
         ParentColor = False
       end
@@ -209,9 +209,9 @@ object SampleView: TSampleView
       end
       object lblLFO1: TLabel
         Left = 40
-        Height = 14
+        Height = 13
         Top = 0
-        Width = 27
+        Width = 26
         Caption = 'LFO1'
         Font.Style = [fsBold]
         ParentColor = False
@@ -219,9 +219,9 @@ object SampleView: TSampleView
       end
       object lblLFO2: TLabel
         Left = 40
-        Height = 14
+        Height = 13
         Top = 42
-        Width = 27
+        Width = 26
         Caption = 'LFO2'
         Font.Style = [fsBold]
         ParentColor = False
@@ -229,9 +229,9 @@ object SampleView: TSampleView
       end
       object lblLFO3: TLabel
         Left = 40
-        Height = 14
+        Height = 13
         Top = 80
-        Width = 27
+        Width = 26
         Caption = 'LFO3'
         Font.Style = [fsBold]
         ParentColor = False
@@ -454,9 +454,9 @@ object SampleView: TSampleView
       end
       object lblFilter: TLabel
         Left = 7
-        Height = 14
+        Height = 13
         Top = 0
-        Width = 29
+        Width = 28
         Caption = 'Filter'
         Font.Style = [fsBold]
         ParentColor = False
@@ -464,9 +464,9 @@ object SampleView: TSampleView
       end
       object lblAmp: TLabel
         Left = 6
-        Height = 14
+        Height = 13
         Top = 42
-        Width = 24
+        Width = 23
         Caption = 'Amp'
         Font.Style = [fsBold]
         ParentColor = False
@@ -474,9 +474,9 @@ object SampleView: TSampleView
       end
       object lblPitch: TLabel
         Left = 7
-        Height = 14
+        Height = 13
         Top = 80
-        Width = 27
+        Width = 26
         Caption = 'Pitch'
         Font.Style = [fsBold]
         ParentColor = False
@@ -538,9 +538,9 @@ object SampleView: TSampleView
       end
       object lblOSC2ModAmount1: TLabel
         Left = 2
-        Height = 14
+        Height = 13
         Top = 80
-        Width = 60
+        Width = 59
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False
@@ -675,9 +675,9 @@ object SampleView: TSampleView
       end
       object lblOSC1: TLabel
         Left = 4
-        Height = 14
+        Height = 13
         Top = 0
-        Width = 28
+        Width = 27
         Caption = 'Osc 1'
         Font.Style = [fsBold]
         ParentColor = False
@@ -694,9 +694,9 @@ object SampleView: TSampleView
       end
       object lblOSC1ModAmount: TLabel
         Left = 137
-        Height = 14
+        Height = 13
         Top = 0
-        Width = 60
+        Width = 59
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False
@@ -704,9 +704,9 @@ object SampleView: TSampleView
       end
       object lblOSC2: TLabel
         Left = 4
-        Height = 14
+        Height = 13
         Top = 42
-        Width = 28
+        Width = 27
         Caption = 'Osc 2'
         Font.Style = [fsBold]
         ParentColor = False
@@ -749,9 +749,9 @@ object SampleView: TSampleView
       end
       object lblOSC2ModAmount: TLabel
         Left = 137
-        Height = 14
+        Height = 13
         Top = 41
-        Width = 60
+        Width = 59
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False
@@ -776,9 +776,9 @@ object SampleView: TSampleView
       end
       object lblOSC3: TLabel
         Left = 4
-        Height = 14
+        Height = 13
         Top = 80
-        Width = 28
+        Width = 27
         Caption = 'Osc 3'
         Font.Style = [fsBold]
         ParentColor = False
@@ -821,9 +821,9 @@ object SampleView: TSampleView
       end
       object lblOSC3ModAmount: TLabel
         Left = 137
-        Height = 14
+        Height = 13
         Top = 79
-        Width = 60
+        Width = 59
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False
