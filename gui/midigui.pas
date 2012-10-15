@@ -306,7 +306,7 @@ type
 implementation
 
 uses
-  utils, appcolors, pattern;
+  utils, appcolors, pattern, sampler, ComCtrls;
 
 { TMidiNoteGUI }
 
@@ -379,13 +379,60 @@ begin
 end;
 
 procedure TMidiPatternGUI.FrameDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  lSucces: Boolean;
+  lNote: Integer;
+  lTreeView: TTreeView;
+  lCreateNoteCommand: TCreateNotesCommand;
+  lCreateSampleCommand: TCreateSampleCommand;
 begin
-  // TODO implement
   {
     Drop samples to midigrid instantely creates a sample in the current samplebank
     for this midigrid.
   }
-  writeln('TODO Drop samples to midigrid instantely creates a sample in the current samplebank for this midigrid ');
+  if Source is TTreeView then
+  begin
+    lTreeView := TTreeView(Source);
+
+    DBLog('lTreeView.Selected.Text: ' + lTreeView.Selected.Text);
+
+    lSucces := False;
+
+    lCreateNoteCommand := TCreateNotesCommand.Create(Self.ObjectID);
+    try
+      if FQuantizeValue = 0 then
+        lCreateNoteCommand.NoteLength := 22050
+      else
+        lCreateNoteCommand.NoteLength := Round(FQuantizeValue);
+
+      lNote := ConvertScreenToNote(Y - FNoteOffset);
+      lCreateNoteCommand.Note := lNote;
+      lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(X - FLocationOffset));
+
+      GCommandQueue.PushCommand(lCreateNoteCommand);
+
+      lSucces := True;
+    except
+      lCreateNoteCommand.Free;
+    end;
+
+    // Create sample in sampler based on dragged waveform
+    // set low, high and base -note to 'lCreateNoteCommand.Note' value
+    if lSucces then
+    begin
+      lCreateSampleCommand := TCreateSampleCommand.Create(TMidiPattern(FModel).SampleBank.ObjectID);
+      try
+        lCreateSampleCommand.SampleLocation := lTreeView.Selected.Text;
+        lCreateSampleCommand.LowNote := lNote;
+        lCreateSampleCommand.HighNote := lNote;
+        lCreateSampleCommand.BaseNote := lNote;
+
+        GCommandQueue.PushCommand(lCreateSampleCommand);
+      except
+        lCreateSampleCommand.Free;
+      end;
+    end;
+  end;
 end;
 
 procedure TMidiPatternGUI.FrameDragOver(Sender, Source: TObject; X, Y: Integer;

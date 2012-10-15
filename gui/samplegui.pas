@@ -789,33 +789,35 @@ var
   screenloop: integer;
   zeroline: integer;
 begin
-  if (FDataSize > 0) and Assigned(FData) then
-  begin
-    bmp := TBitmap.Create;
-    try
-      bmp.Height := Height;
-      bmp.Width := Width;
-      zeroline := Height div 2;
+  bmp := TBitmap.Create;
+  try
+    bmp.Height := Height;
+    bmp.Width := Width;
+    zeroline := Height div 2;
 
-      bmp.Canvas.Pen.Color := clBlack;
-      bmp.Canvas.Clipping := False;
-      bmp.Canvas.Rectangle(0, 0, Width, Height);
+    bmp.Canvas.Pen.Color := clBlack;
+    bmp.Canvas.Clipping := False;
+    bmp.Canvas.Rectangle(0, 0, Width, Height);
 
-      bmp.Canvas.Pen.Color := clBlack;
-      bmp.Canvas.Line(0, zeroline, Width, zeroline);
+    bmp.Canvas.Pen.Color := clBlack;
+    bmp.Canvas.Line(0, zeroline, Width, zeroline);
 
-      bmp.Canvas.Pen.Color := clBlue;
-      bmp.Canvas.MoveTo(0, zeroline);
+    bmp.Canvas.Pen.Color := clBlue;
+    bmp.Canvas.MoveTo(0, zeroline);
 
+    if (FDataSize > 0) and Assigned(FData) then
+    begin
       FZoom := (FDataSize / SizeOf(Single)) / bmp.Width;
 
       for ScreenLoop := 0 to Pred(bmp.Width) do
+      begin
         bmp.Canvas.LineTo(ScreenLoop, Round(FData[Trunc(ScreenLoop * FZoom)] * zeroline) + zeroline);
-
-      Canvas.Draw(0, 0, bmp);
-    finally
-      bmp.Free;
+      end;
     end;
+
+    Canvas.Draw(0, 0, bmp);
+  finally
+    bmp.Free;
   end;
 
   inherited Paint;

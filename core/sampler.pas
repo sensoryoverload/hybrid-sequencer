@@ -538,6 +538,9 @@ type
 
   TCreateSampleCommand = class(TSampleBankCommand)
   private
+    FBaseNote: Integer;
+    FHighNote: Integer;
+    FLowNote: Integer;
     FOldObjectID: string;
     FSampleLocation: string;
   protected
@@ -545,6 +548,9 @@ type
     procedure DoRollback; override;
   published
     property SampleLocation: string read FSampleLocation write FSampleLocation;
+    property LowNote: Integer read FLowNote write FLowNote;
+    property HighNote: Integer read FHighNote write FHighNote;
+    property BaseNote: Integer read FBaseNote write FBaseNote;
   end;
 
   {
@@ -1990,6 +1996,11 @@ begin
     begin
       lSample.SampleLocation := '- new -';
     end;
+
+    lSample.LowNote := FLowNote;
+    lSample.HighNote := FHighNote;
+    lSample.Key := FBaseNote;
+
     lSample.Initialize;
 
     FOldObjectID := lSample.ObjectID;
