@@ -9,7 +9,7 @@ interface
   a result. }
 
 uses
-  Classes, SysUtils, BGRABitmapTypes;
+  Classes, BGRABitmapTypes;
 
 { The median filter consist in calculating the median value of pixels. Here
   a square of 9x9 pixel is considered. The median allow to select the most
@@ -54,7 +54,9 @@ function FilterEmboss(bmp: TBGRACustomBitmap; angle: single): TBGRACustomBitmap;
 { Emboss highlight computes a sort of emboss with 45 degrees angle and
   with standard selection color (white/black and filled with blue) }
 function FilterEmbossHighlight(bmp: TBGRACustomBitmap;
-  FillSelection: boolean): TBGRACustomBitmap;
+  FillSelection: boolean; DefineBorderColor: TBGRAPixel): TBGRACustomBitmap;
+function FilterEmbossHighlightOffset(bmp: TBGRACustomBitmap;
+  FillSelection: boolean; DefineBorderColor: TBGRAPixel; var Offset: TPoint): TBGRACustomBitmap;
 
 { Normalize use the whole available range of values, making dark colors darkest possible
   and light colors lightest possible }
@@ -206,11 +208,11 @@ begin
         if diag1.cd < 0.3 then
         begin
           c1 := bmp.GetPixel(xb, yb);
-          c2 := bmp.GetPixel(xb + 1, yb + 1);
+          c2 := bmp.GetPixel(integer(xb + 1), integer(yb + 1));
           c := MergeBGRA(c1, c2);
           //restore
           Result.SetPixel(xb * 3 + 2, yb * 3 + 2, bmp.GetPixel(xb, yb));
-          Result.SetPixel(xb * 3 + 3, yb * 3 + 3, bmp.GetPixel(xb + 1, yb + 1));
+          Result.SetPixel(xb * 3 + 3, yb * 3 + 3, bmp.GetPixel(integer(xb + 1), integer(yb + 1)));
 
           if (diag1.sd < h1.sd) and (diag1.sd < v2.sd) then
             Result.SetPixel(xb * 3 + 3, yb * 3 + 2, c);
@@ -282,7 +284,7 @@ begin
         for dx := -1 to 1 do
           if (dx <> 0) or (dy <> 0) then
           begin
-            a_pixels[n] := bmp.GetPixel(xb + dx, yb + dy);
+            a_pixels[n] := bmp.GetPixel(integer(xb + dx), integer(yb + dy));
             Inc(n);
           end;
 
@@ -707,10 +709,10 @@ begin
     for xb := bounds.Left to bounds.Right - 1 do
     begin
       c[0] := bmp.getPixel(xb, yb);
-      c[1] := bmp.getPixel(xb + idx1, yb + idy1);
-      c[2] := bmp.getPixel(xb + idx2, yb + idy2);
-      c[3] := bmp.getPixel(xb + idx3, yb + idy3);
-      c[4] := bmp.getPixel(xb + idx4, yb + idy4);
+      c[1] := bmp.getPixel(integer(xb + idx1), integer(yb + idy1));
+      c[2] := bmp.getPixel(integer(xb + idx2), integer(yb + idy2));
+      c[3] := bmp.getPixel(integer(xb + idx3), integer(yb + idy3));
+      c[4] := bmp.getPixel(integer(xb + idx4), integer(yb + idy4));
 
       sumR   := 0;
       sumG   := 0;
@@ -766,31 +768,34 @@ end;
 
 { Like general emboss, but with fixed direction and automatic color with transparency }
 function FilterEmbossHighlight(bmp: TBGRACustomBitmap;
-  FillSelection: boolean): TBGRACustomBitmap;
+  FillSelection: boolean; DefineBorderColor: TBGRAPixel): TBGRACustomBitmap;
 var
   yb, xb: integer;
-  w:      array[1..6] of integer;
-  c:      array[0..6] of TBGRAPixel;
+  c0,c1,c2,c3,c4,c5,c6: integer;
 
-  i, bmpWidth, bmpHeight: integer;
+  bmpWidth, bmpHeight: integer;
   slope, h: byte;
   sum:      integer;
   tempPixel, highlight: TBGRAPixel;
   pdest, psrcUp, psrc, psrcDown: PBGRAPixel;
 
   bounds: TRect;
+  borderColorOverride: boolean;
+  borderColorLevel: integer;
+
+  currentBorderColor: integer;
 begin
-  for i := 1 to 3 do
-  begin
-    w[i]     := -1;
-    w[i + 3] := 1;
-  end;
+  borderColorOverride := DefineBorderColor.alpha <> 0;
+  borderColorLevel := DefineBorderColor.red;
 
   bmpWidth  := bmp.Width;
   bmpHeight := bmp.Height;
   Result    := bmp.NewBitmap(bmpWidth, bmpHeight);
 
-  bounds := bmp.GetImageBounds(cRed);
+  if borderColorOverride then
+    bounds := bmp.GetImageBounds(cRed, borderColorLevel)
+  else
+    bounds := bmp.GetImageBounds(cRed);
   if (bounds.Right <= bounds.Left) or (bounds.Bottom <= Bounds.Top) then
     exit;
   bounds.Left   := max(0, bounds.Left - 1);
@@ -798,6 +803,7 @@ begin
   bounds.Right  := min(bmpWidth, bounds.Right + 1);
   bounds.Bottom := min(bmpHeight, bounds.Bottom + 1);
 
+  currentBorderColor := borderColorLevel;
   for yb := bounds.Top to bounds.Bottom - 1 do
   begin
     pdest := Result.scanline[yb] + bounds.Left;
@@ -814,61 +820,52 @@ begin
 
     for xb := bounds.Left to bounds.Right - 1 do
     begin
-      c[0] := psrc^;
+      c0 := pbyte(psrc)^;
+      if not borderColorOverride then currentBorderColor := c0;
       if (xb = 0) then
       begin
-        c[1] := c[0];
-        c[2] := c[0];
+        c1 := currentBorderColor;
+        c2 := currentBorderColor;
       end
       else
       begin
         if psrcUp <> nil then
-          c[1] := (psrcUp - 1)^
+          c1 := pbyte(psrcUp - 1)^
         else
-          c[1] := c[0];
-        c[2] := (psrc - 1)^;
+          c1 := currentBorderColor;
+        c2 := pbyte(psrc - 1)^;
       end;
       if psrcUp <> nil then
       begin
-        c[3] := psrcUp^;
+        c3 := pbyte(psrcUp)^;
         Inc(psrcUp);
       end
       else
-        c[3] := c[0];
+       c3 := currentBorderColor;
 
       if (xb = bmpWidth - 1) then
       begin
-        c[4] := c[0];
-        c[5] := c[0];
+        c4 := currentBorderColor;
+        c5 := currentBorderColor;
       end
       else
       begin
         if psrcDown <> nil then
-          c[4] := (psrcDown + 1)^
+          c4 := pbyte(psrcDown + 1)^
         else
-          c[4] := c[0];
-        c[5] := (psrc + 1)^;
+          c4 := currentBorderColor;
+        c5 := pbyte(psrc + 1)^;
       end;
       if psrcDown <> nil then
       begin
-        c[6] := psrcDown^;
+        c6 := pbyte(psrcDown)^;
         Inc(psrcDown);
       end
       else
-        c[6] := c[0];
+        c6 := currentBorderColor;
       Inc(psrc);
 
-     { c[1] := bmp.getPixel(xb-1,yb-1);
-       c[2] := bmp.getPixel(xb-1,yb);
-       c[3] := bmp.getPixel(xb,yb-1);
-       c[4] := bmp.getPixel(xb+1,yb+1);
-       c[5] := bmp.getPixel(xb+1,yb);
-       c[6] := bmp.getPixel(xb,yb+1); }
-
-      sum := 0;
-      for i := 1 to 6 do
-        sum += (c[i].red - c[0].red) * w[i];
-
+      sum := c4+c5+c6-c1-c2-c3;
       sum := 128 + sum div 3;
       if sum > 255 then
         slope := 255
@@ -877,7 +874,147 @@ begin
         slope := 1
       else
         slope := sum;
-      h := c[0].red;
+      h := c0;
+
+      tempPixel.red   := slope;
+      tempPixel.green := slope;
+      tempPixel.blue  := slope;
+      tempPixel.alpha := abs(slope - 128) * 2;
+
+      if fillSelection then
+      begin
+        highlight := BGRA(h shr 2, h shr 1, h, h shr 1);
+        if tempPixel.red < highlight.red then
+          tempPixel.red := highlight.red;
+        if tempPixel.green < highlight.green then
+          tempPixel.green := highlight.green;
+        if tempPixel.blue < highlight.blue then
+          tempPixel.blue := highlight.blue;
+        if tempPixel.alpha < highlight.alpha then
+          tempPixel.alpha := highlight.alpha;
+      end;
+
+      pdest^ := tempPixel;
+      Inc(pdest);
+    end;
+  end;
+  Result.InvalidateBitmap;
+end;
+
+function FilterEmbossHighlightOffset(bmp: TBGRACustomBitmap;
+  FillSelection: boolean; DefineBorderColor: TBGRAPixel; var Offset: TPoint): TBGRACustomBitmap;
+var
+  yb, xb: integer;
+  c0,c1,c2,c3,c4,c5,c6: integer;
+
+  bmpWidth, bmpHeight: integer;
+  slope, h: byte;
+  sum:      integer;
+  tempPixel, highlight: TBGRAPixel;
+  pdest, psrcUp, psrc, psrcDown: PBGRAPixel;
+
+  bounds: TRect;
+  borderColorOverride: boolean;
+  borderColorLevel: integer;
+
+  currentBorderColor: integer;
+begin
+  borderColorOverride := DefineBorderColor.alpha <> 0;
+  borderColorLevel := DefineBorderColor.red;
+
+  bmpWidth  := bmp.Width;
+  bmpHeight := bmp.Height;
+
+  if borderColorOverride then
+    bounds := bmp.GetImageBounds(cRed, borderColorLevel)
+  else
+    bounds := bmp.GetImageBounds(cRed);
+  if (bounds.Right <= bounds.Left) or (bounds.Bottom <= Bounds.Top) then
+  begin
+    Result    := bmp.NewBitmap(0, 0);
+    exit;
+  end;
+  bounds.Left   := max(0, bounds.Left - 1);
+  bounds.Top    := max(0, bounds.Top - 1);
+  bounds.Right  := min(bmpWidth, bounds.Right + 1);
+  bounds.Bottom := min(bmpHeight, bounds.Bottom + 1);
+
+  Result    := bmp.NewBitmap(bounds.Right-Bounds.Left+1, bounds.Bottom-Bounds.Top+1);
+  inc(Offset.X, bounds.Left);
+  inc(Offset.Y, bounds.Top);
+
+  currentBorderColor := borderColorLevel;
+  for yb := bounds.Top to bounds.Bottom - 1 do
+  begin
+    pdest := Result.scanline[yb-Bounds.Top];
+
+    if yb > 0 then
+      psrcUp := bmp.Scanline[yb - 1] + bounds.Left
+    else
+      psrcUp := nil;
+    psrc := bmp.scanline[yb] + bounds.Left;
+    if yb < bmpHeight - 1 then
+      psrcDown := bmp.scanline[yb + 1] + bounds.Left
+    else
+      psrcDown := nil;
+
+    for xb := bounds.Left to bounds.Right - 1 do
+    begin
+      c0 := pbyte(psrc)^;
+      if not borderColorOverride then currentBorderColor := c0;
+      if (xb = 0) then
+      begin
+        c1 := currentBorderColor;
+        c2 := currentBorderColor;
+      end
+      else
+      begin
+        if psrcUp <> nil then
+          c1 := pbyte(psrcUp - 1)^
+        else
+          c1 := currentBorderColor;
+        c2 := pbyte(psrc - 1)^;
+      end;
+      if psrcUp <> nil then
+      begin
+        c3 := pbyte(psrcUp)^;
+        Inc(psrcUp);
+      end
+      else
+       c3 := currentBorderColor;
+
+      if (xb = bmpWidth - 1) then
+      begin
+        c4 := currentBorderColor;
+        c5 := currentBorderColor;
+      end
+      else
+      begin
+        if psrcDown <> nil then
+          c4 := pbyte(psrcDown + 1)^
+        else
+          c4 := currentBorderColor;
+        c5 := pbyte(psrc + 1)^;
+      end;
+      if psrcDown <> nil then
+      begin
+        c6 := pbyte(psrcDown)^;
+        Inc(psrcDown);
+      end
+      else
+        c6 := currentBorderColor;
+      Inc(psrc);
+
+      sum := c4+c5+c6-c1-c2-c3;
+      sum := 128 + sum div 3;
+      if sum > 255 then
+        slope := 255
+      else
+      if sum < 1 then
+        slope := 1
+      else
+        slope := sum;
+      h := c0;
 
       tempPixel.red   := slope;
       tempPixel.green := slope;
@@ -1455,7 +1592,7 @@ begin
       for dy := -1 to 1 do
         for dx := -1 to 1 do
         begin
-          a_pixels[n] := bmp.GetPixel(xb + dx, yb + dy);
+          a_pixels[n] := bmp.GetPixel(integer(xb + dx), integer(yb + dy));
           if a_pixels[n].alpha = 0 then
             a_pixels[n] := BGRAPixelTransparent;
           Inc(n);

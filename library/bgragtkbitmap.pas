@@ -66,10 +66,6 @@ uses BGRABitmapTypes, LCLType,
   {$ENDIF}
   FPImage;
 
-{$IFDEF LCLgtk2}
-type TGtkDeviceContext = TGtk2DeviceContext;
-{$ENDIF}
-
 {procedure TBGRAGtkBitmap.SlowDrawTransparent(ABitmap: TBGRADefaultBitmap;
   ACanvas: TCanvas; ARect: TRect);
 var

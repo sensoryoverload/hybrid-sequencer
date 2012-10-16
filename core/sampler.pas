@@ -1997,11 +1997,11 @@ begin
       lSample.SampleLocation := '- new -';
     end;
 
+    lSample.Initialize;
+
     lSample.LowNote := FLowNote;
     lSample.HighNote := FHighNote;
     lSample.Key := FBaseNote;
-
-    lSample.Initialize;
 
     FOldObjectID := lSample.ObjectID;
 

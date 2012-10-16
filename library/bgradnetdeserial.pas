@@ -154,7 +154,7 @@ type
     function GetBoxedValue(obj: TCustomSerializedObject; index: integer): string;
     procedure LoadFromStream(Stream: TStream);
     procedure LoadFromFile(filename: string);
-    function ToString: string;
+    function ToString: string; override;
     constructor Create;
     destructor Destroy; override;
     function GetTypeOfClassObject(idObject: longword): integer;
@@ -246,6 +246,8 @@ begin
   stream.Read(Result, sizeof(Result));
   Result := LEtoN(Result);
 end;
+
+{$hints on}
 
 function GetFieldTypeSize(const fieldType: TFieldType): longword;
 begin
@@ -655,8 +657,6 @@ constructor TSerializedValue.Create(AContainer: TDotNetDeserialization;
 begin
   inherited Create(AContainer,AItemType,1);
 end;
-
-{$hints on}
 
 { TDotNetDeserialization }
 

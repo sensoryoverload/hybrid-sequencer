@@ -11,7 +11,7 @@ interface
   A poly-polyline consists in a series of polylines, defined by polyline points separated by empty points (see EmptyPointF) }
 
 uses
-  Classes, SysUtils, Graphics, BGRABitmapTypes;
+  SysUtils, Graphics, BGRABitmapTypes;
 
 var   //predefined pen styles
   SolidPenStyle, DashPenStyle, DotPenStyle, DashDotPenStyle, DashDotDotPenStyle, ClearPenStyle: TBGRAPenStyle;
@@ -44,14 +44,17 @@ function ComputeWidePolyPolylinePoints(const linepts: array of TPointF; width: s
 
 //aliased version
 procedure BGRADrawLineAliased(dest: TBGRACustomBitmap; x1, y1, x2, y2: integer; c: TBGRAPixel; DrawLastPixel: boolean);
+procedure BGRAEraseLineAliased(dest: TBGRACustomBitmap; x1, y1, x2, y2: integer; alpha: byte; DrawLastPixel: boolean);
 
 //antialiased version
 procedure BGRADrawLineAntialias(dest: TBGRACustomBitmap; x1, y1, x2, y2: integer;
   c: TBGRAPixel; DrawLastPixel: boolean);
+procedure BGRAEraseLineAntialias(dest: TBGRACustomBitmap; x1, y1, x2, y2: integer;
+  calpha: byte; DrawLastPixel: boolean);
 
 //antialiased version with bicolor dashes (to draw a frame)
 procedure BGRADrawLineAntialias(dest: TBGRACustomBitmap; x1, y1, x2, y2: integer;
-  c1, c2: TBGRAPixel; dashLen: integer; DrawLastPixel: boolean);
+  c1, c2: TBGRAPixel; dashLen: integer; DrawLastPixel: boolean; var DashPos: integer);
 
 //length added to ensure accepable alpha join (using TBGRAMultishapeFiller is still better)
 function GetAlphaJoinFactor(alpha: byte): single;
@@ -144,6 +147,81 @@ begin
     dest.DrawPixel(X2, Y2, c);
 end;
 
+procedure BGRAEraseLineAliased(dest: TBGRACustomBitmap; x1, y1, x2,
+  y2: integer; alpha: byte; DrawLastPixel: boolean);
+var
+  Y, X: integer;
+  DX, DY, SX, SY, E: integer;
+begin
+
+  if (Y1 = Y2) and (X1 = X2) then
+  begin
+    if DrawLastPixel then
+      dest.ErasePixel(X1, Y1, alpha);
+    Exit;
+  end;
+
+  DX := X2 - X1;
+  DY := Y2 - Y1;
+
+  if DX < 0 then
+  begin
+    SX := -1;
+    DX := -DX;
+  end
+  else
+    SX := 1;
+
+  if DY < 0 then
+  begin
+    SY := -1;
+    DY := -DY;
+  end
+  else
+    SY := 1;
+
+  DX := DX shl 1;
+  DY := DY shl 1;
+
+  X := X1;
+  Y := Y1;
+  if DX > DY then
+  begin
+    E := DY - DX shr 1;
+
+    while X <> X2 do
+    begin
+      dest.ErasePixel(X, Y, alpha);
+      if E >= 0 then
+      begin
+        Inc(Y, SY);
+        Dec(E, DX);
+      end;
+      Inc(X, SX);
+      Inc(E, DY);
+    end;
+  end
+  else
+  begin
+    E := DX - DY shr 1;
+
+    while Y <> Y2 do
+    begin
+      dest.ErasePixel(X, Y, alpha);
+      if E >= 0 then
+      begin
+        Inc(X, SX);
+        Dec(E, DY);
+      end;
+      Inc(Y, SY);
+      Inc(E, DX);
+    end;
+  end;
+
+  if DrawLastPixel then
+    dest.ErasePixel(X2, Y2, alpha);
+end;
+
 procedure BGRADrawLineAntialias(dest: TBGRACustomBitmap; x1, y1, x2, y2: integer;
   c: TBGRAPixel; DrawLastPixel: boolean);
 var
@@ -226,19 +304,103 @@ begin
     dest.DrawPixel(X2, Y2, c);
 end;
 
+procedure BGRAEraseLineAntialias(dest: TBGRACustomBitmap; x1, y1, x2,
+  y2: integer; calpha: byte; DrawLastPixel: boolean);
+var
+  Y, X:  integer;
+  DX, DY, SX, SY, E: integer;
+  alpha: single;
+begin
+
+  if (Y1 = Y2) and (X1 = X2) then
+  begin
+    if DrawLastPixel then
+      dest.ErasePixel(X1, Y1, calpha);
+    Exit;
+  end;
+
+  DX := X2 - X1;
+  DY := Y2 - Y1;
+
+  if DX < 0 then
+  begin
+    SX := -1;
+    DX := -DX;
+  end
+  else
+    SX := 1;
+
+  if DY < 0 then
+  begin
+    SY := -1;
+    DY := -DY;
+  end
+  else
+    SY := 1;
+
+  DX := DX shl 1;
+  DY := DY shl 1;
+
+  X := X1;
+  Y := Y1;
+
+  if DX > DY then
+  begin
+    E := 0;
+
+    while X <> X2 do
+    begin
+      alpha := 1 - E / DX;
+      dest.ErasePixel(X, Y, round(calpha * sqrt(alpha)));
+      dest.ErasePixel(X, Y + SY, round(calpha * sqrt(1 - alpha)));
+      Inc(E, DY);
+      if E >= DX then
+      begin
+        Inc(Y, SY);
+        Dec(E, DX);
+      end;
+      Inc(X, SX);
+    end;
+  end
+  else
+  begin
+    E := 0;
+
+    while Y <> Y2 do
+    begin
+      alpha := 1 - E / DY;
+      dest.ErasePixel(X, Y, round(calpha * sqrt(alpha)));
+      dest.ErasePixel(X + SX, Y, round(calpha * sqrt(1 - alpha)));
+      Inc(E, DX);
+      if E >= DY then
+      begin
+        Inc(X, SX);
+        Dec(E, DY);
+      end;
+      Inc(Y, SY);
+    end;
+  end;
+  if DrawLastPixel then
+    dest.ErasePixel(X2, Y2, calpha);
+end;
+
 procedure BGRADrawLineAntialias(dest: TBGRACustomBitmap; x1, y1, x2, y2: integer;
-  c1, c2: TBGRAPixel; dashLen: integer; DrawLastPixel: boolean);
+  c1, c2: TBGRAPixel; dashLen: integer; DrawLastPixel: boolean; var DashPos: integer);
 var
   Y, X:  integer;
   DX, DY, SX, SY, E: integer;
   alpha: single;
   c:     TBGRAPixel;
-  DashPos: integer;
 begin
   if (c1.alpha=0) and (c2.alpha=0) then exit;
+  if DashLen <= 0 then
+  begin
+    BGRADrawLineAntialias(dest,x1,y1,x2,y2,MergeBGRA(c1,c2),DrawLastPixel);
+    exit;
+  end;
 
-  c := c1;
-  DashPos := 0;
+  DashPos := PositiveMod(DashPos,DashLen+DashLen);
+  if DashPos < DashLen then c := c1 else c := c2;
 
   if (Y1 = Y2) and (X1 = X2) then
   begin
@@ -331,7 +493,11 @@ begin
     end;
   end;
   if DrawLastPixel then
+  begin
     dest.DrawPixel(X2, Y2, c);
+    inc(DashPos);
+    if DashPos = DashLen + DashLen then DashPos := 0;
+  end;
 end;
 
 function GetAlphaJoinFactor(alpha: byte): single;

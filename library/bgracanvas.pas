@@ -5,7 +5,7 @@ unit BGRACanvas;
 interface
 
 uses
-  Classes, SysUtils, BGRABitmapTypes, Graphics, GraphType, FPImage, Types, FPCanvas;
+  Classes, SysUtils, Graphics, GraphType, Types, FPImage, FPCanvas, BGRABitmapTypes;
 
 type
 
@@ -77,14 +77,20 @@ type
   { TBGRAFont }
 
   TBGRAFont = class(TBGRAColoredObject)
+  private
+    function GetAntialiasing: Boolean;
+    procedure SetAntialiasing(const AValue: Boolean);
+  public
     Name:   string;
     Height: Integer;
     Style:  TFontStyles;
-    Antialiasing: Boolean;
+    Quality : TBGRAFontQuality;
     Orientation:  integer;
     Texture:      IBGRAScanner;
     constructor Create;
     procedure Assign(Source: TObject); override;
+    property Antialiasing: Boolean read GetAntialiasing write SetAntialiasing;
+
   end;
 
   { TBGRACanvas }
@@ -182,6 +188,7 @@ type
                          Filled: boolean = False;
                          Continuous: boolean = False);
     procedure Draw(X,Y: Integer; SrcBitmap: TBGRACustomBitmap);
+    procedure CopyRect(X,Y: Integer; SrcBitmap: TBGRACustomBitmap; SrcRect: TRect);
     procedure StretchDraw(DestRect: TRect; SrcBitmap: TBGRACustomBitmap; HorizFlip: Boolean = false; VertFlip: Boolean = false);
     procedure DrawFocusRect(bounds: TRect);
     procedure CopyRect(Dest: TRect; SrcBmp: TBGRACustomBitmap;
@@ -213,6 +220,17 @@ implementation
 uses BGRAPen, BGRAPath, BGRAPolygon, BGRAPolygonAliased, Math;
 
 { TBGRAFont }
+
+function TBGRAFont.GetAntialiasing: Boolean;
+begin
+  result := Quality <> fqSystem;
+end;
+
+procedure TBGRAFont.SetAntialiasing(const AValue: Boolean);
+begin
+  if AValue and not Antialiasing then
+    Quality := fqFineAntialiasing;
+end;
 
 constructor TBGRAFont.Create;
 begin
@@ -248,7 +266,7 @@ begin
     Name := sf.Name;
     Height := sf.Height;
     Style := sf.Style;
-    Antialiasing := sf.Antialiasing;
+    Quality := sf.Quality;
     Orientation := sf.Orientation;
     Texture := sf.Texture;
   end else
@@ -624,7 +642,7 @@ begin
   FBitmap.FontName := Font.Name;
   FBitmap.FontHeight := -Font.Height;
   FBitmap.FontStyle := Font.Style;
-  FBitmap.FontAntialias := Font.Antialiasing;
+  FBitmap.FontQuality := Font.Quality;
   FBitmap.FontOrientation := Font.Orientation;
 end;
 
@@ -1400,6 +1418,12 @@ begin
   FBitmap.PutImage(X,Y,SrcBitmap,dmDrawWithTransparency);
 end;
 
+procedure TBGRACanvas.CopyRect(X, Y: Integer; SrcBitmap: TBGRACustomBitmap;
+  SrcRect: TRect);
+begin
+  FBitmap.PutImagePart(X,Y,SrcBitmap,SrcRect,dmDrawWithTransparency);
+end;
+
 procedure TBGRACanvas.StretchDraw(DestRect: TRect; SrcBitmap: TBGRACustomBitmap; HorizFlip: Boolean = false; VertFlip: Boolean = false);
 var Stretched: TBGRACustomBitmap;
     temp: Integer;
@@ -1482,6 +1506,12 @@ var TempBmp: TBGRACustomBitmap;
   Temp: Integer;
   FlipHoriz,FlipVert: Boolean;
 begin
+  if (Dest.Right-Dest.Left = Source.Right-Source.Left) and (Dest.Bottom-Dest.Top = Source.Bottom-Source.Top) and
+     (Dest.Right > Dest.Left) and (Dest.Bottom > Dest.Top) then
+  begin
+    CopyRect(Dest.Left,Dest.Top, SrcBmp, Source);
+    exit;
+  end;
   if (Source.Left = Source.Right) or (Source.Bottom = Source.Top) or
     (Dest.Left = Dest.Right) or (Dest.Bottom = Dest.Top) then exit;
   if Source.Left > Source.Right then
@@ -1500,8 +1530,7 @@ begin
     FlipVert := True;
   end else
     FlipVert := false;
-  TempBmp := FBitmap.NewBitmap(Source.Right-Source.Left,Source.Bottom-Source.Top);
-  TempBmp.PutImage(-Source.Left,-Source.Top, SrcBmp, dmSet);
+  TempBmp := SrcBmp.GetPart(Source);
   StretchDraw(Dest,TempBmp,FlipHoriz,FlipVert);
   TempBmp.Free;
 end;
