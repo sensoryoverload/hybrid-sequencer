@@ -267,14 +267,16 @@
         <Filename Value="core/sampler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sampler"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="15"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1982"/>
-        <CursorPos X="1" Y="1988"/>
+        <TopLine Value="2459"/>
+        <CursorPos X="1" Y="2486"/>
         <UsageCount Value="212"/>
-        <Bookmarks Count="2">
+        <Bookmarks Count="3">
           <Item0 X="5" Y="2741" ID="6"/>
           <Item1 X="10" Y="1857" ID="7"/>
+          <Item2 X="1" Y="2563" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit21>
@@ -318,8 +320,8 @@
         <UnitName Value="bankgui"/>
         <EditorIndex Value="11"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="258"/>
-        <CursorPos X="1" Y="275"/>
+        <TopLine Value="221"/>
+        <CursorPos X="1" Y="238"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -380,7 +382,7 @@
         <UnitName Value="samplegui"/>
         <EditorIndex Value="14"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="802"/>
+        <TopLine Value="784"/>
         <CursorPos X="26" Y="808"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
@@ -401,10 +403,12 @@
         <Filename Value="common/fx.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fx"/>
+        <EditorIndex Value="16"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="246"/>
-        <CursorPos X="9" Y="252"/>
+        <TopLine Value="178"/>
+        <CursorPos X="10" Y="203"/>
         <UsageCount Value="211"/>
+        <Loaded Value="True"/>
       </Unit32>
       <Unit33>
         <Filename Value="gui/optionsgui.pas"/>
@@ -571,7 +575,6 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="wavepatterncontrolgui"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="246"/>
@@ -622,9 +625,8 @@
         <TopLine Value="1758"/>
         <CursorPos X="1" Y="1785"/>
         <UsageCount Value="204"/>
-        <Bookmarks Count="2">
+        <Bookmarks Count="1">
           <Item0 X="12" Y="1810" ID="2"/>
-          <Item1 X="1" Y="1744" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit54>
@@ -972,7 +974,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="66"/>
         <CursorPos X="58" Y="102"/>
-        <UsageCount Value="169"/>
+        <UsageCount Value="170"/>
       </Unit95>
       <Unit96>
         <Filename Value="../../lazarus/lcl/include/treeview.inc"/>
@@ -1005,124 +1007,124 @@
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1763" Column="57" TopLine="1721"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2324" Column="40" TopLine="2298"/>
       </Position1>
       <Position2>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1768" Column="55" TopLine="1726"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2413" Column="21" TopLine="2389"/>
       </Position2>
       <Position3>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1824" Column="1" TopLine="1840"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2434" Column="21" TopLine="2392"/>
       </Position3>
       <Position4>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2460" Column="23" TopLine="2433"/>
       </Position4>
       <Position5>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="39" Column="11" TopLine="1"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2527" Column="25" TopLine="2504"/>
       </Position5>
       <Position6>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="40" Column="11" TopLine="1"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2529" Column="28" TopLine="2504"/>
       </Position6>
       <Position7>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="41" Column="11" TopLine="1"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2599" Column="70" TopLine="2576"/>
       </Position7>
       <Position8>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="42" Column="11" TopLine="1"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2602" Column="50" TopLine="2576"/>
       </Position8>
       <Position9>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="43" Column="11" TopLine="1"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2626" Column="1" TopLine="2577"/>
       </Position9>
       <Position10>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="46" Column="12" TopLine="4"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2486" Column="29" TopLine="2469"/>
       </Position10>
       <Position11>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="115" Column="21" TopLine="74"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="564" Column="23" TopLine="539"/>
       </Position11>
       <Position12>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="116" Column="21" TopLine="74"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="98" Column="22" TopLine="72"/>
       </Position12>
       <Position13>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="115" Column="1" TopLine="87"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="162" Column="21" TopLine="135"/>
       </Position13>
       <Position14>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="474" Column="26" TopLine="451"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="193" Column="21" TopLine="163"/>
       </Position14>
       <Position15>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="263" Column="1" TopLine="246"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="262" Column="36" TopLine="223"/>
       </Position15>
       <Position16>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="264" Column="1" TopLine="247"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="271" Column="21" TopLine="229"/>
       </Position16>
       <Position17>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="263" Column="1" TopLine="246"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="398" Column="22" TopLine="356"/>
       </Position17>
       <Position18>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="262" Column="1" TopLine="245"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="417" Column="22" TopLine="375"/>
       </Position18>
       <Position19>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="261" Column="1" TopLine="244"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="611" Column="22" TopLine="570"/>
       </Position19>
       <Position20>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="260" Column="1" TopLine="243"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="644" Column="22" TopLine="602"/>
       </Position20>
       <Position21>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="259" Column="1" TopLine="242"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="661" Column="22" TopLine="619"/>
       </Position21>
       <Position22>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="258" Column="1" TopLine="241"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1256" Column="35" TopLine="1229"/>
       </Position22>
       <Position23>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="257" Column="1" TopLine="240"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1451" Column="34" TopLine="1427"/>
       </Position23>
       <Position24>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="256" Column="1" TopLine="239"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1485" Column="41" TopLine="1464"/>
       </Position24>
       <Position25>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="255" Column="1" TopLine="238"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1550" Column="34" TopLine="1529"/>
       </Position25>
       <Position26>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="254" Column="1" TopLine="237"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1893" Column="30" TopLine="1866"/>
       </Position26>
       <Position27>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="253" Column="1" TopLine="236"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1900" Column="53" TopLine="1866"/>
       </Position27>
       <Position28>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="252" Column="1" TopLine="235"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2134" Column="36" TopLine="2113"/>
       </Position28>
       <Position29>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="264" Column="1" TopLine="247"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2261" Column="32" TopLine="2348"/>
       </Position29>
       <Position30>
-        <Filename Value="gui/wavepatterncontrolgui.pas"/>
-        <Caret Line="263" Column="1" TopLine="246"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2369" Column="21" TopLine="2349"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
@@ -1168,6 +1170,15 @@
     <LCLWidgetType Value="gtk2"/>
   </CompilerOptions>
   <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="gui/bankgui.pas"/>
+        <Line Value="203"/>
+      </Item1>
+    </BreakPoints>
     <Watches Count="2">
       <Item1>
         <Expression Value="lMidiNote.Fobjectid"/>

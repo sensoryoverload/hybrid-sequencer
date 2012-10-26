@@ -201,6 +201,9 @@ begin
     lCreateSampleCommand := TCreateSampleCommand.Create(ObjectID);
     try
       lCreateSampleCommand.SampleLocation := lTreeView.Selected.Text;
+      lCreateSampleCommand.BaseNote := 48;
+      lCreateSampleCommand.LowNote := 0;
+      lCreateSampleCommand.HighNote := 127;
 
       GCommandQueue.PushCommand(lCreateSampleCommand);
     except
@@ -229,6 +232,9 @@ begin
 
     // Get tbank object
     lCreateSampleCommand := TCreateSampleCommand.Create(ObjectID);
+    lCreateSampleCommand.BaseNote := 48;
+    lCreateSampleCommand.LowNote := 0;
+    lCreateSampleCommand.HighNote := 127;
     try
       lCreateSampleCommand.SampleLocation := lTreeView.Selected.Text;
 
