@@ -16,11 +16,12 @@ type
     btnDouble: TButton;
     btnHalf: TButton;
     cbPitchAlgo: TComboBox;
+    cbQuantize: TComboBox;
     edtFilename: TLabeledEdit;
     fspnPitch: TFloatSpinEdit;
-    gbAudioTrackSettings: TGroupBox;
     Label1: TLabel;
     lblPitch: TLabel;
+    Panel1: TPanel;
     spnBeatsPerMinute: TSpinEdit;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
@@ -29,6 +30,7 @@ type
     procedure btnDoubleClick(Sender: TObject);
     procedure btnHalfClick(Sender: TObject);
     procedure cbPitchAlgoChange(Sender: TObject);
+    procedure cbQuantizeChange(Sender: TObject);
     procedure tbLatencyChange(Sender: TObject);
     procedure tbThresholdMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -124,6 +126,16 @@ begin
   if cbPitchAlgo.ItemIndex <> Integer(TWavePattern(Subject).PitchAlgorithm) then
   begin
     cbPitchAlgo.ItemIndex := Integer(TWavePattern(Subject).PitchAlgorithm);
+  end;
+
+  if cbQuantize.ItemIndex <> Integer(TWavePattern(Subject).QuantizeSetting) then
+  begin
+    cbQuantize.ItemIndex := Integer(TWavePattern(Subject).QuantizeSetting);
+  end;
+
+  if fspnPitch.Value <> TWavePattern(Subject).Pitch then
+  begin
+    fspnPitch.Value := TWavePattern(Subject).Pitch;
   end;
 
   DBLog('end TWavePatternControl.Update');
@@ -242,6 +254,21 @@ begin
   end;
 end;
 
+procedure TWavePatternControlGUI.cbQuantizeChange(Sender: TObject);
+var
+  lChangeQuantizeCommand: TChangeQuantizeCommand;
+begin
+  lChangeQuantizeCommand := TChangeQuantizeCommand.Create(FObjectID);
+  try
+    lChangeQuantizeCommand.Value := TQuantizeSettings(cbQuantize.ItemIndex);
+
+    GCommandQueue.PushCommand(lChangeQuantizeCommand);
+  except
+    lChangeQuantizeCommand.Free;
+  end;
+
+end;
+
 procedure TWavePatternControlGUI.tbLatencyChange(Sender: TObject);
 var
   FChangeLatencyCommand: TChangeLatencyCommand;
@@ -311,6 +338,14 @@ begin
   cbPitchAlgo.Items.Add('FFT');
   cbPitchAlgo.Items.Add('Rubberband');
   cbPitchAlgo.Items.Add('Pitched');
+
+  cbQuantize.Items.Add('-');
+  cbQuantize.Items.Add('4 Beats');
+  cbQuantize.Items.Add('1 Beat');
+  cbQuantize.Items.Add('1/4 Beat');
+  cbQuantize.Items.Add('1/8 Beat');
+  cbQuantize.Items.Add('1/16 Beat');
+  cbQuantize.Items.Add('1/32 Beat');
 
   FWaveGUI := TWaveGUI.Create(nil);
   FWaveGUI.Align := alClient;

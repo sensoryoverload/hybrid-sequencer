@@ -1319,7 +1319,7 @@ begin
       (abs(FMouseDownX - X) > 5) or (abs(FMouseDownY - Y) > 5);
   end;
 
-  Invalidate;
+  //Invalidate;
 
   FLastMouseX := X;
   FLastMouseY := Y;

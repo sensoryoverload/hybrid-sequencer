@@ -251,7 +251,6 @@ type
     FMidiBuffer: TMidiBuffer;
 
     // Private sampler, not a plugin so it's more thightly integrated
-    FSample: TSample;
     FSampleBank: TSampleBank;
     FSampleBankEngine: TSampleBankEngine;
 
@@ -337,16 +336,10 @@ begin
   FSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
   FSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
 
-  FSample := TSample.Create(AObjectOwner, AMapped);
-  FSample.LoadSample('Default');
-  FSample.Initialize;
-
   LoopStart.Value := 0;
   LoopLength.Value := Round(GSettings.SampleRate * 2);
   LoopEnd.Value := LoopStart.Value + LoopLength.Value;
   FLooped := False;
-
-  FSampleBank.SampleList.Add(FSample);
 
   FSampleBankEngine.SampleBank := FSampleBank;
 
@@ -355,9 +348,6 @@ end;
 
 destructor TMidiPattern.Destroy;
 begin
-  FSample.UnloadSample; // TODO Should be done by TSample class itself
-  FSample.Free;
-
   FSampleBankEngine.Free;
 
   if Assigned(FSampleBank) then

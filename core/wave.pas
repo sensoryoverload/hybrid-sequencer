@@ -35,8 +35,16 @@ const
   DECIMATED_CACHE_DISTANCE = 64;
   MAX_STRETCH = 256;
   MIN_STRETCH = 1 / 256;
+  QUNATIZE_BAR = 88200;
+  QUANTIZE_BEAT = 22050;
+  QUANTIZE_4TH = QUNATIZE_BAR div 4;
+  QUANTIZE_8TH = QUNATIZE_BAR div 8;
+  QUANTIZE_16TH = QUNATIZE_BAR div 16;
+  QUANTIZE_32TH = QUNATIZE_BAR div 32;
 
 type
+  TQuantizeSettings = (qsNone, qsBar, qsBeat, qs4th, qs8th, qs16th, qs32th);
+
   TRingBufferData = class(TObject)
   private
     FData: Pointer;
@@ -104,6 +112,7 @@ type
   private
     { Audio }
     FDecimatedData: PSingle;
+    FQuantizeSettings: TQuantizeSettings;
     FWorkBuffer: PSingle;
     FConvertBuffer: PSingle;
     FBufferFrames: Integer;
@@ -126,7 +135,7 @@ type
     FVolumeDecay: Single;
     FWaveFileName: string;
     FWSOLAStretcher: TSoundTouch;
-    FFFTStretcher: TSmbPitchShifter;
+//    FFFTStretcher: TSmbPitchShifter;
     FTransientThreshold: Integer;
     FBufferDataSize: PtrUInt;
     FWave: TWaveFile;
@@ -149,6 +158,7 @@ type
     procedure SetCursorRamp(const AValue: Single);
     procedure SetPitchAlgorithm(AValue: TPitchAlgorithm);
     procedure SetRealBPM(const AValue: Single);
+    procedure SetWaveFileName(AValue: string);
     function SliceAt(Location: Integer; Margin: single): TMarker;
     procedure SetTransientThreshold(const AValue: Integer);
     procedure UpdateBPMScale;
@@ -227,8 +237,9 @@ type
     property RealBPM: Single read FRealBPM write SetRealBPM;
     property PatternLength: Integer read FPatternLength write FPatternLength;
     property PitchAlgorithm: TPitchAlgorithm read FPitchAlgorithm write SetPitchAlgorithm;
-    property WaveFileName: string read FWaveFileName write FWaveFileName;
+    property WaveFileName: string read FWaveFileName write SetWaveFileName;
     property Latency: Integer read FLatency write FLatency;
+    property QuantizeSetting: TQuantizeSettings read FQuantizeSettings write FQuantizeSettings;
   end;
 
   { TWaveFormCommand }
@@ -426,6 +437,19 @@ type
     property Latency: Integer read FValue write FValue;
   end;
 
+  { TChangeQuantizeCommand }
+
+  TChangeQuantizeCommand = class(TWaveFormCommand)
+  private
+    FOldValue: TQuantizeSettings;
+    FValue: TQuantizeSettings;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property Value: TQuantizeSettings read FValue write FValue;
+  end;
+
   { TChangeStretchAlgoCommand }
 
   TChangeStretchAlgoCommand = class(TWaveFormCommand)
@@ -446,6 +470,19 @@ var
   BeatDetect: TBeatDetector;
 
 implementation
+
+function QuantizeLocation(ALocation: Integer; AQuantizeSettings: TQuantizeSettings): Integer;
+begin
+  case AQuantizeSettings of
+    qsNone: Result := ALocation;
+    qsBar: Result := (ALocation div QUNATIZE_BAR) * QUNATIZE_BAR;
+    qsBeat: Result := (ALocation div QUANTIZE_BEAT) * QUANTIZE_BEAT;
+    qs4th: Result := (ALocation div QUANTIZE_4TH) * QUANTIZE_4TH;
+    qs8th: Result := (ALocation div QUANTIZE_8TH) * QUANTIZE_8TH;
+    qs16th: Result := (ALocation div QUANTIZE_16TH) * QUANTIZE_16TH;
+    qs32th: Result := (ALocation div QUANTIZE_32TH) * QUANTIZE_32TH;
+  end;
+end;
 
 function SortOnLocation(Item1 : Pointer; Item2 : Pointer) : Integer;
 var
@@ -479,6 +516,19 @@ begin
     Result := 0
   else
     Result := -1;
+end;
+
+{ TChangeQuantizeCommand }
+
+procedure TChangeQuantizeCommand.DoExecute;
+begin
+  FOldValue := FValue;
+  FWavePattern.QuantizeSetting := FValue;
+end;
+
+procedure TChangeQuantizeCommand.DoRollback;
+begin
+  FWavePattern.QuantizeSetting := FOldValue;
 end;
 
 { TChangeLatencyCommand }
@@ -542,8 +592,7 @@ begin
   FOldSampleEnd := FWavePattern.SampleEnd.Value;
 
   FWavePattern.LoopLength.Value := FWavePattern.LoopLength.Value * 2;
-  FWavePattern.LoopEnd.Value :=
-    FWavePattern.LoopStart.Value + FWavePattern.LoopLength.Value;
+  FWavePattern.LoopEnd.Value := FWavePattern.LoopStart.Value + FWavePattern.LoopLength.Value;
 
   FWavePattern.SampleEnd.Value := FWavePattern.SampleStart.Value +
     (FWavePattern.SampleEnd.Value - FWavePattern.SampleStart.Value) * 2;
@@ -951,6 +1000,14 @@ begin
   DivideByRealBPM_Multiplier := 1 / FRealBPM;
 end;
 
+procedure TWavePattern.SetWaveFileName(AValue: string);
+begin
+  if FWaveFileName = AValue then Exit;
+  FWaveFileName := AValue;
+
+  LoadSample(FWaveFileName);
+end;
+
 procedure TWavePattern.SetCursorRamp(const AValue: Single);
 begin
   if FCursorRamp = AValue then exit;
@@ -983,10 +1040,10 @@ begin
     end;
   paRubberband:
     begin
-      rubberband_reset(FRubberbandStretcher);
-      rubberband_set_pitch_scale(FRubberbandStretcher, 1);
+//      rubberband_reset(FRubberbandStretcher);
+//      rubberband_set_pitch_scale(FRubberbandStretcher, 1);
 
-      FLatency := Rubberband_get_latency(FRubberbandStretcher);
+//      FLatency := Rubberband_get_latency(FRubberbandStretcher);
     end
   else
     begin
@@ -1423,32 +1480,35 @@ begin
 
     AddSlice(Round(i * GSettings.SampleRate / 16), SLICE_VIRTUAL, True);
   end;}
-  BeatDetect.setThresHold(0.1);
-  for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
+  if FWave.ChannelCount > 0 then
   begin
-    BeatDetect.AudioProcess(TChannel(Wave.ChannelList[0]).Buffer[i * FWave.ChannelCount]);
-    if BeatDetect.BeatPulse then
+    BeatDetect.setThresHold(0.1);
+    for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
     begin
-      if Assigned(lCurrentSlice) and BeatDetect.TriggerOn then
+      BeatDetect.AudioProcess(TChannel(Wave.ChannelList[0]).Buffer[i * FWave.ChannelCount]);
+      if BeatDetect.BeatPulse then
+      begin
+        if Assigned(lCurrentSlice) and BeatDetect.TriggerOn then
+        begin
+          WindowLength := 0;
+        end;
+
+        lCurrentSlice := AddSlice(i - 250, SLICE_VIRTUAL, True);
+        if lFirstSlice then
+        begin
+          //LoopStart.Value := i;
+          lFirstSlice := False;
+        end;
+      end;
+
+      if BeatDetect.ReleasePulse then
       begin
         WindowLength := 0;
-      end;
-
-      lCurrentSlice := AddSlice(i - 250, SLICE_VIRTUAL, True);
-      if lFirstSlice then
+      end
+      else
       begin
-        //LoopStart.Value := i;
-        lFirstSlice := False;
+        Inc(WindowLength);
       end;
-    end;
-
-    if BeatDetect.ReleasePulse then
-    begin
-      WindowLength := 0;
-    end
-    else
-    begin
-      Inc(WindowLength);
     end;
   end;
 
@@ -1684,7 +1744,7 @@ procedure TUpdateWaveSampleMarkerCommand.DoExecute;
 begin
   DBLog('start TUpdateWaveSampleMarkerCommand.DoExecute');
 
-  if Persist then
+  //if Persist then
   begin
     // Save state
     case FDataType of
@@ -1698,12 +1758,12 @@ begin
     stStart:
     begin
       if FLocation < 0 then FLocation := 0;
-      FWavePattern.SampleStart.Value := FLocation;
+      FWavePattern.SampleStart.Value := QuantizeLocation(FLocation, FWavePattern.QuantizeSetting);
     end;
     stEnd:
     begin
       if FLocation < 0 then FLocation := 0;
-      FWavePattern.SampleEnd.Value := FLocation;
+      FWavePattern.SampleEnd.Value := QuantizeLocation(FLocation, FWavePattern.QuantizeSetting);
     end;
   end;
 
@@ -1721,9 +1781,6 @@ end;
 procedure TUpdateWaveSampleMarkerCommand.DoRollback;
 begin
   DBLog('start TUpdateWaveSampleMarkerCommand.DoRollback');
-
-  // Retrieve state
-  FWavePattern.SampleStart.Value := FOldLocation;
 
   // Assign
   case FDataType of
@@ -1750,7 +1807,7 @@ var
 begin
   DBLog('start TUpdateWaveLoopMarkerCommand.DoExecute');
 
-  if Persist then
+  //if Persist then
   begin
     // Save state
     case FDataType of
@@ -1760,23 +1817,24 @@ begin
     end;
   end;
 
-  lQuantize := Round(GSettings.SampleRate / 8);
-
   // Assign
   case FDataType of
   ltStart:
   begin
     if FLocation < 0 then FLocation := 0;
 
-    FWavePattern.LoopStart.Value := (FLocation div lQuantize) * lQuantize;
+    FWavePattern.LoopStart.Value := QuantizeLocation(FLocation, FWavePattern.QuantizeSetting);
   end;
   ltEnd:
   begin
     if FLocation < 0 then FLocation := 0;
-    FWavePattern.LoopEnd.Value := (FLocation div lQuantize) * lQuantize;;
+    FWavePattern.LoopEnd.Value := QuantizeLocation(FLocation, FWavePattern.QuantizeSetting);
   end;
-  ltLength: FWavePattern.LoopLength.Value := (FLocation div lQuantize) * lQuantize;
+  ltLength: FWavePattern.LoopLength.Value := QuantizeLocation(FLocation, FWavePattern.QuantizeSetting);
   end;
+
+  FWavePattern.UpdateSampleScale;
+  FWavePattern.UpdateBPMScale;
 
   // Update observers
   FWavePattern.Notify;
@@ -1800,6 +1858,9 @@ begin
   ltEnd: FWavePattern.LoopEnd.Value := FOldLocation;
   ltLength: FWavePattern.LoopLength.Value := FOldLocation;
   end;
+
+  FWavePattern.UpdateSampleScale;
+  FWavePattern.UpdateBPMScale;
 
   // Update observers
   FWavePattern.Notify;

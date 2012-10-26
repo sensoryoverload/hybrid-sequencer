@@ -280,6 +280,9 @@ begin
   lCreateSampleCommand := TCreateSampleCommand.Create(ObjectID);
   try
     lCreateSampleCommand.SampleLocation := '';
+    lCreateSampleCommand.BaseNote := 48;
+    lCreateSampleCommand.LowNote := 0;
+    lCreateSampleCommand.HighNote := 127;
 
     GCommandQueue.PushCommand(lCreateSampleCommand);
   except

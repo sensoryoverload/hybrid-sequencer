@@ -31,6 +31,7 @@ uses
 
 const
   DIVBY1000 = 1 / 1000;
+  KEYS_PER_OCTAVE = 12;
 
 type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
@@ -788,9 +789,9 @@ begin
     // Draw note indictor lines
     FBitmap.Canvas.Pen.Color := clMidigridBackgroundBlack;
     FBitmap.Canvas.Brush.Color := clMidigridBackgroundBlack;
+    lMidiNoteModula := 0;
     for lNoteIndex := 0 to 127 do
     begin
-      lMidiNoteModula := lNoteIndex mod 12;
       case lMidiNoteModula of
        0: lMidiNoteKey := keyWhite;
        1: lMidiNoteKey := keyBlack;
@@ -813,6 +814,12 @@ begin
           ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
           FBitmap.Width,
           ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
+      end;
+
+      Inc(lMidiNoteModula);
+      if lMidiNoteModula = KEYS_PER_OCTAVE then
+      begin
+        lMidiNoteModula := 0;
       end;
     end;
 
@@ -922,9 +929,9 @@ begin
       FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
       FBitmap.Canvas.Clipping := True;
       FBitmap.Canvas.Rectangle(0, 0, 30, FBitmap.Height);
+      lMidiNoteModula := 0;
       for lNoteIndex := 0 to 127 do
       begin
-        lMidiNoteModula := lNoteIndex mod 12;
         case lMidiNoteModula of
          0: lMidiNoteKey := keyWhite;
          1: lMidiNoteKey := keyBlack;
@@ -961,6 +968,11 @@ begin
           30,
           ConvertNoteToScreen(lNoteIndex) + FNoteOffset);
         end;
+        Inc(lMidiNoteModula);
+        if lMidiNoteModula = KEYS_PER_OCTAVE then
+        begin
+          lMidiNoteModula := 0;
+        end;
       end;
       FBitmap.Canvas.Line(30, 0, 30, FBitmap.Height);
 
@@ -973,8 +985,7 @@ begin
     begin
       FBitmap.Canvas.Pen.Color := clRed;
       FBitmap.Canvas.Line(x, 0, x, Height);
-      FBitmap.Canvas.TextOut(x + 10, 10, Format('Start %d', [LoopStart.Location]))
-
+      //FBitmap.Canvas.TextOut(x + 10, 10, Format('Start %d', [LoopStart.Location]))
     end;
 
     // Draw loopendmarker
@@ -983,7 +994,7 @@ begin
     begin
       FBitmap.Canvas.Pen.Color := clRed;
       FBitmap.Canvas.Line(x, 0, x, Height);
-      FBitmap.Canvas.TextOut(x + 10, 10, Format('End %d', [LoopEnd.Location]))
+      //FBitmap.Canvas.TextOut(x + 10, 10, Format('End %d', [LoopEnd.Location]))
     end;
     FBitmap.Canvas.Pen.Width := 1;
 

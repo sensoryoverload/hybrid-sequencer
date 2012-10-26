@@ -451,25 +451,22 @@ begin
   inherited Assign(Source);
 end;
 
+{
+  Advance cursor
+  Todo: when a pattern switch is done, the cursor stops
+  and continues when switched to the original pattern.
+  This would start this pattern possibly halfway it's length
+  and that would normally not be desired. Problem is that
+  simply resetting it to 0 would put the pattern out of sync
+  with other tracks. Not sure this makes any sense but it
+  has to be tried.
+}
 procedure TPattern.ProcessAdvance;
 begin
-  // Advance cursor
-  (*FPatternCursor := FPatternCursor + GAudioStruct.BPMScale;
-  if FSyncQuantize then
-  begin
-    FPatternCursor := FLoopStart.Value + fmod(FPatternCursor - FLoopStart.Value, GAudioStruct.MainQuantizeLength);
-    FSyncQuantize := False;
-  end
-  else if FPatternCursor >= FLoopEnd.Value then
-  begin
-    FPatternCursor := FPatternCursor - FLoopLength.Value;
-    FLooped := True;
-  end;*)
-
   FPatternCursor := FPatternCursor + GAudioStruct.BPMScale;
   if FPatternCursor > FLoopEnd.Value then
   begin
-    FPatternCursor := FPatternCursor - FLoopLength.Value;
+    FPatternCursor := FPatternCursor - (FLoopEnd.Value - FLoopStart.Value);
     FLooped := True;
   end;
 

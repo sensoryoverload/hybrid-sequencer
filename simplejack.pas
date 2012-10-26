@@ -417,6 +417,8 @@ var
   lPlayingPattern: TPattern;
   buffer_size: Integer;
 begin
+  Result := 0;
+
   buffer_size := nframes * SizeOf(Single);
 
   midi_in_buf := jack_port_get_buffer(midi_input_port, nframes);
@@ -533,8 +535,10 @@ begin
             end;
             lTrack.PlayingPattern := lTrack.ScheduledPattern;
 
+            lTrack.PlayingPattern.PatternCursor := lTrack.PlayingPattern.LoopStart.Value;
+
             if lTrack.PlayingPattern is TWavePattern then
-            begin;
+            begin
               TWavePattern(lTrack.PlayingPattern).Flush;
             end
             else if lTrack.PlayingPattern is TMidiPattern then
@@ -632,6 +636,13 @@ begin
                   lTrack.OutputBuffer[i] := lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier;
                   output_left[i] := output_left[i] + lTrack.OutputBuffer[i];
                   output_right[i] := output_right[i] + lTrack.OutputBuffer[i];
+                end;
+              end
+              else
+              begin
+                for i := 0 to Pred(nframes) do
+                begin
+                  lTrack.OutputBuffer[i] := 0;
                 end;
               end;
 

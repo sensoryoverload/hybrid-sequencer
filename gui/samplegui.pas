@@ -41,6 +41,7 @@ type
 
   TWaveEdit = class(TCustomControl)
   private
+    FChannelCount: Integer;
     FData: PSingle;
     FDataSize: Integer;
     FZoom: Single;
@@ -52,6 +53,7 @@ type
     destructor Destroy; override;
     property Data: PSingle read FData write FData;
     property DataSize: Integer read FDataSize write FDataSize;
+    property ChannelCount: Integer read FChannelCount write FChannelCount;
     property Zoom: Single read FZoom write FZoom;
   end;
 
@@ -504,11 +506,12 @@ begin
   begin
     FWaveEdit.Data := TChannel(TSample(Subject).Wave.ChannelList[0]).Buffer;
     FWaveEdit.DataSize := TChannel(TSample(Subject).Wave.ChannelList[0]).BufferSize;
+    FWaveEdit.ChannelCount := TSample(Subject).Wave.ChannelCount;
   end
   else
   begin
     FWaveEdit.Data := GWaveformTable.Table[TSample(Subject).Osc1.WaveForm];
-    FWaveEdit.DataSize := LUT_SIZE;
+    FWaveEdit.DataSize := LUT_SIZE * SizeOf(Single);
   end;
   FWaveEdit.Invalidate;
 
@@ -805,7 +808,7 @@ begin
     bmp.Canvas.Pen.Color := clBlue;
     bmp.Canvas.MoveTo(0, zeroline);
 
-    if (FDataSize > 0) and Assigned(FData) then
+    if (FDataSize > 0) and (FChannelCount > 0) and Assigned(FData) then
     begin
       FZoom := (FDataSize / SizeOf(Single)) / bmp.Width;
 
