@@ -796,8 +796,6 @@ begin
   Enabled := True;
   FValueVisible := False;
 
-  DoubleBuffered:= True;
-
   FDialMoving := False;
 
   FMidiMappingMode := False;
@@ -1285,7 +1283,6 @@ begin
   ParentColor := True;
 
   Width:= 20;
-  DoubleBuffered:= False;
 
   ChannelCount := 2;
   for i := 0 to 7 do

@@ -33,17 +33,17 @@ object MainApp: TMainApp
       Left = 0
       Height = 297
       Top = 43
-      Width = 254
+      Width = 220
       Align = alLeft
       Caption = 'Files'
       ClientHeight = 286
-      ClientWidth = 250
+      ClientWidth = 216
       TabOrder = 0
       object TreeView1: TTreeView
         Left = 0
         Height = 286
         Top = 0
-        Width = 250
+        Width = 216
         Align = alClient
         Anchors = []
         BorderStyle = bsNone
@@ -64,10 +64,10 @@ object MainApp: TMainApp
       end
     end
     object LeftSplitter: TCollapseSplitter
-      Left = 254
+      Left = 220
       Height = 297
       Top = 43
-      Width = 4
+      Width = 3
       OnDblClick = LeftSplitterDblClick
     end
     object pnlToolbar: TPanel
@@ -192,49 +192,45 @@ object MainApp: TMainApp
   object MainMenu1: TMainMenu
     left = 555
     top = 131
-    object ControlMenu: TMenuItem
-      Caption = 'Control'
-      object OptionMenu: TMenuItem
-        Caption = 'Options...'
-        OnClick = OptionMenuClick
+    object miFile: TMenuItem
+      Caption = 'File'
+      object miOpenLiveSet: TMenuItem
+        Action = acOpenLiveSet
       end
-      object MenuItem1: TMenuItem
-        Caption = 'Clear session'
-        OnClick = MenuItem1Click
+      object miSaveLiveSet: TMenuItem
+        Action = acSaveLiveSet
+        Caption = 'Save LiveSet'
       end
-      object MenuItem2: TMenuItem
-        Caption = 'Exit'
-        OnClick = MenuItem2Click
+      object miSaveLiveSetAs: TMenuItem
+        Action = acSaveLiveSetAs
       end
-    end
-    object SaveMenu: TMenuItem
-      Caption = 'Save'
-      object SaveSession: TMenuItem
-        Caption = 'Session'
-        OnClick = SaveSessionClick
+      object miCloseLiveSet: TMenuItem
+        Action = acCloseLiveSet
       end
-      object SaveTrack: TMenuItem
-        Caption = 'Track'
-        OnClick = SaveTrackClick
-      end
-      object SavePattern: TMenuItem
-        Caption = 'New Item13'
-        OnClick = SavePatternClick
-      end
-      object MenuItem3: TMenuItem
-        Caption = 'New Item14'
+      object miExit: TMenuItem
+        Action = acExit
       end
     end
-    object LoadMenu: TMenuItem
-      Caption = 'Load'
-      object LoadSession: TMenuItem
-        Caption = 'Session'
-        OnClick = LoadSessionClick
+    object miEdit: TMenuItem
+      Caption = 'Edit'
+    end
+    object miView: TMenuItem
+      Caption = 'View'
+    end
+    object miOptions: TMenuItem
+      Caption = 'Options'
+      object miOptionsDialog: TMenuItem
+        Action = acOptions
+        Caption = 'Options'
+        OnClick = acOptionsExecute
       end
+    end
+    object miTools: TMenuItem
+      Caption = 'Tools'
     end
     object HelpMenu: TMenuItem
       Caption = 'Help'
-      object MenuItem4: TMenuItem
+      object miAbout: TMenuItem
         Action = acAbout
         OnClick = acAboutExecute
       end
@@ -281,6 +277,43 @@ object MainApp: TMainApp
       Caption = 'About'
       ImageIndex = 18
       OnExecute = acAboutExecute
+      OnUpdate = acAboutUpdate
+    end
+    object acSaveLiveSetAs: TAction
+      Category = 'MenuItems'
+      Caption = 'Save LiveSet As...'
+      OnExecute = acSaveLiveSetAsExecute
+      OnUpdate = acSaveLiveSetAsUpdate
+    end
+    object acSaveLiveSet: TAction
+      Category = 'MenuItems'
+      Caption = 'acSaveLiveSet'
+      OnExecute = acSaveLiveSetExecute
+      OnUpdate = acSaveLiveSetUpdate
+    end
+    object acOpenLiveSet: TAction
+      Category = 'MenuItems'
+      Caption = 'Open LiveSet...'
+      OnExecute = acOpenLiveSetExecute
+      OnUpdate = acOpenLiveSetUpdate
+    end
+    object acExit: TAction
+      Category = 'MenuItems'
+      Caption = 'Exit'
+      OnExecute = acExitExecute
+      OnUpdate = acExitUpdate
+    end
+    object acCloseLiveSet: TAction
+      Category = 'MenuItems'
+      Caption = 'Close LiveSet'
+      OnExecute = acCloseLiveSetExecute
+      OnUpdate = acCloseLiveSetUpdate
+    end
+    object acOptions: TAction
+      Category = 'MenuItems'
+      Caption = 'acOptions'
+      OnExecute = acOptionsExecute
+      OnUpdate = acOptionsUpdate
     end
   end
   object ilGlobalImages: TImageList
@@ -978,7 +1011,6 @@ object MainApp: TMainApp
     top = 82
     object miCreateTrack: TMenuItem
       Caption = 'Create track'
-      OnClick = miCreateTrackClick
     end
   end
 end

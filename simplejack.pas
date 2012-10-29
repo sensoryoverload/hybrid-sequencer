@@ -100,6 +100,12 @@ type
     acPause: TAction;
     acRedo: TAction;
     acAbout: TAction;
+    acSaveLiveSetAs: TAction;
+    acSaveLiveSet: TAction;
+    acOpenLiveSet: TAction;
+    acExit: TAction;
+    acCloseLiveSet: TAction;
+    acOptions: TAction;
     acUndo: TAction;
     alGlobalActions: TActionList;
     LeftSplitter: TCollapseSplitter;
@@ -108,24 +114,24 @@ type
     ilGlobalImages: TImageList;
     MainMenu1: TMainMenu;
     HelpMenu: TMenuItem;
-    MenuItem3: TMenuItem;
+    miOptionsDialog: TMenuItem;
+    miCloseLiveSet: TMenuItem;
+    miView: TMenuItem;
+    miExit: TMenuItem;
+    miSaveLiveSetAs: TMenuItem;
+    miFile: TMenuItem;
+    miOpenLiveSet: TMenuItem;
+    miSaveLiveSet: TMenuItem;
     miCreateTrack: TMenuItem;
     pnlToolbar: TPanel;
     pnlVarious: TPanel;
     pnlBottom: TPanel;
     pupScrollBox: TPopupMenu;
     SaveDialog1: TSaveDialog;
-    SavePattern: TMenuItem;
-    MenuItem4: TMenuItem;
-    MenuItem1: TMenuItem;
-    MenuItem2: TMenuItem;
-    LoadMenu: TMenuItem;
-    LoadSession: TMenuItem;
-    SaveMenu: TMenuItem;
-    ControlMenu: TMenuItem;
-    OptionMenu: TMenuItem;
-    SaveSession: TMenuItem;
-    SaveTrack: TMenuItem;
+    miAbout: TMenuItem;
+    miTools: TMenuItem;
+    miOptions: TMenuItem;
+    miEdit: TMenuItem;
     gbTrackDetail: Tgroupbox;
     pnlTop: Tpanel;
     ScreenUpdater: TTimer;
@@ -138,10 +144,23 @@ type
     tbRedo: TToolButton;
     TreeView1: TTreeView;
     procedure acAboutExecute(Sender: TObject);
+    procedure acAboutUpdate(Sender: TObject);
+    procedure acCloseLiveSetExecute(Sender: TObject);
+    procedure acCloseLiveSetUpdate(Sender: TObject);
+    procedure acExitExecute(Sender: TObject);
+    procedure acExitUpdate(Sender: TObject);
+    procedure acOpenLiveSetExecute(Sender: TObject);
+    procedure acOpenLiveSetUpdate(Sender: TObject);
+    procedure acOptionsExecute(Sender: TObject);
+    procedure acOptionsUpdate(Sender: TObject);
     procedure acPauseExecute(Sender: TObject);
     procedure acPlayExecute(Sender: TObject);
     procedure acRedoExecute(Sender: TObject);
     procedure acRedoUpdate(Sender: TObject);
+    procedure acSaveLiveSetAsExecute(Sender: TObject);
+    procedure acSaveLiveSetAsUpdate(Sender: TObject);
+    procedure acSaveLiveSetExecute(Sender: TObject);
+    procedure acSaveLiveSetUpdate(Sender: TObject);
     procedure acStopExecute(Sender: TObject);
     procedure acUndoExecute(Sender: TObject);
     procedure acUndoUpdate(Sender: TObject);
@@ -156,15 +175,7 @@ type
     procedure FormKeyPress(Sender: TObject; var Key: char);
     procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure gbOutputClick(Sender: TObject);
-    procedure LoadSessionClick(Sender: TObject);
-    procedure MenuItem1Click(Sender: TObject);
-    procedure MenuItem2Click(Sender: TObject);
-    procedure miCreateTrackClick(Sender: TObject);
-    procedure SavePatternClick(Sender: TObject);
-    procedure MenuItem4Click(Sender: TObject);
-    procedure OptionMenuClick(Sender: TObject);
-    procedure SaveSessionClick(Sender: TObject);
-    procedure SaveTrackClick(Sender: TObject);
+    procedure miOpenLiveSetClick(Sender: TObject);
     procedure ScreenUpdaterTimer(Sender: TObject);
     procedure Formdestroy(Sender: Tobject);
     procedure Formcreate(Sender: Tobject);
@@ -203,8 +214,8 @@ type
     procedure AddSubFolders(const Directory: string;
       ParentNode: TTreeNode);
 
-    procedure LoadGlobalSession;
-    procedure SaveGlobalSession;
+    procedure LoadGlobalSession(ALiveSetName: string);
+    procedure SaveGlobalSession(ALiveSetName: string);
     procedure ClearGlobalSession;
   protected
   public
@@ -807,6 +818,79 @@ begin
   tbRedo.Enabled := False;//((GHistoryIndex > -1) and (GHistoryIndex <= GHistoryQueue.Count));
 end;
 
+procedure TMainApp.acSaveLiveSetAsExecute(Sender: TObject);
+var
+  lSaveDialog: TSaveDialog;
+  lSave: Boolean;
+begin
+  lSaveDialog := TSaveDialog.Create(nil);
+  try
+    lSaveDialog.InitialDir := ExtractFilePath(ParamStr(0));
+    lSaveDialog.DefaultExt := '.hls';
+    lSaveDialog.Filter := 'Hybrid Live Set|*.hls';;
+    if lSaveDialog.Execute then
+    begin
+      if FileExists(lSaveDialog.FileName) then
+      begin
+        lSave := (MessageDlg('', Format('"%s" already exists. Overwrite it?', [lSaveDialog.FileName]), mtConfirmation, mbYesNoCancel, 0) = mrYes);
+      end;
+
+      // save
+      if lSave then
+      begin
+        GAudioStruct.LiveSetName := lSaveDialog.FileName;
+
+        SaveGlobalSession(lSaveDialog.FileName);
+      end;
+    end;
+  finally
+    lSaveDialog.Free;
+  end;
+end;
+
+procedure TMainApp.acSaveLiveSetAsUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := True;
+end;
+
+procedure TMainApp.acSaveLiveSetExecute(Sender: TObject);
+var
+  lSaveDialog: TSaveDialog;
+  lSave: Boolean;
+begin
+  lSave := True;
+  if SameText(GAudioStruct.LiveSetName, '') then
+  begin
+    lSaveDialog := TSaveDialog.Create(nil);
+    try
+      lSaveDialog.InitialDir := ExtractFilePath(ParamStr(0));
+      lSaveDialog.DefaultExt := '.hls';
+      lSaveDialog.Filter := 'Hybrid Live Set|*.hls';
+      if lSaveDialog.Execute then
+      begin
+        GAudioStruct.LiveSetName := lSaveDialog.FileName;
+        if FileExists(lSaveDialog.FileName) then
+        begin
+          // replace
+          lSave := (MessageDlg('', Format('"%s" already exists. Overwrite it?', [lSaveDialog.FileName]), mtConfirmation, mbYesNoCancel, 0) = mrYes);
+        end;
+      end;
+    finally
+      lSaveDialog.Free;
+    end;
+  end;
+
+  if lSave then
+  begin
+    SaveGlobalSession(GAudioStruct.LiveSetName);
+  end;
+end;
+
+procedure TMainApp.acSaveLiveSetUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := True;
+end;
+
 procedure TMainApp.acPauseExecute(Sender: TObject);
 begin
   // Pause
@@ -814,8 +898,87 @@ begin
 end;
 
 procedure TMainApp.acAboutExecute(Sender: TObject);
+var
+  lAbout: TfmAbout;
 begin
-  //
+  lAbout := TfmAbout.Create(nil);
+  try
+    lAbout.ShowModal;
+  finally
+    lAbout.Free;
+  end;
+end;
+
+procedure TMainApp.acAboutUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := True;
+end;
+
+procedure TMainApp.acCloseLiveSetExecute(Sender: TObject);
+begin
+  ClearGlobalSession;
+end;
+
+procedure TMainApp.acCloseLiveSetUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := True;
+end;
+
+procedure TMainApp.acExitExecute(Sender: TObject);
+begin
+  Self.Close;
+end;
+
+procedure TMainApp.acExitUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := True;
+end;
+
+procedure TMainApp.acOpenLiveSetExecute(Sender: TObject);
+var
+  lOpenDialog: TOpenDialog;
+begin
+  lOpenDialog := TOpenDialog.Create(nil);
+  try
+    lOpenDialog.InitialDir := ExtractFilePath(ParamStr(0));
+    lOpenDialog.Filter := 'Hybrid Live Set|*.hls';
+    if lOpenDialog.Execute then
+    begin
+      LoadGlobalSession(lOpenDialog.FileName);
+    end;
+  finally
+    lOpenDialog.Free;
+  end;
+end;
+
+procedure TMainApp.acOpenLiveSetUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := True;
+end;
+
+procedure TMainApp.acOptionsExecute(Sender: TObject);
+var
+  lFmOptions: TfmOptions;
+begin
+
+  lFmOptions := TfmOptions.Create(nil);
+  try
+    lFmOptions.Settings := GSettings;
+
+    if lFmOptions.ShowModal = mrOK then
+    begin
+      GSettings.Save('config.xml');
+      LoadTreeDirectory;
+    end;
+  finally
+    lFmOptions.Free;
+  end;
+
+end;
+
+procedure TMainApp.acOptionsUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := True;
 end;
 
 procedure TMainApp.DialControl1StartChange(Sender: TObject);
@@ -902,72 +1065,19 @@ begin
   FOutputWaveform := not FOutputWaveForm;
 end;
 
-procedure TMainApp.LoadSessionClick(Sender: TObject);
-begin
-  LoadGlobalSession;
-end;
-
-procedure TMainApp.MenuItem1Click(Sender: TObject);
-begin
-  ClearGlobalSession;
-end;
-
-procedure TMainApp.MenuItem2Click(Sender: TObject);
-begin
-  //
-  Application.Terminate;
-end;
-
-procedure TMainApp.miCreateTrackClick(Sender: TObject);
-begin
-  CreateTrack('', 2);
-end;
-
-procedure TMainApp.SavePatternClick(Sender: TObject);
-begin
-
-end;
-
-procedure TMainApp.MenuItem4Click(Sender: TObject);
+procedure TMainApp.miOpenLiveSetClick(Sender: TObject);
 var
-  lAbout: TfmAbout;
+  lOpenDialog: TOpenDialog;
 begin
-  lAbout := TfmAbout.Create(nil);
+  lOpenDialog := TOpenDialog.Create(nil);
   try
-    lAbout.ShowModal;
-  finally
-    lAbout.Free;
-  end;
-end;
-
-procedure TMainApp.OptionMenuClick(Sender: TObject);
-var
-  lFmOptions: TfmOptions;
-begin
-
-  lFmOptions := TfmOptions.Create(nil);
-  try
-    lFmOptions.Settings := GSettings;
-
-    if lFmOptions.ShowModal = mrOK then
+    if lOpenDialog.Execute then
     begin
-      GSettings.Save('config.xml');
-      LoadTreeDirectory;
+
     end;
   finally
-    lFmOptions.Free;
+    lOpenDialog.Free;
   end;
-
-end;
-
-procedure TMainApp.SaveSessionClick(Sender: TObject);
-begin
-  SaveGlobalSession;
-end;
-
-procedure TMainApp.SaveTrackClick(Sender: TObject);
-begin
-
 end;
 
 procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
@@ -1493,12 +1603,14 @@ begin
   end;
 end;
 
-procedure TMainApp.LoadGlobalSession;
+procedure TMainApp.LoadGlobalSession(ALiveSetName: string);
 var
   lLoadSession: TLoadSessionCommand;
 begin
   lLoadSession := TLoadSessionCommand.Create('');
   try
+    lLoadSession.LiveSetName := ALiveSetName;
+
     GCommandQueue.PushCommand(lLoadSession);
   except
     on e: Exception do
@@ -1509,12 +1621,14 @@ begin
   end;
 end;
 
-procedure TMainApp.SaveGlobalSession;
+procedure TMainApp.SaveGlobalSession(ALiveSetName: string);
 var
   lSaveSession: TSaveSessionCommand;
 begin
   lSaveSession := TSaveSessionCommand.Create('');
   try
+    lSaveSession.LiveSetName := ALiveSetName;
+
     GCommandQueue.PushCommand(lSaveSession);
   except
     on e: Exception do
@@ -1522,7 +1636,7 @@ begin
       DBLog('HybridError: ' + e.Message);
       lSaveSession.Free;
     end;
-  end;;
+  end;
 end;
 
 procedure TMainApp.ClearGlobalSession;

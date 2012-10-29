@@ -724,7 +724,6 @@ begin
 // ------------------------------
 
   FBitmap := TBitmap.Create;
-  DoubleBuffered := True;
 
   FRealCursorPosition:= FLoopStart.Location;
   FRubberBandMode := False;

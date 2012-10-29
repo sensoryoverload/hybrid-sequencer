@@ -96,19 +96,24 @@ type
   { TLoadSessionCommand }
 
   TLoadSessionCommand = class(TAudioStructureCommand)
+  private
+    FLiveSetName: string;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   published
+    property LiveSetName: string read FLiveSetName write FLiveSetName;
   end;
 
   { TSaveSessionCommand }
 
   TSaveSessionCommand = class(TAudioStructureCommand)
   private
+    FLiveSetName: string;
   protected
     procedure DoExecute; override;
   published
+    property LiveSetName: string read FLiveSetName write FLiveSetName;
   end;
 
   { TClearSessionCommand }
@@ -124,6 +129,7 @@ type
 
   TAudioStructure = class(THybridPersistentModel)
   private
+    FLiveSetName: string;
     FTrack: TTrackList;
     FActive: Boolean;
     //FModelThread: TModelThread;
@@ -146,6 +152,7 @@ type
     procedure SetBPM(const AValue: Single);
     procedure RecalculateSynchronize;
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
+    procedure SetLiveSetName(AValue: string);
     procedure SetSelectedBank(const AValue: TSampleBank);
   public
     MainCounter: Double;
@@ -173,6 +180,7 @@ type
     property PlayState: Integer read FPlayState write FPlayState;
     property MainSampleRate: Single read FMainSampleRate write FMainSampleRate;
     property MainQuantizeLength: Integer read FMainQuantizeLength write FMainQuantizeLength;
+    property LiveSetName: string read FLiveSetName write SetLiveSetName;
   end;
 
 var
@@ -193,7 +201,7 @@ begin
 
   for lTrackIndex := Pred(GAudioStruct.Tracks.Count) downto 0 do
   begin
-    if GAudioStruct.Tracks[lTrackIndex].TrackType <> ttMaster then
+//    if GAudioStruct.Tracks[lTrackIndex].TrackType <> ttMaster then
     begin
       GAudioStruct.Tracks.Remove(GAudioStruct.Tracks[lTrackIndex]);
     end;
@@ -238,10 +246,10 @@ end;
 
 procedure TAudioStructure.Initialize;
 begin
-  FMasterTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
+  {FMasterTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
   FMasterTrack.TrackType := ttMaster;
 
-  GAudioStruct.Tracks.Add(FMasterTrack);
+  GAudioStruct.Tracks.Add(FMasterTrack); }
 
   Notify;
 end;
@@ -318,6 +326,12 @@ begin
   AObject := lTrack;
 
   DBLog('end TAudioStructure.DoCreateInstance');
+end;
+
+procedure TAudioStructure.SetLiveSetName(AValue: string);
+begin
+  if FLiveSetName = AValue then Exit;
+  FLiveSetName := AValue;
 end;
 
 procedure TAudioStructure.SetSelectedBank(const AValue: TSampleBank);
@@ -479,13 +493,10 @@ begin
       lTrack.PatternList.Add(lMidiPattern);
       lTrack.SelectedPattern := lMidiPattern;
 
-      //Nothing to load here..
-      {if FileExists(SourceLocation) then
-      begin}
-        lMidiPattern.Initialize;
-      {end;}
+      lMidiPattern.Initialize;
+
       lTrack.EndUpdate;
-      lWavePattern.Notify;
+      lMidiPattern.Notify;
     end;
     fsEmpty:
     begin
@@ -572,7 +583,7 @@ begin
 
   FAudioStructure.BeginUpdate;
 
-  ReadXMLFile(xDoc, 'teste.xml');
+  ReadXMLFile(xDoc, FLiveSetName);
   try
     RootNode := xDoc.DocumentElement.FirstChild;
     if RootNode <> nil then
@@ -626,7 +637,7 @@ begin
   GAudioStruct.SaveToXML(GAudioStruct, 0, RootNode);
 
   // write to XML
-  writeXMLFile(xDoc, 'teste.xml');
+  writeXMLFile(xDoc, FLiveSetName);
   // free memory
   Xdoc.free;
 
