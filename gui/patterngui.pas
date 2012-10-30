@@ -86,7 +86,6 @@ uses
 procedure TPatternGUI.SetPatternColor(const AValue: TColor);
 begin
   FPatternColor := AValue;
-  Repaint;
 end;
 
 procedure TPatternGUI.SetPosition(const AValue: Integer);

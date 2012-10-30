@@ -525,7 +525,7 @@ end;
 
 procedure TBankSelectControl.UpdateControl;
 begin
-  Repaint;
+  Invalidate;
 end;
 
 procedure TBankSelectControl.Update(Subject: THybridPersistentModel);
@@ -562,7 +562,7 @@ procedure TBankSelectControl.MouseUp(Button: TMouseButton;
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
-  Repaint;
+  Invalidate;
 end;
 
 initialization

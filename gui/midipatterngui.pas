@@ -115,8 +115,6 @@ end;
 procedure TMidiPatternGUI.ChangeZoomX(Sender: TObject);
 begin
   // Zooming is GUI stuff and only needs to update itself
-
-    {GAudioStruct.SelectedTrack.SelectedPattern.WaveForm.Repaint;}
 end;
 
 procedure TMidiPatternGUI.EraseBackground(DC: HDC);

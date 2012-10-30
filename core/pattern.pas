@@ -59,6 +59,9 @@ type
     FLoopLength: TLoopMarker;
     FLooped: Boolean;
 
+    procedure SetLoopEnd(AValue: TLoopMarker);
+    procedure SetLoopLength(AValue: TLoopMarker);
+    procedure SetLoopStart(AValue: TLoopMarker);
     procedure SetOkToPlay(const AValue: Boolean);
     procedure SetPatternColor(const AValue: TColor);
     procedure SetPosition(const AValue: Integer);
@@ -94,9 +97,9 @@ type
     property PatternLength: Longint read FPatternLength write FPatternLength;
     property PatternName: string read FPatternName write FPatternName;
     property FileName: string read FFileName write FFileName;
-    property LoopStart: TLoopMarker read FLoopStart write FLoopStart;
-    property LoopEnd: TLoopMarker read FLoopEnd write FLoopEnd;
-    property LoopLength: TLoopMarker read FLoopLength write FLoopLength;
+    property LoopStart: TLoopMarker read FLoopStart write SetLoopStart;
+    property LoopEnd: TLoopMarker read FLoopEnd write SetLoopEnd;
+    property LoopLength: TLoopMarker read FLoopLength write SetLoopLength;
     property Looped: Boolean read FLooped write FLooped;
   end;
 
@@ -340,6 +343,24 @@ begin
   FOkToPlay := AValue;
 end;
 
+procedure TPattern.SetLoopEnd(AValue: TLoopMarker);
+begin
+  if FLoopEnd = AValue then Exit;
+  FLoopEnd := AValue;
+end;
+
+procedure TPattern.SetLoopLength(AValue: TLoopMarker);
+begin
+  if FLoopLength = AValue then Exit;
+  FLoopLength := AValue;
+end;
+
+procedure TPattern.SetLoopStart(AValue: TLoopMarker);
+begin
+  if FLoopStart = AValue then Exit;
+  FLoopStart := AValue;
+end;
+
 procedure TPattern.SetPosition(const AValue: Integer);
 begin
   FPosition := AValue;
@@ -424,7 +445,7 @@ begin
   FLoopLength := TLoopMarker.Create(AObjectOwner, ltLength);
 
   FLoopStart.Value := 0;
-  FLoopEnd.Value := Round(44100 * 4);
+  FLoopEnd.Value := 0;
 
   FLooped := False;
 

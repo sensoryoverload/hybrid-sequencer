@@ -666,6 +666,7 @@ begin
     begin
       lWavePattern := TWavePattern.Create(ObjectOwner, MAPPED);
       lWavePattern.WaveFileName := SourceLocation;
+      lWavePattern.CalculateLoopMarkers;
       lWavePattern.PatternName := PatternName;
 
       InitializePattern(lWavePattern);
@@ -674,6 +675,8 @@ begin
     begin;
       lMidiPattern := TMidiPattern.Create(ObjectOwner, MAPPED);
       lMidiPattern.LoadFromFile(SourceLocation);
+      lMidiPattern.LoopStart.Value := 0;
+      lMidiPattern.LoopEnd.Value := Round(2 * GSettings.SampleRate);
 
       InitializePattern(lMidiPattern);
     end;

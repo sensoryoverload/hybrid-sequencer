@@ -153,7 +153,6 @@ type
     FRubberbandStretcher: RubberBandState;
     FLatency: Integer;
 
-    procedure CalculateLoopMarkers;
     function CalculateSampleCursor: Boolean;
     procedure SetCursorRamp(const AValue: Single);
     procedure SetPitchAlgorithm(AValue: TPitchAlgorithm);
@@ -199,6 +198,7 @@ type
     procedure SortSlices;
     procedure RecalculateWarp;
     function LoadSampleInfo: Boolean;
+    procedure CalculateLoopMarkers;
     procedure AutoMarkerProcess(ACalculateStatistics: Boolean = True);
     function GetSliceAt(Location: Integer; AMargin: single): TMarker;
     function VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
@@ -852,7 +852,8 @@ begin
       AutoMarkerProcess(True);
     end;
 
-    CalculateLoopMarkers;
+    //CalculateLoopMarkers;
+    UpdateSampleScale;
   end;
 
   DBLog('start TWaveForm.LoadSampleData');
@@ -1413,6 +1414,7 @@ end;
 
 procedure TWavePattern.CalculateLoopMarkers;
 begin
+  // Is loop already set ?
   if RealBPM = 0 then
   begin
     RealBPM := 120;

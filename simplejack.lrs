@@ -1,9 +1,9 @@
 { This is an automatically generated lazarus resource file }
 
 LazarusResources.Add('TMainApp','FORMDATA',[
-  'TPF0'#8'TMainApp'#7'MainApp'#4'Left'#3#183#0#6'Height'#3#167#2#3'Top'#2'8'#5
+  'TPF0'#8'TMainApp'#7'MainApp'#4'Left'#3#184#0#6'Height'#3#224#2#3'Top'#2#0#5
   +'Width'#3'G'#4#14'AllowDropFiles'#9#7'Caption'#6#11'Hybrid 2009'#12'ClientHe'
-  +'ight'#3#148#2#11'ClientWidth'#3'G'#4#11'Font.Height'#2#7#10'KeyPreview'#9#4
+  +'ight'#3#205#2#11'ClientWidth'#3'G'#4#11'Font.Height'#2#7#10'KeyPreview'#9#4
   +'Menu'#7#9'MainMenu1'#8'OnCreate'#7#10'FormCreate'#9'OnDestroy'#7#11'FormDes'
   +'troy'#11'OnDropFiles'#7#13'FormDropFiles'#9'OnKeyDown'#7#11'FormKeyDown'#10
   +'OnKeyPress'#7#12'FormKeyPress'#7'OnKeyUp'#7#9'FormKeyUp'#6'OnShow'#7#8'Form'
@@ -48,11 +48,11 @@ LazarusResources.Add('TMainApp','FORMDATA',[
   +'aints.MinWidth'#2'$'#0#0#0#0#17'TCollapseSplitter'#14'BottomSplitter'#6'Cur'
   +'sor'#7#8'crVSplit'#4'Left'#2#0#6'Height'#2#4#3'Top'#3'T'#1#5'Width'#3'G'#4#5
   +'Align'#7#5'alTop'#12'ResizeAnchor'#7#5'akTop'#0#0#6'TPanel'#9'pnlBottom'#4
-  +'Left'#2#0#6'Height'#3'<'#1#3'Top'#3'X'#1#5'Width'#3'G'#4#5'Align'#7#8'alCli'
-  +'ent'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3'<'#1#11'ClientWidth'#3'G'
-  +#4#8'TabOrder'#2#2#0#6'TPanel'#10'pnlVarious'#4'Left'#2#0#6'Height'#3'<'#1#3
+  +'Left'#2#0#6'Height'#3'u'#1#3'Top'#3'X'#1#5'Width'#3'G'#4#5'Align'#7#8'alCli'
+  +'ent'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3'u'#1#11'ClientWidth'#3'G'
+  +#4#8'TabOrder'#2#2#0#6'TPanel'#10'pnlVarious'#4'Left'#2#0#6'Height'#3'u'#1#3
   +'Top'#2#0#5'Width'#3#170#0#5'Align'#7#6'alLeft'#10'BevelOuter'#7#6'bvNone'#8
-  +'TabOrder'#2#0#0#0#9'TSplitter'#9'Splitter1'#4'Left'#3#170#0#6'Height'#3'<'#1
+  +'TabOrder'#2#0#0#0#9'TSplitter'#9'Splitter1'#4'Left'#3#170#0#6'Height'#3'u'#1
   +#3'Top'#2#0#5'Width'#2#5#0#0#0#9'TMainMenu'#9'MainMenu1'#4'left'#3'+'#2#3'to'
   +'p'#3#131#0#0#9'TMenuItem'#6'miFile'#7'Caption'#6#4'File'#0#9'TMenuItem'#13
   +'miOpenLiveSet'#6'Action'#7#13'acOpenLiveSet'#0#0#9'TMenuItem'#13'miSaveLive'
