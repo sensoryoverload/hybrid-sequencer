@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Dialogs, Controls, globalconst, track, LCLType,
   BGRABitmap, BGRABitmapTypes, Graphics, ActnList, Menus, contnrs,
-  Forms, pattern, ExtCtrls, dialcontrol;
+  Forms, pattern, StdCtrls, ExtCtrls, dialcontrol;
 
 const
   TRACK_WIDTH = 100;
@@ -594,14 +594,14 @@ begin
   FTrackControls.Height := 150;
   FTrackControls.Left := 0;
   FTrackControls.Top := FSessionGrid.Height - FTrackControls.Height;
-  FTrackControls.BevelOuter := bvNone;
+  FTrackControls.BevelOuter := bvRaised;
   FTrackControls.Parent := FSessionGrid;
 
   FVolumeFader := TVolumeControl.Create(FTrackControls);
-  FVolumeFader.Height := 150;
+  FVolumeFader.Height := 142;
   FVolumeFader.Width := 20;
-  FVolumeFader.Left := 5;
-  FVolumeFader.Top := 0;
+  FVolumeFader.Left := 4;
+  FVolumeFader.Top := 4;
   FVolumeFader.OnChange := @LevelChange;
   FVolumeFader.OnStartChange := @LevelStartChange;
   FVolumeFader.Parent := FTrackControls;
@@ -609,8 +609,12 @@ begin
   FActiveSwitch := TToggleControl.Create(FTrackControls);
   FActiveSwitch.Left := 30;
   FActiveSwitch.Top := 5;
+  FActiveSwitch.Width := 30;
+  FActiveSwitch.Height := 30;
   FActiveSwitch.CaptionOff := 'Off';
   FActiveSwitch.CaptionOn := 'On';
+  FActiveSwitch.FontSize := 10;
+  FActiveSwitch.FontStyle := [fsBold];
   FActiveSwitch.OnChange := @ActiveSwitchChange;
   FActiveSwitch.Parent := FTrackControls;
 
@@ -848,6 +852,9 @@ begin
 
   for lIndex := 0 to Pred(FTrackViewList.Count) do
   begin
+    FTrackViewList[lIndex].FActiveSwitch.CaptionOff := IntToStr(Succ(lIndex));
+    FTrackViewList[lIndex].FActiveSwitch.CaptionOn := IntToStr(Succ(lIndex));
+
     FTrackViewList[lIndex].Render(0, 0, ABGRABitmap);
   end;
 end;
@@ -1048,6 +1055,10 @@ begin
     lTrackState.Width := TRACK_WIDTH;
 
     FTrackViewList.Add(lTrackState);
+
+    // Default Track numbering
+    lTrackState.FActiveSwitch.CaptionOff := IntToStr(FTrackViewList.Count + 1);
+    lTrackState.FActiveSwitch.CaptionOn := IntToStr(FTrackViewList.Count + 1);
 
     lTrack.Attach(lTrackState);
   end;
@@ -1305,6 +1316,8 @@ begin
   Invalidate;
 
   inherited MouseUp(Button, Shift, X, Y);
+
+  writeln('MouseUp');
 end;
 
 procedure TSessionGrid.MouseMove(Shift: TShiftState; X, Y: Integer);

@@ -119,6 +119,8 @@ Type
 
   TToggleControl = class(TCustomControl, IFeedBack)
   private
+    FFontSize: Integer;
+    FFontStyle: TFontStyles;
     FSwitchedOn: Boolean;
     FLastSwitchedOn: Boolean;
     FCaption: string;
@@ -136,6 +138,8 @@ Type
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
     procedure UpdateControl;
+    property FontSize: Integer read FFontSize write FFontSize;
+    property FontStyle: TFontStyles read FFontStyle write FFontStyle;
   published
     property SwitchedOn: Boolean read FSwitchedOn write SetSwitchedOn;
     property CaptionOn: string read FCaptionOn write SetCaptionOn;
@@ -1152,12 +1156,15 @@ begin
 
   ControlStyle := ControlStyle + [csDisplayDragImage];
 
-  Constraints.MinHeight:= 14;
-  Constraints.MaxHeight:= 14;
+  Constraints.MinHeight := 14;
+  Constraints.MaxHeight := 14;
   Width:= 40;
 
-  FSwitchedOn:= False;
-  FCaption:= 'Off';
+  FFontStyle := [];
+  FFontSize := 8;
+
+  FSwitchedOn := False;
+  FCaption := 'Off';
 end;
 
 destructor TToggleControl.Destroy;
@@ -1176,7 +1183,8 @@ var
 begin
   Bitmap := TBitmap.Create;
   try
-    Bitmap.Canvas.Font.Size:= 7;
+    Bitmap.Canvas.Font.Size:= FFontSize;
+    Bitmap.Canvas.Font.Style := FFontStyle;
 
     if FSwitchedOn then
       FCaption := FCaptionOn
@@ -1191,7 +1199,7 @@ begin
 
     // Switched on/off state color
     if FSwitchedOn then
-      Bitmap.Canvas.Brush.Color := clLime
+      Bitmap.Canvas.Brush.Color := clYellow
     else
       Bitmap.Canvas.Brush.Color := clLtGray;
 
@@ -1282,7 +1290,7 @@ begin
 
   ParentColor := True;
 
-  Width:= 20;
+  Width := 30;
 
   ChannelCount := 2;
   for i := 0 to 7 do
@@ -1309,10 +1317,9 @@ end;
 
 procedure TVolumeControl.Paint;
 var
-  Millimeter: Integer;
-  MillimeterStep: Single;
   HeightScale: Integer;
-  i: byte;
+  i: Integer;
+  ChannelOffset: Integer;
   Bitmap: TBitmap;
 begin
   Bitmap := TBitmap.Create;
@@ -1322,36 +1329,47 @@ begin
     Bitmap.Width := Width;
 
     // Draws the background
-    Bitmap.Canvas.Pen.Color := Parent.Color;
-    Bitmap.Canvas.Rectangle(0, 0, Width, Height);
+    Bitmap.Canvas.Pen.Color := clBtnFace;
+    Bitmap.Canvas.Brush.Color := clBtnFace;
+    Bitmap.Canvas.FillRect(0, 0, Width, Height);
 
     // Draw Levels for all channels
     for i := 0 to ChannelCount - 1 do
     begin
+      ChannelOffset := i * 5 + 11;
       HeightScale:= Round(Height * ChannelLevel[i]);
+
+      // In the RED!
       Bitmap.Canvas.Brush.Color:= clRed;
-      Bitmap.Canvas.FillRect(i * 5, Height - HeightScale, i * 5 + 4, Height);
+      Bitmap.Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, 20);
 
+      // You've been warned
+      Bitmap.Canvas.Brush.Color:= clYellow;
+      Bitmap.Canvas.FillRect(ChannelOffset, 21, ChannelOffset + 4, 40);
+
+      // Behaving signal
+      Bitmap.Canvas.Brush.Color:= clLime;
+      Bitmap.Canvas.FillRect(ChannelOffset, 41, ChannelOffset + 4, Height - 1);
+
+      // Signal level
       Bitmap.Canvas.Brush.Color:= clLtGray;
-      Bitmap.Canvas.FillRect(i * 5, 0, i * 5 + 4, Height - HeightScale);
+      Bitmap.Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, Height - HeightScale);
     end;
 
-    // Draw Scale
-    Bitmap.Canvas.Pen.Color := clBlack;
-
-    MillimeterStep:= Height * DIVBY20;
-    for Millimeter:= 0 to 19 do
-    begin
-      Bitmap.Canvas.Line(
-        12, Round(Millimeter * 20) + 2,
-        15, Round(Millimeter * 20) + 2);
-    end;
-    Bitmap.Canvas.Brush.Color:= clBlue;
+    Bitmap.Canvas.Brush.Color:= RGBToColor(50, 50, 50);
+    Bitmap.Canvas.FillRect(4, 0, 6, Height);
 
     // Draw FaderHandle
     FY := Round(Bitmap.Height - (FPosition * (Bitmap.Height * DIVBY100)));
-    Bitmap.Canvas.FillRect(0, FY - 2, 10, FY + 2);
-    Bitmap.Canvas.TextOut(0, 0, Format('%f', [FPosition]));
+    Bitmap.Canvas.Brush.Color:= RGBToColor(255, 255, 255);
+    Bitmap.Canvas.Pen.Color:= RGBToColor(50, 50, 50);
+    Bitmap.Canvas.RoundRect(0, FY - 12, 10, FY + 12, 4, 4);
+
+    Bitmap.Canvas.Brush.Color:= RGBToColor(50, 50, 50);
+    Bitmap.Canvas.FillRect(0, FY - 1, 10, FY + 1);
+
+    // Volume in range 0..100
+    //Bitmap.Canvas.TextOut(0, 0, Format('%f', [FPosition]));
     Canvas.Draw(0, 0, Bitmap);
   finally
     Bitmap.Free;

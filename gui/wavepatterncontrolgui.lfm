@@ -22,13 +22,13 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 208
       Height = 13
       Top = 7
-      Width = 22
+      Width = 21
       Caption = 'bpm'
       ParentColor = False
     end
     object edtFilename: TLabeledEdit
       Left = 23
-      Height = 25
+      Height = 23
       Top = 1
       Width = 75
       EditLabel.AnchorSideTop.Control = edtFilename
@@ -36,10 +36,10 @@ object WavePatternControlGUI: TWavePatternControlGUI
       EditLabel.AnchorSideRight.Control = edtFilename
       EditLabel.AnchorSideBottom.Control = edtFilename
       EditLabel.AnchorSideBottom.Side = asrBottom
-      EditLabel.Left = 5
+      EditLabel.Left = 4
       EditLabel.Height = 13
-      EditLabel.Top = 7
-      EditLabel.Width = 15
+      EditLabel.Top = 6
+      EditLabel.Width = 16
       EditLabel.Caption = 'file'
       EditLabel.ParentColor = False
       LabelPosition = lpLeft
@@ -85,7 +85,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 295
       Height = 13
       Top = 7
-      Width = 25
+      Width = 24
       Caption = 'pitch'
       ParentColor = False
     end
@@ -109,7 +109,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object cbPitchAlgo: TComboBox
       Left = 519
-      Height = 25
+      Height = 27
       Top = 1
       Width = 100
       ItemHeight = 0
@@ -119,26 +119,26 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object fspnPitch: TFloatSpinEdit
       Left = 323
-      Height = 25
+      Height = 23
       Top = 1
       Width = 50
+      Enabled = False
       Increment = 1
       MaxValue = 100
       MinValue = 0
-      OnChange = spnPitchChange
       TabOrder = 7
       Value = 1
     end
     object spnBeatsPerMinute: TSpinEdit
       Left = 233
-      Height = 25
+      Height = 23
       Top = 1
       Width = 59
       TabOrder = 8
     end
     object cbQuantize: TComboBox
       Left = 737
-      Height = 25
+      Height = 27
       Top = 1
       Width = 100
       ItemHeight = 0

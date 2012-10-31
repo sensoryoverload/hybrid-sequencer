@@ -443,36 +443,23 @@ var
   TempLeftLevel: Single;
   TempRightLevel: Single;
 begin
-  {for i := 0 to Pred(AFrameCount) do
+  if Active then
   begin
-    TempLeftLevel := Abs(ABuffer[i] * FVolumeMultiplier);
-    if TempLeftLevel > FLeftLevel then
-      FLeftLevel := (FAttack_coef * (FLeftLevel - TempLeftLevel)) + TempLeftLevel
-    else
-      FLeftLevel := (FRelease_coef * (FLeftLevel - TempLeftLevel)) + TempLeftLevel;
-
-    // TODO! Buffer is still in MONO so this code does exactly the same as above
-    TempRightLevel := Abs(ABuffer[i] * FVolumeMultiplier);
-    if TempRightLevel > FRightLevel then
-      FRightLevel := (FAttack_coef * (FRightLevel - TempRightLevel)) + TempRightLevel
-    else
-      FRightLevel := (FRelease_coef * (FRightLevel - TempRightLevel)) + TempRightLevel;
-  end; }
-
-  for i := 0 to Pred(AFrameCount) do
-  begin
-    // Left
-    TempLeftLevel := Abs(ABuffer[i]);
-    if TempLeftLevel > FLeftLevel then
+    for i := 0 to Pred(AFrameCount) do
     begin
-      FLeftLevel := TempLeftLevel;
-    end;
+      // Left
+      TempLeftLevel := Abs(ABuffer[i]);
+      if TempLeftLevel > FLeftLevel then
+      begin
+        FLeftLevel := TempLeftLevel;
+      end;
 
-    // Right
-    TempRightLevel := Abs(ABuffer[i]);
-    if TempRightLevel > FRightLevel then
-    begin
-      FRightLevel := TempRightLevel;
+      // Right
+      TempRightLevel := Abs(ABuffer[i]);
+      if TempRightLevel > FRightLevel then
+      begin
+        FRightLevel := TempRightLevel;
+      end;
     end;
   end;
 
