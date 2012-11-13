@@ -248,6 +248,8 @@ type
     FWindowEnd: Single;
     FLooped: Boolean;
 
+    FLatency: Integer;
+
     FMidiBuffer: TMidiBuffer;
 
     // Private sampler, not a plugin so it's more thightly integrated
@@ -269,6 +271,8 @@ type
     procedure ProcessInit; override;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
     procedure ProcessAdvance; override;
+
+    function Latency: Integer;
 
     property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
     property Enabled: Boolean read GetEnabled write FEnabled default True;
@@ -462,6 +466,11 @@ end;
 procedure TMidiPattern.ProcessAdvance;
 begin
   Inherited;
+end;
+
+function TMidiPattern.Latency: Integer;
+begin
+  Result := 0;
 end;
 
 function TMidiPattern.NoteByObjectID(AObjectID: string): TMidiNote;

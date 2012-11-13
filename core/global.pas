@@ -387,8 +387,18 @@ begin
         Freemem(FData);
       end;
 
-      GetMem(FData, FDataSize + 1000);
-      FReadCount := sf_read_float(lSampleHandle, FData, FDataSize);
+      GetMem(FData, FDataSize * 4 + 1000);
+      try
+        FReadCount := sf_read_float(lSampleHandle, FData, FDataSize);
+
+      except
+        on e: exception do
+        begin
+          Result := False;
+
+          raise;
+        end;
+      end;
       lChannelSize := (FReadCount div FChannelCount) * SizeOf(Single);
       lChannelItems := FReadCount div FChannelCount;
 

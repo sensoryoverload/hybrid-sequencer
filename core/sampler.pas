@@ -22,8 +22,6 @@ unit sampler;
 
 {$mode objfpc}{$H+}
 
-(*{$fputype sse}*)
-
 interface
 
 uses

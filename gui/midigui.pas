@@ -853,20 +853,21 @@ begin
     if FZoomFactorX < 3.90625 then
       lTimeSpacing := lTimeSpacing * 2;
 
-    lTime := lTimeSpacing;
-    lLastTime := -1;
     repeat
       x := ConvertTimeToScreen(Round(lTime)) + FLocationOffset;
-      FBitmap.Canvas.Pen.Color := clGray;
-      FBitmap.Canvas.Line(x, 0, x, FBitmap.Height);
       lNewTime := Round(lTime) div 22050 + 1;
-      if lLastTime <> lNewTime then
+      if x < FBitmap.Width then
       begin
-        FBitmap.Canvas.TextOut(x + 2, 1, Format('%d', [lNewTime]));
+        FBitmap.Canvas.Pen.Color := clGray;
+        FBitmap.Canvas.Line(x, 0, x, FBitmap.Height);
+        if lLastTime <> lNewTime then
+        begin
+          FBitmap.Canvas.TextOut(x + 2, 1, Format('%d', [lNewTime]));
+        end;
       end;
       lLastTime := lNewTime;
       lTime := lTime + lTimeSpacing;
-    until x > FBitmap.Width;
+    until x >= FBitmap.Width;
 
     // Draw note cursor box
     FBitmap.Canvas.Pen.Color := clCream;

@@ -311,7 +311,7 @@ end;
 
 constructor TSmbPitchShifter.Create;
 begin
-  Initialize;
+  //
 end;
 
 procedure TSmbPitchShifter.Initialize;
@@ -356,8 +356,6 @@ procedure TSmbPitchShifter.SetFFTFrameSize(AValue: Longint);
 begin
   if FFFTFrameSize = AValue then Exit;
   FFFTFrameSize := AValue;
-
-  Initialize;
 end;
 
 procedure TSmbPitchShifter.SetOverSampling(AValue: Longint);

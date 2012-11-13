@@ -480,7 +480,7 @@ end;
 
 constructor T3BandFilterbank.Create;
 begin
-  Initialize(1000, 3000, 44100);
+  Initialize(300, 3000, 44100);
 end;
 
 // Recommended frequencies are ...

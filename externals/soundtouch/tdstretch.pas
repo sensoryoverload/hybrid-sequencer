@@ -108,18 +108,18 @@ DEFAULT_SEQUENCE_MS = USE_AUTO_SEQUENCE_LEN;
 
   // Adjust tempo param according to tempo, so that variating processing sequence length is used
   // at varius tempo settings, between the given low...top limits
-  AUTOSEQ_TEMPO_LOW = 0.25; //0.9;     // auto setting low tempo range (-50%)
-  AUTOSEQ_TEMPO_TOP = 4.0; //1.07;     // auto setting top tempo range (+100%)
+  AUTOSEQ_TEMPO_LOW = 0.5;     // auto setting low tempo range (-50%)
+  AUTOSEQ_TEMPO_TOP = 2.0;     // auto setting top tempo range (+100%)
 
   // sequence-ms setting values at above low & top tempo
-  AUTOSEQ_AT_MIN =    150; //120.0;
-  AUTOSEQ_AT_MAX =    25; //30.0;
+  AUTOSEQ_AT_MIN =    125.0;
+  AUTOSEQ_AT_MAX =    50.0;
   AUTOSEQ_K =         ((AUTOSEQ_AT_MAX - AUTOSEQ_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEQ_C =         (AUTOSEQ_AT_MIN - (AUTOSEQ_K) * (AUTOSEQ_TEMPO_LOW));
 
   // seek-window-ms setting values at above low & top tempo
-  AUTOSEEK_AT_MIN =   20; // 20.0;
-  AUTOSEEK_AT_MAX =   3; //3.0;
+  AUTOSEEK_AT_MIN =   25.0;
+  AUTOSEEK_AT_MAX =   15.0;
   AUTOSEEK_K =        ((AUTOSEEK_AT_MAX - AUTOSEEK_AT_MIN) / (AUTOSEQ_TEMPO_TOP - AUTOSEQ_TEMPO_LOW));
   AUTOSEEK_C =        (AUTOSEEK_AT_MIN - (AUTOSEEK_K) * (AUTOSEQ_TEMPO_LOW));
 
@@ -176,8 +176,9 @@ type
     overlapMs: Integer;
     bAutoSeqSetting: Boolean;
     bAutoSeekSetting: Boolean;
-    beatdetect: TBeatDetector;
+
     transient: Boolean;
+    transientenvelope: Integer;
 
     procedure acceptNewOverlapLength(newOverlapLength: Integer);
 
@@ -212,6 +213,7 @@ type
     /// the 'set_returnBuffer_size' function.
 
   public
+    beatdetect: TBeatDetector;
     procedure processSamples;
     constructor Create; override;
     destructor Destroy; override;
@@ -273,6 +275,7 @@ type
     function getInputSampleReq: Integer;
     function getOutputBatchSize: Integer;
     procedure enableTransientDetection(enable: Integer);
+    function getLatency: Integer;
   end;
 
 implementation
@@ -296,10 +299,11 @@ begin
   beatdetect := TBeatDetector.Create;
 
   beatdetect.setSampleRate(44100);
-  beatdetect.setThresHold(0.4);
+  beatdetect.setThresHold(0.3);
   beatdetect.setFilterCutOff(2000);
 
   transient := False;
+  transientenvelope := 0;
 
   bQuickSeek := FALSE;
   channels := 1;
@@ -346,8 +350,8 @@ end;
 //      position (default = 28 ms)
 // 'overlapMS' = overlapping length (default = 12 ms)
 
-procedure TTDStretch.setParameters(aSampleRate, aSequenceMS,
-  aSeekWindowMS, aOverlapMS: Integer);
+procedure TTDStretch.setParameters(asampleRate: Integer; asequenceMS: Integer;
+  aseekwindowMS: Integer; aoverlapMS: Integer);
 begin
   // accept only positive parameter values - if zero or negative, use old values instead
   if aSampleRate > 0 then Self.sampleRate := aSampleRate;
@@ -386,7 +390,8 @@ end;
 /// Get routine control parameters, see setParameters() function.
 /// Any of the parameters to this function can be NULL, in such case corresponding parameter
 /// value isn't returned.
-procedure TTDStretch.getParameters(apSampleRate, apSequenceMs, apSeekWindowMs, apOverlapMs: PInteger);
+procedure TTDStretch.getParameters(apSampleRate: PInteger;
+  apSequenceMs: PInteger; apSeekWindowMs: PInteger; apOverlapMs: PInteger);
 begin
   if Assigned(apSampleRate) then
   begin
@@ -494,7 +499,6 @@ begin
     end
     else
     begin
-//      Result := seekBestOverlapPositionStereoQuick(refPos);
       Result := seekBestOverlapPositionStereo(refPos);
     end;
   end
@@ -508,7 +512,6 @@ begin
     end
     else
     begin
-//      Result := seekBestOverlapPositionMonoQuick(refPos);
       Result := seekBestOverlapPositionMono(refPos);
     end;
   end;
@@ -1094,6 +1097,11 @@ end;
 procedure TTDStretch.enableTransientDetection(enable: Integer);
 begin
   transient := (enable = 1);
+end;
+
+function TTDStretch.getLatency: Integer;
+begin
+  Result := seekWindowMs + sequenceMs + overlapMs;
 end;
 
 end.

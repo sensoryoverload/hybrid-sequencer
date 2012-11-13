@@ -270,7 +270,7 @@ var
 implementation
 
 uses
-  fx, librubberband;
+  fx;
 
 function DumpCallStack: string;
 var
@@ -610,7 +610,6 @@ begin
       begin
         if lPlayingPattern.OkToPlay then
         begin
-
           if lTrack.Playing then
           begin
 
@@ -631,35 +630,7 @@ begin
               {
               // 2. Execute per track plugins
               lTrack.PluginProcessor.Execute(nframes, lPlayingPattern.PluginProcessor.Buffer);
-
-              // 3. Apply tracksettings (Level, Mute, ...) to track output buffer
-              for i := 0 to Pred(nframes) do
-              begin
-                lTrack.OutputBuffer[i] :=
-                  (lTrack.PluginProcessor.Buffer[i] + input[i]) * lTrack.VolumeMultiplier * 1.5;
-              end;          }
-
-              // Mix to the jack out only when audible
-              if lTrack.VolumeMultiplier > DENORMAL_KILLER then
-              begin
-                for i := 0 to Pred(nframes) do
-                begin
-                  lTrack.OutputBuffer[i] := lTrack.OutputBuffer[i] * lTrack.VolumeMultiplier;
-                  output_left[i] := output_left[i] + lTrack.OutputBuffer[i];
-                  output_right[i] := output_right[i] + lTrack.OutputBuffer[i];
-                end;
-              end
-              else
-              begin
-                for i := 0 to Pred(nframes) do
-                begin
-                  lTrack.OutputBuffer[i] := 0;
-                end;
-              end;
-
-              // Copy to track output (JUST FOR DEBUGGING, use MasterOut )
-              {Move(lTrack.OutputBuffer[0], output_left[0], buffer_size);
-              Move(lTrack.OutputBuffer[0], output_right[0], buffer_size);}
+              }
             end;
           end;
         end;
@@ -667,8 +638,14 @@ begin
 
       lTrack.Process(lTrack.OutputBuffer, nframes);
     end;
+
+    // Mix into output 1 (left) and 2 (right)
+    for i := 0 to Pred(nframes) do
+    begin
+      output_left[i] := output_left[i] + lTrack.OutputBuffer[i * 2];
+      output_right[i] := output_right[i] + lTrack.OutputBuffer[i * 2 + 1];
+    end;
   end;
-  //------- End effects section ----------------------------------------
 
   // Move to displaybuffer
   if GAudioStruct.Tracks.Count > 0 then

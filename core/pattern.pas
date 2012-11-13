@@ -34,9 +34,11 @@ type
 
   TPattern = class(THybridPersistentModel)
   private
+    FChannelCount: Integer;
     FPatternColor: TColor;
     FPatternCursor: Double;
     FRealCursorPosition: Integer;
+    FLatency: Integer;
     FPitched: Boolean;
     FPosition: Integer; // Vertical position in the patterngrid
     FText: string;
@@ -82,6 +84,9 @@ type
     procedure ProcessInit; virtual; abstract;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); virtual;
     procedure ProcessAdvance; virtual;
+    function Latency: Integer; virtual;
+
+    property ChannelCount: Integer read FChannelCount write FChannelCount;
   published
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
@@ -373,10 +378,10 @@ end;
 
 procedure TPattern.Setpitch(const Avalue: Single);
 begin
-  if Avalue > 8 then
-    FPitch := 8
-  else if Avalue < 0.1 then
-    FPitch := 0.1
+  if Avalue > 2 then
+    FPitch := 2
+  else if Avalue < 0.5 then
+    FPitch := 0.5
   else
     FPitch := Avalue;
 end;
@@ -449,6 +454,8 @@ begin
 
   FLooped := False;
 
+  FChannelCount := 1; // Default
+
   DBLog('end TPattern.Create');
 end;
 
@@ -492,6 +499,11 @@ begin
   end;
 
   RealCursorPosition := Round(PatternCursor);
+end;
+
+function TPattern.Latency: Integer;
+begin
+  Result := 0;
 end;
 
 { TPatternCommand }

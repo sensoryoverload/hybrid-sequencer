@@ -145,6 +145,9 @@ const
   SETTING_USE_TRANSIENT_DETECTION = 8;
 
 type
+
+  { TSoundTouch }
+
   TSoundTouch = class(TFIFOProcessor)
   private
     /// Rate transposer class instance
@@ -274,6 +277,8 @@ type
     ///                      function 'receiveSamples()'
     /// - isEmpty()        : Returns nonzero if there aren't any 'ready' samples.
     /// - clear()          : Clears all samples from ready/processing buffers.
+
+    function latency: Integer;
   end;
 
 implementation
@@ -422,6 +427,8 @@ begin
     pTDStretch.setTempo(tempo);
   end;
 
+  // #ifndef SOUNDTOUCH_PREVENT_CLICK_AT_RATE_CROSSOVER
+
   if rate <= 1 then
   begin
     if output <> pTDStretch then
@@ -474,7 +481,7 @@ begin
     // raise Exception.Create('SoundTouch : Number of channels not defined');
   end
   // Transpose the rate of the new samples if necessary
-  (* Bypass the nominal setting - can introduce a click in sound when tempo/pitch control crosses the nominal value...*)
+  (* Bypass the nominal setting - can introduce a click in sound when tempo/pitch control crosses the nominal value...
   else if rate = 1.0 then
   begin
       // The rate value is same as the original, simply evaluate the tempo changer.
@@ -486,7 +493,8 @@ begin
         pTDStretch.moveSamples(pRateTransposer);
       end;
       pTDStretch.putSamples(samples, anumSamples);
-  end
+  end    *)
+  // SOUNDTOUCH_PREVENT_CLICK_AT_RATE_CROSSOVER
   else if rate <= 1.0 then
   begin
     // transpose the rate down, output the transposed sound to tempo changer buffer
@@ -680,6 +688,11 @@ begin
     end;
   end;
   Result := 0;
+end;
+
+function TSoundTouch.latency: Integer;
+begin
+  Result := pTDStretch.getLatency;
 end;
 
 end.

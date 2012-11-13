@@ -134,6 +134,9 @@ function DumpExceptionCallStack(E: Exception): string;
 function DumpCallStack: string;
 
 function fmod(AValue, AModulo: Double): Double; inline;
+procedure ConvertBufferMonoToStereo(ASource, ATarget: PSingle; AFrames: Integer); inline;
+procedure ConvertBufferStereoToMono(ASource, ATarget: PSingle; AFrames: Integer); inline;
+procedure CopyBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer); inline;
 
 var
   FLogging: Boolean;
@@ -602,6 +605,37 @@ var
 begin
   lDivision := AValue / AModulo;
   Result := (lDivision - Trunc(lDivision)) * AModulo;
+end;
+
+procedure ConvertBufferMonoToStereo(ASource, ATarget: PSingle; AFrames: Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(AFrames) do
+  begin
+    ATarget[i * 2] := ASource[i];
+    ATarget[i * 2 + 1] := ASource[i];
+  end;
+end;
+
+procedure ConvertBufferStereoToMono(ASource, ATarget: PSingle; AFrames: Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(AFrames) do
+  begin
+    ATarget[i] := (ASource[i * 2] + ASource[i * 2 + 1]) * 0.5;
+  end;
+end;
+
+procedure CopyBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(AFrames * AChannels) do
+  begin
+    ATarget[i] := ASource[i];
+  end;
 end;
 
 initialization

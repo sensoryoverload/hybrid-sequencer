@@ -26,7 +26,7 @@ interface
 uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
  jacktypes, StdCtrls, Dialogs, Spin, bpmdetect, beattrigger, Utils,
- globalconst, librubberband, soundtouch, contnrs, global_command,
+ globalconst, multiband_wsola, soundtouch, contnrs, global_command,
  ShellCtrls, global, flqueue, math, ringbuffer, pattern,
  audiostructure, smbPitchShift;
 
@@ -105,7 +105,15 @@ type
     procedure RingbufferReader(ABuffer: jack_default_audio_sample_t; ASize: Integer);
   end;
 
+  { TSliceStretch }
 
+  TSliceStretch = class
+  private
+    FModulo: Double;
+  protected
+  public
+    procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
+  end;
 
   { TWavePattern }
   TWavePattern = class(TPattern)
@@ -134,6 +142,7 @@ type
     FSampleRate: Single;
     FVolumeDecay: Single;
     FWaveFileName: string;
+    FMultiWSOLA: TMultiWSOLA;
     FWSOLAStretcher: TSoundTouch;
 //    FFFTStretcher: TSmbPitchShifter;
     FTransientThreshold: Integer;
@@ -150,8 +159,6 @@ type
 //    FDiskWriterThread: TDiskWriterThread;
     FDiskReaderThread: TDiskReaderThread;
     FPitchAlgorithm: TPitchAlgorithm;
-    FRubberbandStretcher: RubberBandState;
-    FLatency: Integer;
 
     function CalculateSampleCursor: Boolean;
     procedure SetCursorRamp(const AValue: Single);
@@ -204,6 +211,7 @@ type
     function VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
     function StartVirtualLocation(ALocation: single): Integer;
     procedure Flush;
+    function Latency: Integer;
 
     procedure ProcessInit; override;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
@@ -238,7 +246,6 @@ type
     property PatternLength: Integer read FPatternLength write FPatternLength;
     property PitchAlgorithm: TPitchAlgorithm read FPitchAlgorithm write SetPitchAlgorithm;
     property WaveFileName: string read FWaveFileName write SetWaveFileName;
-    property Latency: Integer read FLatency write FLatency;
     property QuantizeSetting: TQuantizeSettings read FQuantizeSettings write FQuantizeSettings;
   end;
 
@@ -518,6 +525,14 @@ begin
     Result := -1;
 end;
 
+{ TSliceStretch }
+
+procedure TSliceStretch.Process(ABuffer: PSingle; AFrameIndex: Integer;
+  AFrameCount: Integer);
+begin
+  //
+end;
+
 { TChangeQuantizeCommand }
 
 procedure TChangeQuantizeCommand.DoExecute;
@@ -536,12 +551,12 @@ end;
 procedure TChangeLatencyCommand.DoExecute;
 begin
   FOldValue := FValue;
-  FWavePattern.Latency := FValue;
+// deprecated  FWavePattern.Latency := FValue;
 end;
 
 procedure TChangeLatencyCommand.DoRollback;
 begin
-  FWavePattern.Latency := FOldValue;
+// deprecated  FWavePattern.Latency := FOldValue;
 end;
 
 { THalveLoopLengthCommand }
@@ -673,30 +688,29 @@ begin
   FLastSliceIndex := -1;
 
   FWSOLAStretcher := TSoundTouch.Create;
-  FWSOLAStretcher.setChannels(1);
+  FWSOLAStretcher.setChannels(2);
   FWSOLAStretcher.setSampleRate(Round(GSettings.SampleRate));
   FWSOLAStretcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FWSOLAStretcher.setPitch(1);
 
+  FMultiWSOLA := TMultiWSOLA.Create;
+  FMultiWSOLA.Channels := 1;
+  FMultiWSOLA.Samplerate := Round(GSettings.SampleRate);
+  FMultiWSOLA.AntiAliasFilter := False;
+  FMultiWSOLA.QuickSeek := True;
+{  FMultiWSOLA.SequenceMS := 40;
+  FMultiWSOLA.SeekWindowMS := 15;
+  FMultiWSOLA.OverlapMS := 8;}
+
   Pitch := 1;
 
-{  FFFTStretcher := TSmbPitchShifter.Create;
+  {FFFTStretcher := TSmbPitchShifter.Create;
   FFFTStretcher.FFTFrameSize := 512;
   FFFTStretcher.OverSampling := 8;
-  FFFTStretcher.SampleRate := GSettings.SampleRate;}
+  FFFTStretcher.SampleRate := GSettings.SampleRate;
+  FFFTStretcher.Initialize;}
 
-{  FRubberbandStretcher := rubberband_new(
-    Round(GSettings.SampleRate),
-    1,
-    RubberBandOptionProcessRealTime or
-    RubberBandOptionDetectorCompound or
-    RubberBandOptionWindowShort,
-    1,
-    1);
-  rubberband_set_debug_level(FRubberbandStretcher, 0);
-  FLatency := rubberband_get_latency(FRubberbandStretcher); }
-
-  PitchAlgorithm := paNone;
+  PitchAlgorithm := paSoundTouchEco;
 
   Getmem(FWorkBuffer, 88200);
   Getmem(FConvertBuffer, 44100 * SizeOf(Single));
@@ -704,6 +718,8 @@ begin
 //  FDiskWriterThread.FreeOnTerminate := True;
 //  FDiskReaderThread := TDiskReaderThread.Create(False);
 //FDiskReaderThread.FreeOnTerminate := True;
+
+  QuantizeSetting := qsBeat;
 
   DBLog('end Twaveform.Create');
 end;
@@ -718,6 +734,8 @@ begin
     Freemem(FDecimatedData);
   if Assigned(FWSOLAStretcher) then
     FWSOLAStretcher.Free;
+  if Assigned(FMultiWSOLA) then
+    FMultiWSOLA.Free;
   if Assigned(FWave) then
     FWave.Free;
 {  if Assigned(FDiskWriterThread) then
@@ -730,8 +748,6 @@ begin
     FSampleEnd.Free;
 
 //  FFFTStretcher.Free;
-
-{  rubberband_delete(FRubberbandStretcher);  }
 
   Freemem(FConvertBuffer);
 
@@ -778,6 +794,14 @@ begin
 
   FWave.BufferFormat := bfInterleave;
   FWave.LoadSample(AFilename);
+
+  ChannelCount := FWave.ChannelCount;
+
+  if PitchAlgorithm in [paSoundTouch, paSoundTouchEco] then
+  begin
+    // Always 2 channels
+    TimeStretch.setChannels(2);
+  end;
 
   WaveFileName := AFileName;
 
@@ -845,14 +869,10 @@ begin
     end;
 
     //Detect onsets as default
-//    if LoadSampleInfo(AFilename) then
-    begin
-      BeatDetect.setThresHold(0.5);
+    BeatDetect.setThresHold(0.5);
 
-      AutoMarkerProcess(True);
-    end;
+    AutoMarkerProcess(True);
 
-    //CalculateLoopMarkers;
     UpdateSampleScale;
   end;
 
@@ -955,7 +975,6 @@ begin
       1:
       begin
         lWaveSlice.Locked := not lWaveSlice.Locked;
-        //RecalculateSlicePosition(lWaveSlice, Location);
       end;
     end;
 
@@ -1029,28 +1048,30 @@ begin
     begin
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 1);
       TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
-
-      FLatency := Round((GSettings.SampleRate / 1000) * TimeStretch.getSetting(SETTING_SEEKWINDOW_MS)); {TimeStretch.GetLatency;}
+      TimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
+      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 15);
+      TimeStretch.setSetting(SETTING_OVERLAP_MS, 8);
+      TimeStretch.setSetting(SETTING_USE_TRANSIENT_DETECTION, 1);
     end;
   paSoundTouch:
     begin
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 0);
       TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
-
-      FLatency := Round((GSettings.SampleRate / 1000) * TimeStretch.getSetting(SETTING_SEEKWINDOW_MS)); {TimeStretch.GetLatency;}
+      TimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
+      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 15);
+      TimeStretch.setSetting(SETTING_OVERLAP_MS, 8);
+      TimeStretch.setSetting(SETTING_USE_TRANSIENT_DETECTION, 1);
     end;
-  paRubberband:
-    begin
-//      rubberband_reset(FRubberbandStretcher);
-//      rubberband_set_pitch_scale(FRubberbandStretcher, 1);
-
-//      FLatency := Rubberband_get_latency(FRubberbandStretcher);
-    end
+  paSubBandSoundTouch:
+  begin
+    FMultiWSOLA.QuickSeek := True;
+    FMultiWSOLA.SequenceMS := 40; //40
+    FMultiWSOLA.SeekWindowMS := 15; //15
+    FMultiWSOLA.OverlapMS := 8; //8
+  end;
   else
     begin
       FPitchAlgorithm := paNone;
-
-      FLatency := 0;
     end;
   end;
 
@@ -1066,9 +1087,27 @@ begin
     begin
       TimeStretch.flush;
     end;
-    paRubberband:
+    paSubBandSoundTouch:
     begin
-      rubberband_reset(FRubberbandStretcher);
+      FMultiWSOLA.Flush;
+    end;
+  end;
+end;
+
+function TWavePattern.Latency: Integer;
+begin
+  case PitchAlgorithm of
+    paSoundTouch, paSoundTouchEco, paSubBandSoundTouch:
+    begin
+      Result := TimeStretch.latency;
+    end;
+    paFFT:
+    begin
+      Result := 0;
+    end;
+    paPitched:
+    begin
+      Result := 0;
     end;
   end;
 end;
@@ -1192,8 +1231,16 @@ begin
           lSliceStart.OrigLocation +
           (Pitch * GAudioStruct.BPMScaleInv * (ALocation - lSliceStart.Location));
 
+(* v1   This code just cut off the sound giving gaps between te slices when
+        played slower than nominal speed
+
         // Return false if cursor in next slice
-        Result := (AFrameData.Location < lSliceEnd.Location);
+        Result := (AFrameData.Location < lSliceEnd.Location);*)
+
+        if AFrameData.Location >= lSliceEnd.Location then
+        begin
+          AFrameData.Location := lSliceEnd.Location - (Round(AFrameData.Location - lSliceEnd.Location) mod 2000);
+        end;
       end
       else
       begin
@@ -1268,6 +1315,8 @@ end;
 procedure TWavePattern.Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
 var
   lInSample: Boolean;
+  k: Integer;
+  lChannelIndex: Integer;
 begin
   if AFrameIndex = 0 then
   begin
@@ -1292,23 +1341,35 @@ begin
       // Put sound in buffer
       lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
       frac_pos := Frac(CursorAdder);
-      buf_offset := (Round(CursorAdder + FLatency) * Wave.ChannelCount);
+      buf_offset := Round(CursorAdder * Wave.ChannelCount);
 
-      if Trunc(CursorAdder) < (Wave.Frames - FLatency * FWave.ChannelCount) then
+      if Trunc(CursorAdder) < (Wave.Frames * FWave.ChannelCount) then
       begin
-        // Interpolate with Hermite interpolation
-        if buf_offset <= 0 then
-          xm1 := 0
+        (* TODO Make a stereo version of this
+
+          WorkBuffer[AFrameIndex] := hermite4(
+          frac_pos,
+          ifthen(buf_offset <= 1, 0, lBuffer[buf_offset - 1]),
+          lBuffer[buf_offset],
+          lBuffer[buf_offset + 1],
+          lBuffer[buf_offset + 2]);
+        *)
+
+        // Always convert mono to stereo
+        if FWave.ChannelCount = 1 then
+        begin
+          WorkBuffer[AFrameIndex * 2] := lBuffer[buf_offset];
+          WorkBuffer[AFrameIndex * 2 + 1] := lBuffer[buf_offset];
+        end
         else
-          xm1 := lBuffer[buf_offset - 1];
-        x0 := lBuffer[buf_offset];
-        x1 := lBuffer[buf_offset + 1];
-        x2 := lBuffer[buf_offset + 2];
-        WorkBuffer[AFrameIndex] := hermite4(frac_pos, xm1, x0, x1, x2);
+        begin
+          WorkBuffer[AFrameIndex * 2] := lBuffer[buf_offset];
+          WorkBuffer[AFrameIndex * 2 + 1] := lBuffer[buf_offset + 1];
+        end;
 
         // Scale buffer up to now when the scaling-factor has changed or
         // the end of the buffer has been reached.
-        if PitchAlgorithm in [paSoundTouch, paSoundTouchEco, paRubberband, paFFT] then
+        if PitchAlgorithm in [paSoundTouch, paSoundTouchEco, paSubBandSoundTouch, paFFT] then
         begin
           if (CursorRamp <> psLastScaleValue) or
             (FBPMscaleOld <> FBPMscale) or
@@ -1333,39 +1394,21 @@ begin
                 end;
 
                 TimeStretch.setPitch(CalculatedPitch);
-                FLatency := Round((GSettings.SampleRate / 1000) * TimeStretch.getSetting(SETTING_SEQUENCE_MS));
                 TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
                 TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
+              end;
+              paSubBandSoundTouch:
+              begin
+                FMultiWSOLA.Pitch := CalculatedPitch;
+                FMultiWSOLA.Process(
+                  @WorkBuffer[psBeginLocation],
+                  @ABuffer[psBeginLocation],
+                  lFrames);
               end;
               paFFT:
               begin
 //                FFFTStretcher.Pitch := CalculatedPitch;
 //                FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
-              end;
-              paRubberband:
-              begin
-(*                for k := 0 to Pred(lFrames) do
-                begin
-                  FConvertBuffer[k] := WorkBuffer[psBeginLocation + k];
-                end;
-                rubberband_set_pitch_scale(FRubberbandStretcher, CalculatedPitch);
-                FLatency := 8 * rubberband_get_latency(FRubberbandStretcher) * Wave.ChannelCount;
-
-                rubberband_process(
-                  FRubberbandStretcher,
-                  @FConvertBuffer,
-                  lFrames,
-                  0);
-
-                rubberband_retrieve(
-                  FRubberbandStretcher,
-                  @FConvertBuffer,
-                  lFrames);
-
-                for k := 0 to Pred(lFrames) do
-                begin
-                  ABuffer[psBeginLocation + k] := FConvertBuffer[k];
-                end;*)
               end;
             end;
 
@@ -1376,9 +1419,23 @@ begin
             FSampleScaleOld := FSampleScale;
           end;
         end
+        else if PitchAlgorithm = paPitched then
+        begin // paPitched
+          ABuffer[AFrameIndex * 2] := WorkBuffer[AFrameIndex * 2];
+          ABuffer[AFrameIndex * 2 + 1] := WorkBuffer[AFrameIndex * 2 + 1];
+        end
+        else if PitchAlgorithm = paSliceStretch then
+        begin
+          {if fmod(CursorAdder, GSettings.SampleRate / 32) then
+          begin
+
+          end;}
+        end
         else
         begin
-          ABuffer[AFrameIndex] := WorkBuffer[AFrameIndex];
+          // Copy stereo pair
+          ABuffer[AFrameIndex * 2] := WorkBuffer[AFrameIndex * 2];
+          ABuffer[AFrameIndex * 2 + 1] := WorkBuffer[AFrameIndex * 2 + 1];
         end;
       end
       else
@@ -1424,16 +1481,24 @@ begin
     if RealBPM < 90 then
     begin
       RealBPM := RealBPM * 2;
+      if RealBPM < 90 then
+      begin
+        RealBPM := RealBPM * 2;
+      end;
     end
     else if RealBPM > 190 then
     begin
       RealBPM := RealBPM / 2;
+      if RealBPM > 190 then
+      begin
+        RealBPM := RealBPM / 2;
+      end;
     end;
   end;
 
   // Determine bars
   BarCount := FWave.Frames div (2 * FWave.SampleRate);
-  BarLength := BarCount * FWave.SampleRate * 2;
+  BarLength := BarCount * FWave.SampleRate * FWave.ChannelCount * 2;
 
   LoopStart.Value := 0;
   LoopEnd.Value := BarLength;
@@ -1479,12 +1544,11 @@ begin
 
   {for i := 0 to Pred(Round(FWave.ReadCount / FWave.ChannelCount / Round(GSettings.SampleRate / 16))) do
   begin
-
     AddSlice(Round(i * GSettings.SampleRate / 16), SLICE_VIRTUAL, True);
   end;}
   if FWave.ChannelCount > 0 then
   begin
-    BeatDetect.setThresHold(0.1);
+    BeatDetect.setThresHold(0.4);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
     begin
       BeatDetect.AudioProcess(TChannel(Wave.ChannelList[0]).Buffer[i * FWave.ChannelCount]);
@@ -2175,6 +2239,8 @@ begin
   // Store RealBPM
   FOldRealBPM := FRealBPM;
   FWavePattern.RealBPM := FRealBPM;
+
+  DBLog(Format('Set BPM: %f', [FRealBPM]));
 
   FWavePattern.EndUpdate;
 

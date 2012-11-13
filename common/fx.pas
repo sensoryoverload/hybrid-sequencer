@@ -34,6 +34,36 @@ uses
   
 type
 
+  { TFIFOAudioBuffer }
+
+  TFIFOAudioBuffer = class
+  private
+    FBuffer: PSingle;
+    FChannelCount: Integer;
+    FDelay: Integer;
+    FDelaySamples: Integer;
+    FLength: Integer;
+    FBeginPtr: Integer;
+    FEndPtr: Integer;
+    FSampleRate: Integer;
+    procedure SetChannelCount(AValue: Integer);
+    procedure SetDelay(AValue: Integer);
+    procedure SetSampleRate(AValue: Integer);
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    // Push samples in the internal buffer
+    procedure PutSamples(ABuffer: PSingle; ANumSamples: Integer);
+    function ReceiveSamples(ABuffer: PSingle; ANumSamples: Integer): Integer;
+    procedure Process(ABuffer: PSingle; ANumSamples: Integer);
+
+    // Set the delay in
+    property Delay: Integer read FDelay write SetDelay;
+    property SampleRate: Integer read FSampleRate write SetSampleRate;
+    property ChannelCount: Integer read FChannelCount write SetChannelCount;
+  end;
+
   { TDummyFilter }
 
   TDummyFilter = class(TInternalNode)
@@ -122,6 +152,104 @@ type
 implementation
 
 var RandSeed:Integer=$DEAD;
+
+{ TFIFOAudioBuffer }
+
+{
+  Sets the length of the buffer
+}
+procedure TFIFOAudioBuffer.SetDelay(AValue: Integer);
+begin
+  if AValue = 0 then
+    FDelay := 1
+  else
+    FDelay := AValue;
+
+  FDelaySamples := Round(FSampleRate / (1000 / FDelay));
+end;
+
+procedure TFIFOAudioBuffer.SetChannelCount(AValue: Integer);
+begin
+  if FChannelCount = AValue then Exit;
+  FChannelCount := AValue;
+end;
+
+procedure TFIFOAudioBuffer.SetSampleRate(AValue: Integer);
+begin
+  if FSampleRate = AValue then Exit;
+  FSampleRate := AValue;
+end;
+
+constructor TFIFOAudioBuffer.Create;
+begin
+  inherited Create;
+
+  FSampleRate := 44100;
+  FLength := 88200;
+  FBeginPtr := 0;
+  FEndPtr := 0;
+
+  FBuffer := GetMem(SizeOf(Single) * FLength);
+end;
+
+destructor TFIFOAudioBuffer.Destroy;
+begin
+  FreeMem(FBuffer);
+
+  inherited Destroy;
+end;
+
+{
+  Pushes an amount of samples to the internal buffer
+}
+procedure TFIFOAudioBuffer.PutSamples(ABuffer: PSingle; ANumSamples: Integer);
+var
+  i: Integer;
+begin
+  // Check if there is capacity to move ANumSamples into the buffer
+  if ANumSamples * 2 * FChannelCount < FLength then
+  begin
+    for i := Pred(ANumSamples * FChannelCount) downto 0 do
+    begin
+      FBuffer[FDelaySamples - ANumSamples + i] := FBuffer[i];
+    end;
+    for i := 0 to Pred(ANumSamples * FChannelCount) do
+    begin
+      FBuffer[i] := ABuffer[i];
+    end;
+//    Move(FBuffer, FBuffer[FDelaySamples - ANumSamples], FDelaySamples * SizeOf(Single));
+//    Move(ABuffer, FBuffer, ANumSamples * SizeOf(Single));
+//    Inc(FBeginPtr, ANumSamples);
+  end
+  else
+  begin
+    raise Exception.Create('TFIFOAudioBuffer: Buffer overflow');
+  end;
+end;
+
+{
+  Fetch an amount of samples from the internal buffer
+}
+function TFIFOAudioBuffer.ReceiveSamples(ABuffer: PSingle; ANumSamples: Integer
+  ): Integer;
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(ANumSamples * FChannelCount) do
+  begin
+    ABuffer[i] := FBuffer[FDelaySamples - ANumSamples + i];
+  end;
+  //Move(FBuffer[FDelaySamples - ANumSamples], ABuffer, ANumSamples * SizeOf(Single));
+end;
+
+procedure TFIFOAudioBuffer.Process(ABuffer: PSingle; ANumSamples: Integer);
+begin
+  // Put samples in one end of the pipe
+  PutSamples(ABuffer, ANumSamples);
+
+  // Get samples from the other end of the pipe
+  ReceiveSamples(ABuffer, ANumSamples);
+end;
 
 
 { TDecimateFX }

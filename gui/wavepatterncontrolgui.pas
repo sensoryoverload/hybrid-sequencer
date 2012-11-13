@@ -18,11 +18,9 @@ type
     cbPitchAlgo: TComboBox;
     cbQuantize: TComboBox;
     edtFilename: TLabeledEdit;
-    fspnPitch: TFloatSpinEdit;
-    Label1: TLabel;
-    lblPitch: TLabel;
     Panel1: TPanel;
-    spnBeatsPerMinute: TSpinEdit;
+    pcBPM: TParameterControl;
+    pcPitch: TParameterControl;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
     TrackBar1: TTrackBar;
@@ -31,14 +29,16 @@ type
     procedure btnHalfClick(Sender: TObject);
     procedure cbPitchAlgoChange(Sender: TObject);
     procedure cbQuantizeChange(Sender: TObject);
-    procedure tbLatencyChange(Sender: TObject);
+    procedure pcBPMChange(Sender: TObject);
+    procedure pcBPMStartChange(Sender: TObject);
+    procedure pcPitchChange(Sender: TObject);
+    procedure pcPitchStartChange(Sender: TObject);
     procedure tbThresholdMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure TrackBar1Change(Sender: TObject);
-    procedure LoopMetricChange(Sender: TObject);
+    procedure DoChancheRealBPMCommand(APersist: Boolean);
+    procedure DoChangePitchCommand(APersist: Boolean);
     procedure cbPitchedChange(Sender: TObject);
-    procedure spnBeatsPerMinuteChange(Sender: TObject);
-    procedure spnPitchChange(Sender: TObject);
   private
     { private declarations }
     FModel: TWavePattern;
@@ -76,7 +76,6 @@ type
     property Pitched: Boolean read FPitched write FPitched default False;
     property RealBPM: Single read FRealBPM write FRealBPM default 120;
 
-//    property Model: TObject read FModelObject write FModelObject;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
@@ -118,9 +117,9 @@ procedure TWavePatternControlGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TWavePatternControl.Update');
 
-  if spnBeatsPerMinute.Value <> TWavePattern(Subject).RealBPM then
+  if pcBPM.Value <> TWavePattern(Subject).RealBPM then
   begin
-    spnBeatsPerMinute.Value := TWavePattern(Subject).RealBPM;
+    pcBPM.Value := TWavePattern(Subject).RealBPM;
   end;
 
   if cbPitchAlgo.ItemIndex <> Integer(TWavePattern(Subject).PitchAlgorithm) then
@@ -133,9 +132,9 @@ begin
     cbQuantize.ItemIndex := Integer(TWavePattern(Subject).QuantizeSetting);
   end;
 
-  if fspnPitch.Value <> TWavePattern(Subject).Pitch then
+  if pcPitch.Value <> TWavePattern(Subject).Pitch then
   begin
-    fspnPitch.Value := TWavePattern(Subject).Pitch;
+    pcPitch.Value := TWavePattern(Subject).Pitch;
   end;
 
   DBLog('end TWavePatternControl.Update');
@@ -172,20 +171,6 @@ begin
   FModel := TWavePattern(AModel);
 end;
 
-procedure TWavePatternControlGUI.spnBeatsPerMinuteChange(Sender: TObject);
-var
-  lChangeRealBPMCommand: TChangeRealBPMCommand;
-begin
-  lChangeRealBPMCommand := TChangeRealBPMCommand.Create(FObjectID);
-  try
-//    lChangeRealBPMCommand.RealBPM := spnBeatsPerMinute.Value;
-
-    GCommandQueue.PushCommand(lChangeRealBPMCommand);
-  except
-    lChangeRealBPMCommand.Free;
-  end;
-end;
-
 procedure TWavePatternControlGUI.cbPitchedChange(Sender: TObject);
 var
   lTogglePitchCommand: TTogglePitchCommand;
@@ -197,20 +182,6 @@ begin
     GCommandQueue.PushCommand(lTogglePitchCommand);
   except
     lTogglePitchCommand.Free;
-  end;
-end;
-
-procedure TWavePatternControlGUI.spnPitchChange(Sender: TObject);
-var
-  lChangePitchCommand: TChangePitchCommand;
-begin
-  lChangePitchCommand := TChangePitchCommand.Create(FObjectID);
-  try
-    lChangePitchCommand.Pitch := fspnPitch.Value;
-
-    GCommandQueue.PushCommand(lChangePitchCommand);
-  except
-    lChangePitchCommand.Free;
   end;
 end;
 
@@ -269,19 +240,53 @@ begin
 
 end;
 
-procedure TWavePatternControlGUI.tbLatencyChange(Sender: TObject);
+procedure TWavePatternControlGUI.DoChancheRealBPMCommand(APersist: Boolean);
 var
-  FChangeLatencyCommand: TChangeLatencyCommand;
+  lChangeRealBPMCommand: TChangeRealBPMCommand;
 begin
-  // Double the length of the loop
-  FChangeLatencyCommand := TChangeLatencyCommand.Create(FObjectID);
+  lChangeRealBPMCommand := TChangeRealBPMCommand.Create(FObjectID);
   try
-    //FChangeLatencyCommand.Latency := tbLatency.Position;
+    lChangeRealBPMCommand.Persist := APersist;
+    lChangeRealBPMCommand.RealBPM := pcBPM.Value;
 
-    GCommandQueue.PushCommand(FChangeLatencyCommand);
+    GCommandQueue.PushCommand(lChangeRealBPMCommand);
   except
-    FChangeLatencyCommand.Free;
+    lChangeRealBPMCommand.Free;
   end;
+end;
+
+procedure TWavePatternControlGUI.pcBPMChange(Sender: TObject);
+begin
+  DoChancheRealBPMCommand(False);
+end;
+
+procedure TWavePatternControlGUI.pcBPMStartChange(Sender: TObject);
+begin
+  DoChancheRealBPMCommand(True);
+end;
+
+procedure TWavePatternControlGUI.DoChangePitchCommand(APersist: Boolean);
+var
+  lChangePitchCommand: TChangePitchCommand;
+begin
+  lChangePitchCommand := TChangePitchCommand.Create(FObjectID);
+  try
+    lChangePitchCommand.Pitch := pcPitch.Value;
+
+    GCommandQueue.PushCommand(lChangePitchCommand);
+  except
+    lChangePitchCommand.Free;
+  end;
+end;
+
+procedure TWavePatternControlGUI.pcPitchChange(Sender: TObject);
+begin
+  DoChangePitchCommand(False);
+end;
+
+procedure TWavePatternControlGUI.pcPitchStartChange(Sender: TObject);
+begin
+  DoChangePitchCommand(True);
 end;
 
 procedure TWavePatternControlGUI.btnDoubleClick(Sender: TObject);
@@ -310,12 +315,6 @@ begin
   end;
 end;
 
-procedure TWavePatternControlGUI.LoopMetricChange(Sender: TObject);
-begin
-  //
-end;
-
-
 procedure TWavePatternControlGUI.Setpitch(const Avalue: Single);
 begin
   if Avalue > 8 then
@@ -335,8 +334,8 @@ begin
   cbPitchAlgo.Items.Add('None');
   cbPitchAlgo.Items.Add('SoundTouch Eco');
   cbPitchAlgo.Items.Add('SoundTouch HQ');
+  cbPitchAlgo.Items.Add('SubbandSoundTouch');
   cbPitchAlgo.Items.Add('FFT');
-  cbPitchAlgo.Items.Add('Rubberband');
   cbPitchAlgo.Items.Add('Pitched');
 
   cbQuantize.Items.Add('-');
