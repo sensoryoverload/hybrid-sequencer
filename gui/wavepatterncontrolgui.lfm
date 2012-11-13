@@ -18,14 +18,6 @@ object WavePatternControlGUI: TWavePatternControlGUI
     ClientHeight = 29
     ClientWidth = 1083
     TabOrder = 0
-    object Label1: TLabel
-      Left = 208
-      Height = 13
-      Top = 7
-      Width = 21
-      Caption = 'bpm'
-      ParentColor = False
-    end
     object edtFilename: TLabeledEdit
       Left = 23
       Height = 23
@@ -46,7 +38,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 0
     end
     object ToggleControl1: TToggleControl
-      Left = 627
+      Left = 743
       Height = 14
       Top = 6
       Width = 48
@@ -70,7 +62,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Visible = False
     end
     object TrackBar1: TTrackBar
-      Left = 377
+      Left = 493
       Height = 42
       Top = 0
       Width = 135
@@ -81,16 +73,8 @@ object WavePatternControlGUI: TWavePatternControlGUI
       ScalePos = trLeft
       TabOrder = 3
     end
-    object lblPitch: TLabel
-      Left = 295
-      Height = 13
-      Top = 7
-      Width = 24
-      Caption = 'pitch'
-      ParentColor = False
-    end
     object btnDouble: TButton
-      Left = 683
+      Left = 799
       Height = 25
       Top = 1
       Width = 25
@@ -99,7 +83,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 4
     end
     object btnHalf: TButton
-      Left = 710
+      Left = 826
       Height = 25
       Top = 1
       Width = 25
@@ -108,7 +92,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 5
     end
     object cbPitchAlgo: TComboBox
-      Left = 519
+      Left = 635
       Height = 27
       Top = 1
       Width = 100
@@ -117,34 +101,43 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Style = csDropDownList
       TabOrder = 6
     end
-    object fspnPitch: TFloatSpinEdit
-      Left = 323
-      Height = 23
-      Top = 1
-      Width = 50
-      Enabled = False
-      Increment = 1
-      MaxValue = 100
-      MinValue = 0
-      TabOrder = 7
-      Value = 1
-    end
-    object spnBeatsPerMinute: TSpinEdit
-      Left = 233
-      Height = 23
-      Top = 1
-      Width = 59
-      TabOrder = 8
-    end
     object cbQuantize: TComboBox
-      Left = 737
+      Left = 853
       Height = 27
       Top = 1
       Width = 100
       ItemHeight = 0
       OnChange = cbQuantizeChange
       Style = csDropDownList
-      TabOrder = 9
+      TabOrder = 7
+    end
+    object pcBPM: TParameterControl
+      Left = 230
+      Height = 11
+      Top = 7
+      Width = 91
+      Value = 120
+      Min = 20
+      Max = 200
+      Caption = 'BPM'
+      Orientation = oHorizontal
+      Size = 100
+      OnChange = pcBPMChange
+      OnStartChange = pcBPMStartChange
+    end
+    object pcPitch: TParameterControl
+      Left = 343
+      Height = 11
+      Top = 7
+      Width = 100
+      Value = 1
+      Min = 0.5
+      Max = 2
+      Caption = 'Pitch'
+      Orientation = oHorizontal
+      Size = 100
+      OnChange = pcPitchChange
+      OnStartChange = pcPitchStartChange
     end
   end
 end

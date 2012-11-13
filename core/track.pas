@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, globalconst, ContNrs, pattern, jacktypes, utils,
   sndfile, Dialogs, bpm, global_command, global, plugin, pluginhost,
-  math;
+  math, fx;
 
 type
   { TTrack }
@@ -61,6 +61,8 @@ type
     // One exception is when recording, track which is recording is processed last
     FProcessPriority: Integer;
 
+    FLatencyCompensationBuffer: TFIFOAudioBuffer;
+
     FSelected: Boolean;
     FPitched: Boolean;
     FLeftLevel: Single;
@@ -70,7 +72,13 @@ type
     FBooleanStack: Integer;
     FActive: Boolean;
     FRecording: Boolean;
+    // Value between 0 and 1
     FVolume: Single;
+    // Value between -1 (Left) and 1 (Right), defaults to 0 (Center)
+    FBalance: single;
+    FLeftPanGain: Single;
+    FRightPanGain: Single;
+
     FVolumeMultiplier: Single;
     FTrackType: TTrackType;
     FTrackName: string;
@@ -91,6 +99,7 @@ type
 
     function GetDevValue: shortstring;
     function GetVolume: single;
+    procedure SetBalance(AValue: single);
     procedure SetDevValue(const AValue: shortstring);
     procedure SetLeftLevel(const AValue: Single);
     procedure SetRightLevel(const AValue: Single);
@@ -114,6 +123,9 @@ type
     property PreFadeBuffer: pjack_default_audio_sample_t read FPreFadeBuffer write FPreFadeBuffer;
     property BooleanStack: Integer read FBooleanStack;
     property Recording: Boolean read FRecording write FRecording;
+    property LatencyCompensationBuffer: TFIFOAudioBuffer read FLatencyCompensationBuffer write FLatencyCompensationBuffer;
+    property LeftPanGain: Single read FLeftPanGain;
+    property RightPanGain: Single read FRightPanGain;
   published
     property PatternList: TPatternList read FPatternList write FPatternList;
     //property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
@@ -121,6 +133,7 @@ type
     property RightLevel: Single read FRightLevel write SetRightLevel;
     property Selected: Boolean read FSelected write FSelected;
     property Volume: single read GetVolume write SetVolume;
+    property Balance: single read FBalance write SetBalance;
     property VolumeMultiplier: Single read FVolumeMultiplier write FVolumeMultiplier;
     property Latency: Word read FLatency write FLatency default 0;
     property Playing: Boolean read GetPlaying write SetPlaying;
@@ -254,6 +267,18 @@ type
 
   published
     property TrackLevel: Single read FTrackLevel write FTrackLevel;
+  end;
+
+  TTrackBalanceCommand = class(TTrackCommand)
+  private
+    FTrackBalance: Single;
+    FOldTrackBalance: Single;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+
+  published
+    property TrackBalance: Single read FTrackBalance write FTrackBalance;
   end;
 
   TTracksRefreshEvent = procedure (TrackObject: TTrack) of object;
@@ -440,26 +465,48 @@ end;
 procedure TTrack.Process(ABuffer: PSingle; AFrameCount: Integer);
 var
   i: Integer;
+  lLeftOffset: Integer;
+  lRightOffset: Integer;
   TempLeftLevel: Single;
   TempRightLevel: Single;
 begin
+  if FPlayingPattern.Latency <> 0 then
+  begin
+    FLatencyCompensationBuffer.Delay := FPlayingPattern.Latency;
+    FLatencyCompensationBuffer.Process(ABuffer, AFrameCount);
+  end;
+
   if Active then
   begin
     for i := 0 to Pred(AFrameCount) do
     begin
+      lLeftOffset := i * 2;
+      lRightOffset := i * 2 + 1;
+
+      ABuffer[lLeftOffset] := ABuffer[lLeftOffset] * FVolumeMultiplier * FLeftPanGain;
+      ABuffer[lRightOffset] := ABuffer[lRightOffset] * FVolumeMultiplier * FRightPanGain;
+
       // Left
-      TempLeftLevel := Abs(ABuffer[i]);
+      TempLeftLevel := Abs(ABuffer[lLeftOffset]);
       if TempLeftLevel > FLeftLevel then
       begin
         FLeftLevel := TempLeftLevel;
       end;
 
       // Right
-      TempRightLevel := Abs(ABuffer[i]);
+      TempRightLevel := Abs(ABuffer[lRightOffset]);
       if TempRightLevel > FRightLevel then
       begin
         FRightLevel := TempRightLevel;
       end;
+    end;
+  end
+  else
+  begin
+    // Silence both channels
+    for i := 0 to Pred(AFrameCount * 2) do
+    begin
+      ABuffer[i] := 0;
     end;
   end;
 
@@ -475,7 +522,11 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  Getmem(FOutputBuffer, 88200);
+  Getmem(FOutputBuffer, 88200 * 2);
+
+  FLatencyCompensationBuffer := TFIFOAudioBuffer.Create;
+  FLatencyCompensationBuffer.Delay := 150;
+  FLatencyCompensationBuffer.SampleRate := Round(GSettings.SampleRate);
 
   FPatternList := TPatternList.create(True);
   ObjectOwnerID := AObjectOwner;
@@ -484,6 +535,7 @@ begin
   FToTrackID := 0; // 0 = master (default)
   FPitched:= False;
   Volume := 100;
+  Balance := 0; // 0.5 denotes center position
   FActive := True;
   FTrackType := ttNormal;
 
@@ -515,6 +567,9 @@ begin
 
   if Assigned(FPatternList) then
     FPatternList.Free;
+
+  if Assigned(FLatencyCompensationBuffer) then
+    FLatencyCompensationBuffer.Free;
 
   inherited Destroy;
 
@@ -550,6 +605,15 @@ end;
 function TTrack.GetVolume: single;
 begin
   Result := FVolume;
+end;
+
+procedure TTrack.SetBalance(AValue: single);
+begin
+  if FBalance = AValue then Exit;
+  FBalance := AValue;
+
+  FLeftPanGain := (1 - FBalance) * (0.7 + 0.2 * FBalance);
+  FRightPanGain := (1 + FBalance) * (0.7 - 0.2 * FBalance);
 end;
 
 function TTrack.GetDevValue: shortstring;
@@ -789,6 +853,43 @@ begin
   end;
 
   DBLog('end Rollback TTrackLevelCommand');
+end;
+
+procedure TTrackBalanceCommand.DoExecute;
+begin
+  DBLog('start Execute TTrackBalanceCommand ' + ObjectID);
+
+  DBLog(Format('Setting Balance to %f', [FTrackBalance]));
+
+  FTrack.Balance := FTrackBalance;
+
+  if Persist then
+  begin
+    FTrack.BeginUpdate;
+
+    FOldTrackBalance := FTrackBalance;
+
+    FTrack.EndUpdate;
+  end;
+
+  DBLog('end Execute TTrackBalanceCommand');
+end;
+
+
+procedure TTrackBalanceCommand.DoRollback;
+begin
+  DBLog('start Rollback TTrackBalanceCommand ' + ObjectID);
+
+  if Persist then
+  begin
+    FTrack.BeginUpdate;
+
+    FTrack.Balance := FOldTrackBalance;
+
+    FTrack.EndUpdate;
+  end;
+
+  DBLog('end Rollback TTrackBalanceCommand');
 end;
 
 { TRepositonPatternCommand }

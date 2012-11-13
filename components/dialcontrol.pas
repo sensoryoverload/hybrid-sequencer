@@ -160,6 +160,7 @@ Type
 
   TParameterControl = class(TCustomControl)
   private
+    FBoolean: Boolean;
     FMax: Single;
     FMin: Single;
     FOrientation: TOrientation;
@@ -187,6 +188,7 @@ Type
     property Min: Single read FMin write SetMin;
     property Max: Single read FMax write SetMax;
     property Caption: string read FCaption write SetCaption;
+    property ShowValue: Boolean read FBoolean write FBoolean;
     property Orientation: TOrientation read FOrientation write SetOrientation;
     property Size: Integer read FSize write SetSize;
 
@@ -511,7 +513,14 @@ end;
 procedure TParameterControl.SetValue(const AValue: Single);
 begin
   FValue := AValue;
-  FScreenValue := Round((Size / (FMax - FMin)) * FValue);
+  if FOrientation = oHorizontal then
+  begin
+    FScreenValue := Round((Width / (FMax - FMin)) * FValue);
+  end
+  else
+  begin
+    FScreenValue := Round((Height / (FMax - FMin)) * FValue);
+  end;
 
   Invalidate;
 end;
@@ -561,6 +570,7 @@ begin
 
   ParentColor := True;
   Size := 100;
+  ShowValue := True;
 
   FChanging := False;
 end;
@@ -577,41 +587,45 @@ end;
 
 procedure TParameterControl.Paint;
 var
-  Bitmap: TBitmap;
+  lBGRABitmap: TBGRABitmap;
+  lCaption: string;
 begin
-  Bitmap := TBitmap.Create;
+  lBGRABitmap := TBGRABitmap.Create(Width, Height);
   try
-    // Initializes the Bitmap Size
-    Bitmap.Height := Height;
-    Bitmap.Width := Width;
-
-    // Outline color
-    Bitmap.Canvas.Pen.Style := psSolid;
-    Bitmap.Canvas.Pen.Color := clBlack;
-    Bitmap.Canvas.Font.Size:= 7;
-
     if Orientation = oHorizontal then
     begin
-      Bitmap.Canvas.Brush.Color := clLtGray;
-      Bitmap.Canvas.Rectangle(0, 0, Width, Height);
-
-      Bitmap.Canvas.Brush.Color:= clGray;
-      Bitmap.Canvas.Rectangle(0, 0, FScreenValue, Height);
-      Bitmap.Canvas.TextOut(1, 1, FCaption + ' ' + FormatFloat('#.#', FValue));
+      lBGRABitmap.Rectangle(0, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+      lBGRABitmap.Rectangle(FScreenValue - 1, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+      lBGRABitmap.FontHeight := Height - 1;
+      if ShowValue then
+      begin
+        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
+      end
+      else
+      begin
+        lCaption := FCaption
+      end;
+      lBGRABitmap.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
     end
     else if Orientation = oVertical then
     begin
-      Bitmap.Canvas.Brush.Color := clLtGray;
-      Bitmap.Canvas.Rectangle(0, 0, Width, Height);
-
-      Bitmap.Canvas.Brush.Color:= clGray;
-      Bitmap.Canvas.Rectangle(0, FScreenValue, Width, Height);
-      Bitmap.Canvas.TextOut(1, 1, FormatFloat('#.#', FValue));
+      lBGRABitmap.Rectangle(0, 0, Width, FScreenValue, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+      lBGRABitmap.Rectangle(0, FScreenValue, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+      lBGRABitmap.FontHeight := Width - 2;
+      if ShowValue then
+      begin
+        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
+      end
+      else
+      begin
+        lCaption := FCaption
+      end;
+      lBGRABitmap.TextOut(1, 1, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
     end;
 
-    Canvas.Draw(0, 0, Bitmap);
+    lBGRABitmap.Draw(Canvas, 0, 0, True);
   finally
-    Bitmap.Free;
+    lBGRABitmap.Free;
   end;
 end;
 
@@ -662,7 +676,7 @@ begin
       begin
         FScreenValue := X;
       end;
-      FValue := ((FMax - FMin) / Size) * FScreenValue + FMin;
+      FValue := ((FMax - FMin) / Width) * FScreenValue + FMin;
     end
     else if Orientation = oVertical then
     begin
@@ -678,7 +692,7 @@ begin
       begin
         FScreenValue := Y;
       end;
-      FValue := FMax - ((FMax - FMin) / Size) * FScreenValue;
+      FValue := FMax - ((FMax - FMin) / Height) * FScreenValue;
     end;
   end;
 end;
@@ -1179,40 +1193,35 @@ end;
 
 procedure TToggleControl.Paint;
 var
-  Bitmap: TBitmap;
+  lBGRABitmap: TBGRABitmap;
 begin
-  Bitmap := TBitmap.Create;
+  lBGRABitmap := TBGRABitmap.Create(Width, Height);
   try
-    Bitmap.Canvas.Font.Size:= FFontSize;
-    Bitmap.Canvas.Font.Style := FFontStyle;
+    lBGRABitmap.FontHeight := FFontSize;
+    lBGRABitmap.FontStyle := FFontStyle;
 
     if FSwitchedOn then
       FCaption := FCaptionOn
     else
       FCaption := FCaptionOff;
 
-    FCaptionWidth := Canvas.TextWidth(FCaption);
-
-    // Initializes the Bitmap Size
-    Bitmap.Height := Height;
-    Bitmap.Width := Width;
-
-    // Switched on/off state color
-    if FSwitchedOn then
-      Bitmap.Canvas.Brush.Color := clYellow
-    else
-      Bitmap.Canvas.Brush.Color := clLtGray;
-
     // Outline color
-    Bitmap.Canvas.Pen.Style:= psSolid;
-    Bitmap.Canvas.Pen.Color:= clBlack;
+    lBGRABitmap.PenStyle := psSolid;
 
-    Bitmap.Canvas.Rectangle(0, 0, Width, Height);
-    Bitmap.Canvas.TextOut((Width shr 1) - (FCaptionWidth shr 1), 1, FCaption);
+    if FSwitchedOn then
+      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clYellow), dmSet)
+    else
+      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
 
-    Canvas.Draw(0, 0, Bitmap);
+    lBGRABitmap.TextOut(
+      (Width shr 1) - (lBGRABitmap.TextSize(FCaption).cx shr 1),
+      1,
+      FCaption,
+      ColorToBGRA(ColorToRGB(clBtnText)));
+
+    lBGRABitmap.Draw(Canvas, 0, 0, False);
   finally
-    Bitmap.Free;
+    lBGRABitmap.Free;
   end;
 
   //inherited Paint;

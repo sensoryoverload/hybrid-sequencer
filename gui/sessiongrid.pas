@@ -95,6 +95,7 @@ type
   private
     FTrackControls: TPanel;
     FVolumeFader: TVolumeControl;
+    FBalanceControl: TParameterControl;
     FActiveSwitch: TToggleControl;
 
     FTop: Integer;
@@ -110,6 +111,8 @@ type
     procedure ActiveSwitchChange(Sender: TObject);
     procedure LevelChange(Sender: TObject);
     procedure LevelStartChange(Sender: TObject);
+    procedure BalanceChange(Sender: TObject);
+    procedure BalanceStartChange(Sender: TObject);
     procedure SetSessionGrid(AValue: TSessionGrid);
   protected
     procedure SetHeight(AValue: Integer);
@@ -440,7 +443,8 @@ begin
   // SetActive
   FActiveSwitch.SwitchedOn := TTrack(Subject).Active;
 
-  // SetPan
+  // SetBalance
+  FBalanceControl.Value := TTrack(Subject).Balance;
 
   // SetInput
 
@@ -528,8 +532,8 @@ var
 begin
   Result := nil;
 
-  lPosition := AY div PATTERN_HEIGHT;
-  if lPosition < FSessionGrid.VisiblePatternCount then
+  lPosition := AY div PATTERN_HEIGHT + FSessionGrid.ScrollIndex;
+  if AY div PATTERN_HEIGHT < FSessionGrid.VisiblePatternCount then
   begin
     lTrack := TTrack(Model);
     for lIndex := 0 to Pred(lTrack.PatternList.Count) do
@@ -597,18 +601,32 @@ begin
   FTrackControls.BevelOuter := bvRaised;
   FTrackControls.Parent := FSessionGrid;
 
+  FBalanceControl := TParameterControl.Create(FTrackControls);
+  FBalanceControl.Height := 10;
+  FBalanceControl.Width := 50;
+  FBalanceControl.Top := 4;
+  FBalanceControl.Left := 4;
+  FBalanceControl.Caption := 'Balance';
+  FBalanceControl.Min := -1;
+  FBalanceControl.Max := 1;
+  FBalanceControl.Value := 0;
+  FBalanceControl.ShowValue := False;
+  FBalanceControl.OnStartChange := @BalanceStartChange;
+  FBalanceControl.OnChange := @BalanceChange;
+  FBalanceControl.Parent := FTrackControls;
+
   FVolumeFader := TVolumeControl.Create(FTrackControls);
   FVolumeFader.Height := 142;
   FVolumeFader.Width := 20;
   FVolumeFader.Left := 4;
-  FVolumeFader.Top := 4;
+  FVolumeFader.Top := 16;
   FVolumeFader.OnChange := @LevelChange;
   FVolumeFader.OnStartChange := @LevelStartChange;
   FVolumeFader.Parent := FTrackControls;
 
   FActiveSwitch := TToggleControl.Create(FTrackControls);
   FActiveSwitch.Left := 30;
-  FActiveSwitch.Top := 5;
+  FActiveSwitch.Top := 30;
   FActiveSwitch.Width := 30;
   FActiveSwitch.Height := 30;
   FActiveSwitch.CaptionOff := 'Off';
@@ -661,6 +679,36 @@ begin
     GCommandQueue.PushCommand(lTrackLevelCommand);
   except
     lTrackLevelCommand.Free;
+  end;
+end;
+
+procedure TTrackView.BalanceChange(Sender: TObject);
+var
+  lTrackBalanceCommand: TTrackBalanceCommand;
+begin
+  lTrackBalanceCommand := TTrackBalanceCommand.Create(ObjectID);
+  try
+    lTrackBalanceCommand.Persist := False;
+    lTrackBalanceCommand.TrackBalance := FBalanceControl.Value;
+
+    GCommandQueue.PushCommand(lTrackBalanceCommand);
+  except
+    lTrackBalanceCommand.Free;
+  end;
+end;
+
+procedure TTrackView.BalanceStartChange(Sender: TObject);
+var
+  lTrackBalanceCommand: TTrackBalanceCommand;
+begin
+  lTrackBalanceCommand := TTrackBalanceCommand.Create(ObjectID);
+  try
+    lTrackBalanceCommand.Persist := True;
+    lTrackBalanceCommand.TrackBalance := FBalanceControl.Value;
+
+    GCommandQueue.PushCommand(lTrackBalanceCommand);
+  except
+    lTrackBalanceCommand.Free;
   end;
 end;
 
@@ -874,10 +922,10 @@ begin
     begin
       lPosition := Y div PATTERN_HEIGHT;
 
-      if lPosition < FVisiblePatternCount then
+      if Y div PATTERN_HEIGHT < FVisiblePatternCount then
       begin
         ADragPosition.TrackID := FTrackViewList[lIndex].ObjectID;
-        ADragPosition.Position := lPosition;
+        ADragPosition.Position := lPosition + ScrollIndex;
         ADragPosition.XOffset := X - FTrackViewList[lIndex].Left;
         ADragPosition.YOffset := Y - lPosition * PATTERN_HEIGHT;
       end;
@@ -1032,7 +1080,7 @@ begin
   begin
     lPattern := TPattern(ATrack.PatternList[lIndex]);
 
-    if Trunc(Y / PATTERN_HEIGHT) = lPattern.Position then
+    if Y div PATTERN_HEIGHT + ScrollIndex = lPattern.Position then
     begin
       Result := TPattern(ATrack.PatternList[lIndex]);
 
@@ -1331,8 +1379,6 @@ begin
     FDragging :=
       (abs(FMouseDownX - X) > 5) or (abs(FMouseDownY - Y) > 5);
   end;
-
-  //Invalidate;
 
   FLastMouseX := X;
   FLastMouseY := Y;
