@@ -299,13 +299,14 @@
         <Filename Value="core/track.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="track"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="14"/>
         <WindowIndex Value="0"/>
         <TopLine Value="468"/>
-        <CursorPos X="1" Y="490"/>
+        <CursorPos X="5" Y="475"/>
         <UsageCount Value="212"/>
         <Bookmarks Count="1">
-          <Item0 X="1" Y="479" ID="2"/>
+          <Item0 X="1" Y="482" ID="2"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit23>
@@ -619,11 +620,10 @@
         <Filename Value="core/wave.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wave"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="860"/>
-        <CursorPos X="7" Y="892"/>
+        <TopLine Value="703"/>
+        <CursorPos X="1" Y="713"/>
         <UsageCount Value="204"/>
         <Bookmarks Count="3">
           <Item0 X="7" Y="1547" ID="5"/>

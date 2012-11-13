@@ -470,10 +470,13 @@ var
   TempLeftLevel: Single;
   TempRightLevel: Single;
 begin
-  if FPlayingPattern.Latency <> 0 then
+  if Assigned(FPlayingPattern) then
   begin
-    FLatencyCompensationBuffer.Delay := FPlayingPattern.Latency;
-    FLatencyCompensationBuffer.Process(ABuffer, AFrameCount);
+    if FPlayingPattern.Latency <> 0 then
+    begin
+      FLatencyCompensationBuffer.Delay := FPlayingPattern.Latency;
+      FLatencyCompensationBuffer.Process(ABuffer, AFrameCount);
+    end;
   end;
 
   if Active then

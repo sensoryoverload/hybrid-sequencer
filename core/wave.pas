@@ -710,7 +710,7 @@ begin
   FFFTStretcher.SampleRate := GSettings.SampleRate;
   FFFTStretcher.Initialize;}
 
-  PitchAlgorithm := paSoundTouchEco;
+  PitchAlgorithm := paNone;
 
   Getmem(FWorkBuffer, 88200);
   Getmem(FConvertBuffer, 44100 * SizeOf(Single));
