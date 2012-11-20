@@ -46,7 +46,7 @@ unit smbPitchShift;
 interface
 
 uses
-  Math, fftw_s;
+  Math;
 
 const
   M_PI = 3.14159265358979323846;
@@ -60,7 +60,7 @@ type
   private
     FInFIFO: array[0..MAX_FRAME_LENGTH - 1] of Single;
     FOutFIFO: array[0..MAX_FRAME_LENGTH - 1] of Single;
-    FFFTworksp: array[0..MAX_FRAME_LENGTH - 1] of complex_single;
+    FFFTworksp: array[0..MAX_FRAME_LENGTH - 1] of Single;
 
     FLastPhase: array[0..MAX_FRAME_LENGTH div 2] of Single;
     FOverSampling: Longint;
@@ -74,9 +74,9 @@ type
     FSynMagn: array[0..MAX_FRAME_LENGTH - 1] of Single;
     FHanningWindow: array[0..MAX_FRAME_LENGTH - 1] of Single;
     FRover: Longint;
-    p, q: fftw_plan_single;
 
     FFFTFrameSize: Longint;
+    procedure smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
     procedure SetFFTFrameSize(AValue: Longint);
     procedure SetOverSampling(AValue: Longint);
     procedure SetPitch(AValue: Single);
@@ -137,23 +137,24 @@ begin
       FRover := inFifoLatency;
 
       { do windowing and re,im interleave }
-      for k := 0 to ffftFrameSize -1 do
+      for k := 0 to fftFrameSize -1 do
       begin
-        FFFTworksp[k].re := FInFIFO[k] * FHanningWindow[k];
-        FFFTworksp[k].im := 0.0;
+        window := -0.5 * cos(2.0 * Pi * k/fftFrameSize) + 0.5;
+        FFFTworksp[2 * k] := FInFIFO[k] * window;
+        FFFTworksp[2 * k + 1] := 0.0;
       end;
 
       { ***************** ANALYSIS ******************* }
       { do transform }
-      fftw_execute(p);
+      smbFft(@FFFTworksp[0], fftFrameSize, -1);
 
       { this is the analysis step }
       for k := 0 to fftFrameSize2 - 1 do
       begin
 
         { de-interlace FFT buffer }
-        real := FFFTworksp[k].re;
-        imag := FFFTworksp[k].im;
+        real := FFFTworksp[2 * k];
+        imag := FFFTworksp[2 * k + 1];
 
         { compute magnitude and phase }
         magn := 2.0 * squareroot_sse_11bits(real * real + imag * imag);
@@ -225,24 +226,25 @@ begin
         phase := FSumPhase[k];
 
         { get real and imag part and re-interleave }
-        FFFTworksp[k].re := magn * Cos(phase);
-        FFFTworksp[k].im := magn * Sin(phase);
+        FFFTworksp[2 * k] := magn * Cos(phase);
+        FFFTworksp[2 * k + 1] := magn * Sin(phase);
       end;
 
       { zero negative frequencies }
-      for k := fftFrameSize2 to ffftFrameSize - 1 do
-      begin
-        FFFTworksp[k].re := 0.0;
-        FFFTworksp[k].im := 0.0;
-      end;
+      for k := fftFrameSize+2 to 2 * fftFrameSize - 1 do
+        FFFTworksp[k] := 0.0;
+
 
       { do inverse transform }
-      fftw_execute(q);
+      smbFFT(@FFFTworksp[0], fftFrameSize, 1);
 
       { do windowing and add to output accumulator }
-      for k := 0 to ffftFrameSize - 1 do
+      for k :=0 to fftFrameSize - 1 do
       begin
-        FOutputAccum[k] += 2.0 * FHanningWindow[k] * FFFTworksp[k].re * fftFrameSizeMulOverSampling;
+        window := -0.5 * Cos(2.0 * Pi * k/fftFrameSize) + 0.5;
+        FOutputAccum[k] := FOutputAccum[k] +
+                           2.0 * window * FFFTworksp[2 * k] *
+                           fftFrameSizeMulOverSampling;
       end;
       for k := 0 to stepSize - 1 do
         FOutFIFO[k] := FOutputAccum[k];
@@ -348,8 +350,125 @@ begin
     FHanningWindow[i] := -0.5*cos(2.0*M_PI*i/FFFTFrameSize)+0.5;
   end;
 
-  p := fftw_plan_dft_1d(FFFTFrameSize, FFFTworksp, FFFTworksp, FFTW_FORWARD, [fftw_measure]);
-  q := fftw_plan_dft_1d(FFFTFrameSize, FFFTworksp, FFFTworksp, FFTW_BACKWARD, [fftw_measure]);
+end;
+
+procedure TSmbPitchShifter.smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
+
+// FFT routine, (C)1996 S.M.Bernsee. Sign = -1 is FFT, 1 is iFFT (inverse)
+// Fills fftBuffer[0..2*fftFrameSize-1] with the Fourier transform of the
+// time domain data in fftBuffer[0..2*fftFrameSize-1]. The FFT array takes
+// and returns the cosine and sine parts in an interleaved manner, ie.
+// fftBuffer[0] = cosPart[0], fftBuffer[1] = sinPart[0], asf. fftFrameSize
+// must be a power of 2. It expects a complex input signal (see footnote 2),
+// ie. when working with 'common' audio signals our input signal has to be
+// passed as beginin[0],0.,in[1],0.,in[2],0.,...end asf. In that case, the
+// transform of the frequencies of interest is in fftBuffer[0...fftFrameSize].
+
+var
+  wr, wi, arg, temp: Single;
+  p1, p2: PSingle;
+  tr, ti, ur, ui: Single;
+  p1r, p1i, p2r, p2i: PSingle;
+  i, bitm, j, le, le2, k: Longint;
+begin
+  i := 2;
+  while i < 2 * fftFrameSize - 2 do
+  begin
+    bitm := 2;
+    j := 0;
+    while bitm < 2 * fftFrameSize do
+    begin
+      if (i and bitm) <> 0 then
+        Inc(j);
+      j := j shl 1;
+      bitm := bitm shl 1;
+    end;
+    if i < j then
+    begin
+      p1 := fftBuffer + i;
+      p2 := fftBuffer + j;
+      temp := p1^;
+      p1^ := p2^;
+      p2^ := temp;
+      Inc(p1);
+      Inc(p2);
+      temp := p1^;
+      p1^ := p2^;
+      p2^ := temp;
+    end;
+    Inc(i, 2);
+  end;
+
+  le := 2;
+  for k := 0 to Trunc(Ln(fftFrameSize)/Ln(2.0) + 0.5) - 1 do
+  begin
+    le := le shl 1;
+    le2 := le shr 1;
+    ur := 1.0;
+    ui := 0.0;
+    arg := Pi / (le2 shr 1);
+    wr := Cos(arg);
+    wi := sign * Sin(arg);
+    j := 0;
+    while j < le2 do
+    begin
+      p1r := fftBuffer + j;
+      p1i := p1r + 1;
+      p2r := p1r + le2;
+      p2i := p2r + 1;
+      i := j;
+      while i < 2 * fftFrameSize do
+      begin
+        tr := p2r^ * ur - p2i^ * ui;
+        ti := p2r^ * ui + p2i^ * ur;
+        p2r^ := p1r^ - tr;
+        p2i^ := p1i^ - ti;
+        p1r^ := p1r^ + tr;
+        p1i^ := p1i^ + ti;
+        Inc(p1r, le);
+        Inc(p1i, le);
+        Inc(p2r, le);
+        Inc(p2i, le);
+        Inc(i, le);
+      end;
+      tr := ur * wr - ui * wi;
+      ui := ur * wi + ui * wr;
+      ur := tr;
+      Inc(j, 2);
+    end
+  end
+end;
+
+// 12/12/02, smb
+//
+// PLEASE NOTE:
+//
+// There have been some reports on domain errors when the atan2() function
+// was used as in the above code. Usually, a domain error should not
+// interrupt the program flow (maybe except in Debug mode) but rather be
+// handled "silently" and a global variable should be set according to
+// this error. However, on some occasions people ran into this kind of
+// scenario, so a replacement atan2() function is provided here.
+//
+// If you are experiencing domain errors and your program stops, simply
+// replace all instances of atan2() with calls to the smbAtan2()
+// function below.
+
+function smbAtan2(x, y: Double): Double;
+var
+  signx: Double;
+begin
+  if x > 0.0 then
+    signx := 1.0
+  else
+    signx := -1.0;
+
+  if x = 0.0 then
+    Result := 0.0
+  else if y = 0.0 then
+    Result := signx * Pi / 2.0
+  else
+    Result := ArcTan2(x, y);
 end;
 
 procedure TSmbPitchShifter.SetFFTFrameSize(AValue: Longint);

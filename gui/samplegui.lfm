@@ -136,7 +136,7 @@ object SampleView: TSampleView
         Width = 36
         Value = 0
         Caption = 'Rate'
-        Lowest = 0.05000000074505
+        Lowest = 0.05000000074506
         Highest = 1000
         Enabled = True
         ValueVisible = True
@@ -153,7 +153,7 @@ object SampleView: TSampleView
         Width = 36
         Value = 0
         Caption = 'Rate'
-        Lowest = 0.05000000074505
+        Lowest = 0.05000000074506
         Highest = 4000
         Enabled = True
         ValueVisible = True
@@ -170,7 +170,7 @@ object SampleView: TSampleView
         Width = 36
         Value = 0
         Caption = 'Rate'
-        Lowest = 0.05000000074505
+        Lowest = 0.05000000074506
         Highest = 4000
         Enabled = True
         ValueVisible = True

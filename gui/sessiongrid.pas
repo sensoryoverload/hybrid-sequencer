@@ -95,7 +95,7 @@ type
   private
     FTrackControls: TPanel;
     FVolumeFader: TVolumeControl;
-    FBalanceControl: TParameterControl;
+    FPanControl: TParameterControl;
     FActiveSwitch: TToggleControl;
 
     FTop: Integer;
@@ -444,7 +444,7 @@ begin
   FActiveSwitch.SwitchedOn := TTrack(Subject).Active;
 
   // SetBalance
-  FBalanceControl.Value := TTrack(Subject).Balance;
+  FPanControl.Value := TTrack(Subject).Pan;
 
   // SetInput
 
@@ -601,22 +601,23 @@ begin
   FTrackControls.BevelOuter := bvRaised;
   FTrackControls.Parent := FSessionGrid;
 
-  FBalanceControl := TParameterControl.Create(FTrackControls);
-  FBalanceControl.Height := 10;
-  FBalanceControl.Width := 50;
-  FBalanceControl.Top := 4;
-  FBalanceControl.Left := 4;
-  FBalanceControl.Caption := 'Balance';
-  FBalanceControl.Min := -1;
-  FBalanceControl.Max := 1;
-  FBalanceControl.Value := 0;
-  FBalanceControl.ShowValue := False;
-  FBalanceControl.OnStartChange := @BalanceStartChange;
-  FBalanceControl.OnChange := @BalanceChange;
-  FBalanceControl.Parent := FTrackControls;
+  FPanControl := TParameterControl.Create(FTrackControls);
+  FPanControl.Orientation := oBalance;
+  FPanControl.Height := 10;
+  FPanControl.Width := 50;
+  FPanControl.Top := 4;
+  FPanControl.Left := 4;
+  FPanControl.Caption := 'Balance';
+  FPanControl.Min := -1;
+  FPanControl.Max := 1;
+  FPanControl.Value := 0;
+  FPanControl.ShowValue := False;
+  FPanControl.OnStartChange := @BalanceStartChange;
+  FPanControl.OnChange := @BalanceChange;
+  FPanControl.Parent := FTrackControls;
 
   FVolumeFader := TVolumeControl.Create(FTrackControls);
-  FVolumeFader.Height := 142;
+  FVolumeFader.Height := 122;
   FVolumeFader.Width := 20;
   FVolumeFader.Left := 4;
   FVolumeFader.Top := 16;
@@ -684,12 +685,12 @@ end;
 
 procedure TTrackView.BalanceChange(Sender: TObject);
 var
-  lTrackBalanceCommand: TTrackBalanceCommand;
+  lTrackBalanceCommand: TTrackPanCommand;
 begin
-  lTrackBalanceCommand := TTrackBalanceCommand.Create(ObjectID);
+  lTrackBalanceCommand := TTrackPanCommand.Create(ObjectID);
   try
     lTrackBalanceCommand.Persist := False;
-    lTrackBalanceCommand.TrackBalance := FBalanceControl.Value;
+    lTrackBalanceCommand.Pan := FPanControl.Value;
 
     GCommandQueue.PushCommand(lTrackBalanceCommand);
   except
@@ -699,12 +700,12 @@ end;
 
 procedure TTrackView.BalanceStartChange(Sender: TObject);
 var
-  lTrackBalanceCommand: TTrackBalanceCommand;
+  lTrackBalanceCommand: TTrackPanCommand;
 begin
-  lTrackBalanceCommand := TTrackBalanceCommand.Create(ObjectID);
+  lTrackBalanceCommand := TTrackPanCommand.Create(ObjectID);
   try
     lTrackBalanceCommand.Persist := True;
-    lTrackBalanceCommand.TrackBalance := FBalanceControl.Value;
+    lTrackBalanceCommand.Pan := FPanControl.Value;
 
     GCommandQueue.PushCommand(lTrackBalanceCommand);
   except

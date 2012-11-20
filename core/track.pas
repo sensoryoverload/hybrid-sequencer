@@ -75,7 +75,7 @@ type
     // Value between 0 and 1
     FVolume: Single;
     // Value between -1 (Left) and 1 (Right), defaults to 0 (Center)
-    FBalance: single;
+    FPan: single;
     FLeftPanGain: Single;
     FRightPanGain: Single;
 
@@ -84,7 +84,7 @@ type
     FTrackName: string;
     FScheduledTo: TScheduleType;
 
-    //FPluginProcessor: TPluginProcessor;
+    FPluginProcessor: TPluginProcessor;
 
     // Location where track puts its output samples
     // This is then used by the mixing and routing function to serve this data to
@@ -99,7 +99,7 @@ type
 
     function GetDevValue: shortstring;
     function GetVolume: single;
-    procedure SetBalance(AValue: single);
+    procedure SetPan(AValue: single);
     procedure SetDevValue(const AValue: shortstring);
     procedure SetLeftLevel(const AValue: Single);
     procedure SetRightLevel(const AValue: Single);
@@ -128,12 +128,12 @@ type
     property RightPanGain: Single read FRightPanGain;
   published
     property PatternList: TPatternList read FPatternList write FPatternList;
-    //property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
+    property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property LeftLevel: Single read FLeftLevel write SetLeftLevel;
     property RightLevel: Single read FRightLevel write SetRightLevel;
     property Selected: Boolean read FSelected write FSelected;
     property Volume: single read GetVolume write SetVolume;
-    property Balance: single read FBalance write SetBalance;
+    property Pan: single read FPan write SetPan;
     property VolumeMultiplier: Single read FVolumeMultiplier write FVolumeMultiplier;
     property Latency: Word read FLatency write FLatency default 0;
     property Playing: Boolean read GetPlaying write SetPlaying;
@@ -269,16 +269,16 @@ type
     property TrackLevel: Single read FTrackLevel write FTrackLevel;
   end;
 
-  TTrackBalanceCommand = class(TTrackCommand)
+  TTrackPanCommand = class(TTrackCommand)
   private
-    FTrackBalance: Single;
-    FOldTrackBalance: Single;
+    FPan: Single;
+    FOldPan: Single;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
 
   published
-    property TrackBalance: Single read FTrackBalance write FTrackBalance;
+    property Pan: Single read FPan write FPan;
   end;
 
   TTracksRefreshEvent = procedure (TrackObject: TTrack) of object;
@@ -538,12 +538,12 @@ begin
   FToTrackID := 0; // 0 = master (default)
   FPitched:= False;
   Volume := 100;
-  Balance := 0; // 0.5 denotes center position
+  Pan := 0; // 0 denotes center position
   FActive := True;
   FTrackType := ttNormal;
 
-  //FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
-  //FPluginProcessor.AudioIn.Buffer := FOutputBuffer;
+  FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
+  FPluginProcessor.AudioIn.Buffer := FOutputBuffer;
 
   if Assigned(SelectedPattern) then
   begin
@@ -562,8 +562,8 @@ destructor TTrack.Destroy;
 begin
   DBLog('start TwaveformTrack.Destroy');
 
-  //if Assigned(FPluginProcessor) then
-  //  FPluginProcessor.Free;
+  if Assigned(FPluginProcessor) then
+    FPluginProcessor.Free;
 
   if Assigned(FOutputBuffer) then
     Freemem(FOutputBuffer);
@@ -610,13 +610,14 @@ begin
   Result := FVolume;
 end;
 
-procedure TTrack.SetBalance(AValue: single);
+procedure TTrack.SetPan(AValue: single);
 begin
-  if FBalance = AValue then Exit;
-  FBalance := AValue;
+  FPan := AValue;
 
-  FLeftPanGain := (1 - FBalance) * (0.7 + 0.2 * FBalance);
-  FRightPanGain := (1 + FBalance) * (0.7 - 0.2 * FBalance);
+  FLeftPanGain := (1 - FPan) * (0.7 + 0.2 * FPan);
+  FRightPanGain := (1 + FPan) * (0.7 - 0.2 * FPan);
+
+  DBLog(Format('L=%f, R=%f', [FLeftPanGain, FRightPanGain]));
 end;
 
 function TTrack.GetDevValue: shortstring;
@@ -858,28 +859,28 @@ begin
   DBLog('end Rollback TTrackLevelCommand');
 end;
 
-procedure TTrackBalanceCommand.DoExecute;
+procedure TTrackPanCommand.DoExecute;
 begin
-  DBLog('start Execute TTrackBalanceCommand ' + ObjectID);
+  DBLog('start Execute TTrackPanCommand ' + ObjectID);
 
-  DBLog(Format('Setting Balance to %f', [FTrackBalance]));
+  DBLog(Format('Setting Pan to %f (0=L, 1=R)', [FPan]));
 
-  FTrack.Balance := FTrackBalance;
+  FTrack.Pan := FPan;
 
   if Persist then
   begin
     FTrack.BeginUpdate;
 
-    FOldTrackBalance := FTrackBalance;
+    FOldPan := FPan;
 
     FTrack.EndUpdate;
   end;
 
-  DBLog('end Execute TTrackBalanceCommand');
+  DBLog('end Execute TTrackPanCommand');
 end;
 
 
-procedure TTrackBalanceCommand.DoRollback;
+procedure TTrackPanCommand.DoRollback;
 begin
   DBLog('start Rollback TTrackBalanceCommand ' + ObjectID);
 
@@ -887,7 +888,7 @@ begin
   begin
     FTrack.BeginUpdate;
 
-    FTrack.Balance := FOldTrackBalance;
+    FTrack.Pan := FOldPan;
 
     FTrack.EndUpdate;
   end;

@@ -568,6 +568,8 @@ begin
       end;}
       TimeMarkerLocation := Round((TimeMarker * QuarterBeatMarkerSpacing) - FOffset);
       FBitmap.Canvas.Line(TimeMarkerLocation, FTransportBarHeight, TimeMarkerLocation, Height);
+
+      //FBitmap.Canvas.TextOut(TimeMarkerLocation + 2, 75, Format('%d', [TimeMarkerLocation]));
       end;
     end;
 
@@ -597,11 +599,11 @@ begin
           AdderFactor := TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate;
 
           SliceLeft :=
-            Round((TMarkerGUI(SliceListGUI[SliceLoop]).Location) *
+            Round(TMarkerGUI(SliceListGUI[SliceLoop]).Location *
             FBpmFactor * FZoomFactorToScreen - FOffset);
 
           SliceRight :=
-            Round((TMarkerGUI(SliceListGUI[SliceLoop + 1]).Location) *
+            Round(TMarkerGUI(SliceListGUI[SliceLoop + 1]).Location *
             FBpmFactor * FZoomFactorToScreen - FOffset);
 
           Adder :=
@@ -716,6 +718,7 @@ begin
             FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
           end;
 
+          //FBitmap.Canvas.TextOut(SliceLeft + 2, 60, Format('%d', [TMarkerGUI(SliceListGUI[SliceLoop]).Location]));
           //FBitmap.Canvas.TextOut(SliceLeft + 5, 60, Format('%f', [TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
           //FBitmap.Canvas.TextOut(SliceLeft + 5, 70, Format('%f', [1 /TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
         end;

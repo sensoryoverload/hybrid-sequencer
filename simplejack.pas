@@ -38,6 +38,8 @@ uses
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
   DIV_BY_24 = 1 /24;
+  STEREO = 2;
+  MONO = 1;
 
 type
 
@@ -430,7 +432,7 @@ var
 begin
   Result := 0;
 
-  buffer_size := nframes * SizeOf(Single);
+  buffer_size := nframes * SizeOf(Single) * STEREO;
 
   midi_in_buf := jack_port_get_buffer(midi_input_port, nframes);
   midi_out_buf := jack_port_get_buffer(midi_output_port, nframes);
@@ -624,13 +626,6 @@ begin
                 TMidiPattern(lPlayingPattern).SampleBankEngine.Process( TMidiPattern(lPlayingPattern).MidiBuffer,
                   lTrack.OutputBuffer, nframes);
               end;
-
-              // 1. Execute per pattern plugins
-              //lPlayingPattern.PluginProcessor.Execute(nframes, lTrack.OutputBuffer);
-              {
-              // 2. Execute per track plugins
-              lTrack.PluginProcessor.Execute(nframes, lPlayingPattern.PluginProcessor.Buffer);
-              }
             end;
           end;
         end;

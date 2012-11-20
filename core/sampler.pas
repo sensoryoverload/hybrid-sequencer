@@ -2383,7 +2383,10 @@ begin
           lSampleAdd := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex];
           lSampleMul := ABuffer[lBufferIndex] * lVoice.InternalBuffer[lBufferIndex];
           ABuffer[lBufferIndex] := lSampleAdd - lSampleMul * log_approx(FSample.GlobalLevel);}
-          ABuffer[lBufferIndex] := ABuffer[lBufferIndex] + lVoice.InternalBuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
+
+          // Mono to stereo
+          ABuffer[lBufferIndex * 2] := ABuffer[lBufferIndex * 2] + lVoice.InternalBuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
+          ABuffer[lBufferIndex * 2 + 1] := ABuffer[lBufferIndex * 2 + 1] + lVoice.InternalBuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
         end;
       end;
     end;

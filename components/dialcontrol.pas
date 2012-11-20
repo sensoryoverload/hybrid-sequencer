@@ -154,7 +154,7 @@ Type
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
   end;
 
-  TOrientation = (oHorizontal, oVertical);
+  TOrientation = (oHorizontal, oVertical, oBalance);
 
   { TParameterControl }
 
@@ -513,7 +513,7 @@ end;
 procedure TParameterControl.SetValue(const AValue: Single);
 begin
   FValue := AValue;
-  if FOrientation = oHorizontal then
+  if (FOrientation = oHorizontal) or (FOrientation = oBalance) then
   begin
     FScreenValue := Round((Width / (FMax - FMin)) * FValue);
   end
@@ -546,7 +546,7 @@ end;
 procedure TParameterControl.SetOrientation(AValue: TOrientation);
 begin
   FOrientation := AValue;
-  if Orientation = oHorizontal then
+  if (Orientation = oHorizontal) or (Orientation = oBalance) then
   begin
     Height := 13;
     Width := Size;
@@ -589,10 +589,27 @@ procedure TParameterControl.Paint;
 var
   lBGRABitmap: TBGRABitmap;
   lCaption: string;
+  lCenter: Integer;
 begin
   lBGRABitmap := TBGRABitmap.Create(Width, Height);
   try
-    if Orientation = oHorizontal then
+    if Orientation = oBalance then
+    begin
+      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+      lBGRABitmap.Rectangle(Width div 2, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+      lBGRABitmap.DrawVertLine(Width div 2, 0, Height, ColorToBGRA(clGray));
+      lBGRABitmap.FontHeight := Height - 1;
+      if ShowValue then
+      begin
+        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
+      end
+      else
+      begin
+        lCaption := FCaption
+      end;
+      lBGRABitmap.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+    end
+    else if Orientation = oHorizontal then
     begin
       lBGRABitmap.Rectangle(0, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
       lBGRABitmap.Rectangle(FScreenValue - 1, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
@@ -662,7 +679,7 @@ procedure TParameterControl.UpdateScreenValue(X, Y: Integer);
 begin
   if FChanging then
   begin
-    if Orientation = oHorizontal then
+    if (Orientation = oHorizontal) or (Orientation = oBalance) then
     begin
       if X > Width then
       begin
@@ -701,12 +718,15 @@ procedure TParameterControl.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
   UpdateScreenValue(X, Y);
 
-  if Assigned(FOnChange) then
+  if FChanging then
   begin
-    FOnChange(Self);
-  end;
+    if Assigned(FOnChange) then
+    begin
+      FOnChange(Self);
+    end;
 
-  Invalidate;
+    Invalidate;
+  end;
 
   inherited MouseMove(Shift, X, Y);
 end;

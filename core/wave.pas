@@ -45,6 +45,17 @@ const
 type
   TQuantizeSettings = (qsNone, qsBar, qsBeat, qs4th, qs8th, qs16th, qs32th);
 
+  TSliceState = (ssNormal, ssSeek, ssStretch);
+
+  { TSliceStretch }
+
+  TSliceStretch = class
+  private
+    FState: TSliceState;
+  public
+    procedure Process(ALocation: Integer; ABuffer: PSingle);
+  end;
+
   TRingBufferData = class(TObject)
   private
     FData: Pointer;
@@ -105,16 +116,6 @@ type
     procedure RingbufferReader(ABuffer: jack_default_audio_sample_t; ASize: Integer);
   end;
 
-  { TSliceStretch }
-
-  TSliceStretch = class
-  private
-    FModulo: Double;
-  protected
-  public
-    procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer);
-  end;
-
   { TWavePattern }
   TWavePattern = class(TPattern)
   private
@@ -144,7 +145,7 @@ type
     FWaveFileName: string;
     FMultiWSOLA: TMultiWSOLA;
     FWSOLAStretcher: TSoundTouch;
-//    FFFTStretcher: TSmbPitchShifter;
+    FFFTStretcher: TSmbPitchShifter;
     FTransientThreshold: Integer;
     FBufferDataSize: PtrUInt;
     FWave: TWaveFile;
@@ -155,6 +156,8 @@ type
     FSampleScale: Single;
     FSampleScaleOld: Single;
     FSampleScaleInverse: Single;
+
+    FSliceSize16: Single;
 
 //    FDiskWriterThread: TDiskWriterThread;
     FDiskReaderThread: TDiskReaderThread;
@@ -527,8 +530,7 @@ end;
 
 { TSliceStretch }
 
-procedure TSliceStretch.Process(ABuffer: PSingle; AFrameIndex: Integer;
-  AFrameCount: Integer);
+procedure TSliceStretch.Process(ALocation: Integer; ABuffer: PSingle);
 begin
   //
 end;
@@ -704,13 +706,13 @@ begin
 
   Pitch := 1;
 
-  {FFFTStretcher := TSmbPitchShifter.Create;
+  FFFTStretcher := TSmbPitchShifter.Create;
   FFFTStretcher.FFTFrameSize := 512;
   FFFTStretcher.OverSampling := 8;
   FFFTStretcher.SampleRate := GSettings.SampleRate;
-  FFFTStretcher.Initialize;}
+  FFFTStretcher.Initialize;
 
-  PitchAlgorithm := paNone;
+  PitchAlgorithm := paPitched;
 
   Getmem(FWorkBuffer, 88200);
   Getmem(FConvertBuffer, 44100 * SizeOf(Single));
@@ -747,7 +749,7 @@ begin
   if Assigned(FSampleEnd) then
     FSampleEnd.Free;
 
-//  FFFTStretcher.Free;
+  FFFTStretcher.Free;
 
   Freemem(FConvertBuffer);
 
@@ -1225,7 +1227,30 @@ begin
 
     if (ALocation >= lSliceStart.Location) and (ALocation < lSliceEnd.Location) then
     begin
-      if PitchAlgorithm = paPitched then
+      if PitchAlgorithm = paSliceStretch then
+      begin
+        AFrameData.Location :=
+          lSliceStart.OrigLocation +
+          (Pitch * GAudioStruct.BPMScaleInv * (ALocation - lSliceStart.Location));
+
+        { determine slicestart , sliceend
+
+        (samplerate / (120 / BPM)) / 16
+          Make statemachine
+          - normal (still inside first iteration of sample until (endlocation - overlap))
+          - seek (when offset found sets new state 'stretching', sets sequence counter)
+          - stretching (decrease (or increase) sequence counter, keep playing
+            until sequence at maximum. When not at next slice then go into seek state
+            again, else start fast fade out )
+            start of sequence should fade in (fadeout for normal should have started (overlap))
+            Normal and overlap sequence should be mixed together
+        //
+        //
+        // seek with efficient algo for similar wave pattern, get offset between now and
+        // found location.
+        }
+      end
+      else if PitchAlgorithm = paPitched then
       begin
         AFrameData.Location :=
           lSliceStart.OrigLocation +
@@ -1407,8 +1432,8 @@ begin
               end;
               paFFT:
               begin
-//                FFFTStretcher.Pitch := CalculatedPitch;
-//                FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
+                FFFTStretcher.Pitch := CalculatedPitch;
+                FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
               end;
             end;
 
@@ -1542,11 +1567,12 @@ begin
   SortSlices;
   Notify;
 
-  {for i := 0 to Pred(Round(FWave.ReadCount / FWave.ChannelCount / Round(GSettings.SampleRate / 16))) do
+  for i := 0 to Pred(32)  do
   begin
-    AddSlice(Round(i * GSettings.SampleRate / 16), SLICE_VIRTUAL, True);
-  end;}
-  if FWave.ChannelCount > 0 then
+    AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
+  end;
+  writeln(format('slicecount %d', [FSliceList.Count]));
+  {if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.4);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1576,7 +1602,7 @@ begin
         Inc(WindowLength);
       end;
     end;
-  end;
+  end;}
 
   Notify;
 
