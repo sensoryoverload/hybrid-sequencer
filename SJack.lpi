@@ -54,7 +54,7 @@
         <MinVersion Major="1" Valid="True"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="101">
+    <Units Count="102">
       <Unit0>
         <Filename Value="SJack.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -73,12 +73,9 @@
         <UnitName Value="simplejack"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="422"/>
-        <CursorPos X="1" Y="435"/>
+        <TopLine Value="334"/>
+        <CursorPos X="29" Y="378"/>
         <UsageCount Value="218"/>
-        <Bookmarks Count="1">
-          <Item0 X="1" Y="435" ID="1"/>
-        </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -114,7 +111,7 @@
         <Filename Value="common/flqueue.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="flqueue"/>
-        <EditorIndex Value="28"/>
+        <EditorIndex Value="29"/>
         <WindowIndex Value="0"/>
         <TopLine Value="111"/>
         <CursorPos X="11" Y="114"/>
@@ -165,7 +162,7 @@
         <Filename Value="core/bpm.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="bpm"/>
-        <EditorIndex Value="27"/>
+        <EditorIndex Value="28"/>
         <WindowIndex Value="0"/>
         <TopLine Value="56"/>
         <CursorPos X="3" Y="83"/>
@@ -181,9 +178,6 @@
         <TopLine Value="373"/>
         <CursorPos X="7" Y="385"/>
         <UsageCount Value="212"/>
-        <Bookmarks Count="1">
-          <Item0 X="7" Y="385" ID="2"/>
-        </Bookmarks>
         <Loaded Value="True"/>
       </Unit11>
       <Unit12>
@@ -199,10 +193,11 @@
         <Filename Value="core/globalconst.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="globalconst"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="87"/>
-        <CursorPos X="89" Y="116"/>
+        <TopLine Value="178"/>
+        <CursorPos X="80" Y="192"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit13>
@@ -278,14 +273,15 @@
         <Filename Value="core/sampler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sampler"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="23"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2367"/>
-        <CursorPos X="1" Y="2388"/>
+        <TopLine Value="202"/>
+        <CursorPos X="1" Y="229"/>
         <UsageCount Value="212"/>
-        <Bookmarks Count="1">
-          <Item0 X="5" Y="2742" ID="6"/>
+        <Bookmarks Count="3">
+          <Item0 X="5" Y="2730" ID="6"/>
+          <Item1 X="3" Y="1435" ID="2"/>
+          <Item2 X="1" Y="1713" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit21>
@@ -386,8 +382,8 @@
         <UnitName Value="samplegui"/>
         <EditorIndex Value="22"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="513"/>
-        <CursorPos X="3" Y="514"/>
+        <TopLine Value="530"/>
+        <CursorPos X="18" Y="577"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -407,7 +403,7 @@
         <Filename Value="common/fx.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fx"/>
-        <EditorIndex Value="25"/>
+        <EditorIndex Value="26"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
@@ -745,7 +741,7 @@
         <Filename Value="core/wsola.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wsola"/>
-        <EditorIndex Value="26"/>
+        <EditorIndex Value="27"/>
         <WindowIndex Value="0"/>
         <TopLine Value="94"/>
         <CursorPos X="6" Y="119"/>
@@ -822,7 +818,7 @@
         <Filename Value="core/smbpitchshift.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="smbPitchShift"/>
-        <EditorIndex Value="24"/>
+        <EditorIndex Value="25"/>
         <WindowIndex Value="0"/>
         <TopLine Value="329"/>
         <CursorPos X="1" Y="353"/>
@@ -1017,7 +1013,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1263"/>
         <CursorPos X="23" Y="1319"/>
-        <UsageCount Value="33"/>
+        <UsageCount Value="34"/>
         <Loaded Value="True"/>
       </Unit99>
       <Unit100>
@@ -1028,134 +1024,139 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="10" Y="12"/>
-        <UsageCount Value="49"/>
+        <UsageCount Value="51"/>
         <Bookmarks Count="1">
           <Item0 X="1" Y="17" ID="9"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit100>
+      <Unit101>
+        <Filename Value="/usr/share/fpcsrc/2.6.0/rtl/inc/objpash.inc"/>
+        <EditorIndex Value="24"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="179"/>
+        <CursorPos X="23" Y="192"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit101>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="611" Column="23" TopLine="567"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="998" Column="50" TopLine="958"/>
       </Position1>
       <Position2>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="690" Column="25" TopLine="646"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="999" Column="37" TopLine="958"/>
       </Position2>
       <Position3>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="777" Column="12" TopLine="731"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1227" Column="29" TopLine="1195"/>
       </Position3>
       <Position4>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="690" Column="37" TopLine="664"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1229" Column="37" TopLine="1195"/>
       </Position4>
       <Position5>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="619" Column="41" TopLine="582"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1770" Column="7" TopLine="1724"/>
       </Position5>
       <Position6>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="385" Column="7" TopLine="373"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1726" Column="1" TopLine="1718"/>
       </Position6>
       <Position7>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="690" Column="23" TopLine="664"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1826" Column="7" TopLine="1800"/>
       </Position7>
       <Position8>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="142" Column="15" TopLine="117"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1726" Column="1" TopLine="1700"/>
       </Position8>
       <Position9>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="603" Column="23" TopLine="559"/>
+        <Filename Value="core/globalconst.pas"/>
+        <Caret Line="1086" Column="5" TopLine="1054"/>
       </Position9>
       <Position10>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="607" Column="23" TopLine="563"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1763" Column="3" TopLine="1753"/>
       </Position10>
       <Position11>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="611" Column="23" TopLine="567"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1701" Column="1" TopLine="1695"/>
       </Position11>
       <Position12>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="690" Column="23" TopLine="646"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1703" Column="1" TopLine="1696"/>
       </Position12>
       <Position13>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="776" Column="13" TopLine="731"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1423" Column="3" TopLine="1409"/>
       </Position13>
       <Position14>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1580" Column="24" TopLine="1558"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1737" Column="1" TopLine="1715"/>
       </Position14>
       <Position15>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1570" Column="1" TopLine="1558"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1423" Column="3" TopLine="1409"/>
       </Position15>
       <Position16>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1574" Column="52" TopLine="1558"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1701" Column="1" TopLine="1688"/>
       </Position16>
       <Position17>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="596" Column="30" TopLine="584"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1423" Column="5" TopLine="1409"/>
       </Position17>
       <Position18>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="609" Column="1" TopLine="597"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1701" Column="1" TopLine="1688"/>
       </Position18>
       <Position19>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="653" Column="1" TopLine="650"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1423" Column="3" TopLine="1409"/>
       </Position19>
       <Position20>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="627" Column="1" TopLine="617"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1701" Column="1" TopLine="1688"/>
       </Position20>
       <Position21>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2827" Column="4" TopLine="2819"/>
+        <Caret Line="1423" Column="3" TopLine="1409"/>
       </Position21>
       <Position22>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="630" Column="1" TopLine="616"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1701" Column="1" TopLine="1688"/>
       </Position22>
       <Position23>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2827" Column="3" TopLine="2822"/>
+        <Caret Line="228" Column="25" TopLine="217"/>
       </Position23>
       <Position24>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="623" Column="61" TopLine="616"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="204" Column="25" TopLine="204"/>
       </Position24>
       <Position25>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="429" Column="14" TopLine="415"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="228" Column="81" TopLine="204"/>
       </Position25>
       <Position26>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="433" Column="1" TopLine="415"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1634" Column="19" TopLine="1612"/>
       </Position26>
       <Position27>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="42" Column="12" TopLine="29"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1768" Column="1" TopLine="1754"/>
       </Position27>
       <Position28>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="435" Column="14" TopLine="422"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="201" Column="1" TopLine="187"/>
       </Position28>
       <Position29>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="666" Column="1" TopLine="639"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="229" Column="1" TopLine="202"/>
       </Position29>
-      <Position30>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="435" Column="1" TopLine="422"/>
-      </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
       <Item0 Name="SVN active" Value="-1"/>

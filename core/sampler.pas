@@ -225,6 +225,7 @@ type
     procedure SetStartPhase(const AValue: dword);
     procedure SetWaveForm(const Value: TOscWaveform);
   public
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); override;
     function WaveformName:String;
     procedure Initialize; override;
     procedure Finalize; override;
@@ -321,8 +322,6 @@ type
     FSampleName: string;
 
     FPitchScaleFactor: Single;
-    procedure SetSaturateDrivePreFilter(AValue: Single);
-    procedure SetSaturateDrivePostFilter(AValue: Single);
   protected
     procedure RecalculatePitchFactor;
   public
@@ -352,8 +351,8 @@ type
     property AmpEnvelope: TEnvelope read FAmpEnvelope write FAmpEnvelope;
     property FilterEnvelope: TEnvelope read FFilterEnvelope write FFilterEnvelope;
 
-    property SaturateDrivePreFilter: Single read FSaturateDrivePreFilter write SetSaturateDrivePreFilter;
-    property SaturateDrivePostFilter: Single read FSaturateDrivePostFilter write SetSaturateDrivePostFilter;
+    property SaturateDrivePreFilter: Single read FSaturateDrivePreFilter write FSaturateDrivePreFilter;
+    property SaturateDrivePostFilter: Single read FSaturateDrivePostFilter write FSaturateDrivePostFilter;
     property SaturateOn: Boolean read FSaturateOn write FSaturateOn;
 
     property Filter: TFilter read FFilter write FFilter;
@@ -1415,6 +1414,17 @@ begin
   FWaveForm := Value;
 end;
 
+constructor TOscillator.Create(AObjectOwner: string; AMapped: Boolean);
+begin
+  inherited Create(AObjectOwner, AMapped);
+
+  FPitch := 1;
+  FModAmount := 0;
+  FInternalLevel := 1;
+  FActive := True;
+  FMode := omOsc;
+end;
+
 function TOscillator.WaveformName: String;
 begin
   result := WFStrings[Ord(Fwaveform)];
@@ -1422,11 +1432,11 @@ end;
 
 procedure TOscillator.Initialize;
 begin
-  FPitch := 1000;
+  {FPitch := 1000;
   FModAmount := 0;
   FInternalLevel := 1;
   FActive := True;
-  FMode := omOsc;
+  FMode := omOsc;}
 
   Notify;
 end;
@@ -1672,26 +1682,6 @@ end;
 
 { TSample }
 
-procedure TSample.SetSaturateDrivePreFilter(AValue: Single);
-begin
-  if FSaturateDrivePreFilter = AValue then Exit;
-  FSaturateDrivePreFilter := AValue;
-  if FSaturateDrivePreFilter < 1 then
-  begin
-    FSaturateDrivePreFilter := 1;
-  end;
-end;
-
-procedure TSample.SetSaturateDrivePostFilter(AValue: Single);
-begin
-  if FSaturateDrivePostFilter = AValue then Exit;
-  FSaturateDrivePostFilter := AValue;
-  if FSaturateDrivePostFilter < 1 then
-  begin
-    FSaturateDrivePostFilter := 1;
-  end;
-end;
-
 procedure TSample.RecalculatePitchFactor;
 begin
   //FPitchScaleFactor := 1;
@@ -1701,24 +1691,67 @@ constructor TSample.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   inherited Create(AObjectOwner, AMapped);
 
-  // Init oscillators
+  // create oscillators
   FOsc1 := TOscillator.Create(ObjectID);
   FOsc2 := TOscillator.Create(ObjectID);
   FOsc3 := TOscillator.Create(ObjectID);
 
-  // Init envelopes
+  // create envelopes
   FAmpEnvelope := TEnvelope.Create(ObjectID);
   FFilterEnvelope := TEnvelope.Create(ObjectID);
   FPitchEnvelope := TEnvelope.Create(ObjectID);
 
-  // Init Filter
+  // create Filter
   FFilter := TFilter.Create(ObjectID);
 
-  // Init LFO
+  // create LFO
   FLFO1 := TOscillator.Create(ObjectID);
   FLFO2 := TOscillator.Create(ObjectID);
   FLFO3 := TOscillator.Create(ObjectID);
 
+  // init oscillators
+  FOsc1.Initialize;
+  FOsc1.Level := 1;
+  FOsc1.Pitch := 12;
+  FOsc1.WaveForm := sawtooth;
+  FOsc2.Initialize;
+  FOsc2.Level := 0;
+  FOsc2.Pitch := 12;
+  FOsc2.WaveForm := off;
+  FOsc3.Initialize;
+  FOsc3.Level := 0;
+  FOsc3.Pitch := 12;
+  FOsc3.WaveForm := off;
+
+  // Init envelopes
+  FAmpEnvelope.Initialize;
+  FFilterEnvelope.Initialize;
+  FPitchEnvelope.Initialize;
+
+  // Init Filter
+  FFilter.FilterType := ftBandreject;
+  FFilter.Initialize;
+
+  // Init LFO
+  FLFO1.Initialize;
+  FLFO1.Pitch := 0.1;
+  FLFO1.Mode := omLfo;
+  FLFO1.WaveForm := sinus;
+  FLFO2.Initialize;
+  FLFO2.Pitch := 0.1;
+  FLFO2.Mode := omLfo;
+  FLFO2.WaveForm := off;
+  FLFO3.Initialize;
+  FLFO3.Pitch := 0.1;
+  FLFO3.Mode := omLfo;
+  FLFO3.WaveForm := off;
+
+  // Globals
+  FLowNote := 0;
+  FHighNote := 127;
+  FKey := 48;
+  FSaturateDrivePreFilter := 1;
+  FSaturateDrivePostFilter := 1;
   FGlobalLevel := 1;
 
   FPitchScaleFactor := 1;
@@ -1746,50 +1779,6 @@ end;
 procedure TSample.Initialize;
 begin
   Notify;
-
-  FOsc1.Initialize;
-  FOsc1.Level := 1;
-  FOsc1.Pitch := 12;
-  FOsc1.WaveForm := sawtooth;
-  FOsc2.Initialize;
-  FOsc2.Level := 0;
-  FOsc2.Pitch := 12;
-  FOsc2.WaveForm := off;
-  FOsc3.Initialize;
-  FOsc3.Level := 0;
-  FOsc3.Pitch := 12;
-  FOsc3.WaveForm := off;
-
-  // Init envelopes
-  FAmpEnvelope.Initialize;
-  FFilterEnvelope.Initialize;
-  FPitchEnvelope.Initialize;
-
-  // Init Filter
-
-  FFilter.FilterType := ftBandreject;
-  FFilter.Initialize;
-
-  // Init LFO
-  FLFO1.Initialize;
-  FLFO1.Pitch := 0.1;
-  FLFO1.Mode := omLfo;
-  FLFO1.WaveForm := sinus;
-  FLFO2.Initialize;
-  FLFO2.Pitch := 0.1;
-  FLFO2.Mode := omLfo;
-  FLFO2.WaveForm := off;
-  FLFO3.Initialize;
-  FLFO3.Pitch := 0.1;
-  FLFO3.Mode := omLfo;
-  FLFO3.WaveForm := off;
-
-  // Globals
-  FLowNote := 0;
-  FHighNote := 127;
-  FKey := 48;
-  FSaturateDrivePreFilter := 1;
-  FSaturateDrivePostFilter := 1;
 end;
 
 procedure TSample.Finalize;
@@ -1802,7 +1791,6 @@ begin
   DBLog('start TSample.LoadSample');
 
   Result := True;
-
   try
     FWave := GSampleStreamProvider.LoadSample(AFileName);
 
@@ -1845,7 +1833,7 @@ begin
   begin
     lSample := TSample.Create(ObjectID, MAPPED);
     lSample.ObjectOwnerID := ObjectID;
-    lSample.Initialize;
+    //lSample.Initialize;
 
     AObject := lSample;
 

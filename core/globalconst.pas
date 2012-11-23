@@ -189,7 +189,7 @@ type
     FClassType: string;
     FOnCreateInstanceCallback: TCreateInstanceCallback;
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); virtual;
     destructor Destroy; override;
     procedure BeginUpdate;
     procedure EndUpdate;

@@ -463,7 +463,7 @@ begin
   SetupDialControl(dcLFO3Rate, spLFO3_Rate, 0, 1, 0.3);
   FillWaveSelectionComboBox(cbLFO3WaveSelector, spLFO3_Waveform);
 
-  SetupDialControl(dcGlobalLevel, spGlobal_Level, 0.01, 1, 0.5);
+  SetupDialControl(dcGlobalLevel, spGlobal_Level, 0.01, 2, 1);
 
   FillNoteComboBox(cbLowNote, spLow_Note);
   FillNoteComboBox(cbHighNote, spHigh_Note);
