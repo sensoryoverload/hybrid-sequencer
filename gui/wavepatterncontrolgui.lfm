@@ -113,13 +113,14 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object pcBPM: TParameterControl
       Left = 230
-      Height = 11
+      Height = 13
       Top = 7
-      Width = 91
+      Width = 100
       Value = 120
       Min = 20
       Max = 200
       Caption = 'BPM'
+      ShowValue = True
       Orientation = oHorizontal
       Size = 100
       OnChange = pcBPMChange
@@ -127,13 +128,14 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object pcPitch: TParameterControl
       Left = 343
-      Height = 11
+      Height = 13
       Top = 7
       Width = 100
       Value = 1
       Min = 0.5
       Max = 2
       Caption = 'Pitch'
+      ShowValue = True
       Orientation = oHorizontal
       Size = 100
       OnChange = pcPitchChange

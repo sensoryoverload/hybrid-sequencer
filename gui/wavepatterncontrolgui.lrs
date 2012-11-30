@@ -32,13 +32,13 @@ LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   +'cbQuantize'#4'Left'#3'U'#3#6'Height'#2#27#3'Top'#2#1#5'Width'#2'd'#10'ItemH'
   +'eight'#2#0#8'OnChange'#7#16'cbQuantizeChange'#5'Style'#7#14'csDropDownList'
   +#8'TabOrder'#2#7#0#0#17'TParameterControl'#5'pcBPM'#4'Left'#3#230#0#6'Height'
-  +#2#11#3'Top'#2#7#5'Width'#2'['#5'Value'#5#0#0#0#0#0#0#0#240#5'@'#3'Min'#5#0#0
-  +#0#0#0#0#0#160#3'@'#3'Max'#5#0#0#0#0#0#0#0#200#6'@'#7'Caption'#6#3'BPM'#11'O'
-  +'rientation'#7#11'oHorizontal'#4'Size'#2'd'#8'OnChange'#7#11'pcBPMChange'#13
-  +'OnStartChange'#7#16'pcBPMStartChange'#0#0#17'TParameterControl'#7'pcPitch'#4
-  +'Left'#3'W'#1#6'Height'#2#11#3'Top'#2#7#5'Width'#2'd'#5'Value'#5#0#0#0#0#0#0
-  +#0#128#255'?'#3'Min'#5#0#0#0#0#0#0#0#128#254'?'#3'Max'#5#0#0#0#0#0#0#0#128#0
-  +'@'#7'Caption'#6#5'Pitch'#11'Orientation'#7#11'oHorizontal'#4'Size'#2'd'#8'O'
-  +'nChange'#7#13'pcPitchChange'#13'OnStartChange'#7#18'pcPitchStartChange'#0#0
-  +#0#0
+  +#2#13#3'Top'#2#7#5'Width'#2'd'#5'Value'#5#0#0#0#0#0#0#0#240#5'@'#3'Min'#5#0#0
+  +#0#0#0#0#0#160#3'@'#3'Max'#5#0#0#0#0#0#0#0#200#6'@'#7'Caption'#6#3'BPM'#9'Sh'
+  +'owValue'#9#11'Orientation'#7#11'oHorizontal'#4'Size'#2'd'#8'OnChange'#7#11
+  +'pcBPMChange'#13'OnStartChange'#7#16'pcBPMStartChange'#0#0#17'TParameterCont'
+  +'rol'#7'pcPitch'#4'Left'#3'W'#1#6'Height'#2#13#3'Top'#2#7#5'Width'#2'd'#5'Va'
+  +'lue'#5#0#0#0#0#0#0#0#128#255'?'#3'Min'#5#0#0#0#0#0#0#0#128#254'?'#3'Max'#5#0
+  +#0#0#0#0#0#0#128#0'@'#7'Caption'#6#5'Pitch'#9'ShowValue'#9#11'Orientation'#7
+  +#11'oHorizontal'#4'Size'#2'd'#8'OnChange'#7#13'pcPitchChange'#13'OnStartChan'
+  +'ge'#7#18'pcPitchStartChange'#0#0#0#0
 ]);

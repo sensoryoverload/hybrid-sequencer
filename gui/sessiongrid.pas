@@ -11,11 +11,11 @@ uses
 
 const
   TRACK_WIDTH = 100;
-  PATTERN_HEIGHT = 15;
+  PATTERN_HEIGHT = 20;
   TRACK_CONTROL_HEIGHT = 150;
 
 type
-  TDroppedFileEvent = procedure(ADroppedFile: string) of object;
+  TDroppedFilefEvent = procedure(ADroppedFile: string) of object;
 
   TSessionGrid = class;
 

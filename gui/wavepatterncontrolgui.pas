@@ -337,6 +337,7 @@ begin
   cbPitchAlgo.Items.Add('SubbandSoundTouch');
   cbPitchAlgo.Items.Add('FFT');
   cbPitchAlgo.Items.Add('Pitched');
+  cbPitchAlgo.Items.Add('Beats');
 
   cbQuantize.Items.Add('-');
   cbQuantize.Items.Add('4 Beats');
