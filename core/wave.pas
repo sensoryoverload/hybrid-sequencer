@@ -160,6 +160,7 @@ type
     FSliceState: TSliceState;
     FSliceStartLocation: single;
     FSliceEndLocation: single;
+    FSliceStretchCounter: single;
     FSliceLength: Single;
     FSliceCounter: Single;
     FSliceCursor: Single;
@@ -218,7 +219,7 @@ type
     procedure CalculateLoopMarkers;
     procedure AutoMarkerProcess(ACalculateStatistics: Boolean = True);
     function GetSliceAt(Location: Integer; AMargin: single): TMarker;
-    function VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
+    function VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
     function StartVirtualLocation(ALocation: single): Integer;
     procedure Flush;
     function Latency: Integer;
@@ -1220,13 +1221,57 @@ end;
   AFrameData: Structure returned with info about the sampleframe
 
 }
-function TWavePattern.VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
+function TWavePattern.VirtualLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
 var
   i: Integer;
   lSliceStart: TMarker;
   lSliceEnd: TMarker;
   lStart: Single;
   lEnd: Single;
+
+  {
+    Returns best overlap location
+  }
+  function FindBestOverlapPosition(
+    const ASource: PSingle;
+    ATarget: PSingle;
+    ASeekLength: Integer;
+    AOverlapLength: Integer): Integer;
+  var
+    i, j: Integer;
+    adder: single;
+    main_adder: single;
+    position: Integer;
+    ATarget_iterate: PSingle;
+    ASource_iterate: PSingle;
+  begin
+    main_adder := 99999999;
+    for i := 0 to Pred(2 * ASeekLength) do
+    begin
+      adder := 0;
+      ATarget_iterate := ATarget;
+      ASource_iterate := ASource + i * 2;
+      for j := 0 to Pred(2 * AOverlapLength) do
+      begin
+        adder :=
+          (ATarget_iterate^ + (ATarget_iterate + 1)^) -
+          (ASource_iterate^ + (ASource_iterate + 1)^);
+
+        Inc(ATarget_iterate, 2);
+        Inc(ASource_iterate, 2);
+      end;
+      if adder < main_adder then
+      begin
+        main_adder := adder;
+        position := i;
+      end;
+    end;
+    if main_adder = 99999999 then
+      Result := 0
+    else
+      Result := position;
+  end;
+
 begin
   Result := True;
 
@@ -1249,7 +1294,7 @@ begin
           begin
             FSliceStartLocation := lSliceStart.OrigLocation +
               (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-            FSliceEndLocation := FSliceStartLocation + FSliceLength;
+            FSliceEndLocation := FSliceStartLocation + (FSliceLength * FSampleScaleInverse);
             FLastSlice := lSliceStart;
             FSliceCursor := FSliceStartLocation;
             FSliceState := ssInSlice;
@@ -1272,19 +1317,14 @@ begin
           FSliceSynced := False;
         end;
 
-        // Cursor not in manual slice
         if FSliceSynced and (FSliceState = ssNotInSlice) then
         begin
           // Start of slice
           FSliceStartLocation := lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-          FSliceEndLocation := FSliceStartLocation + FSliceLength;
+
+          FSliceEndLocation := FSliceStartLocation + (FSliceLength * FSampleScaleInverse);
           FSliceCursor := FSliceStartLocation;
-        end
-        else
-        begin
-          // Increate nominal always playing at samplespeed * pitch
-          FSliceCursor := FSliceCursor + Pitch;
         end;
 
         // Increase counter
@@ -1293,9 +1333,35 @@ begin
         if FSliceCursor >= FSliceEndLocation then
         begin
           // Ran past end of slice so loop a part of the previous section
-          AFrameData.Location := FSliceEndLocation - Round(FSliceLength * 0.50) +
+
+          // Default version just loop
+          AFrameData.Location :=
+            FSliceEndLocation - Round(FSliceLength * 0.50) +
             (Round(FSliceCursor - FSliceEndLocation) mod
             Round(FSliceLength * 0.50));
+
+          // Better version with waveform matching
+          {
+            1. Analyse past 10ms (arbitrary) of waveform
+            2. Start comparing this waveform to the waveform half of the slicelength earlier
+            3. Jump to new location or mix waveform
+          }
+          // start a loopcounter here
+       {   if FSliceStretchCounter > (FSliceLength * 0.50) then
+          begin
+            FSliceStretchCounter := 0;
+          end;
+
+          if FSliceStretchCounter = 0 then
+          begin
+            FSliceCursor := Round(FindBestOverlapPosition(
+              @ABuffer[Round(FSliceCursor * 2)],
+              @ABuffer[Round(FSliceCursor * 2 - FSliceLength * 0.50)],
+              Round(FSliceLength * 0.50),
+              Round(FSliceLength * 0.05)));
+          end;      }
+
+          FSliceStretchCounter := FSliceStretchCounter + 1;
         end
         else
         begin
@@ -1312,6 +1378,9 @@ begin
         begin
           AFrameData.Location := TMarker(FSliceList.First).Location;
         end;
+
+        // Increate nominal always playing at samplespeed * pitch
+        FSliceCursor := FSliceCursor + Pitch;
       end
       else if PitchAlgorithm = paPitched then
       begin
@@ -1422,13 +1491,14 @@ begin
 
     if lInSample then
     begin
-      if VirtualLocation(StartingSliceIndex, FSampleCursor, lFramePacket) then
+      lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
+
+      if VirtualLocation(StartingSliceIndex, FSampleCursor, lFramePacket, lBuffer) then
       begin
         CursorAdder := lFramePacket.Location;
         CursorRamp := lFramePacket.Ramp;
 
         // Put sound in buffer
-        lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
         frac_pos := Frac(CursorAdder);
         buf_offset := Round(CursorAdder * Wave.ChannelCount);
 
@@ -1549,12 +1619,8 @@ procedure TWavePattern.ProcessAdvance;
 begin
   UpdateBPMScale;
 
-  // 32th
-  //FSliceLength := GSettings.SampleRate * (1 / 16) * GAudioStruct.BPMScaleInv;
   // 16th
   FSliceLength := GSettings.SampleRate * (1 / 8) * GAudioStruct.BPMScale;
-  // 8
-  //FSliceLength := GSettings.SampleRate * (1 / 4) * GAudioStruct.BPMScaleInv;
 
   if Looped then
   begin

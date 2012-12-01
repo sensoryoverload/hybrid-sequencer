@@ -1365,8 +1365,6 @@ begin
   Invalidate;
 
   inherited MouseUp(Button, Shift, X, Y);
-
-  writeln('MouseUp');
 end;
 
 procedure TSessionGrid.MouseMove(Shift: TShiftState; X, Y: Integer);
