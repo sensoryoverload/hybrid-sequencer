@@ -1294,7 +1294,7 @@ begin
           begin
             FSliceStartLocation := lSliceStart.OrigLocation +
               (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-            FSliceEndLocation := FSliceStartLocation + (FSliceLength * FSampleScaleInverse);
+            FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScaleInverse;
             FLastSlice := lSliceStart;
             FSliceCursor := FSliceStartLocation;
             FSliceState := ssInSlice;
@@ -1323,7 +1323,7 @@ begin
           FSliceStartLocation := lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
 
-          FSliceEndLocation := FSliceStartLocation + (FSliceLength * FSampleScaleInverse);
+          FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScaleInverse;
           FSliceCursor := FSliceStartLocation;
         end;
 
@@ -1347,7 +1347,7 @@ begin
             3. Jump to new location or mix waveform
           }
           // start a loopcounter here
-       {   if FSliceStretchCounter > (FSliceLength * 0.50) then
+          {if FSliceStretchCounter > (FSliceLength * 0.50) then
           begin
             FSliceStretchCounter := 0;
           end;
@@ -1357,11 +1357,11 @@ begin
             FSliceCursor := Round(FindBestOverlapPosition(
               @ABuffer[Round(FSliceCursor * 2)],
               @ABuffer[Round(FSliceCursor * 2 - FSliceLength * 0.50)],
-              Round(FSliceLength * 0.50),
-              Round(FSliceLength * 0.05)));
-          end;      }
+              Round(FSliceLength * 0.30),
+              Round(FSliceLength * 0.10)));
+          end;
 
-          FSliceStretchCounter := FSliceStretchCounter + 1;
+          FSliceStretchCounter := FSliceStretchCounter + 1;  }
         end
         else
         begin
@@ -1617,6 +1617,8 @@ end;
 
 procedure TWavePattern.ProcessAdvance;
 begin
+  inherited;
+
   UpdateBPMScale;
 
   // 16th
@@ -1626,14 +1628,14 @@ begin
   begin
     FSliceCounter := 0;
     FSliceStartLocation := 0;
-    FSliceEndLocation := FSliceStartLocation + FSliceLength;
+    FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScaleInverse;
     FSliceCursor := 0;
+    FSliceStretchCounter := 0;
 
     Looped := False;
     Flush;
   end;
 
-  inherited;
 end;
 
 procedure TWavePattern.CalculateLoopMarkers;
@@ -1714,7 +1716,7 @@ begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;  }
   writeln(format('slicecount %d', [FSliceList.Count]));
-  if FWave.ChannelCount > 0 then
+  {if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1744,7 +1746,7 @@ begin
         Inc(WindowLength);
       end;
     end;
-  end;
+  end;  }
 
   Notify;
 

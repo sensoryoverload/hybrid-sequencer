@@ -75,7 +75,7 @@
         <UnitName Value="simplejack"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1083"/>
+        <TopLine Value="619"/>
         <CursorPos X="17" Y="1107"/>
         <UsageCount Value="218"/>
         <Loaded Value="True"/>
@@ -113,7 +113,7 @@
         <Filename Value="common/flqueue.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="flqueue"/>
-        <EditorIndex Value="31"/>
+        <EditorIndex Value="30"/>
         <WindowIndex Value="0"/>
         <TopLine Value="111"/>
         <CursorPos X="11" Y="114"/>
@@ -162,7 +162,7 @@
         <Filename Value="core/bpm.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="bpm"/>
-        <EditorIndex Value="30"/>
+        <EditorIndex Value="29"/>
         <WindowIndex Value="0"/>
         <TopLine Value="56"/>
         <CursorPos X="3" Y="83"/>
@@ -224,7 +224,7 @@
         <UnitName Value="midi"/>
         <EditorIndex Value="20"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="317"/>
+        <TopLine Value="304"/>
         <CursorPos X="1" Y="330"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
@@ -246,7 +246,7 @@
         <EditorIndex Value="16"/>
         <WindowIndex Value="0"/>
         <TopLine Value="481"/>
-        <CursorPos X="35" Y="496"/>
+        <CursorPos X="3" Y="494"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit18>
@@ -275,7 +275,7 @@
         <EditorIndex Value="25"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2716"/>
-        <CursorPos X="5" Y="2730"/>
+        <CursorPos X="8" Y="2727"/>
         <UsageCount Value="212"/>
         <Bookmarks Count="1">
           <Item0 X="5" Y="2730" ID="6"/>
@@ -297,8 +297,8 @@
         <UnitName Value="track"/>
         <EditorIndex Value="14"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="841"/>
-        <CursorPos X="15" Y="888"/>
+        <TopLine Value="472"/>
+        <CursorPos X="11" Y="480"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit23>
@@ -382,9 +382,12 @@
         <UnitName Value="samplegui"/>
         <EditorIndex Value="21"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="304"/>
-        <CursorPos X="24" Y="322"/>
+        <TopLine Value="443"/>
+        <CursorPos X="54" Y="444"/>
         <UsageCount Value="212"/>
+        <Bookmarks Count="1">
+          <Item0 X="54" Y="444" ID="5"/>
+        </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit30>
@@ -403,7 +406,7 @@
         <Filename Value="common/fx.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fx"/>
-        <EditorIndex Value="28"/>
+        <EditorIndex Value="27"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
@@ -621,17 +624,16 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1617"/>
-        <CursorPos X="3" Y="1625"/>
+        <TopLine Value="1334"/>
+        <CursorPos X="48" Y="1341"/>
         <UsageCount Value="204"/>
-        <Bookmarks Count="7">
-          <Item0 X="7" Y="1695" ID="5"/>
-          <Item1 X="33" Y="1487" ID="7"/>
-          <Item2 X="5" Y="547" ID="3"/>
-          <Item3 X="1" Y="1309" ID="8"/>
-          <Item4 X="22" Y="1629" ID="2"/>
-          <Item5 X="23" Y="1725" ID="4"/>
-          <Item6 X="35" Y="1350" ID="1"/>
+        <Bookmarks Count="6">
+          <Item0 X="33" Y="1487" ID="7"/>
+          <Item1 X="5" Y="547" ID="3"/>
+          <Item2 X="1" Y="1309" ID="8"/>
+          <Item3 X="22" Y="1629" ID="2"/>
+          <Item4 X="23" Y="1725" ID="4"/>
+          <Item5 X="34" Y="1350" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit54>
@@ -739,7 +741,7 @@
         <Filename Value="core/wsola.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wsola"/>
-        <EditorIndex Value="29"/>
+        <EditorIndex Value="28"/>
         <WindowIndex Value="0"/>
         <TopLine Value="94"/>
         <CursorPos X="6" Y="119"/>
@@ -816,7 +818,7 @@
         <Filename Value="core/smbpitchshift.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="smbPitchShift"/>
-        <EditorIndex Value="27"/>
+        <EditorIndex Value="26"/>
         <WindowIndex Value="0"/>
         <TopLine Value="329"/>
         <CursorPos X="1" Y="353"/>
@@ -997,7 +999,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1263"/>
         <CursorPos X="23" Y="1319"/>
-        <UsageCount Value="71"/>
+        <UsageCount Value="74"/>
         <Loaded Value="True"/>
       </Unit96>
       <Unit97>
@@ -1008,7 +1010,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="10" Y="12"/>
-        <UsageCount Value="124"/>
+        <UsageCount Value="131"/>
         <Bookmarks Count="1">
           <Item0 X="1" Y="17" ID="9"/>
         </Bookmarks>
@@ -1016,134 +1018,132 @@
       </Unit97>
       <Unit98>
         <Filename Value="/usr/share/fpcsrc/2.6.0/rtl/inc/objpash.inc"/>
-        <EditorIndex Value="26"/>
         <WindowIndex Value="0"/>
         <TopLine Value="179"/>
         <CursorPos X="23" Y="192"/>
         <UsageCount Value="47"/>
-        <Loaded Value="True"/>
       </Unit98>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1656" Column="23" TopLine="1639"/>
+        <Caret Line="1631" Column="22" TopLine="1613"/>
       </Position1>
       <Position2>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1626" Column="7" TopLine="1608"/>
+        <Caret Line="1360" Column="49" TopLine="1333"/>
       </Position2>
       <Position3>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="2730" Column="5" TopLine="2716"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="1540" Column="88" TopLine="1524"/>
       </Position3>
       <Position4>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="14" Column="17" TopLine="1"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="1355" Column="11" TopLine="1337"/>
       </Position4>
       <Position5>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1223" Column="124" TopLine="1213"/>
+        <Caret Line="1331" Column="67" TopLine="1310"/>
       </Position5>
       <Position6>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="221" Column="97" TopLine="221"/>
+        <Caret Line="1728" Column="23" TopLine="1715"/>
       </Position6>
       <Position7>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1223" Column="124" TopLine="1215"/>
+        <Caret Line="1627" Column="1" TopLine="1618"/>
       </Position7>
       <Position8>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="221" Column="29" TopLine="215"/>
+        <Caret Line="1352" Column="37" TopLine="1334"/>
       </Position8>
       <Position9>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="222" Column="34" TopLine="215"/>
+        <Caret Line="1622" Column="1" TopLine="1617"/>
       </Position9>
       <Position10>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1223" Column="38" TopLine="1217"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="330" Column="1" TopLine="304"/>
       </Position10>
       <Position11>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1358" Column="33" TopLine="1356"/>
+        <Filename Value="core/pattern.pas"/>
+        <Caret Line="425" Column="3" TopLine="313"/>
       </Position11>
       <Position12>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1361" Column="43" TopLine="1354"/>
+        <Filename Value="core/pattern.pas"/>
+        <Caret Line="85" Column="30" TopLine="71"/>
       </Position12>
       <Position13>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1435" Column="7" TopLine="1430"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1107" Column="17" TopLine="619"/>
       </Position13>
       <Position14>
-        <Filename Value="externals/soundtouch/tdstretch.pas"/>
-        <Caret Line="852" Column="1" TopLine="830"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="1350" Column="32" TopLine="1337"/>
       </Position14>
       <Position15>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1349" Column="34" TopLine="1323"/>
+        <Filename Value="core/track.pas"/>
+        <Caret Line="477" Column="66" TopLine="465"/>
       </Position15>
       <Position16>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="163" Column="34" TopLine="146"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2727" Column="8" TopLine="2716"/>
       </Position16>
       <Position17>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1353" Column="1" TopLine="1335"/>
+        <Caret Line="1323" Column="14" TopLine="1311"/>
       </Position17>
       <Position18>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1357" Column="93" TopLine="1340"/>
+        <Caret Line="547" Column="5" TopLine="533"/>
       </Position18>
       <Position19>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1361" Column="34" TopLine="1340"/>
+        <Caret Line="1747" Column="10" TopLine="1728"/>
       </Position19>
       <Position20>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1359" Column="64" TopLine="1342"/>
+        <Caret Line="1360" Column="40" TopLine="1306"/>
       </Position20>
       <Position21>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1361" Column="21" TopLine="1344"/>
+        <Caret Line="1629" Column="75" TopLine="1613"/>
       </Position21>
       <Position22>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1360" Column="41" TopLine="1343"/>
+        <Caret Line="1326" Column="54" TopLine="1313"/>
       </Position22>
       <Position23>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1631" Column="22" TopLine="1613"/>
+        <Caret Line="1630" Column="30" TopLine="1613"/>
       </Position23>
       <Position24>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1360" Column="49" TopLine="1333"/>
+        <Caret Line="1352" Column="33" TopLine="1343"/>
       </Position24>
       <Position25>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1540" Column="88" TopLine="1524"/>
+        <Caret Line="1350" Column="35" TopLine="1343"/>
       </Position25>
       <Position26>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1355" Column="11" TopLine="1337"/>
+        <Caret Line="1631" Column="31" TopLine="1613"/>
       </Position26>
       <Position27>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1331" Column="67" TopLine="1310"/>
+        <Caret Line="1350" Column="12" TopLine="1307"/>
       </Position27>
       <Position28>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1728" Column="23" TopLine="1715"/>
+        <Caret Line="1622" Column="10" TopLine="1613"/>
       </Position28>
       <Position29>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1627" Column="1" TopLine="1618"/>
+        <Caret Line="1623" Column="3" TopLine="1613"/>
       </Position29>
       <Position30>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="1352" Column="37" TopLine="1334"/>
+        <Caret Line="1629" Column="24" TopLine="1616"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">

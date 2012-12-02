@@ -1627,7 +1627,7 @@ end;
 
 procedure TEnvelopeEngine.NoteOn;
 begin
-  if FEnvelope.Attack = 0 then
+  if FEnvelope.Attack < 0.05 then
   begin
     FInternalLevel := 1;
     FState := esDecay;
