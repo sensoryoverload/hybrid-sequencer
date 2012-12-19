@@ -113,7 +113,7 @@ type
 
   TFileSourceTypes = (fsTrack, fsEmpty, fsWave, fsMIDI, fsPlugin);
 
-  TPitchAlgorithm = (paNone, paSoundTouchEco, paSoundTouch, paSubBandSoundTouch, paFFT, paPitched, paSliceStretch);
+  TPitchAlgorithm = (paNone, paSoundTouchEco, paSoundTouch, paFFT, paPitched, paSliceStretch);
 
   TSerializeAction = (saRetrieveProperties, saInitilizeObjects);
 
@@ -354,6 +354,7 @@ type
     Ramp: Single;      // Current warp ramp
     Pitch: Single;     // Pitch rate for slice
     Index: Integer;
+    FadeInFactor: Single;
   end;
 
   { TLoopMarker }

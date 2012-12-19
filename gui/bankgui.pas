@@ -81,6 +81,7 @@ type
     property SampleListGUI: TObjectList read FSampleListGUI write FSampleListGUI;
     property ObjectID: string read GetObjectID write SetObjectID;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
+    property Model: TSampleBank read FModel write FModel;
   end;
 
   TBankSelectControl = class(TPersistentCustomControl)

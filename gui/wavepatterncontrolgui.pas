@@ -334,7 +334,6 @@ begin
   cbPitchAlgo.Items.Add('None');
   cbPitchAlgo.Items.Add('SoundTouch Eco');
   cbPitchAlgo.Items.Add('SoundTouch HQ');
-  cbPitchAlgo.Items.Add('SubbandSoundTouch');
   cbPitchAlgo.Items.Add('FFT');
   cbPitchAlgo.Items.Add('Pitched');
   cbPitchAlgo.Items.Add('Beats');

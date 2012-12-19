@@ -11,7 +11,7 @@ uses
 
 const
   TRACK_WIDTH = 100;
-  PATTERN_HEIGHT = 20;
+  PATTERN_HEIGHT = 15;
   TRACK_CONTROL_HEIGHT = 150;
 
 type

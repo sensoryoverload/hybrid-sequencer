@@ -6,16 +6,16 @@ object PatternView: TPatternView
   ClientHeight = 628
   ClientWidth = 976
   TabOrder = 0
-  DesignLeft = 583
-  DesignTop = 169
+  DesignLeft = 302
+  DesignTop = 107
   object pcEditor: TPageControl
     Left = 0
     Height = 628
     Top = 0
     Width = 976
-    ActivePage = tsMIDI
+    ActivePage = tsPlugins
     Align = alClient
-    TabIndex = 0
+    TabIndex = 2
     TabOrder = 0
     TabPosition = tpLeft
     object tsMIDI: TTabSheet
@@ -23,6 +23,9 @@ object PatternView: TPatternView
     end
     object tsWave: TTabSheet
       Caption = 'Pattern'
+    end
+    object tsPlugins: TTabSheet
+      Caption = 'Plugins'
     end
   end
 end

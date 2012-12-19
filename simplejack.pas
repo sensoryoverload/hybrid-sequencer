@@ -623,8 +623,24 @@ begin
               if lPlayingPattern is TMidiPattern then
               begin
                 FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
-                TMidiPattern(lPlayingPattern).SampleBankEngine.Process( TMidiPattern(lPlayingPattern).MidiBuffer,
-                  lTrack.OutputBuffer, nframes);
+                TMidiPattern(lPlayingPattern).SampleBankEngine.Process(
+                  TMidiPattern(lPlayingPattern).MidiBuffer,
+                  lTrack.OutputBuffer,
+                  nframes);
+
+                // Effects chain
+                TMidiPattern(lPlayingPattern).PluginProcessor.Process(
+                  TMidiPattern(lPlayingPattern).MidiBuffer,
+                  lTrack.OutputBuffer,
+                  nframes);
+              end
+              else
+              begin
+                // Effects chain
+                TWavePattern(lPlayingPattern).PluginProcessor.Process(
+                  nil,
+                  lTrack.OutputBuffer,
+                  nframes);
               end;
             end;
           end;
@@ -1164,8 +1180,8 @@ begin
   if Assigned(FSessionGrid) then
     FSessionGrid.Free;
 
-  if Assigned(FPatternView) then
-    FPatternView.Free;
+//  if Assigned(FPatternView) then
+//    FPatternView.Free;
 
   if Assigned(FMappingMonitor) then
     FMappingMonitor.Free;
@@ -1192,7 +1208,7 @@ begin
   GAudioStruct.MainSampleRate := samplerate;
   GAudioStruct.BPM := 120;
 
-  FPatternView := TPatternView.Create(nil);
+  FPatternView := TPatternView.Create(Self);
   FPatternView.Parent := pnlBottom;
   FPatternView.Align := alClient;
   GAudioStruct.Attach(FPatternView);
@@ -1524,6 +1540,8 @@ begin
     // Add plugins
     lFilterRootNode := TreeView1.Items.Add(RootNode, 'Plugins');
     lFilterRootNode.ImageIndex := 17;
+    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Sampler');
+    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Distortion');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'BitReducer');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Moog filter');
 

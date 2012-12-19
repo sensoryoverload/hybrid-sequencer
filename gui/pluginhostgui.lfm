@@ -1,34 +1,33 @@
 object PluginProcessorGUI: TPluginProcessorGUI
   Left = 0
-  Height = 304
+  Height = 455
   Top = 0
-  Width = 687
-  ClientHeight = 304
-  ClientWidth = 687
+  Width = 784
+  ClientHeight = 455
+  ClientWidth = 784
   TabOrder = 0
-  DesignLeft = 446
-  DesignTop = 479
+  DesignLeft = 258
+  DesignTop = 162
   object gbPlugin: TGroupBox
     Left = 0
-    Height = 304
+    Height = 455
     Top = 0
     Width = 207
     Align = alLeft
     Caption = 'Plugin'
+    ParentColor = False
     TabOrder = 0
   end
-  object sbPluginGraph: TScrollBox
+  object pnlPlugin: TPanel
     Left = 207
-    Height = 304
+    Height = 455
     Top = 0
-    Width = 480
-    HorzScrollBar.Page = 478
-    VertScrollBar.Page = 302
+    Width = 577
     Align = alClient
-    Color = clGradientActiveCaption
+    Caption = 'pnlPlugin'
     ParentColor = False
     TabOrder = 1
-    OnDragDrop = sbPluginGraphDragDrop
-    OnDragOver = sbPluginGraphDragOver
+    OnDragDrop = pnlPluginDragDrop
+    OnDragOver = pnlPluginDragOver
   end
 end

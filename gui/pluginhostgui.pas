@@ -26,42 +26,17 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, StdCtrls, globalconst, global,
-  plugin, utils, Controls, LCLType, Graphics, contnrs, pluginhost, pluginnodegui;
+  plugin, utils, Controls, LCLType, Graphics, ExtCtrls, contnrs, pluginhost,
+  pluginnodegui, bankgui, sampler;
 
 type
-  TInterConnectPort = record
-    PluginID: string;
-    Parameter: string;
-  end;
-
-  { TInterConnectGUI }
-
-  TInterConnectGUI = class(THybridPersistentView)
-  private
-    FToPluginNode: string;
-    FToPluginNodePort: string;
-    FFromPluginNode: string;
-    FFromPluginNodePort: string;
-    function GetIsReady: Boolean;
-  public
-    procedure Update(Subject: THybridPersistentModel); reintroduce;
-    property IsReady: Boolean read GetIsReady;
-    // Connection outputs audio or midi to pluginnode input (parent)
-    property ToPluginNode: string read FToPluginNode write FToPluginNode;
-    property ToPluginNodePort: string read FToPluginNodePort write FToPluginNodePort;
-    // Connection input takes audio or midi from pluginnode output (child)
-    property FromPluginNode: string read FFromPluginNode write FFromPluginNode;
-    property FromPluginNodePort: string read FFromPluginNodePort write FFromPluginNodePort;
-
-  end;
-
   { TPluginProcessorGUI }
 
   TPluginProcessorGUI = class(TFrame, IObserver)
     gbPlugin: TGroupBox;
-    sbPluginGraph: TScrollBox;
-    procedure sbPluginGraphDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure sbPluginGraphDragOver(Sender, Source: TObject; X, Y: Integer;
+    pnlPlugin: TPanel;
+    procedure pnlPluginDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure pnlPluginDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
   private
     { private declarations }
@@ -74,9 +49,6 @@ type
     FModel: THybridPersistentModel;
 
     FNodeListGUI: TObjectList;
-    FConnectionListGUI: TObjectList;
-    FTempConnection: TInterConnectGUI;
-    FBusyConnecting: Boolean;
   protected
   public
     { public declarations }
@@ -84,14 +56,10 @@ type
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
     procedure EraseBackground(DC: HDC); override;
-    procedure Paint; override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     procedure CreateNodeGUI(AObjectID: string);
     procedure DeleteNodeGUI(AObjectID: string);
-    procedure CreateConnectionGUI(AObjectID: string);
-    procedure DeleteConnectionGUI(AObjectID: string);
-    procedure DoConnection(AObjectID: string; AParameter: string);
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
     function GetObjectID: string;
@@ -102,7 +70,6 @@ type
     property ObjectID: string read GetObjectID write SetObjectID;
     property Model: THybridPersistentModel read FModel write FModel;
     property NodeListGUI: TObjectList read FNodeListGUI write FNodeListGUI;
-    property ConnectionListGUI: TObjectList read FConnectionListGUI write FConnectionListGUI;
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
     property AudioOutGUI: TGenericPluginGUI read FAudioOutGUI write FAudioOutGUI;
     property AudioInGUI: TGenericPluginGUI read FAudioInGUI write FAudioInGUI;
@@ -111,9 +78,9 @@ type
 implementation
 
 uses
-  global_command, ComCtrls;
+  global_command, ComCtrls, plugin_distortion, plugin_distortion_gui;
 
-procedure TPluginProcessorGUI.sbPluginGraphDragDrop(Sender, Source: TObject; X,
+procedure TPluginProcessorGUI.pnlPluginDragDrop(Sender, Source: TObject; X,
   Y: Integer);
 var
   lTreeView: TTreeView;
@@ -128,9 +95,16 @@ begin
 
     lCreateNodesCommand := TCreateNodesCommand.Create(ObjectID);
     try
-      lCreateNodesCommand.XLocation := X;
-      lCreateNodesCommand.YLocation := Y;
+      lCreateNodesCommand.SequenceNr := 0;
       lCreateNodesCommand.PluginName := lTreeView.Selected.Text;
+      if SameText(lTreeView.Selected.Text, 'sampler') then
+      begin
+        lCreateNodesCommand.PluginType := ptSampler;
+      end
+      else if SameText(lTreeView.Selected.Text, 'distortion') then
+      begin
+        lCreateNodesCommand.PluginType := ptDistortion;
+      end;
 
       GCommandQueue.PushCommand(lCreateNodesCommand);
     except
@@ -139,7 +113,7 @@ begin
   end;
 end;
 
-procedure TPluginProcessorGUI.sbPluginGraphDragOver(Sender, Source: TObject; X,
+procedure TPluginProcessorGUI.pnlPluginDragOver(Sender, Source: TObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
 begin
   Accept := True;
@@ -152,14 +126,16 @@ begin
   inherited Create(AOwner);
 
   FNodeListGUI := TObjectList.create(True);
-  FConnectionListGUI := TObjectList.create(True);
-  FTempConnection := TInterConnectGUI.Create(Self.ObjectID);
 
-  FAudioInGUI := TGenericPluginGUI.Create(Self);
-  FAudioInGUI.Parent := sbPluginGraph;
+//  FAudioInGUI := TGenericPluginGUI.Create(Self);
+//  FAudioInGUI.Parent := pnlPlugin;
 
-  FAudioOutGUI := TGenericPluginGUI.Create(Self);
-  FAudioOutGUI.Parent := sbPluginGraph;
+//  FAudioOutGUI := TGenericPluginGUI.Create(Self);
+//  FAudioOutGUI.Parent := pnlPlugin;
+
+
+  {pnlPlugin.OnDragDrop := @pnlPluginDragDrop;
+  pnlPlugin.OnDragOver := @pnlPluginDragOver; }
 
   DBLog('end TPluginProcessorGUI.Create');
 end;
@@ -168,12 +144,7 @@ destructor TPluginProcessorGUI.Destroy;
 begin
   DBLog('start TPluginProcessorGUI.Destroy');
 
-  FTempConnection.Free;
   FNodeListGUI.Free;
-  FConnectionListGUI.Free;
-
-  FAudioInGUI.Free;
-  FAudioOutGUI.Free;
 
   inherited Destroy;
 
@@ -201,115 +172,17 @@ begin
   inherited EraseBackground(DC);
 end;
 
-procedure TPluginProcessorGUI.Paint;
-var
-  i: Integer;
-  lPoints: array of TPoint;
-  lFromPluginNode: TGenericPluginGUI;
-  lToPluginNode: TGenericPluginGUI;
-  lBitmap: TBitmap;
-
-  function GetObjectFromList(AObjectID: string): TGenericPluginGUI;
-  var
-    i: Integer;
-  begin
-    Result := nil;
-    if AObjectID = FAudioInGUI.ObjectID then
-    begin
-      Result := FAudioInGUI;
-      exit;
-    end;
-
-    if AObjectID = FAudioOutGUI.ObjectID then
-    begin
-      Result := FAudioOutGUI;
-      exit;
-    end;
-
-    for i := 0 to Pred(FNodeListGUI.Count) do
-    begin
-      if AObjectID = TGenericPluginGUI(FNodeListGUI[i]).ObjectID then
-      begin
-        Result := TGenericPluginGUI(FNodeListGUI[i]);
-        break;
-      end;
-    end;
-  end;
-
-begin
-  lBitmap := TBitmap.Create;
-  try
-    lBitmap.Height := Height;
-    lBitmap.Width := Width;
-    lBitmap.Canvas.Clear;
-    lBitmap.Canvas.Pen.Color := clGreen;
-    lBitmap.Canvas.Brush.Color := clGradientActiveCaption;
-    lBitmap.Canvas.Rectangle(0, 0, lBitmap.Width, lBitmap.Height);
-
-    SetLength(lPoints, 4);
-    for i := 0 to Pred(FConnectionListGUI.Count) do
-    begin
-      lFromPluginNode := GetObjectFromList(TInterConnectGUI(FConnectionListGUI[i]).FromPluginNode);
-      lToPluginNode := GetObjectFromList(TInterConnectGUI(FConnectionListGUI[i]).ToPluginNode);
-
-      if Assigned(lFromPluginNode) and Assigned(lToPluginNode) then
-      begin
-        lPoints[0].X := lFromPluginNode.Left + lFromPluginNode.Width;
-        lPoints[0].Y := lFromPluginNode.Top + (lFromPluginNode.Height div 2);
-        lPoints[1].X := lFromPluginNode.Left + lFromPluginNode.Width + 100;
-        lPoints[1].Y := lFromPluginNode.Top + (lFromPluginNode.Height div 2);
-        lPoints[2].X := lToPluginNode.Left - 100;
-        lPoints[2].Y := lToPluginNode.Top + (lToPluginNode.Height div 2);
-        lPoints[3].X := lToPluginNode.Left;
-        lPoints[3].Y := lToPluginNode.Top + (lToPluginNode.Height div 2);
-        lBitmap.Canvas.PolyBezier(lPoints);
-      end;
-    end;
-
-    if FBusyConnecting then
-    begin
-      if Assigned(FTempConnection) then
-      begin
-        if (FTempConnection.FromPluginNode <> '') and (FTempConnection.ToPluginNode <> '') then
-        begin
-          lFromPluginNode := GetObjectFromList(FTempConnection.FromPluginNode);
-          lToPluginNode := GetObjectFromList(FTempConnection.ToPluginNode);
-
-          if Assigned(lFromPluginNode) and Assigned(lToPluginNode) then
-          begin
-            lPoints[0].X := lFromPluginNode.Left + lFromPluginNode.Width;
-            lPoints[0].Y := lFromPluginNode.Top + (lFromPluginNode.Height div 2);
-            lPoints[1].X := lFromPluginNode.Left + lFromPluginNode.Width + 100;
-            lPoints[1].Y := lFromPluginNode.Top + (lFromPluginNode.Height div 2);
-            lPoints[2].X := lToPluginNode.Left - 100;
-            lPoints[2].Y := lToPluginNode.Top + (lToPluginNode.Height div 2);
-            lPoints[3].X := lToPluginNode.Left;
-            lPoints[3].Y := lToPluginNode.Top + (lToPluginNode.Height div 2);
-            lBitmap.Canvas.PolyBezier(lPoints);
-          end;
-        end;
-      end;
-    end;
-    sbPluginGraph.Canvas.Draw(0, 0, lBitmap);
-  finally
-    lBitmap.Free;
-  end;
-
-  inherited Paint;
-end;
-
-
 procedure TPluginProcessorGUI.Connect;
 begin
   Model := GObjectMapper.GetModelObject(ObjectID);
 
-  TPluginProcessor(Model).AudioIn.Attach(FAudioInGUI);
+  {TPluginProcessor(Model).AudioIn.Attach(FAudioInGUI);
   FAudioInGUI.ObjectID := TPluginProcessor(Model).AudioIn.ObjectID;
   FAudioInGUI.PluginName := TPluginProcessor(Model).AudioIn.PluginName;
 
   TPluginProcessor(Model).AudioOut.Attach(FAudioOutGUI);
   FAudioOutGUI.ObjectID := TPluginProcessor(Model).AudioOut.ObjectID;
-  FAudioOutGUI.PluginName := TPluginProcessor(Model).AudioOut.PluginName;
+  FAudioOutGUI.PluginName := TPluginProcessor(Model).AudioOut.PluginName; }
 end;
 
 procedure TPluginProcessorGUI.Disconnect;
@@ -321,21 +194,66 @@ procedure TPluginProcessorGUI.CreateNodeGUI(AObjectID: string);
 var
   lPluginNode: TPluginNode;
   lPluginNodeGUI: TGenericPluginGUI;
+  lSampleBankGUI: TBankView;
+  lPluginDistortionGUI: TPluginDistortionGUI;
 begin
   DBLog('start TPluginProcessorGUI.CreateNodeGUI ' + AObjectID);
 
   lPluginNode := TPluginNode(GObjectMapper.GetModelObject(AObjectID));
   if Assigned(lPluginNode) then
   begin
-    lPluginNodeGUI := TGenericPluginGUI.Create(Self);
-    lPluginNodeGUI.ObjectID := AObjectID;
-    lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
-    lPluginNodeGUI.Model := lPluginNode;
-    lPluginNodeGUI.PluginName := lPluginNode.PluginName;
-    lPluginNodeGUI.Parent := Self.sbPluginGraph;
+    case lPluginNode.PluginType of
+    ptIO:
+    begin
+      lPluginNodeGUI := TGenericPluginGUI.Create(nil);
+      lPluginNodeGUI.ObjectID := AObjectID;
+      lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
+      lPluginNodeGUI.Model := lPluginNode;
+      lPluginNodeGUI.PluginName := lPluginNode.PluginName;
+      lPluginNodeGUI.Parent := pnlPlugin;
+      lPluginNodeGUI.Width := 50;
+      lPluginNodeGUI.Align := alLeft;
 
-    FNodeListGUI.Add(lPluginNodeGUI);
-    lPluginNode.Attach(lPluginNodeGUI);
+      if Odd(FNodeListGUI.Count) then
+      begin
+        lPluginNodeGUI.Color := clRed;
+      end
+      else
+      begin
+        lPluginNodeGUI.Color := clBlue;
+      end;
+
+      FNodeListGUI.Add(lPluginNodeGUI);
+      lPluginNode.Attach(lPluginNodeGUI);
+    end;
+    ptSampler:
+    begin
+      lSampleBankGUI := TBankView.Create(nil);
+      lSampleBankGUI.ObjectID := AObjectID;
+      lSampleBankGUI.ObjectOwnerID := Self.ObjectID;
+      lSampleBankGUI.Model := TSampleBank(lPluginNode);
+//      lSampleBankGUI.PluginName := lPluginNode.PluginName;
+      lSampleBankGUI.Parent := pnlPlugin;
+      lSampleBankGUI.Align := alLeft;
+
+      FNodeListGUI.Add(lSampleBankGUI);
+      TSampleBank(lPluginNode).Attach(lSampleBankGUI);
+    end;
+    ptDistortion:
+    begin
+      lPluginDistortionGUI := TPluginDistortionGUI.Create(nil);
+      lPluginDistortionGUI.ObjectID := AObjectID;
+      lPluginDistortionGUI.ObjectOwnerID := Self.ObjectID;
+      lPluginDistortionGUI.Model := TPluginDistortion(lPluginNode);
+      lPluginDistortionGUI.PluginName := lPluginNode.PluginName;
+      lPluginDistortionGUI.Parent := pnlPlugin;
+      lPluginDistortionGUI.Width := 100;
+      lPluginDistortionGUI.Align := alLeft;
+
+      FNodeListGUI.Add(lPluginDistortionGUI);
+      TPluginDistortion(lPluginNode).Attach(lPluginDistortionGUI);
+    end;
+    end;
   end;
 
   DBLog('end TPluginProcessorGUI.CreateNodeGUI');
@@ -359,92 +277,6 @@ begin
   end;
 
   DBLog('end TPluginProcessorGUI.DeleteNodeGUI');
-end;
-
-procedure TPluginProcessorGUI.CreateConnectionGUI(AObjectID: string);
-var
-  lInterConnect: TInterConnect;
-  lInterConnectGUI: TInterConnectGUI;
-begin
-  DBLog('start TPluginProcessorGUI.CreateConnectionGUI ' + AObjectID);
-
-  lInterConnect := TInterConnect(GObjectMapper.GetModelObject(AObjectID));
-  if Assigned(lInterConnect) then
-  begin
-    lInterConnectGUI := TInterConnectGUI.Create(Self.ObjectID);
-    lInterConnectGUI.ObjectID := AObjectID;
-    lInterConnectGUI.ObjectOwnerID := Self.ObjectID;
-    lInterConnectGUI.Model := lInterConnect;
-    lInterConnectGUI.FromPluginNode := lInterConnect.FromPluginNode;
-    lInterConnectGUI.ToPluginNode := lInterConnect.ToPluginNode;
-
-    FConnectionListGUI.Add(lInterConnectGUI);
-    lInterConnect.Attach(lInterConnectGUI);
-
-    Invalidate;
-  end;
-
-  DBLog('end TPluginProcessorGUI.CreateConnectionGUI');
-end;
-
-procedure TPluginProcessorGUI.DeleteConnectionGUI(AObjectID: string);
-var
-  lInterConnectGUI: TInterConnect;
-  lIndex: Integer;
-begin
-  DBLog('start TPluginProcessorGUI.DeleteConnectionGUI ' + AObjectID);
-
-  for lIndex := Pred(FConnectionListGUI.Count) downto 0 do
-  begin
-    lInterConnectGUI := TInterConnect(FConnectionListGUI[lIndex]);
-
-    if lInterConnectGUI.ObjectID = AObjectID then
-    begin
-      FConnectionListGUI.Remove(lInterConnectGUI);
-      break;
-    end;
-  end;
-
-  Invalidate;
-
-  DBLog('end TPluginProcessorGUI.DeleteConnectionGUI');
-end;
-
-procedure TPluginProcessorGUI.DoConnection(AObjectID: string; AParameter: string);
-var
-  lCreateConnectionCommand: TCreateConnectionCommand;
-begin
-  // Start connection
-  if not FBusyConnecting then
-  begin
-    FTempConnection.FromPluginNode := AObjectID;
-    FTempConnection.FromPluginNodePort := AParameter;
-
-    DBLog('Start plugin connect %s', AObjectID);
-
-    FBusyConnecting := True;
-  end
-  else
-  // End connection
-  begin
-    FTempConnection.ToPluginNode := AObjectID;
-    FTempConnection.ToPluginNodePort := AParameter;
-
-    DBLog('End plugin connect %s', AObjectID);
-
-    // Create connection command here
-    lCreateConnectionCommand := TCreateConnectionCommand.Create(Self.ObjectID);
-    try
-      lCreateConnectionCommand.FromPluginNode := FTempConnection.FromPluginNode;
-      lCreateConnectionCommand.ToPluginNode := FTempConnection.ToPluginNode;
-
-      GCommandQueue.PushCommand(lCreateConnectionCommand);
-    except
-      lCreateConnectionCommand.Free;
-    end;
-
-    FBusyConnecting := False;
-  end;
 end;
 
 function TPluginProcessorGUI.GetModel: THybridPersistentModel;
@@ -477,21 +309,6 @@ begin
   FObjectOwnerID := AObjectOwnerID;
 end;
 
-{ TInterConnectGUI }
-
-function TInterConnectGUI.GetIsReady: Boolean;
-begin
-  Result := ((FFromPluginNode <> '') and (FFromPluginNodePort <> '') and
-    (FToPluginNode <> '') and (FToPluginNodePort <> ''));
-end;
-
-procedure TInterConnectGUI.Update(Subject: THybridPersistentModel);
-begin
-  FFromPluginNode := TInterConnect(Subject).FromPluginNode;
-  FToPluginNode := TInterConnect(Subject).ToPluginNode;
-  FFromPluginNodePort := TInterConnect(Subject).FromPluginNodePort;
-  FToPluginNodePort := TInterConnect(Subject).ToPluginNodePort;
-end;
 
 initialization
   {$I pluginhostgui.lrs}

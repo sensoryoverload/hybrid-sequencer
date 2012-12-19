@@ -377,7 +377,7 @@ type
 
   { TSampleBank }
 
-  TSampleBank = class(THybridPersistentModel)
+  TSampleBank = class({THybridPersistentModel}TPluginNode)
   private
     FBankName: string;
     FMidiChannel: Integer; // Needed??
@@ -1627,16 +1627,9 @@ end;
 
 procedure TEnvelopeEngine.NoteOn;
 begin
-  if FEnvelope.Attack < 0.05 then
-  begin
-    FInternalLevel := 1;
-    FState := esDecay;
-  end
-  else
   begin
     FAttackAdder :=
       1 / (Samplerate * log_approx( FEnvelope.Attack ) * 3);
-    FInternalLevel := 0;
   end;
 
   // Time to decrease to sustain level

@@ -481,6 +481,8 @@ begin
 
   if Active then
   begin
+    FPluginProcessor.Process(nil, ABuffer, AFrameCount);
+
     for i := 0 to Pred(AFrameCount) do
     begin
       lLeftOffset := i * 2;
@@ -543,7 +545,6 @@ begin
   FTrackType := ttNormal;
 
   FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
-  FPluginProcessor.AudioIn.Buffer := FOutputBuffer;
 
   if Assigned(SelectedPattern) then
   begin

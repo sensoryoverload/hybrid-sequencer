@@ -347,6 +347,8 @@ begin
 
   FSampleBankEngine.SampleBank := FSampleBank;
 
+  //PluginProcessor.InsertNode(FSampleBank, PluginProcessor.AudioOut, PluginProcessor.AudioIn);
+
   DBLog('end TMidiGrid.Create');
 end;
 

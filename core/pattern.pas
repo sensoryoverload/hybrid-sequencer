@@ -45,6 +45,7 @@ type
     FSyncQuantize: Boolean;
     FOkToPlay: Boolean;
     FPitch: Single;
+    FPitchInv: Single;
     FRootNote: Integer;
     FMidiChannel: Integer;
     FPlaying: Boolean;
@@ -53,8 +54,6 @@ type
     FPatternName: string;
     FFileName: string; // The name of the xml file
     FPluginProcessor: TPluginProcessor;
-    FFilter: TDecimateFX;
-    FFilter2: TMoogFilter;
 
     FLoopStart: TLoopMarker;
     FLoopEnd: TLoopMarker;
@@ -87,6 +86,7 @@ type
     function Latency: Integer; virtual;
 
     property ChannelCount: Integer read FChannelCount write FChannelCount;
+    property PitchInv: Single read FPitchInv write FPitchInv;
   published
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
@@ -151,117 +151,11 @@ type
   published
   end;
 
-  { TInsertPluginCommand }
-
-  TInsertPluginCommand = class(TPatternCommand)
-  private
-    FPluginName: string;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  public
-    property PluginName: string read FPluginName write FPluginName;
-  end;
-
-  TRemovePluginCommand = class(TPatternCommand)
-  private
-    FPluginName: string;
-  protected
-  public
-    property PluginName: string read FPluginName write FPluginName;
-  end;
-
 implementation
 
 uses
   utils, DOM, XMLWrite, XMLRead, audiostructure;
 
-{ TInsertPluginCommand }
-
-procedure TInsertPluginCommand.DoExecute;
-//  lParentNode: T
-begin
-  // Create Node By PluginID (0, 1, 2, ..) and PluginType (LADSPA, Internal, etc)
-
-  // Find left node
-//  FParentID := FPattern.PluginProcessor.NodeByID(FParentID);
-
-  // Find right node
-//  FChildID := FPattern.PluginProcessor.NodeByID(FChildID);
-
-  // Insert new node
-//  FPattern.PluginProcessor.InsertNode();
-end;
-
-procedure TInsertPluginCommand.DoRollback;
-begin
-  //
-end;
-
-(*
-{ TUpdateLoopMarkerCommand }
-
-procedure TUpdateLoopMarkerCommand.DoExecute;
-begin
-  DBLog('start TUpdateWaveLoopMarkerCommand.DoExecute');
-
-  if Persist then
-  begin
-    // Save state
-    case FDataType of
-    ltStart: FOldLocation := FPattern.LoopStart.Location;
-    ltEnd: FOldLocation := FPattern.LoopEnd.Location;
-    ltLength: FOldLocation := FPattern.LoopLength.Location;
-    end;
-  end;
-
-  // Assign
-  case FDataType of
-  ltStart:
-  begin
-    if FLocation < 0 then FLocation := 0;
-    FPattern.LoopStart.Location := FLocation;
-  end;
-  ltEnd:
-  begin
-    if FLocation < 0 then FLocation := 0;
-    FPattern.LoopEnd.Location := FLocation;
-  end;
-  ltLength: FPattern.LoopLength.Location := FLocation;
-  end;
-
-  // Update observers
-  FPattern.Notify;
-  FPattern.LoopStart.Notify;
-  FPattern.LoopEnd.Notify;
-  FPattern.LoopLength.Notify;
-
-  DBLog('end TUpdateWaveLoopMarkerCommand.DoExecute');
-end;
-
-procedure TUpdateLoopMarkerCommand.DoRollback;
-begin
-  DBLog('start TUpdateWaveLoopStartCommand.DoRollback');
-
-  // Retrieve state
-  FPattern.LoopStart.Location := FOldLocation;
-
-  // Assign
-  case FDataType of
-  ltStart: FPattern.LoopStart.Location := FOldLocation;
-  ltEnd: FPattern.LoopEnd.Location := FOldLocation;
-  ltLength: FPattern.LoopLength.Location := FOldLocation;
-  end;
-
-  // Update observers
-  FPattern.Notify;
-  FPattern.LoopStart.Notify;
-  FPattern.LoopEnd.Notify;
-  FPattern.LoopLength.Notify;
-
-  DBLog('end TUpdateWaveLoopStartCommand.DoRollback');
-end;
-*)
 { TSavePatternCommand }
 
 procedure TSavePatternCommand.DoExecute;
@@ -384,6 +278,8 @@ begin
     FPitch := 0.5
   else
     FPitch := Avalue;
+
+  FPitchInv := 1 / FPitch;
 end;
 
 procedure TPattern.DoCreateInstance(var AObject: TObject; AClassName: string);
@@ -416,8 +312,6 @@ begin
   begin
     FLooped := False;
   end;
-
-  inherited;
 end;
 
 constructor TPattern.Create(AObjectOwner: string; AMapped: Boolean = True);
@@ -429,18 +323,6 @@ begin
   FOnCreateInstanceCallback := @DoCreateInstance;
 
   FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
-
-  FFilter := TDecimateFX.Create(FPluginProcessor.ObjectID);
-  FFilter.PluginName := 'DecimateFX';
-  FFilter.Init(16, 44100);
-  FFilter2 := TMoogFilter.Create(FPluginProcessor.ObjectID);
-  FFilter2.PluginName := 'MoogFilter';
-  FFilter2.Frequency := 20000;
-  FFilter2.Resonance := 0.0;
-
-  FPluginProcessor.InsertNode(FFilter, FPluginProcessor.AudioOut, FPluginProcessor.AudioIn);
-  FPluginProcessor.InsertNode(FFilter2, FFilter, FPluginProcessor.AudioIn);
-
 
   FOkToPlay := False;
 
@@ -462,8 +344,7 @@ end;
 destructor TPattern.Destroy;
 begin
   FPluginProcessor.Free;
-  FFilter.Free;
-  FFilter2.Free;
+
   if Assigned(FLoopStart) then
     FLoopStart.Free;
   if Assigned(FLoopEnd) then

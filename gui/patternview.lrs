@@ -3,9 +3,10 @@
 LazarusResources.Add('TPatternView','FORMDATA',[
   'TPF0'#12'TPatternView'#11'PatternView'#4'Left'#2#0#6'Height'#3't'#2#3'Top'#2
   +#0#5'Width'#3#208#3#12'ClientHeight'#3't'#2#11'ClientWidth'#3#208#3#8'TabOrd'
-  +'er'#2#0#10'DesignLeft'#3'G'#2#9'DesignTop'#3#169#0#0#12'TPageControl'#8'pcE'
-  +'ditor'#4'Left'#2#0#6'Height'#3't'#2#3'Top'#2#0#5'Width'#3#208#3#10'ActivePa'
-  +'ge'#7#6'tsMIDI'#5'Align'#7#8'alClient'#8'TabIndex'#2#0#8'TabOrder'#2#0#11'T'
-  +'abPosition'#7#6'tpLeft'#0#9'TTabSheet'#6'tsMIDI'#7'Caption'#6#7'Pattern'#0#0
-  +#9'TTabSheet'#6'tsWave'#7'Caption'#6#7'Pattern'#0#0#0#0
+  +'er'#2#0#10'DesignLeft'#3'.'#1#9'DesignTop'#2'k'#0#12'TPageControl'#8'pcEdit'
+  +'or'#4'Left'#2#0#6'Height'#3't'#2#3'Top'#2#0#5'Width'#3#208#3#10'ActivePage'
+  +#7#9'tsPlugins'#5'Align'#7#8'alClient'#8'TabIndex'#2#2#8'TabOrder'#2#0#11'Ta'
+  +'bPosition'#7#6'tpLeft'#0#9'TTabSheet'#6'tsMIDI'#7'Caption'#6#7'Pattern'#0#0
+  +#9'TTabSheet'#6'tsWave'#7'Caption'#6#7'Pattern'#0#0#9'TTabSheet'#9'tsPlugins'
+  +#7'Caption'#6#7'Plugins'#0#0#0#0
 ]);

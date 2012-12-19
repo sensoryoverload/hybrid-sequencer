@@ -29,6 +29,8 @@ uses
   ladspaloader;
 
 type
+  TPluginType = (ptIO, ptSampler, ptDistortion, ptFlanger, ptFilter, ptReducer);
+
   TPluginNodeType = (pntSource, pntSink, pntPlugin);
 
   TApplyProc = procedure of Object;
@@ -59,10 +61,7 @@ type
 
   TPluginNode = class(THybridPersistentModel)
   private
-    FChilds: TObjectList; // multiple TPluginNodes
     FPortList: TObjectList;
-    FParent: TPluginNode;
-    FMixBuffer: PSingle;
     FParameterList: TObjectList;
     FReturnBuffer: PSingle;
     FMidiBuffer: TMidiBuffer;
@@ -70,8 +69,9 @@ type
     FFrames: Integer;
     FNodeType: TPluginNodeType;
     FPluginName: string;
-    FCached: Boolean;
-    FSelected: Boolean;
+    FPluginType: TPluginType;
+    FChannels: Integer;
+    FSequenceNr: Single;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -83,20 +83,17 @@ type
     procedure Activate; virtual;
     procedure Deactivate; virtual;
     procedure Clean; virtual;
-    procedure ApplyToAll(AApplyProc: TApplyProc);
-    function Execute(AFrames: Integer): PSingle;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
     procedure Clear;
-    property MixBuffer: PSingle read FMixBuffer write FMixBuffer;
     property PortList: TObjectList read FPortList write FPortList;
-    property Parent: TPluginNode read FParent write FParent;
     property NodeType: TPluginNodeType read FNodeType write FNodeType;
     property Buffer: psingle read FBuffer write FBuffer;
-    property Childs: TObjectList read FChilds write FChilds;
   published
     property PluginName: string read FPluginName write FPluginName;
+    property PluginType: TPluginType read FPluginType write FPluginType;
     property Frames: Integer read FFrames write FFrames;
-    property Selected: Boolean read FSelected write FSelected;
+    property SequenceNr: Single read FSequenceNr write FSequenceNr;
+    property Channels: Integer read FChannels write FChannels;
   end;
 
   { TScriptNode }
@@ -136,42 +133,6 @@ type
   { TExternalNode }
 
   TExternalNode = class(TInternalNode)
-  private
-  public
-    constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
-  end;
-
-  { TAudioOutNode }
-
-  TAudioOutNode = class(TInternalNode)
-  private
-  public
-    constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
-  end;
-
-  { TAudioInNode }
-
-  TAudioInNode = class(TInternalNode)
-  private
-  public
-    constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
-  end;
-
-  { TMidiOutNode }
-
-  TMidiOutNode = class(TInternalNode)
-  private
-  public
-    constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
-  end;
-
-  { TMidiInNode }
-
-  TMidiInNode = class(TInternalNode)
   private
   public
     constructor Create(AObjectOwnerID: string);
@@ -234,81 +195,6 @@ begin
   //  FLADSPA.Run
 end;
 
-{ TAudioOutNode }
-
-constructor TAudioOutNode.Create(AObjectOwnerID: string);
-begin
-  inherited Create(AObjectOwnerID);
-
-  GObjectMapper.SetModelObjectID(Self, '{C83219B8-4ABC-4570-A65F-DDC31E61BE15}');
-
-  NodeType := pntSink;
-end;
-
-procedure TAudioOutNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
-begin
-  //
-end;
-
-{ TMidiInNode }
-
-constructor TMidiInNode.Create(AObjectOwnerID: string);
-begin
-  inherited Create(AObjectOwnerID);
-
-  GObjectMapper.SetModelObjectID(Self, '{55D760C9-C10F-4BF1-82F7-49A25CA3C03E}');
-
-  NodeType := pntSource;
-end;
-
-procedure TMidiInNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
-begin
-  //
-end;
-
-{ TMidiOutNode }
-
-constructor TMidiOutNode.Create(AObjectOwnerID: string);
-begin
-  inherited Create(AObjectOwnerID);
-
-  GObjectMapper.SetModelObjectID(Self, '{1294039B-A480-418F-9AE0-BE9C2A15755D}');
-
-  NodeType := pntSink;
-end;
-
-procedure TMidiOutNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(AFrames) do
-  begin
-    FBuffer[i] := FMixBuffer[i];
-  end;
-end;
-
-{ TAudioInNode }
-
-constructor TAudioInNode.Create(AObjectOwnerID: string);
-begin
-  inherited Create(AObjectOwnerID);
-
-  GObjectMapper.SetModelObjectID(Self, '{0485096E-A098-48FB-8D84-792936163D0D}');
-  NodeType := pntSource;
-end;
-
-procedure TAudioInNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
-var
-  i: Integer;
-begin
-  // Just copy from FBuffer as this is the external input and just to be safe, should not
-  // be referenced.
-  for i := 0 to Pred(AFrames) do
-  begin
-    FMixBuffer[i] := FBuffer[i];
-  end;
-end;
-
 { TPluginNode }
 
 constructor TPluginNode.Create(AObjectOwnerID: string; AMapped: Boolean = True);
@@ -321,18 +207,15 @@ begin
   FOnCreateInstanceCallback := @DoCreateInstance;
 
   lPluginProcessor := TPluginProcessor(GObjectMapper.GetModelObject(AObjectOwnerID));
-  FFrames := lPluginProcessor.Frames;
 
-  FChilds := TObjectList.Create(False);
-  FCached := False;
-  FMixBuffer := GetMem(FFrames * SizeOf(Single));
-  FBuffer := GetMem(FFrames * SizeOf(Single));
+  FFrames := lPluginProcessor.Frames;
+  FChannels := 2;
+  FBuffer := GetMem(FFrames * SizeOf(Single) * FChannels);
 
   FParameterList := TObjectList.Create(False);
 
-  for i := 0 to Pred(FFrames) do
+  for i := 0 to Pred(FFrames * FChannels) do
   begin
-    FMixBuffer[i] := 0;
     FBuffer[i] := 0;
   end;
 end;
@@ -342,18 +225,7 @@ begin
   DBLog('start TPluginNode.Destroy: ' + ClassName);
 
   FParameterList.Free;
-  FreeMem(FMixBuffer);
-
-  {
-    TAudioInNode takes it's audio buffer from TWaveForm, TWaveFormTrack and as such should not
-    free this buffer. An other alternative would be to copy the buffer.
-  }
-  if not ClassNameIs('TPluginAudioIn') then
-  begin
-    FreeMem(FBuffer);
-  end;
-
-  FChilds.Free;
+  FreeMem(FBuffer);
 
   inherited Destroy;
 
@@ -397,84 +269,15 @@ begin
   //
 end;
 
-function TPluginNode.Execute(AFrames: Integer): PSingle;
-var
-  lChildIndex: Integer;
-  lIndex: Integer;
-  lChildNode: TPluginNode;
-begin
-  // Clear mixbuffer each call
-  FillByte(FMixBuffer[0], AFrames * SizeOf(Single), 0);
-
-  // First recurse into childs
-  if FChilds.Count > 0 then
-  begin
-    for lChildIndex := 0 to Pred(FChilds.Count) do
-    begin
-      lChildNode := TPluginNode(FChilds[lChildIndex]);
-
-      if Assigned(lChildNode) then
-      begin
-        FReturnBuffer := lChildNode.Execute(AFrames);
-
-        // Mix each child into buffer
-        for lIndex := 0 to Pred(AFrames) do
-        begin
-          FMixBuffer[lIndex] += FReturnBuffer[lIndex];
-        end;
-      end;
-    end;
-
-    // Scale mixbuffer
-    for lIndex := 0 to Pred(AFrames) do
-    begin
-      FMixBuffer[lIndex] /= FChilds.Count;
-    end;
-  end;
-
-  // Apply plugin to mixed childs
-  Process(FMidiBuffer, FMixBuffer, AFrames);
-
-  FCached := True;
-
-  Result := FMixBuffer;
-end;
-
 procedure TPluginNode.Clear;
 var
   i: Integer;
 begin
-  FCached := False;
-
   for i := 0 to Pred(FFrames) do
   begin
-    FMixBuffer[i] := 0;
+    FBuffer[i] := 0;
   end;
 end;
-
-procedure TPluginNode.ApplyToAll(AApplyProc: TApplyProc);
-var
-  lChildIndex: Integer;
-  lChildNode: TPluginNode;
-begin
-  // First recurse into childs
-  for lChildIndex := 0 to Pred(FChilds.Count) do
-  begin
-    lChildNode := TPluginNode(FChilds[lChildIndex]);
-
-    if Assigned(lChildNode) then
-    begin
-      lChildNode.ApplyToAll(AApplyProc);
-    end;
-  end;
-
-  // Apply plugin to mixed childs
-  if Assigned(AApplyProc) then
-  begin
-    AApplyProc();
-  end;
-end;
-
 
 { TExternalNode }
 

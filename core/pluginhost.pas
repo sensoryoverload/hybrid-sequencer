@@ -25,7 +25,8 @@ unit pluginhost;
 interface
 
 uses
-  Classes, SysUtils, ContNrs, globalconst, global_command, global, plugin, utils;
+  Classes, SysUtils, ContNrs, globalconst, global_command, global, plugin, utils,
+  sampler;
 
 type
 
@@ -44,59 +45,29 @@ type
     property PluginList: TObjectList read FPluginList;
   end;
 
-  { TInterConnect }
-
-  TInterConnect = class(THybridPersistentModel)
-  private
-    FToPluginNode: string;
-    FToPluginNodePort: string;
-    FFromPluginNode: string;
-    FFromPluginNodePort: string;
-    function GetIsReady: Boolean;
-  public
-    procedure Initialize; override;
-    procedure Finalize; override;
-    property IsReady: Boolean read GetIsReady;
-  published
-    // Connection outputs audio or midi to pluginnode input (parent)
-    property ToPluginNode: string read FToPluginNode write FToPluginNode;
-    property ToPluginNodePort: string read FToPluginNodePort write FToPluginNodePort;
-    // Connection input takes audio or midi from pluginnode output (child)
-    property FromPluginNode: string read FFromPluginNode write FFromPluginNode;
-    property FromPluginNodePort: string read FFromPluginNodePort write FFromPluginNodePort;
-  end;
-
   { TPluginProcessor }
 
   TPluginProcessor = class(THybridPersistentModel)
   private
-    FAudioOut: TAudioOutNode;
-    FAudioIn: TAudioInNode;
-    FConnectionList: TObjectList;
     FBuffer: PSingle;
     FEnabled: Boolean;
     FNodeList: TObjectList;
     FFrames: Integer;
+    FChannels: Integer;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
+    procedure SortPlugins;
   public
     constructor Create(AFrames: Integer; AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
     procedure Initialize; override;
-    function Execute(AFrames: Integer; ABuffer: PSingle): PSingle;
-    procedure AddChild(AParentNode, ANode: TPluginNode);
-    procedure InsertNode(ANode, AParentNode, AChildNode: TPluginNode);
-    procedure RemoveNode(ANode, AParentNode: TPluginNode);
-    function FindNodeByID(ANodeID: string): TPluginNode;
-    function FindConnection(APluginId1, APluginId2: TPluginNode): TInterConnect;
-    procedure Clear;
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+    procedure InsertNode(ANode: TPluginNode);
+    procedure RemoveNode(ANode: TPluginNode);
     property Buffer: PSingle read FBuffer write FBuffer;
-    property AudioOut: TAudioOutNode read FAudioOut write FAudioOut;
-    property AudioIn: TAudioInNode read FAudioIn write FAudioIn;
   published
     property Enabled: Boolean read FEnabled write FEnabled;
     property NodeList: TObjectList read FNodeList write FNodeList;
-    property ConnectionList: TObjectList read FConnectionList write FConnectionList;
     property Frames: Integer read FFrames write FFrames;
   end;
 
@@ -121,55 +92,52 @@ type
 
   TInsertNodeCommand = class(TPluginProcessorCommand)
   private
-    FParentID: string;
-    FChildID: string;
+    FSequenceID: string;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   public
-    property ParentID: string read FParentID write FParentID;
-    property ChildID: string read FChildID write FChildID;
+    property SequenceID: string read FSequenceID write FSequenceID;
   end;
 
   { TCreateNodesCommand }
 
   TCreateNodesCommand = class(TPluginProcessorCommand)
   private
-    FXLocation: Integer;
-    FYLocation: Integer;
+    FSequenceNr: Integer;
     FPluginName: string;
+    FPluginType: TPluginType;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   published
-    property XLocation: Integer read FXLocation write FXLocation;
-    property YLocation: Integer read FYLocation write FYLocation;
+    property SequenceNr: Integer read FSequenceNr write FSequenceNr;
     property PluginName: string read FPluginName write FPluginName;
-  end;
-
-  { TCreateConnectionCommand }
-
-  TCreateConnectionCommand = class(TPluginProcessorCommand)
-  private
-    FFromPluginNode: string;
-    FToPluginNode: string;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  public
-    property FromPluginNode: string read FFromPluginNode write FFromPluginNode;
-    property ToPluginNode: string read FToPluginNode write FToPluginNode;
-  end;
-
-  { TDeleteConnectionCommand }
-
-  TDeleteConnectionCommand = class(TPluginProcessorCommand)
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
+    property PluginType: TPluginType read FPluginType write FPluginType;
   end;
 
 implementation
+
+uses
+  plugin_distortion, plugin_decimate, plugin_moog;
+
+function SortOnSequenceNr(Item1 : Pointer; Item2 : Pointer) : Integer;
+var
+  lSequenceNr1, lSequenceNr2 : TPluginNode;
+begin
+  // We start by viewing the object pointers as TPluginNode objects
+  lSequenceNr1 := TPluginNode(Item1);
+  lSequenceNr2 := TPluginNode(Item2);
+
+  // Now compare by sequencenr
+  if lSequenceNr1.SequenceNr > lSequenceNr2.SequenceNr then
+    Result := 1
+  else if lSequenceNr1.SequenceNr = lSequenceNr2.SequenceNr then
+    Result := 0
+  else
+    Result := -1;
+end;
+
 
 { TInsertNodeCommand }
 
@@ -186,7 +154,6 @@ end;
 procedure TPluginProcessor.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
   lPluginNode: TPluginNode;
-  lInterConnect: TInterConnect;
 begin
   DBLog('start TPluginProcessor.DoCreateInstance');
 
@@ -213,19 +180,28 @@ begin
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
   end
-  else if AClassName = 'TInterConnect' then
-  begin
-    lInterConnect := TInterConnect.Create(ObjectID, MAPPED);
-    lInterConnect.ObjectOwnerID := ObjectID;
-    ConnectionList.Add(lInterConnect);
-    AObject := lInterConnect;
-  end
   else
   begin
     // Should raise some error/exception or just let go?..
   end;
 
   DBLog('end TPluginProcessor.DoCreateInstance');
+end;
+
+{
+  Sort plugins based on their SequenceNr which is the plugins' location in the
+  signal chain.
+}
+procedure TPluginProcessor.SortPlugins;
+var
+  lIndex: Integer;
+begin
+  FNodeList.Sort(@SortOnSequenceNr);
+
+  for lIndex := 0 to Pred(FNodeList.Count) do
+  begin
+    TPluginNode(FNodeList[lIndex]).SequenceNr := lIndex;
+  end;
 end;
 
 { TPluginProcessor }
@@ -239,19 +215,10 @@ begin
   FOnCreateInstanceCallback := @DoCreateInstance;
 
   FNodeList := TObjectList.create(False);
-  FConnectionList := TObjectList.create(True);
 
   FFrames := AFrames;
-
-  FAudioOut := TAudioOutNode.Create(ObjectID);
-  FAudioOut.PluginName := 'AudioOut';
-
-  FAudioIn := TAudioInNode.Create(ObjectID);
-  FAudioIn.PluginName := 'AudioIn';
-
-  FBuffer := GetMem(FFrames * SizeOf(Single));
-
-  AddChild(FAudioOut, FAudioIn);
+  FChannels := 2;
+  FBuffer := GetMem(FFrames * SizeOf(Single) * FChannels);
 
   DBLog('end TPluginProcessor.Create');
 end;
@@ -260,12 +227,9 @@ destructor TPluginProcessor.Destroy;
 begin
   DBLog('start TPluginProcessor.Destroy');
 
-  FAudioOut.Free;
-  FAudioIn.Free;
   FreeMem(FBuffer);
 
   FNodeList.Free;
-  FConnectionList.Free;
 
   inherited Destroy;
 
@@ -273,157 +237,57 @@ begin
 end;
 
 procedure TPluginProcessor.Initialize;
-var
-  lNodeIndex: Integer;
 begin
-  BeginUpdate;
+  //
+end;
 
-  writeln('Should connect all nodes here!');
-
-  // First search node which is not a child of another node
-  for lNodeIndex := 0 to Pred(FNodeList.Count) do
+procedure TPluginProcessor.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+var
+  lIndex: Integer;
+begin
+  if FNodeList.Count > 0 then
   begin
-    //for lChildIndex := 0 to Pred(FNodeList.Count) do
-    writeln(TPluginNode(FNodeList[lNodeIndex]).PluginName + ' Childs ' + IntTostr(TPluginNode(FNodeList[lNodeIndex]).Childs.Count));
+    // Push audio into pluginchain
+    Move(ABuffer^, TPluginNode(FNodeList.First).Buffer^, AFrames * sizeof(single) * FChannels);
+
+    // Process the complete chain
+    for lIndex := 0 to Pred(FNodeList.Count) do
+    begin
+      TPluginNode(FNodeList[lIndex]).Process(
+        AMidiBuffer,
+        TPluginNode(FNodeList[lIndex]).Buffer,
+        AFrames);
+    end;
+
+    // Pull audio from pluginchain
+    Move(TPluginNode(FNodeList.Last).Buffer^, ABuffer^, AFrames * sizeof(single) * FChannels);
   end;
-
-  EndUpdate;
 end;
 
-function TPluginProcessor.Execute(AFrames: Integer; ABuffer: PSingle): PSingle;
-begin
-  // Push audio into pluginchain
-  Move(ABuffer^, FAudioIn.Buffer^, AFrames * sizeof(single));
-
-  // Process the complete chain
-  Result := FAudioOut.Execute(AFrames);
-
-  // Pull audio from pluginchain
-  Move(FAudioOut.MixBuffer^, ABuffer^, AFrames * sizeof(single));
-end;
-
-procedure TPluginProcessor.AddChild(AParentNode, ANode: TPluginNode);
-var
-  lInterConnect: TInterConnect;
-begin
-  DBLog('start TPluginProcessor.AddChild');
-
-  BeginUpdate;
-
-  AParentNode.Childs.Add(ANode);
-
-  lInterConnect := TInterConnect.Create(Self.ObjectID, MAPPED);
-  lInterConnect.FromPluginNode := ANode.ObjectID;
-  lInterConnect.ToPluginNode := AParentNode.ObjectID;
-  FConnectionList.Add(lInterConnect);
-
-  EndUpdate;
-
-  DBLog('end TPluginProcessor.AddChild');
-end;
-
-procedure TPluginProcessor.InsertNode(ANode, AParentNode, AChildNode: TPluginNode);
-var
-  lInterConnect: TInterConnect;
-  lFoundConnection: TInterConnect;
+procedure TPluginProcessor.InsertNode(ANode: TPluginNode);
 begin
   DBLog('start TPluginProcessor.InsertNode');
 
   BeginUpdate;
 
-  DBLog(Format('Disconnect %s from %s', [AChildNode.ClassName, AParentNode.ClassName]));
-  AParentNode.Childs.Extract(AChildNode);
-
-  DBLog(Format('Add %s to %s', [ANode.ClassName, AParentNode.ClassName]));
-  AParentNode.Childs.Add(ANode);
-
-  DBLog(Format('Connect %s to %s', [AChildNode.ClassName, ANode.ClassName]));
-  ANode.Childs.Add(AChildNode);
-
   FNodeList.Add(ANode);
-
-  lFoundConnection := FindConnection(AParentNode, AChildNode);
-  if Assigned(lFoundConnection) then
-  begin
-    lFoundConnection.ToPluginNode := AParentNode.ObjectID;
-    lFoundConnection.FromPluginNode := ANode.ObjectID;
-  end;
-
-  lInterConnect := TInterConnect.Create(Self.ObjectID, MAPPED);
-  lInterConnect.ToPluginNode := ANode.ObjectID;
-  lInterConnect.FromPluginNode := AChildNode.ObjectID;
-  FConnectionList.Add(lInterConnect);
 
   EndUpdate;
 
   DBLog('end TPluginProcessor.InsertNode');
 end;
 
-procedure TPluginProcessor.RemoveNode(ANode, AParentNode: TPluginNode);
-var
-  lChildIndex: Integer;
+procedure TPluginProcessor.RemoveNode(ANode: TPluginNode);
 begin
   DBLog('start TPluginProcessor.RemoveNode');
 
   BeginUpdate;
-
-  for lChildIndex := 0 to Pred(ANode.Childs.Count) do
-  begin
-    AParentNode.Childs.Add(ANode.Childs[lChildIndex]);
-  end;
-
-  for lChildIndex := 0 to Pred(ANode.Childs.Count) do
-  begin
-    ANode.Childs.Remove(ANode);
-  end;
 
   FNodeList.Extract(ANode);
 
   EndUpdate;
 
   DBLog('end TPluginProcessor.RemoveNode');
-end;
-
-function TPluginProcessor.FindNodeByID(ANodeID: string): TPluginNode;
-begin
-  // traverse tree to find node, simple and small structure so no performance problems
-  Result := nil;
-end;
-
-function TPluginProcessor.FindConnection(APluginId1, APluginId2: TPluginNode
-  ): TInterConnect;
-var
-  i: Integer;
-begin
-  Result := nil;
-
-  // First try left => right connected
-  for i := 0 to Pred(FConnectionList.Count) do
-  begin
-    if (TInterConnect(FConnectionList[i]).FromPluginNode = APluginId1.ObjectID) and
-        (TInterConnect(FConnectionList[i]).ToPluginNode = APluginId2.ObjectID) then
-    begin
-      Result := TInterConnect(FConnectionList[i]);
-    end;
-  end;
-
-  // Not found now try left <= right connected
-  if not Assigned(Result) then
-  begin
-    for i := 0 to Pred(FConnectionList.Count) do
-    begin
-      if (TInterConnect(FConnectionList[i]).FromPluginNode = APluginId2.ObjectID) and
-          (TInterConnect(FConnectionList[i]).ToPluginNode = APluginId1.ObjectID) then
-      begin
-        Result := TInterConnect(FConnectionList[i]);
-      end;
-    end;
-  end;
-end;
-
-procedure TPluginProcessor.Clear;
-begin
-  FAudioOut.ApplyToAll(@FAudioOut.Clear);
 end;
 
 { TDeleteNodesCommand }
@@ -442,13 +306,15 @@ begin
   begin
     lPluginNode := TPluginNode(FPluginProcessor.NodeList[i]);
 
-    if lPluginNode.Selected or (lPluginNode.ObjectID = ObjectID) then
+    if lPluginNode.ObjectID = ObjectID then
     begin
       lMementoNode := TMementoNode.Create(FPluginProcessor.ObjectID);
       lMementoNode.ObjectID := lPluginNode.ObjectID;
       lMementoNode.ObjectOwnerID := lPluginNode.ObjectOwnerID;
     end;
   end;
+
+  FPluginProcessor.SortPlugins;
 
   FPluginProcessor.EndUpdate;
 
@@ -477,6 +343,8 @@ begin
       FPluginProcessor.NodeList.Add(lPluginNode);
     end;
 
+    FPluginProcessor.SortPlugins;
+
     FPluginProcessor.EndUpdate;
   end;
 
@@ -488,17 +356,40 @@ end;
 procedure TCreateNodesCommand.DoExecute;
 var
   lPluginNode: TPluginNode;
+  lPluginDistortion: TPluginDistortion;
+  lSampleBank: TSampleBank;
+  lSampleBankEngine: TSampleBankEngine;
 begin
   DBLog('start TCreateNodesCommand.DoExecute');
 
   FPluginProcessor.BeginUpdate;
 
-  lPluginNode := TPluginNode.Create(FPluginProcessor.ObjectID, MAPPED);
-  lPluginNode.PluginName := FPluginName;
+  case FPluginType of
+    ptDistortion:
+    begin
+      lPluginDistortion := TPluginDistortion.Create(FPluginProcessor.ObjectID, MAPPED);
+      lPluginDistortion.PluginName := FPluginName;
+      lPluginDistortion.PluginType := ptDistortion;
 
-  FPluginProcessor.NodeList.Add(lPluginNode);
+      FPluginProcessor.NodeList.Add(lPluginDistortion);
 
-  ObjectIdList.Add(lPluginNode.ObjectID);
+      ObjectIdList.Add(lPluginDistortion.ObjectID);
+    end;
+    ptSampler:
+    begin
+      lSampleBank := TSampleBank.Create(FPluginProcessor.ObjectID, MAPPED);
+      lSampleBank.PluginName := 'Sampler';
+      lSampleBank.PluginType := ptSampler;
+      lSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
+      lSampleBankEngine.SampleBank := lSampleBank;
+
+      FPluginProcessor.NodeList.Add(lSampleBank);
+
+      ObjectIdList.Add(lSampleBank.ObjectID);
+    end;
+  end;
+
+  FPluginProcessor.SortPlugins;
 
   FPluginProcessor.EndUpdate;
 
@@ -525,6 +416,8 @@ begin
       end;
     end;
   end;
+
+  FPluginProcessor.SortPlugins;
 
   FPluginProcessor.EndUpdate;
 
@@ -564,103 +457,6 @@ end;
 procedure TPluginProcessorCommand.Initialize;
 begin
   FPluginProcessor := TPluginProcessor(GObjectMapper.GetModelObject(ObjectOwner));
-end;
-
-{ TCreateConnectionCommand }
-
-procedure TCreateConnectionCommand.DoExecute;
-var
-  lInterConnect: TInterConnect;
-  lParent, lChild: TPluginNode;
-begin
-  DBLog('start TCreateConnectionCommand.DoExecute');
-
-  FPluginProcessor.BeginUpdate;
-
-  lInterConnect := TInterConnect.Create(FPluginProcessor.ObjectID, MAPPED);
-  lInterConnect.FromPluginNode := FFromPluginNode;
-  lInterConnect.ToPluginNode := FToPluginNode;
-  ObjectID := lInterConnect.ObjectID;
-
-  FPluginProcessor.ConnectionList.Add(lInterConnect);
-
-  lChild := TPluginNode(GObjectMapper.GetModelObject(FFromPluginNode));
-  lParent := TPluginNode(GObjectMapper.GetModelObject(FToPluginNode));
-
-  if Assigned(lParent) and Assigned(lChild) then
-  begin
-    DBLog(Format('Connect child %s (%s) to parent %s (%s)',
-      [lChild.PluginName, lChild.ObjectID, lParent.PluginName, lParent.ObjectID]));
-
-    lParent.Childs.Add(lChild);
-  end;
-
-  FPluginProcessor.EndUpdate;
-
-  DBLog('end TCreateConnectionCommand.DoExecute');
-end;
-
-procedure TCreateConnectionCommand.DoRollback;
-var
-  lInterConnect: TInterConnect;
-  lConnectionIndex: Integer;
-  lParent, lChild: TPluginNode;
-begin
-  DBLog('start TCreateConnectionCommand.DoRollback');
-
-  FPluginProcessor.BeginUpdate;
-
-  // Remove plugin audio connection
-  lParent := TPluginNode(GObjectMapper.GetModelObject(FromPluginNode));
-  lChild := TPluginNode(GObjectMapper.GetModelObject(FToPluginNode));
-  if Assigned(lParent) and Assigned(lChild) then
-  begin
-    lParent.Childs.Extract(lChild);
-  end;
-
-  for lConnectionIndex := Pred(FPluginProcessor.ConnectionList.Count) downto 0 do
-  begin
-    lInterConnect := TInterConnect(FPluginProcessor.ConnectionList[lConnectionIndex]);
-    if lInterConnect.ObjectID = ObjectID then
-    begin
-      FPluginProcessor.ConnectionList.Remove(lInterConnect);
-      break;
-    end;
-  end;
-
-  FPluginProcessor.EndUpdate;
-
-  DBLog('end TCreateConnectionCommand.DoRollback');
-end;
-
-{ TDeleteConnectionCommand }
-
-procedure TDeleteConnectionCommand.DoExecute;
-begin
-  //
-end;
-
-procedure TDeleteConnectionCommand.DoRollback;
-begin
-  //
-end;
-
-{ TInterConnect }
-
-function TInterConnect.GetIsReady: Boolean;
-begin
-  Result := ((FromPluginNode <> '') and (FromPluginNodePort <> '') and
-    (ToPluginNode <> '') and (ToPluginNodePort <> ''));
-end;
-
-procedure TInterConnect.Initialize;
-begin
-  Notify;
-end;
-
-procedure TInterConnect.Finalize;
-begin
-  //
 end;
 
 end.
