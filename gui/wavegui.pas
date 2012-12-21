@@ -764,7 +764,39 @@ begin
 
     FOldCursorPosition := SliceLeft;
   end;
+(*
+  SliceLeft := Round(FModel.CursorAdder * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset);
+  if FOldCursorPosition <> SliceLeft then
+  begin
+    Canvas.Pen.Color := clBlue;
+    Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, Height);
+    //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
 
+    FOldCursorPosition := SliceLeft;
+  end;
+
+  Canvas.Pen.Width := 2;
+  SliceLeft := Round(FModel.SliceStartLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset);
+  if FOldCursorPosition <> SliceLeft then
+  begin
+    Canvas.Pen.Color := clGreen;
+    Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, Height);
+    //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
+
+    FOldCursorPosition := SliceLeft;
+  end;
+
+  SliceLeft := Round(FModel.SliceEndLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset);
+  if FOldCursorPosition <> SliceLeft then
+  begin
+    Canvas.Pen.Color := clGreen;
+    Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, Height);
+    //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
+
+    FOldCursorPosition := SliceLeft;
+  end;
+  Canvas.Pen.Width := 1;
+*)
   inherited Paint;
 end;
 

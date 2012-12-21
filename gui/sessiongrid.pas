@@ -120,7 +120,7 @@ type
     procedure SetTop(AValue: Integer);
     procedure SetWidth(AValue: Integer);
   public
-    constructor Create(AObjectOwner: string; TheOwner: TComponent);
+    constructor Create(AObjectOwner: string; TheOwner: TComponent); reintroduce;
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); override;

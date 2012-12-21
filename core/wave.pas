@@ -48,15 +48,6 @@ type
   TSliceState = (ssNormal, ssSeek, ssStretch, ssInSlice, ssNotInSlice);
   TSliceDirection = (sdIdle, sdForward, sdReverse);
 
-  { TSliceStretch }
-
-  TSliceStretch = class
-  private
-    FState: TSliceState;
-  public
-    procedure Process(ALocation: Integer; ABuffer: PSingle);
-  end;
-
   TRingBufferData = class(TObject)
   private
     FData: Pointer;
@@ -222,7 +213,7 @@ type
     function WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
     function StartOfWarpLocation(ALocation: single): Integer;
     procedure Flush;
-    function Latency: Integer;
+    function Latency: Integer; reintroduce;
 
     procedure ProcessInit; override;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
@@ -245,6 +236,7 @@ type
     property SliceEndLocation: Single read FSliceEndLocation write FSliceEndLocation;
     property SliceLength: Single read FSliceLength write FSliceLength;
     property SliceCursor: Single read FSliceCursor write FSliceCursor;
+    property SampleScaleInverse: Single read FSampleScaleInverse write FSampleScaleInverse;
     property BufferFrames: Integer read FBufferFrames write FBufferFrames;
 //    property DiskWriterThread: TDiskWriterThread read FDiskWriterThread;
     property DiskReaderThread: TDiskReaderThread read FDiskReaderThread;
@@ -538,13 +530,6 @@ begin
     Result := 0
   else
     Result := -1;
-end;
-
-{ TSliceStretch }
-
-procedure TSliceStretch.Process(ALocation: Integer; ABuffer: PSingle);
-begin
-  //
 end;
 
 { TChangeQuantizeCommand }
@@ -1232,7 +1217,7 @@ begin
           begin
             FSliceStartLocation := lSliceStart.OrigLocation +
               (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-            FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScaleInverse;
+            FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScale;
             FLastSlice := lSliceStart;
             FSliceCursor := FSliceStartLocation;
             FSliceState := ssInSlice;
@@ -1244,46 +1229,22 @@ begin
           FSliceState := ssNotInSlice;
         end;
 
-        // Calculate actual cursor position in the wave when warped
-        if FSliceCounter > FSliceLength then
-        begin
-          // Wrap around and set
-          FSliceCounter := FSliceCounter - FSliceLength;
-          FSliceSynced := True;
-        end
-        else
-        begin
-          FSliceSynced := False;
-        end;
-
         // Only trigger sync if not in manually defined slice
         if FSliceSynced and (FSliceState = ssNotInSlice) then
         begin
           // Start of slice
           FSliceStartLocation := lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
+          FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScale;
 
-          FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScaleInverse;
           FSliceCursor := FSliceStartLocation;
           AFrameData.FadeInFactor := 0;
         end;
 
-        // Increase counter
-        //FSliceCounter := FSliceCounter + GAudioStruct.BPMScale;
-        if GAudioStruct.BPMScale >= 1 then
-        begin
-          FSliceCounter := FSliceCounter + GAudioStruct.BPMScale;
-        end
-        else
-        begin
-          FSliceCounter := FSliceCounter + GAudioStruct.BPMScaleInv;
-        end;
-
-
         if FSliceCursor > FSliceEndLocation then
         begin
           // Ran past end of slice so loop a part of the previous section
-          lModulo := Round(FSliceEndLocation - FSliceStartLocation) div 4;
+          lModulo := Round(FSliceEndLocation - FSliceStartLocation) div 2;
 
           FSliceLoopModulo := Round(FSliceCursor - FSliceEndLocation) mod lModulo;
           if Odd(Round(FSliceCursor - FSliceEndLocation) div lModulo) then
@@ -1313,6 +1274,22 @@ begin
 
         // Increate nominal always playing at samplespeed * pitch
         FSliceCursor := FSliceCursor + Pitch;
+
+        // Increase counter
+        FSliceCounter := FSliceCounter + GAudioStruct.BPMScale;
+
+        // Calculate actual cursor position in the wave when warped
+        if FSliceCounter > FSliceLength then
+        begin
+          // Wrap around and set
+          FSliceCounter := FSliceCounter - FSliceLength;
+          FSliceSynced := True;
+        end
+        else
+        begin
+          FSliceSynced := False;
+        end;
+
       end
       else if PitchAlgorithm = paPitched then
       begin
@@ -1558,28 +1535,22 @@ begin
 
   UpdateBPMScale;
 
-  // 16th
-//  FSliceLength := GSettings.SampleRate * (1 / 8) * GAudioStruct.BPMScale;
-  // 32th
-  //FSliceLength := GSettings.SampleRate * (1 / 16) * GAudioStruct.BPMScale;
-  if GAudioStruct.BPMScale >= 1 then
-  begin
-    FSliceLength := GSettings.SampleRate * (1 / 8) * GAudioStruct.BPMScale;
-  end
-  else
-  begin
-    FSliceLength := GSettings.SampleRate * (1 / 8) * GAudioStruct.BPMScaleInv;
-  end;
-  // 64th
-  //FSliceLength := GSettings.SampleRate * (1 / 32) * GAudioStruct.BPMScale;
   // 8th
   //FSliceLength := GSettings.SampleRate * (1 / 4) * GAudioStruct.BPMScale;
+  // 16th
+  //FSliceLength := GSettings.SampleRate * (1 / 8) * GAudioStruct.BPMScale;
+  // 32th
+  //FSliceLength := GSettings.SampleRate * (1 / 16) * GAudioStruct.BPMScale;
+  // 64th
+  //FSliceLength := GSettings.SampleRate * (1 / 32) * GAudioStruct.BPMScale;
+
+  FSliceLength := GSettings.SampleRate * (1 / 8);
 
   if Looped then
   begin
     FSliceCounter := 0;
     FSliceStartLocation := 0;
-    FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScaleInverse;
+    FSliceEndLocation := FSliceStartLocation + FSliceLength;
     FSliceCursor := 0;
     FSliceStretchCounter := 0;
 
@@ -1666,7 +1637,7 @@ begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;  }
   writeln(format('slicecount %d', [FSliceList.Count]));
-  if FWave.ChannelCount > 0 then
+  {if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1696,7 +1667,7 @@ begin
         Inc(WindowLength);
       end;
     end;
-  end;
+  end;}
 
   Notify;
 
