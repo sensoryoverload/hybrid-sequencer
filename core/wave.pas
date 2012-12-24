@@ -33,6 +33,7 @@ uses
 const
   MAX_LATENCY = 20000;
   DECIMATED_CACHE_DISTANCE = 64;
+  LOOP_FRACTIONAL_MARGE = 1000;
   MAX_STRETCH = 256;
   MIN_STRETCH = 1 / 256;
   QUNATIZE_BAR = 88200;
@@ -45,7 +46,7 @@ const
 type
   TQuantizeSettings = (qsNone, qsBar, qsBeat, qs4th, qs8th, qs16th, qs32th);
 
-  TSliceState = (ssNormal, ssSeek, ssStretch, ssInSlice, ssNotInSlice);
+  TSliceState = (ssCustom, ssAuto);
   TSliceDirection = (sdIdle, sdForward, sdReverse);
 
   TRingBufferData = class(TObject)
@@ -151,10 +152,12 @@ type
     FSliceState: TSliceState;
     FSliceStartLocation: single;
     FSliceEndLocation: single;
-    FSliceStretchCounter: single;
     FSliceLength: Single;
     FSliceCounter: Single;
+    FSliceLastCounter: Single;
     FSliceCursor: Single;
+    FSliceCustomCursor: Single;
+    FSliceAutoCursor: Single;
     FSliceSynced: Boolean;
     FSliceLoopModulo: Integer;
     FLastSlice: TMarker;
@@ -236,6 +239,7 @@ type
     property SliceEndLocation: Single read FSliceEndLocation write FSliceEndLocation;
     property SliceLength: Single read FSliceLength write FSliceLength;
     property SliceCursor: Single read FSliceCursor write FSliceCursor;
+    property SliceState: TSliceState read FSliceState write FSliceState;
     property SampleScaleInverse: Single read FSampleScaleInverse write FSampleScaleInverse;
     property BufferFrames: Integer read FBufferFrames write FBufferFrames;
 //    property DiskWriterThread: TDiskWriterThread read FDiskWriterThread;
@@ -1205,55 +1209,43 @@ begin
     begin
       if PitchAlgorithm = paSliceStretch then
       begin
-        if AFrameData.FadeInFactor < 1 then
-        begin
-          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.05;
-        end;
-
-        // Use slice startpoint when in slice
-        if FLastSlice <> lSliceStart then
-        begin
-          if (ALocation - lSliceStart.Location) < FSliceLength then
-          begin
-            FSliceStartLocation := lSliceStart.OrigLocation +
-              (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-            FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScale;
-            FLastSlice := lSliceStart;
-            FSliceCursor := FSliceStartLocation;
-            FSliceState := ssInSlice;
-            AFrameData.FadeInFactor := 0;
-          end;
-        end
-        else
-        begin
-          FSliceState := ssNotInSlice;
-        end;
-
         // Only trigger sync if not in manually defined slice
-        if FSliceSynced and (FSliceState = ssNotInSlice) then
+        if FSliceSynced then
         begin
           // Start of slice
-          FSliceStartLocation := lSliceStart.OrigLocation +
+          FSliceStartLocation :=
+            lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-          FSliceEndLocation := FSliceStartLocation + FSliceLength * FSampleScale;
+
+          FSliceEndLocation :=
+            FSliceStartLocation +
+            FSliceLength * FSampleScale * lSliceStart.DecayRate;
 
           FSliceCursor := FSliceStartLocation;
           AFrameData.FadeInFactor := 0;
         end;
 
-        if FSliceCursor > FSliceEndLocation then
+        // Fade in at each slice start
+        if AFrameData.FadeInFactor < 1 then
+        begin
+          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.05;
+        end;
+
+        if FSliceCursor >= FSliceEndLocation then
         begin
           // Ran past end of slice so loop a part of the previous section
           lModulo := Round(FSliceEndLocation - FSliceStartLocation) div 2;
-
-          FSliceLoopModulo := Round(FSliceCursor - FSliceEndLocation) mod lModulo;
-          if Odd(Round(FSliceCursor - FSliceEndLocation) div lModulo) then
+          if lModulo <> 0 then
           begin
-            AFrameData.Location := Round(FSliceEndLocation - lModulo) + FSliceLoopModulo;
-          end
-          else
-          begin
-            AFrameData.Location := Round(FSliceEndLocation) - FSliceLoopModulo;
+            FSliceLoopModulo := Round(FSliceCursor - FSliceEndLocation) mod lModulo;
+            if Odd(Round(FSliceCursor - FSliceEndLocation) div lModulo) then
+            begin
+              AFrameData.Location := Round(FSliceEndLocation - lModulo) + FSliceLoopModulo;
+            end
+            else
+            begin
+              AFrameData.Location := Round(FSliceEndLocation) - FSliceLoopModulo;
+            end;
           end;
         end
         else
@@ -1275,21 +1267,19 @@ begin
         // Increate nominal always playing at samplespeed * pitch
         FSliceCursor := FSliceCursor + Pitch;
 
-        // Increase counter
-        FSliceCounter := FSliceCounter + GAudioStruct.BPMScale;
+        // Detect slice synchronize
+        FSliceCounter :=
+          fmod(ALocation, FSliceLength * FSampleScale * lSliceStart.DecayRate);
 
-        // Calculate actual cursor position in the wave when warped
-        if FSliceCounter > FSliceLength then
+        if FSliceCounter < FSliceLastCounter then
         begin
-          // Wrap around and set
-          FSliceCounter := FSliceCounter - FSliceLength;
           FSliceSynced := True;
         end
         else
         begin
           FSliceSynced := False;
         end;
-
+        FSliceLastCounter := FSliceCounter;
       end
       else if PitchAlgorithm = paPitched then
       begin
@@ -1427,7 +1417,7 @@ begin
     // Fetch frame data packet containing warp factor and virtual location in wave data
     if AFrameIndex = 0 then
     begin
-      StartingSliceIndex := StartOfWarpLocation(FSampleCursor);
+      StartingSliceIndex := 0;//StartOfWarpLocation(FSampleCursor{ - LOOP_FRACTIONAL_MARGE});
     end;
 
     if lInSample then
@@ -1536,25 +1526,22 @@ begin
   UpdateBPMScale;
 
   // 8th
-  //FSliceLength := GSettings.SampleRate * (1 / 4) * GAudioStruct.BPMScale;
+  //FSliceLength := GSettings.SampleRate * (1 / 4);
   // 16th
-  //FSliceLength := GSettings.SampleRate * (1 / 8) * GAudioStruct.BPMScale;
+  //FSliceLength := GSettings.SampleRate * (1 / 8);
   // 32th
-  //FSliceLength := GSettings.SampleRate * (1 / 16) * GAudioStruct.BPMScale;
+  //FSliceLength := GSettings.SampleRate * (1 / 16);
   // 64th
-  //FSliceLength := GSettings.SampleRate * (1 / 32) * GAudioStruct.BPMScale;
+  //FSliceLength := GSettings.SampleRate * (1 / 32);
 
   FSliceLength := GSettings.SampleRate * (1 / 8);
 
   if Looped then
   begin
-    FSliceCounter := 0;
-    FSliceStartLocation := 0;
-    FSliceEndLocation := FSliceStartLocation + FSliceLength;
-    FSliceCursor := 0;
-    FSliceStretchCounter := 0;
-
     Looped := False;
+    FLastSlice := TMarker(SliceList.Last);
+    FSliceCounter := 0;
+    FSliceSynced := True;
     Flush;
   end;
 end;
@@ -1636,8 +1623,8 @@ begin
   begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;  }
-  writeln(format('slicecount %d', [FSliceList.Count]));
-  {if FWave.ChannelCount > 0 then
+  {writeln(format('slicecount %d', [FSliceList.Count]));
+  if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1667,7 +1654,7 @@ begin
         Inc(WindowLength);
       end;
     end;
-  end;}
+  end; }
 
   Notify;
 

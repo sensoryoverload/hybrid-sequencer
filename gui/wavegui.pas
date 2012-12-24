@@ -543,6 +543,19 @@ begin
         SliceRight,
         Height);
 
+(*  DEBUG CODE
+
+      case FModel.SliceState of
+        ssAuto: FBitmap.Canvas.Brush.Color := clYellow;
+        ssCustom: FBitmap.Canvas.Brush.Color := clLtGray;
+      end;
+      FBitmap.Canvas.FillRect(
+        Round(FModel.SliceStartLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset),
+        FTransportBarHeight,
+        Round(FModel.SliceEndLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset),
+        Height);
+*)
+
       // Draw measurements
       FBitmap.Canvas.Pen.Width := 1;
 
@@ -764,13 +777,14 @@ begin
 
     FOldCursorPosition := SliceLeft;
   end;
-(*
+
+(*   Debug code
+
   SliceLeft := Round(FModel.CursorAdder * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset);
   if FOldCursorPosition <> SliceLeft then
   begin
     Canvas.Pen.Color := clBlue;
     Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, Height);
-    //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
 
     FOldCursorPosition := SliceLeft;
   end;
@@ -781,7 +795,6 @@ begin
   begin
     Canvas.Pen.Color := clGreen;
     Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, Height);
-    //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
 
     FOldCursorPosition := SliceLeft;
   end;
@@ -791,12 +804,11 @@ begin
   begin
     Canvas.Pen.Color := clGreen;
     Canvas.Line(SliceLeft, Succ(FTransportBarHeight), SliceLeft, Height);
-    //Canvas.TextOut(SliceLeft + 10, 50, Format('BPMScale %f', [FModel.BPMscale]));
 
     FOldCursorPosition := SliceLeft;
   end;
-  Canvas.Pen.Width := 1;
-*)
+  Canvas.Pen.Width := 1;   *)
+
   inherited Paint;
 end;
 
