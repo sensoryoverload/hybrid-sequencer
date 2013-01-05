@@ -63,6 +63,7 @@ type
   TFilter = class(THybridPersistentModel)
   private
     FFrequency: Single;
+    FFrequencyInternal: Single;
     FResonance: Single;
     FFreqModSource: TModSource;
     FFreqModAmount: Single;
@@ -79,6 +80,7 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
+    property FrequencyInternal: Single read FFrequencyInternal;
   published
     property Frequency: Single read FFrequency write SetFrequency; // 0..1
     property Resonance: Single read FResonance write FResonance; // 0..1 ?
@@ -472,7 +474,10 @@ end;
 
 procedure TFilter.SetFrequency(AValue: Single);
 begin
+  if FFrequency = AValue then exit;
   FFrequency := AValue;
+
+  FFrequencyInternal := log_approx(AValue);
 end;
 
 procedure TFilter.SetActive(const AValue: Boolean);

@@ -281,6 +281,7 @@ type
 
   TSample = class(THybridPersistentModel)
   private
+    FGlobalLevelInternal: Single;
     FWaveData: pjack_default_audio_sample_t;
     FSampleLocation: string;
     FSampleStart: Integer;
@@ -322,6 +323,7 @@ type
     FSampleName: string;
 
     FPitchScaleFactor: Single;
+    procedure SetGlobalLevel(AValue: Single);
   protected
     procedure RecalculatePitchFactor;
   public
@@ -335,6 +337,7 @@ type
     procedure UnloadSample;
     property WaveData: pjack_default_audio_sample_t read FWaveData write FWaveData;
     property Wave: TWaveFile read FWave write FWave;
+    property GlobalLevelInternal: Single read FGlobalLevelInternal;
   published
     property SampleStart: Integer read FSampleStart write FSampleStart;
     property SampleEnd: Integer read FSampleEnd write FSampleEnd;
@@ -361,7 +364,7 @@ type
     property LFO2: TOscillator read FLFO2 write FLFO2;
     property LFO3: TOscillator read FLFO3 write FLFO3;
 
-    property GlobalLevel: Single read FGlobalLevel write FGlobalLevel;
+    property GlobalLevel: Single read FGlobalLevel write SetGlobalLevel;
 
     property Key: Integer read FKey write FKey;
     property LowNote: Integer read FLowNote write FLowNote;
@@ -1675,6 +1678,14 @@ end;
 
 { TSample }
 
+procedure TSample.SetGlobalLevel(AValue: Single);
+begin
+  if FGlobalLevel = AValue then Exit;
+  FGlobalLevel := AValue;
+
+  FGlobalLevelInternal := log_approx(AValue);
+end;
+
 procedure TSample.RecalculatePitchFactor;
 begin
   //FPitchScaleFactor := 1;
@@ -1740,12 +1751,12 @@ begin
   FLFO3.WaveForm := off;
 
   // Globals
-  FLowNote := 0;
-  FHighNote := 127;
-  FKey := 48;
-  FSaturateDrivePreFilter := 1;
-  FSaturateDrivePostFilter := 1;
-  FGlobalLevel := 1;
+  LowNote := 0;
+  HighNote := 127;
+  Key := 48;
+  SaturateDrivePreFilter := 1;
+  SaturateDrivePostFilter := 1;
+  GlobalLevel := 1;
 
   FPitchScaleFactor := 1;
 
@@ -2366,8 +2377,8 @@ begin
           ABuffer[lBufferIndex] := lSampleAdd - lSampleMul * log_approx(FSample.GlobalLevel);}
 
           // Mono to stereo
-          ABuffer[lBufferIndex * 2] := ABuffer[lBufferIndex * 2] + lVoice.InternalBuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
-          ABuffer[lBufferIndex * 2 + 1] := ABuffer[lBufferIndex * 2 + 1] + lVoice.InternalBuffer[lBufferIndex] * log_approx(FSample.GlobalLevel);
+          ABuffer[lBufferIndex * 2] := ABuffer[lBufferIndex * 2] + lVoice.InternalBuffer[lBufferIndex] * FSample.GlobalLevelInternal;
+          ABuffer[lBufferIndex * 2 + 1] := ABuffer[lBufferIndex * 2 + 1] + lVoice.InternalBuffer[lBufferIndex] * FSample.GlobalLevelInternal;
         end;
       end;
     end;
@@ -2562,14 +2573,14 @@ begin
           begin
             FFilterEngine.Frequency :=
               FCutoffKeytracking + // Key tracking
-              log_approx(FFilterEngine.Filter.Frequency) + // knob position
+              FFilterEngine.Filter.FrequencyInternal + // knob position
               FFilterEnvelopeEngine.Level * FFilterEngine.Filter.EnvelopeAmount; // filter envelope
           end
           else
           begin
             FFilterEngine.Frequency :=
               FCutoffKeytracking + // Key tracking
-              log_approx(FFilterEngine.Filter.Frequency); // knob position
+              FFilterEngine.Filter.FrequencyInternal; // knob position
           end;
 
           FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
