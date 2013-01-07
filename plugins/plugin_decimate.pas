@@ -5,7 +5,7 @@ unit plugin_decimate;
 interface
 
 uses
-  Classes, SysUtils, plugin, global_command;
+  Classes, SysUtils, plugin, global_command, freereverb;
 
 type
   { TDecimateFX }

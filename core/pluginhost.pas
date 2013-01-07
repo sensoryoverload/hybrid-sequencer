@@ -119,7 +119,7 @@ type
 implementation
 
 uses
-  plugin_distortion, plugin_decimate, plugin_moog;
+  plugin_distortion, plugin_decimate, plugin_moog, plugin_freeverb;
 
 function SortOnSequenceNr(Item1 : Pointer; Item2 : Pointer) : Integer;
 var
