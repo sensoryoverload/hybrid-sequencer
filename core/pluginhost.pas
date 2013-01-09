@@ -357,6 +357,7 @@ procedure TCreateNodesCommand.DoExecute;
 var
   lPluginNode: TPluginNode;
   lPluginDistortion: TPluginDistortion;
+  lPluginFreeverb: TPluginFreeverb;
   lSampleBank: TSampleBank;
   lSampleBankEngine: TSampleBankEngine;
 begin
@@ -386,6 +387,16 @@ begin
       FPluginProcessor.NodeList.Add(lSampleBank);
 
       ObjectIdList.Add(lSampleBank.ObjectID);
+    end;
+    ptReverb:
+    begin
+      lPluginFreeverb := TPluginFreeverb.Create(FPluginProcessor.ObjectID, MAPPED);
+      lPluginFreeverb.PluginName := FPluginName;
+      lPluginFreeverb.PluginType := ptReverb;
+
+      FPluginProcessor.NodeList.Add(lPluginFreeverb);
+
+      ObjectIdList.Add(lPluginFreeverb.ObjectID);
     end;
   end;
 

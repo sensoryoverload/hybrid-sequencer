@@ -78,7 +78,8 @@ type
 implementation
 
 uses
-  global_command, ComCtrls, plugin_distortion, plugin_distortion_gui;
+  global_command, ComCtrls, plugin_distortion, plugin_distortion_gui,
+  plugin_freeverb, plugin_freeverb_gui;
 
 procedure TPluginProcessorGUI.pnlPluginDragDrop(Sender, Source: TObject; X,
   Y: Integer);
@@ -104,6 +105,14 @@ begin
       else if SameText(lTreeView.Selected.Text, 'distortion') then
       begin
         lCreateNodesCommand.PluginType := ptDistortion;
+      end
+      else if SameText(lTreeView.Selected.Text, 'reverb') then
+      begin
+        lCreateNodesCommand.PluginType := ptReverb;
+      end
+      else if SameText(lTreeView.Selected.Text, 'bitreducer') then
+      begin
+        lCreateNodesCommand.PluginType := ptReducer;
       end;
 
       GCommandQueue.PushCommand(lCreateNodesCommand);
@@ -196,6 +205,7 @@ var
   lPluginNodeGUI: TGenericPluginGUI;
   lSampleBankGUI: TBankView;
   lPluginDistortionGUI: TPluginDistortionGUI;
+  lPluginFreeverbGUI: TPluginFreeverbGUI;
 begin
   DBLog('start TPluginProcessorGUI.CreateNodeGUI ' + AObjectID);
 
@@ -252,6 +262,20 @@ begin
 
       FNodeListGUI.Add(lPluginDistortionGUI);
       TPluginDistortion(lPluginNode).Attach(lPluginDistortionGUI);
+    end;
+    ptReverb:
+    begin
+      lPluginFreeverbGUI := TPluginFreeverbGUI.Create(nil);
+      lPluginFreeverbGUI.ObjectID := AObjectID;
+      lPluginFreeverbGUI.ObjectOwnerID := Self.ObjectID;
+      lPluginFreeverbGUI.Model := TPluginFreeverb(lPluginNode);
+      lPluginFreeverbGUI.PluginName := lPluginNode.PluginName;
+      lPluginFreeverbGUI.Parent := pnlPlugin;
+      lPluginFreeverbGUI.Width := 100;
+      lPluginFreeverbGUI.Align := alLeft;
+
+      FNodeListGUI.Add(lPluginFreeverbGUI);
+      TPluginFreeverb(lPluginNode).Attach(lPluginFreeverbGUI);
     end;
     end;
   end;

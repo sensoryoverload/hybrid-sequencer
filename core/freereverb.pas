@@ -25,6 +25,7 @@ interface
 uses
   Classes;
 
+{$asmmode intel}
 {$ALIGN 8}
 //
 // Reverb model tuning values, taken from original algoritm by Jezar
@@ -90,7 +91,7 @@ type
   public
     constructor Create(Buffersize: integer); virtual;
     destructor Destroy; override;
-    function process(const input: Single): Single; register; inline;
+    function process(const input: Single): Single; register; inline; assembler;
     procedure mute;
     procedure setfeedback(Value: Single);
     function getfeedback: Single;
@@ -110,7 +111,7 @@ type
   public
     constructor Create(Buffersize: integer); virtual;
     destructor Destroy; override;
-    function process(const input: Single): Single;register; inline;
+    function process(const input: Single): Single; register; inline; assembler;
     procedure mute;
     procedure setdamp(Value: Single);
     function getdamp: Single;
@@ -157,8 +158,8 @@ type
     destructor Destroy; override;
     procedure mute;
     procedure process(
-      const input: psingle;
-      var output: psingle;
+      input: psingle;
+      output: psingle;
       numsamples: integer);
     procedure setroomsize(Value: Single);
     function getroomsize: Single;
@@ -179,8 +180,8 @@ implementation
 constructor TAllpass.Create(Buffersize: integer);
 begin
   inherited Create;
-  Bufsize := Buffersize * 4;
-  Buffer:=AllocMem(BufSize);
+  Bufsize := Buffersize * SizeOf(Single) * 2;
+  Buffer := AllocMem(BufSize);
   bufidx := 0;
 end;
 
@@ -202,14 +203,50 @@ begin
   Fillchar(Buffer^,Bufsize, 0);
 end;
 
-function Tallpass.process(const input: Single): Single;
+(*function Tallpass.process(input: Single): Single;
 begin
-  if input < Kdenorm then input := 0;
-  buffer[Bufidx] := ((buffer[Bufidx] - Input) * feedback) + Input;
+  //if input < Kdenorm then input := 0;
+  Buffer[Bufidx] := ((Buffer[Bufidx] - Input) * feedback) + Input;
   if Bufidx < BufSize then
     Inc(Bufidx)
   else
     Bufidx := 0;
+end;*)
+{ I really don't know if this is all as fast as can be,
+  but it beats Delphi's compiler generated code hands down,
+  Thaddy}
+function Tallpass.process(const input: Single): Single;
+asm
+  mov  ecx, [eax].buffer                   // buffer start in ecx
+  mov  edx, [eax].Bufidx                   // buffer index in edx
+  fld  input
+
+  // This checks for very small values that can cause a processor
+  // to switch in extra precision mode, which is expensive.
+  // Since such small values are irrelevant to audio, avoid this.
+  // The code is equivalent to the C inline macro by Jezar
+  // This is the same spot where the original C macro appears
+  test dword ptr [ecx+edx], $7F800000      // test if denormal
+  jnz @Normal
+  mov dword ptr [ecx+edx], 0               // if so, zero out
+@normal:
+
+  fld  [ecx+edx].Single                    // load current sample from buffer
+  fsub st(0), st(1)                        // subtract input sample
+  // NOT fsub, because delphi 7 translates that into fsubp!
+  fxch                                    // this is a zero cycle operant,
+                                          // just renames the stack internally
+  fmul [eax].feedback                     // multiply stored sample with feedback
+  fadd input                              // and add the input
+  fstp [ecx + edx].Single;                // store at the current sample pos
+  add  edx, 4                             // increment sample position
+  cmp  edx, [eax].BufSize;                // are we at end of buffer?
+  jb   @OK
+  xor  edx, edx                           // if so, reset buffer index
+@OK:
+  mov  [eax].bufidx, edx                  // and store new index,
+                                          // result already in st(0),
+                                          // hence the fxch
 end;
 
 procedure Tallpass.setfeedback(Value: Single);
@@ -220,8 +257,8 @@ end;
 constructor TComb.Create(Buffersize: integer);
 begin
   inherited Create;
-  BufSize := Buffersize * 4;
-  Buffer:=AllocMem(BufSize);
+  BufSize := Buffersize * SizeOf(Single) * 2;
+  Buffer:= AllocMem(BufSize);
   filterstore := 0;
   bufidx := 0;
 end;
@@ -250,17 +287,67 @@ begin
   Fillchar(Buffer^,BufSize,0);
 end;
 
-function Tcomb.process(const input: Single): Single;
+(*function Tcomb.process(input: Single): Single;
 var
   Temp : Single;
 begin
-  if input < Kdenorm then input := 0;
+  //if input < Kdenorm then input := 0;
   Result := buffer[bufidx];
   Temp := Result * feedback + input;
-  if filterStore < Kdenorm then filterStore := 0;
+  //if filterStore < Kdenorm then filterStore := 0;
   Result := Result * damp1 + filterStore * damp2;
   filterStore := Temp;
+end;*)
+{ I really don't know if this is all as fast as can be,
+  but it beats Delphi's compiler generated code hands down,
+  Thaddy}
+
+function Tcomb.process(const input: Single): Single;
+asm
+  mov   ecx, [eax].Buffer                        // buffer start in ecx
+  mov   edx, [eax].Bufidx                        // buffer index in edx
+
+  // This checks for very small values that can cause a processor
+  // to switch in extra precision mode, which is expensive.
+  // Since such small values are irrelevant to audio, avoid this.
+  // This is the same spot where the original C macro appears
+  test  dword ptr [ecx+edx], $7F800000           // test if denormal
+  jnz   @Normal
+  mov   dword ptr [ecx+edx], 0                   // if so, zero out
+@normal:
+
+  fld   [ecx+edx].Single;                        // load sample from buffer
+  fld   st(0)                                    // duplicate on the stack
+  fmul  [eax].damp2                              // multiply with damp2
+  fld   [eax].filterstore;                       // load stored filtered sample
+  fmul  [eax].damp1                              // multiply with damp1
+  faddp
+//  fadd  Kdenorm
+  fst   [eax].filterstore                        // store it back
+
+  // This checks for very small values that can cause a processor
+  // to switch in extra precision mode, which is expensive.
+  // Since such small values are irrelevant to audio, avoid this.
+  // This is the same spot where the original C macro appears
+  test  dword ptr [eax].filterstore, $7F800000   // test if denormal
+  jnz   @Normal2
+  mov   dword ptr [eax].filterstore, 0           // if so, zero out
+@normal2:
+
+  fmul  [eax].feedback                           // multiply with feedback
+  fadd  input                                    // and add to input sample
+//  fadd  Kdenorm
+  fstp  [ecx+edx].Single                         // store at current buffer pos
+  add   edx, 4                                   // update buffer index
+  cmp   edx, [eax].BufSize;                      // end of buffer reached?
+  jb    @OK
+  xor   edx, edx                                 // if so, reset buffer index
+@OK:
+  mov  [eax].bufidx, edx                         // and store new index.
+                                                 // result already in st(0),
+                                                 // hence duplicate
 end;
+
 
 procedure Tcomb.setdamp(Value: Single);
 begin
@@ -323,12 +410,12 @@ destructor TReverb.Destroy;
 var
   i: integer;
 begin
-  for i := 0 to 3 do
+  for i := 0 to Pred(numallpasses) do
   begin
     allpassL[i].Free;
     allpassR[i].Free;
   end;
-  for i := 0 to 7 do
+  for i := 0 to Pred(numcombs) do
   begin
     CombR[i].Free;
     CombL[i].Free;
@@ -388,13 +475,14 @@ begin
 end;
 
 procedure TReverb.process(
-  const input: psingle;
-  var output: psingle;
+  input: psingle;
+  output: psingle;
   numsamples: integer);
 var
   OutL, OutR: Single;
   i, j: integer;
   offsetL, offsetR: Integer;
+  mixinput: single;
 begin
   for i := 0 to Numsamples - 1 do
   begin
@@ -402,11 +490,12 @@ begin
     offsetR := i * 2 + 1;
     outL := 0;
     outR := 0;
+    mixinput := (Input[offsetL] + Input[offsetR]) * gain;
     // Accumulate comb filters in parallel
     for j := 0 to numcombs - 1 do
     begin
-      outL := OutL + combL[j].process(Input[offsetL] * gain);
-      outR := OutR + combR[j].process(Input[offsetR] * gain);
+      outL := OutL + combL[j].process(mixinput);
+      outR := OutR + combR[j].process(mixinput);
     end;
     // Feed through allpasses in series
     for j := 0 to numallpasses - 1 do

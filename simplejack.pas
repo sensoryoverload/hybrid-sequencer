@@ -1540,6 +1540,7 @@ begin
     // Add plugins
     lFilterRootNode := TreeView1.Items.Add(RootNode, 'Plugins');
     lFilterRootNode.ImageIndex := 17;
+    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Reverb');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Sampler');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Distortion');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'BitReducer');

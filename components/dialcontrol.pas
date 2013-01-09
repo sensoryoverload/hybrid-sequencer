@@ -162,6 +162,7 @@ Type
   private
     FBoolean: Boolean;
     FMax: Single;
+    FMidiMappingMode: Boolean;
     FMin: Single;
     FOrientation: TOrientation;
     FSize: Integer;
@@ -183,6 +184,7 @@ Type
     destructor Destroy; override;
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
+    property MidiMappingMode: Boolean read FMidiMappingMode write FMidiMappingMode;
   published
     property Value: Single read FValue write SetValue;
     property Min: Single read FMin write SetMin;

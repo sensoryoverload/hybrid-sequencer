@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, dialcontrol, pluginnodegui, plugin_freeverb, global_command,
-  globalconst;
+  globalconst, freereverb;
 
 type
 
@@ -14,10 +14,17 @@ type
 
   TPluginFreeverbGUI = class(TGenericPluginGUI)
   private
-    FBits: TParameterControl;
+    FRoomSize: TParameterControl;
+    FDamp: TParameterControl;
+    FWidth: TParameterControl;
+    FMode: TParameterControl;
+    FDry: TParameterControl;
+    FWet: TParameterControl;
   protected
-    procedure BitsChange(Sender: TObject);
-    procedure BitsStartChange(Sender: TObject);
+    procedure DoParameterChange(Sender: TObject);
+    procedure DoParameterStartChange(Sender: TObject);
+    function SetupParameterControls(ALeft, ATop: Integer; ACaption: string;
+      AMin, AMax, AValue: Single; AReverbParameter: TReverbParameter): TParameterControl;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -26,35 +33,76 @@ type
 
 implementation
 
+procedure TPluginFreeverbGUI.DoParameterChange(Sender: TObject);
+var
+  lGenericCommand: TFreeverbParameterCommand;
+begin
+  lGenericCommand := TFreeverbParameterCommand.Create(ObjectOwnerID);
+  try
+    lGenericCommand.Parameter := TReverbParameter(TParameterControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TParameterControl(Sender).Value;
+    lGenericCommand.Persist := False;
+
+    GCommandQueue.PushCommand(lGenericCommand);
+  except
+    lGenericCommand.Free;
+  end;
+end;
+
+procedure TPluginFreeverbGUI.DoParameterStartChange(Sender: TObject);
+var
+  lGenericCommand: TFreeverbParameterCommand;
+begin
+  lGenericCommand := TFreeverbParameterCommand.Create(ObjectOwnerID);
+  try
+    lGenericCommand.Parameter := TReverbParameter(TParameterControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TParameterControl(Sender).Value;
+    lGenericCommand.Persist := True;
+
+    GCommandQueue.PushCommand(lGenericCommand);
+  except
+    lGenericCommand.Free;
+  end;
+end;
+
+function TPluginFreeverbGUI.SetupParameterControls(
+  ALeft,
+  ATop: Integer;
+  ACaption: string;
+  AMin,
+  AMax,
+  AValue: Single;
+  AReverbParameter: TReverbParameter): TParameterControl;
+begin
+  Result := TParameterControl.Create(Self);
+  Result.Left := ALeft;
+  Result.Top := ATop;
+  Result.Width := 60;
+  Result.Height := 10;
+  Result.Caption := ACaption;
+  Result.Min := AMin;
+  Result.Max := AMax;
+  Result.Value := AValue;
+  Result.Parent := Self;
+  Result.Tag := Integer(AReverbParameter);
+  Result.OnChange := @DoParameterChange;
+  Result.OnStartChange := @DoParameterStartChange;
+end;
+
 constructor TPluginFreeverbGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FBits := TParameterControl.Create(Self);
-  FBits.Left := 10;
-  FBits.Top := 10;
-  FBits.Width := 60;
-  FBits.Height := 10;
-  FBits.Caption := 'Drive';
-  FBits.Min := 1;
-  FBits.Max := 10;
-  FBits.Value := 1;
-  FBits.Parent := Self;
-  FBits.OnChange := @BitsChange;
-  FBits.OnStartChange := @BitsStartChange;
-
-  FBits := TParameterControl.Create(Self);
-  FBits.Left := 10;
-  FBits.Top := 10;
-  FBits.Width := 60;
-  FBits.Height := 10;
-  FBits.Caption := 'Drive';
-  FBits.Min := 1;
-  FBits.Max := 10;
-  FBits.Value := 1;
-  FBits.Parent := Self;
-  FBits.OnChange := @BitsChange;
-  FBits.OnStartChange := @BitsStartChange;
+  FRoomSize := SetupParameterControls(10, 60, 'Roomsize', 0, 1, initialroom, rpRoomSize);
+  FDamp := SetupParameterControls(10, 80, 'Damp', 0, 1, initialdamp, rpDamp);
+  FWidth := SetupParameterControls(10, 100, 'Width', 0, 1, initialwidth, rpWidth);
+  FMode := SetupParameterControls(10, 120, 'Mode', 0, 1, initialmode, rpMode);
+  FDry := SetupParameterControls(10, 140, 'Dry', 0, 1, initialdry, rpDry);
+  FWet := SetupParameterControls(10, 160, 'Wet', 0, 1, initialwet, rpWet);
 end;
 
 destructor TPluginFreeverbGUI.Destroy;
@@ -66,37 +114,12 @@ procedure TPluginFreeverbGUI.Update(Subject: THybridPersistentModel);
 begin
   if Subject is TPluginFreeverb then
   begin
-    FBits.Value := TPluginFreeverb(Subject).Drive;
-  end;
-end;
-
-procedure TPluginFreeverbGUI.BitsStartChange(Sender: TObject);
-var
-  lFreeverbCommand: TFreeverbCommand;
-begin
-  lFreeverbCommand := TFreeverbCommand.Create(Self.ObjectID);
-  try
-    lFreeverbCommand.Drive := FBits.Value;
-    lFreeverbCommand.Persist := True;
-
-    GCommandQueue.PushCommand(lFreeverbCommand);
-  except
-    lFreeverbCommand.Free;
-  end;
-end;
-
-procedure TPluginFreeverbGUI.BitsChange(Sender: TObject);
-var
-  lFreeverbCommand: TFreeverbCommand;
-begin
-  lFreeverbCommand := TFreeverbCommand.Create(Self.ObjectID);
-  try
-    lFreeverbCommand.Drive := FBits.Value;
-    lFreeverbCommand.Persist := False;
-
-    GCommandQueue.PushCommand(lFreeverbCommand);
-  except
-    lFreeverbCommand.Free;
+    FRoomSize.Value := TPluginFreeverb(Subject).RoomSize;
+    FDamp.Value := TPluginFreeverb(Subject).Damp;
+    FWidth.Value := TPluginFreeverb(Subject).Width;
+    FMode.Value := TPluginFreeverb(Subject).Mode;
+    FDry.Value := TPluginFreeverb(Subject).Dry;
+    FWet.Value := TPluginFreeverb(Subject).Wet;
   end;
 end;
 

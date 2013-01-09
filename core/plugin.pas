@@ -29,7 +29,7 @@ uses
   ladspaloader;
 
 type
-  TPluginType = (ptIO, ptSampler, ptDistortion, ptFlanger, ptFilter, ptReducer);
+  TPluginType = (ptIO, ptSampler, ptDistortion, ptFlanger, ptFilter, ptReducer, ptReverb);
 
   TPluginNodeType = (pntSource, pntSink, pntPlugin);
 
