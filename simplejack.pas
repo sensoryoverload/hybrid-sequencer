@@ -523,7 +523,7 @@ begin
 
       if (i = 0) and Assigned(lTrack.PlayingPattern) then
       begin
-sadfds//        lTrack.PlayingPattern.ProcessInit;
+        lTrack.PlayingPattern.ProcessInit;
 
         if lTrack.Playing then
         begin

@@ -73,11 +73,10 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="simplejack"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="522"/>
-        <CursorPos X="7" Y="526"/>
+        <TopLine Value="578"/>
+        <CursorPos X="40" Y="591"/>
         <UsageCount Value="218"/>
         <Bookmarks Count="1">
           <Item0 X="40" Y="591" ID="4"/>
@@ -232,8 +231,8 @@
         <UnitName Value="midi"/>
         <EditorIndex Value="38"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="463"/>
-        <CursorPos X="69" Y="488"/>
+        <TopLine Value="437"/>
+        <CursorPos X="1" Y="454"/>
         <UsageCount Value="212"/>
         <Bookmarks Count="1">
           <Item0 X="29" Y="450" ID="3"/>
@@ -1042,7 +1041,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="22" Y="1"/>
-        <UsageCount Value="191"/>
+        <UsageCount Value="192"/>
       </Unit97>
       <Unit98>
         <Filename Value="gui/nativepluginsgui.pas"/>
@@ -1063,7 +1062,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="23"/>
         <CursorPos X="1" Y="41"/>
-        <UsageCount Value="149"/>
+        <UsageCount Value="150"/>
         <Loaded Value="True"/>
       </Unit99>
       <Unit100>
@@ -1074,7 +1073,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="56" Y="8"/>
-        <UsageCount Value="149"/>
+        <UsageCount Value="150"/>
         <Loaded Value="True"/>
       </Unit100>
       <Unit101>
@@ -1085,7 +1084,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="148"/>
+        <UsageCount Value="149"/>
         <Loaded Value="True"/>
       </Unit101>
       <Unit102>
@@ -1096,7 +1095,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="41"/>
         <CursorPos X="20" Y="33"/>
-        <UsageCount Value="148"/>
+        <UsageCount Value="149"/>
         <Bookmarks Count="1">
           <Item0 X="20" Y="33" ID="6"/>
         </Bookmarks>
@@ -1120,7 +1119,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="349"/>
         <CursorPos X="1" Y="368"/>
-        <UsageCount Value="49"/>
+        <UsageCount Value="50"/>
         <Loaded Value="True"/>
       </Unit104>
       <Unit105>
@@ -1131,7 +1130,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="21" Y="1"/>
-        <UsageCount Value="41"/>
+        <UsageCount Value="42"/>
         <Loaded Value="True"/>
       </Unit105>
       <Unit106>
@@ -1142,7 +1141,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="21" Y="15"/>
-        <UsageCount Value="41"/>
+        <UsageCount Value="42"/>
         <Bookmarks Count="1">
           <Item0 X="75" Y="61" ID="5"/>
         </Bookmarks>
@@ -1156,7 +1155,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="29"/>
         <CursorPos X="34" Y="50"/>
-        <UsageCount Value="41"/>
+        <UsageCount Value="42"/>
         <Loaded Value="True"/>
       </Unit107>
       <Unit108>
@@ -1187,7 +1186,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="345"/>
         <CursorPos X="1" Y="372"/>
-        <UsageCount Value="15"/>
+        <UsageCount Value="16"/>
         <Loaded Value="True"/>
       </Unit111>
       <Unit112>
@@ -1206,20 +1205,21 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="29"/>
+        <UsageCount Value="30"/>
         <Loaded Value="True"/>
       </Unit113>
       <Unit114>
         <Filename Value="plugins/plugin_bassline.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_bassline"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="250"/>
-        <CursorPos X="1" Y="259"/>
-        <UsageCount Value="29"/>
+        <TopLine Value="188"/>
+        <CursorPos X="27" Y="201"/>
+        <UsageCount Value="30"/>
         <Bookmarks Count="1">
-          <Item0 X="1" Y="230" ID="1"/>
+          <Item0 X="1" Y="209" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit114>
@@ -1238,130 +1238,130 @@
         <WindowIndex Value="0"/>
         <TopLine Value="51"/>
         <CursorPos X="13" Y="77"/>
-        <UsageCount Value="13"/>
+        <UsageCount Value="14"/>
         <Loaded Value="True"/>
       </Unit116>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="364" Column="26" TopLine="341"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="595" Column="12" TopLine="574"/>
       </Position1>
       <Position2>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="365" Column="16" TopLine="342"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2514" Column="17" TopLine="2492"/>
       </Position2>
       <Position3>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="403" Column="14" TopLine="380"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2619" Column="50" TopLine="2596"/>
       </Position3>
       <Position4>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="443" Column="57" TopLine="421"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="211" Column="7" TopLine="200"/>
       </Position4>
       <Position5>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="452" Column="17" TopLine="440"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="18" Column="20" TopLine="4"/>
       </Position5>
       <Position6>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="453" Column="25" TopLine="440"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="211" Column="40" TopLine="197"/>
       </Position6>
       <Position7>
-        <Filename Value="core/global_command.pas"/>
-        <Caret Line="238" Column="3" TopLine="236"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="209" Column="1" TopLine="195"/>
       </Position7>
       <Position8>
-        <Filename Value="plugins/plugin_bassline.pas"/>
-        <Caret Line="195" Column="43" TopLine="188"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="424" Column="40" TopLine="413"/>
       </Position8>
       <Position9>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="2337" Column="23" TopLine="2332"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="450" Column="29" TopLine="439"/>
       </Position9>
       <Position10>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2518" Column="3" TopLine="2508"/>
+        <Caret Line="2269" Column="1" TopLine="2256"/>
       </Position10>
       <Position11>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="453" Column="29" TopLine="435"/>
       </Position11>
       <Position12>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="595" Column="12" TopLine="574"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="456" Column="23" TopLine="441"/>
       </Position12>
       <Position13>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="2514" Column="17" TopLine="2492"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="247" Column="1" TopLine="221"/>
       </Position13>
       <Position14>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="2619" Column="50" TopLine="2596"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="610" Column="1" TopLine="584"/>
       </Position14>
       <Position15>
-        <Filename Value="plugins/plugin_bassline.pas"/>
-        <Caret Line="211" Column="7" TopLine="200"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="526" Column="42" TopLine="514"/>
       </Position15>
       <Position16>
-        <Filename Value="plugins/plugin_bassline.pas"/>
-        <Caret Line="18" Column="20" TopLine="4"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="591" Column="30" TopLine="576"/>
       </Position16>
       <Position17>
-        <Filename Value="plugins/plugin_bassline.pas"/>
-        <Caret Line="211" Column="40" TopLine="197"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2350" Column="1" TopLine="2337"/>
       </Position17>
       <Position18>
         <Filename Value="plugins/plugin_bassline.pas"/>
-        <Caret Line="209" Column="1" TopLine="195"/>
+        <Caret Line="259" Column="1" TopLine="250"/>
       </Position18>
       <Position19>
         <Filename Value="core/midi.pas"/>
-        <Caret Line="424" Column="40" TopLine="413"/>
+        <Caret Line="488" Column="69" TopLine="463"/>
       </Position19>
       <Position20>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="450" Column="29" TopLine="439"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="526" Column="1" TopLine="522"/>
       </Position20>
       <Position21>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="2269" Column="1" TopLine="2256"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="591" Column="40" TopLine="578"/>
       </Position21>
       <Position22>
         <Filename Value="core/midi.pas"/>
-        <Caret Line="453" Column="29" TopLine="435"/>
+        <Caret Line="472" Column="1" TopLine="469"/>
       </Position22>
       <Position23>
         <Filename Value="core/midi.pas"/>
-        <Caret Line="456" Column="23" TopLine="441"/>
+        <Caret Line="450" Column="29" TopLine="437"/>
       </Position23>
       <Position24>
-        <Filename Value="plugins/plugin_bassline.pas"/>
-        <Caret Line="247" Column="1" TopLine="221"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2323" Column="1" TopLine="2310"/>
       </Position24>
       <Position25>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="610" Column="1" TopLine="584"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="158" Column="3" TopLine="145"/>
       </Position25>
       <Position26>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="526" Column="42" TopLine="514"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="209" Column="1" TopLine="196"/>
       </Position26>
       <Position27>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="591" Column="30" TopLine="576"/>
-      </Position27>
-      <Position28>
         <Filename Value="core/sampler.pas"/>
         <Caret Line="2350" Column="1" TopLine="2337"/>
+      </Position27>
+      <Position28>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="454" Column="1" TopLine="437"/>
       </Position28>
       <Position29>
-        <Filename Value="plugins/plugin_bassline.pas"/>
-        <Caret Line="259" Column="1" TopLine="250"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2350" Column="1" TopLine="2337"/>
       </Position29>
       <Position30>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="488" Column="69" TopLine="463"/>
+        <Filename Value="plugins/plugin_bassline.pas"/>
+        <Caret Line="172" Column="11" TopLine="169"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">

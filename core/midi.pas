@@ -451,7 +451,6 @@ begin
         Put event in buffer
       }
       MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
-      DBLog('insert note');
 
       if Assigned(MidiDataCursor.Next) then
       begin
@@ -468,12 +467,8 @@ end;
 
 procedure TMidiPattern.ProcessAdvance;
 begin
-  Inherited;
+  inherited;
 
- { if FLooped then
-  begin
-    ProcessInit;
-  end;         }
 end;
 
 function TMidiPattern.Latency: Integer;
