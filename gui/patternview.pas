@@ -139,9 +139,6 @@ begin
   end
   else if TrackObject is TWavePattern then
   begin
-    tsPlugins.TabVisible := True;
-    pcEditor.ActivePage := tsWave;
-
     if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
     begin
       // Detach if old pattern is visible
@@ -162,6 +159,7 @@ begin
             lMidiPattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
+          tsPlugins.TabVisible := True;
           tsMIDI.TabVisible := False;
           tsWave.TabVisible := True;
           pcEditor.ActivePage := tsWave;
@@ -204,6 +202,7 @@ begin
         else
         begin
           // unknown pattern
+          tsPlugins.TabVisible := False;
           tsMIDI.TabVisible := False;
           tsWave.TabVisible := False;
         end;
@@ -212,6 +211,7 @@ begin
       begin
         if Assigned(GSettings.SelectedPattern) then
         begin
+          tsPlugins.TabVisible := True;
           tsMIDI.TabVisible := False;
           tsWave.TabVisible := True;
           pcEditor.ActivePage := tsWave;
@@ -229,6 +229,7 @@ begin
         end
         else
         begin
+          tsPlugins.TabVisible := False;
           tsMIDI.TabVisible := False;
           tsWave.TabVisible := False;
         end;
@@ -239,9 +240,6 @@ begin
   end
   else if TrackObject is TMidiPattern then
   begin
-    tsPlugins.TabVisible := True;
-    pcEditor.ActivePage := tsMIDI;
-
     if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
     begin
       // Detach if old pattern is visible
@@ -262,7 +260,6 @@ begin
             lWavePattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
-          tsWave.TabVisible := False;
 
           lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
           if Assigned(lMidiPattern) then
@@ -274,6 +271,8 @@ begin
             FPluginProcessorGUI.Connect;
           end;
 
+          tsPlugins.TabVisible := True;
+          tsWave.TabVisible := False;
           tsMIDI.TabVisible := True;
           pcEditor.ActivePage := tsMIDI;
         end
@@ -303,6 +302,7 @@ begin
         else
         begin
           // unknown pattern
+          tsPlugins.TabVisible := False;
           tsMIDI.TabVisible := False;
           tsWave.TabVisible := False;
         end;
@@ -312,7 +312,6 @@ begin
       begin
         if Assigned(GSettings.SelectedPattern) then
         begin
-          tsWave.TabVisible := False;
 
           lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
           if Assigned(lMidiPattern) then
@@ -324,6 +323,8 @@ begin
             FPluginProcessorGUI.Connect;
           end;
 
+          tsPlugins.TabVisible := True;
+          tsWave.TabVisible := False;
           tsMIDI.TabVisible := True;
           pcEditor.ActivePage := tsMIDI;
         end
@@ -376,13 +377,11 @@ begin
   FPluginProcessorGUI.Parent := tsPlugins;
   FPluginProcessorGUI.Align := alClient;
   tsPlugins.TabVisible := False;
+  pcEditor.ActivePage := tsMIDI;
 end;
 
 destructor TPatternView.Destroy;
 begin
-  {FWavePatternControlGUI.Free;
-  FMidiPatternControlGUI.Free;
-  FPluginProcessorGUI.Free;}
 
   FTracks.Free;
 

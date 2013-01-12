@@ -119,7 +119,11 @@ type
 implementation
 
 uses
-  plugin_distortion, plugin_decimate, plugin_moog, plugin_freeverb;
+  plugin_distortion,
+  plugin_decimate,
+  plugin_moog,
+  plugin_freeverb,
+  plugin_bassline;
 
 function SortOnSequenceNr(Item1 : Pointer; Item2 : Pointer) : Integer;
 var
@@ -358,6 +362,7 @@ var
   lPluginNode: TPluginNode;
   lPluginDistortion: TPluginDistortion;
   lPluginFreeverb: TPluginFreeverb;
+  lPluginBassline: TPluginBassline;
   lSampleBank: TSampleBank;
   lSampleBankEngine: TSampleBankEngine;
 begin
@@ -397,6 +402,16 @@ begin
       FPluginProcessor.NodeList.Add(lPluginFreeverb);
 
       ObjectIdList.Add(lPluginFreeverb.ObjectID);
+    end;
+    ptBassline:
+    begin
+      lPluginBassline := TPluginBassline.Create(FPluginProcessor.ObjectID, MAPPED);
+      lPluginBassline.PluginName := FPluginName;
+      lPluginBassline.PluginType := ptBassline;
+
+      FPluginProcessor.NodeList.Add(lPluginBassline);
+
+      ObjectIdList.Add(lPluginBassline.ObjectID);
     end;
   end;
 

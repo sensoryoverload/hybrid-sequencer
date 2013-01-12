@@ -78,8 +78,10 @@ type
 implementation
 
 uses
-  global_command, ComCtrls, plugin_distortion, plugin_distortion_gui,
-  plugin_freeverb, plugin_freeverb_gui;
+  global_command, ComCtrls,
+  plugin_distortion, plugin_distortion_gui,
+  plugin_freeverb, plugin_freeverb_gui,
+  plugin_bassline, plugin_bassline_gui;
 
 procedure TPluginProcessorGUI.pnlPluginDragDrop(Sender, Source: TObject; X,
   Y: Integer);
@@ -109,6 +111,10 @@ begin
       else if SameText(lTreeView.Selected.Text, 'reverb') then
       begin
         lCreateNodesCommand.PluginType := ptReverb;
+      end
+      else if SameText(lTreeView.Selected.Text, 'bassline') then
+      begin
+        lCreateNodesCommand.PluginType := ptBassline;
       end
       else if SameText(lTreeView.Selected.Text, 'bitreducer') then
       begin
@@ -206,6 +212,7 @@ var
   lSampleBankGUI: TBankView;
   lPluginDistortionGUI: TPluginDistortionGUI;
   lPluginFreeverbGUI: TPluginFreeverbGUI;
+  lPluginBasslineGUI: TPluginBasslineGUI;
 begin
   DBLog('start TPluginProcessorGUI.CreateNodeGUI ' + AObjectID);
 
@@ -276,6 +283,20 @@ begin
 
       FNodeListGUI.Add(lPluginFreeverbGUI);
       TPluginFreeverb(lPluginNode).Attach(lPluginFreeverbGUI);
+    end;
+    ptBassline:
+    begin
+      lPluginBasslineGUI := TPluginBasslineGUI.Create(nil);
+      lPluginBasslineGUI.ObjectID := AObjectID;
+      lPluginBasslineGUI.ObjectOwnerID := Self.ObjectID;
+      lPluginBasslineGUI.Model := TPluginBassline(lPluginNode);
+      lPluginBasslineGUI.PluginName := lPluginNode.PluginName;
+      lPluginBasslineGUI.Parent := pnlPlugin;
+      lPluginBasslineGUI.Width := 100;
+      lPluginBasslineGUI.Align := alLeft;
+
+      FNodeListGUI.Add(lPluginBasslineGUI);
+      TPluginBassline(lPluginNode).Attach(lPluginBasslineGUI);
     end;
     end;
   end;

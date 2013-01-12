@@ -445,12 +445,13 @@ begin
   if Assigned(FStartingMidiDataCursor) then
   begin
     MidiDataCursor := FStartingMidiDataCursor;
-    while PatternCursor > MidiDataCursor.Location do
+    while PatternCursor >= MidiDataCursor.Location do
     begin
       {
         Put event in buffer
       }
       MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
+      DBLog('insert note');
 
       if Assigned(MidiDataCursor.Next) then
       begin
@@ -468,6 +469,11 @@ end;
 procedure TMidiPattern.ProcessAdvance;
 begin
   Inherited;
+
+ { if FLooped then
+  begin
+    ProcessInit;
+  end;         }
 end;
 
 function TMidiPattern.Latency: Integer;

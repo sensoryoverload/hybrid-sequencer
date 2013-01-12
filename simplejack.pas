@@ -523,7 +523,7 @@ begin
 
       if (i = 0) and Assigned(lTrack.PlayingPattern) then
       begin
-        lTrack.PlayingPattern.ProcessInit;
+sadfds//        lTrack.PlayingPattern.ProcessInit;
 
         if lTrack.Playing then
         begin
@@ -1541,6 +1541,7 @@ begin
     lFilterRootNode := TreeView1.Items.Add(RootNode, 'Plugins');
     lFilterRootNode.ImageIndex := 17;
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Reverb');
+    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Bassline');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Sampler');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Distortion');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'BitReducer');
