@@ -8,6 +8,7 @@ uses
   Classes, SysUtils, plugin, global_command, global, pluginhost;
 
 type
+  TDistortionParameter = (dpDrive);
 
   { TPluginDistortion }
 
@@ -25,15 +26,17 @@ type
 
   TDistortionCommand = class(TCommand)
   private
-    FOldDrive: Single;
-    FDrive: Single;
+    FOldValue: Variant;
+    FValue: Variant;
     FPluginDistortion: TPluginDistortion;
+    FParameter: TDistortionParameter;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   public
     procedure Initialize; override;
-    property Drive: single read FDrive write FDrive;
+    property Value: Variant read FValue write FValue;
+    property Parameter: TDistortionParameter read FParameter write FParameter;
   end;
 
 implementation
@@ -54,9 +57,13 @@ procedure TDistortionCommand.DoExecute;
 begin
   FPluginDistortion.BeginUpdate;
 
-  FOldDrive := FDrive;
-
-  FPluginDistortion.Drive := FDrive;
+  case FParameter of
+    dpDrive:
+    begin;
+      FOldValue := FPluginDistortion.Drive;
+      FPluginDistortion.Drive := FValue;
+    end;
+  end;
 
   FPluginDistortion.EndUpdate;
 end;
@@ -65,9 +72,12 @@ procedure TDistortionCommand.DoRollback;
 begin
   FPluginDistortion.BeginUpdate;
 
-  FDrive := FOldDrive;
-
-  FPluginDistortion.Drive := FOldDrive;
+  case FParameter of
+    dpDrive:
+    begin;
+      FPluginDistortion.Drive := FOldValue;
+    end;
+  end;
 
   FPluginDistortion.EndUpdate;
 end;

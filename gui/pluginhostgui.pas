@@ -81,7 +81,8 @@ uses
   global_command, ComCtrls,
   plugin_distortion, plugin_distortion_gui,
   plugin_freeverb, plugin_freeverb_gui,
-  plugin_bassline, plugin_bassline_gui;
+  plugin_bassline, plugin_bassline_gui,
+  plugin_decimate, plugin_decimate_gui;
 
 procedure TPluginProcessorGUI.pnlPluginDragDrop(Sender, Source: TObject; X,
   Y: Integer);
@@ -118,7 +119,7 @@ begin
       end
       else if SameText(lTreeView.Selected.Text, 'bitreducer') then
       begin
-        lCreateNodesCommand.PluginType := ptReducer;
+        lCreateNodesCommand.PluginType := ptDecimate;
       end;
 
       GCommandQueue.PushCommand(lCreateNodesCommand);
@@ -141,16 +142,6 @@ begin
   inherited Create(AOwner);
 
   FNodeListGUI := TObjectList.create(True);
-
-//  FAudioInGUI := TGenericPluginGUI.Create(Self);
-//  FAudioInGUI.Parent := pnlPlugin;
-
-//  FAudioOutGUI := TGenericPluginGUI.Create(Self);
-//  FAudioOutGUI.Parent := pnlPlugin;
-
-
-  {pnlPlugin.OnDragDrop := @pnlPluginDragDrop;
-  pnlPlugin.OnDragOver := @pnlPluginDragOver; }
 
   DBLog('end TPluginProcessorGUI.Create');
 end;
@@ -190,14 +181,6 @@ end;
 procedure TPluginProcessorGUI.Connect;
 begin
   Model := GObjectMapper.GetModelObject(ObjectID);
-
-  {TPluginProcessor(Model).AudioIn.Attach(FAudioInGUI);
-  FAudioInGUI.ObjectID := TPluginProcessor(Model).AudioIn.ObjectID;
-  FAudioInGUI.PluginName := TPluginProcessor(Model).AudioIn.PluginName;
-
-  TPluginProcessor(Model).AudioOut.Attach(FAudioOutGUI);
-  FAudioOutGUI.ObjectID := TPluginProcessor(Model).AudioOut.ObjectID;
-  FAudioOutGUI.PluginName := TPluginProcessor(Model).AudioOut.PluginName; }
 end;
 
 procedure TPluginProcessorGUI.Disconnect;
@@ -213,6 +196,7 @@ var
   lPluginDistortionGUI: TPluginDistortionGUI;
   lPluginFreeverbGUI: TPluginFreeverbGUI;
   lPluginBasslineGUI: TPluginBasslineGUI;
+  lPluginDecimateGUI: TPluginDecimateGUI;
 begin
   DBLog('start TPluginProcessorGUI.CreateNodeGUI ' + AObjectID);
 
@@ -298,6 +282,20 @@ begin
       FNodeListGUI.Add(lPluginBasslineGUI);
       TPluginBassline(lPluginNode).Attach(lPluginBasslineGUI);
     end;
+    ptDecimate:
+    begin
+      lPluginDecimateGUI := TPluginDecimateGUI.Create(nil);
+      lPluginDecimateGUI.ObjectID := AObjectID;
+      lPluginDecimateGUI.ObjectOwnerID := Self.ObjectID;
+      lPluginDecimateGUI.Model := TPluginDecimate(lPluginNode);
+      lPluginDecimateGUI.PluginName := lPluginNode.PluginName;
+      lPluginDecimateGUI.Parent := pnlPlugin;
+      lPluginDecimateGUI.Width := 100;
+      lPluginDecimateGUI.Align := alLeft;
+
+      FNodeListGUI.Add(lPluginDecimateGUI);
+      TPluginDecimate(lPluginNode).Attach(lPluginDecimateGUI);
+    end;
     end;
   end;
 
@@ -317,6 +315,7 @@ begin
 
     if lPluginNodeGUI.ObjectID = AObjectID then
     begin
+      TPluginNode(lPluginNodeGUI.Model).Detach(lPluginNodeGUI);
       FNodeListGUI.Remove(lPluginNodeGUI);
     end;
   end;

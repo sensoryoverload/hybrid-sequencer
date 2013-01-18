@@ -9,7 +9,8 @@ uses
   audiostructure;
 
 type
-  TTbParameter = (tbPitch, tbCutoff, tbReso, tbEnvMod, tbDecay, tbAccent);
+  TTbParameter = (tbPitch, tbCutoff, tbReso, tbEnvMod, tbDecay, tbAccent, tbWave,
+    tbOverdrive);
 
   { TPluginBassline }
 
@@ -18,18 +19,23 @@ type
     FTB303: TTB303;
     FLength: Single;
     FPlaying: Boolean;
+    FOverDrive: Single;
     function GetPitch: Single;
     function GetCutoff: Single;
     function GetReso: Single;
     function GetEnvMod: Single;
     function GetDecay: Single;
     function GetAccent: Single;
+    function GetWave: Integer;
+    function GetOverDrive: Single;
     procedure SetPitch(AValue: Single);
     procedure SetCutoff(AValue: Single);
     procedure SetReso(AValue: Single);
     procedure SetEnvMod(AValue: Single);
     procedure SetDecay(AValue: Single);
     procedure SetAccent(AValue: Single);
+    procedure SetWave(AValue: Integer);
+    procedure SetOverDrive(AValue: Single);
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
@@ -41,6 +47,8 @@ type
     property Cutoff: Single read GetCutoff write SetCutoff;
     property Decay: Single read GetDecay write SetDecay;
     property Reso: Single read GetReso write SetReso;
+    property Wave: Integer read GetWave write SetWave;
+    property OverDrive: Single read GetOverDrive write SetOverDrive;
   end;
 
 
@@ -70,6 +78,9 @@ type
 
 
 implementation
+
+uses
+  fx;
 
 { TBasslineParameterCommand }
 
@@ -108,6 +119,16 @@ begin
       FOldValue := FBassline.Accent;
       FBassline.Accent := FValue;
     end;
+    tbWave:
+    begin
+      FOldValue := FBassline.Wave;
+      FBassline.Wave := FValue;
+    end;
+    tbOverdrive:
+    begin
+      FOldValue := FBassline.OverDrive;
+      FBassline.OverDrive := FValue;
+    end;
   end;
 
   FBassline.EndUpdate;
@@ -141,6 +162,14 @@ begin
     tbAccent:
     begin
       FBassline.Accent := FOldValue;
+    end;
+    tbWave:
+    begin
+      FBassline.Wave := FOldValue;
+    end;
+    tbOverdrive:
+    begin
+      FBassline.OverDrive := FOldValue;
     end;
   end;
 
@@ -200,7 +229,7 @@ begin
     begin
       FLength := FLength - GAudioStruct.BPMScale;
     end;
-    lOutput := FTB303.Process;
+    lOutput :=  tanh2(FTB303.Process * FOverDrive);
     ABuffer[lOffsetL] := lOutput;
     ABuffer[lOffsetR] := lOutput;
     Inc(lOffsetL, 2);
@@ -238,6 +267,16 @@ begin
   Result := FTB303.AccAmt;
 end;
 
+function TPluginBassline.GetWave: Integer;
+begin
+  Result := FTB303.Waveform;
+end;
+
+function TPluginBassline.GetOverDrive: Single;
+begin
+  Result := FOverDrive;
+end;
+
 procedure TPluginBassline.SetPitch(AValue: Single);
 begin
   //FTB303.setPitch(AValue);
@@ -266,6 +305,16 @@ end;
 procedure TPluginBassline.SetAccent(AValue: Single);
 begin
   FTB303.AccAmt := AValue;
+end;
+
+procedure TPluginBassline.SetWave(AValue: Integer);
+begin
+  FTB303.Waveform := AValue;
+end;
+
+procedure TPluginBassline.SetOverDrive(AValue: Single);
+begin
+  FOverDrive := AValue;
 end;
 
 constructor TPluginBassline.Create(AObjectOwnerID: string; AMapped: Boolean = True);

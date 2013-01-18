@@ -363,6 +363,7 @@ var
   lPluginDistortion: TPluginDistortion;
   lPluginFreeverb: TPluginFreeverb;
   lPluginBassline: TPluginBassline;
+  lPluginDecimate: TPluginDecimate;
   lSampleBank: TSampleBank;
   lSampleBankEngine: TSampleBankEngine;
 begin
@@ -412,6 +413,16 @@ begin
       FPluginProcessor.NodeList.Add(lPluginBassline);
 
       ObjectIdList.Add(lPluginBassline.ObjectID);
+    end;
+    ptDecimate:
+    begin
+      lPluginDecimate := TPluginDecimate.Create(FPluginProcessor.ObjectID, MAPPED);
+      lPluginDecimate.PluginName := FPluginName;
+      lPluginDecimate.PluginType := ptDecimate;
+
+      FPluginProcessor.NodeList.Add(lPluginDecimate);
+
+      ObjectIdList.Add(lPluginDecimate.ObjectID);
     end;
   end;
 

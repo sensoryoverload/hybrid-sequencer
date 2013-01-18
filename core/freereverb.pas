@@ -23,7 +23,7 @@ unit freereverb;
 interface
 
 uses
-  Classes;
+  Classes, fx;
 
 {$asmmode intel}
 {$ALIGN 8}
@@ -144,6 +144,9 @@ type
     Width,
     mode: Single;
 
+    delayL: TAudioRingBuffer;
+    delayR: TAudioRingBuffer;
+
     // Comb filters
     combL: array [0..numcombs - 1] of TComb;
     combR: array [0..numcombs - 1] of TComb;
@@ -173,9 +176,14 @@ type
     function getwidth: Single;
     procedure setmode(Value: Single);
     function getmode: Single;
+    procedure setpredelay(Value: Single);
+    function getpredelay: Single;
   end;
 
 implementation
+
+uses
+  global;
 
 constructor TAllpass.Create(Buffersize: integer);
 begin
@@ -364,6 +372,11 @@ constructor TReverb.Create;
 begin
   inherited;
 
+  delayL := TAudioRingBuffer.Create(Round(GSettings.SampleRate), 1);
+  delayL.DelaySmp := 0;
+  delayR := TAudioRingBuffer.Create(Round(GSettings.SampleRate), 1);
+  delayR.DelaySmp := 0;
+
   CombL[0] := Tcomb.Create(combtuningL1);
   CombR[0] := Tcomb.Create(combtuningR1);
   CombL[1] := Tcomb.Create(combtuningL2);
@@ -410,6 +423,8 @@ destructor TReverb.Destroy;
 var
   i: integer;
 begin
+  delayL.Free;
+  delayR.Free;
   for i := 0 to Pred(numallpasses) do
   begin
     allpassL[i].Free;
@@ -439,6 +454,17 @@ begin
     Result := 1
   else
     Result := 0;
+end;
+
+procedure TReverb.setpredelay(Value: Single);
+begin
+  delayL.DelaySmp := Round(Value);
+  delayR.DelaySmp := Round(Value);
+end;
+
+function TReverb.getpredelay: Single;
+begin
+  Result := delayL.DelaySmp;
 end;
 
 function TReverb.getroomsize: Single;
@@ -490,7 +516,9 @@ begin
     offsetR := i * 2 + 1;
     outL := 0;
     outR := 0;
-    mixinput := (Input[offsetL] + Input[offsetR]) * gain;
+    mixinput :=
+      (delayL.Process(input[offsetL]) +
+      delayR.Process(input[offsetR])) * gain;
     // Accumulate comb filters in parallel
     for j := 0 to numcombs - 1 do
     begin

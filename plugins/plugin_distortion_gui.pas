@@ -15,9 +15,11 @@ type
   TPluginDistortionGUI = class(TGenericPluginGUI)
   private
     FDrive: TParameterControl;
+    function SetupParameterControls(ALeft, ATop: Integer; ACaption: string;
+      AMin, AMax, AValue: Single; AParameter: TDistortionParameter): TParameterControl;
   protected
-    procedure DriveChange(Sender: TObject);
-    procedure DriveStartChange(Sender: TObject);
+    procedure DoParameterChange(Sender: TObject);
+    procedure DoParameterStartChange(Sender: TObject);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -26,22 +28,35 @@ type
 
 implementation
 
+function TPluginDistortionGUI.SetupParameterControls(
+  ALeft,
+  ATop: Integer;
+  ACaption: string;
+  AMin,
+  AMax,
+  AValue: Single;
+  AParameter: TDistortionParameter): TParameterControl;
+begin
+  Result := TParameterControl.Create(Self);
+  Result.Left := ALeft;
+  Result.Top := ATop;
+  Result.Width := 60;
+  Result.Height := 10;
+  Result.Caption := ACaption;
+  Result.Min := AMin;
+  Result.Max := AMax;
+  Result.Value := AValue;
+  Result.Parent := Self;
+  Result.Tag := Integer(AParameter);
+  Result.OnChange := @DoParameterChange;
+  Result.OnStartChange := @DoParameterStartChange;
+end;
+
 constructor TPluginDistortionGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FDrive := TParameterControl.Create(Self);
-  FDrive.Left := 10;
-  FDrive.Top := 10;
-  FDrive.Width := 60;
-  FDrive.Height := 10;
-  FDrive.Caption := 'Drive';
-  FDrive.Min := 1;
-  FDrive.Max := 10;
-  FDrive.Value := 1;
-  FDrive.Parent := Self;
-  FDrive.OnChange := @DriveChange;
-  FDrive.OnStartChange := @DriveStartChange;
+  FDrive := SetupParameterControls(10, 10, 'Drive', 2, 10, 2, dpDrive);
 end;
 
 destructor TPluginDistortionGUI.Destroy;
@@ -57,33 +72,39 @@ begin
   end;
 end;
 
-procedure TPluginDistortionGUI.DriveStartChange(Sender: TObject);
+procedure TPluginDistortionGUI.DoParameterStartChange(Sender: TObject);
 var
-  lDistortionCommand: TDistortionCommand;
+  lGenericCommand: TDistortionCommand;
 begin
-  lDistortionCommand := TDistortionCommand.Create(Self.ObjectID);
+  lGenericCommand := TDistortionCommand.Create(Self.ObjectID);
   try
-    lDistortionCommand.Drive := FDrive.Value;
-    lDistortionCommand.Persist := True;
+    lGenericCommand.Parameter := TDistortionParameter(TParameterControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TParameterControl(Sender).Value;
+    lGenericCommand.Persist := True;
 
-    GCommandQueue.PushCommand(lDistortionCommand);
+    GCommandQueue.PushCommand(lGenericCommand);
   except
-    lDistortionCommand.Free;
+    lGenericCommand.Free;
   end;
 end;
 
-procedure TPluginDistortionGUI.DriveChange(Sender: TObject);
+procedure TPluginDistortionGUI.DoParameterChange(Sender: TObject);
 var
-  lDistortionCommand: TDistortionCommand;
+  lGenericCommand: TDistortionCommand;
 begin
-  lDistortionCommand := TDistortionCommand.Create(Self.ObjectID);
+  lGenericCommand := TDistortionCommand.Create(Self.ObjectID);
   try
-    lDistortionCommand.Drive := FDrive.Value;
-    lDistortionCommand.Persist := False;
+    lGenericCommand.Parameter := TDistortionParameter(TParameterControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TParameterControl(Sender).Value;
+    lGenericCommand.Persist := False;
 
-    GCommandQueue.PushCommand(lDistortionCommand);
+    GCommandQueue.PushCommand(lGenericCommand);
   except
-    lDistortionCommand.Free;
+    lGenericCommand.Free;
   end;
 end;
 

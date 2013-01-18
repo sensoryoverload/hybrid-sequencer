@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, dialcontrol, pluginnodegui, plugin_decimate, global_command,
-  globalconst;
+  globalconst, global;
 
 type
 
@@ -15,9 +15,12 @@ type
   TPluginDecimateGUI = class(TGenericPluginGUI)
   private
     FBits: TParameterControl;
+    FSampleRate: TParameterControl;
+    function SetupParameterControls(ALeft, ATop: Integer; ACaption: string;
+      AMin, AMax, AValue: Single; AParameter: TDecimateParameter): TParameterControl;
   protected
-    procedure BitsChange(Sender: TObject);
-    procedure BitsStartChange(Sender: TObject);
+    procedure DoParameterChange(Sender: TObject);
+    procedure DoParameterStartChange(Sender: TObject);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -26,35 +29,37 @@ type
 
 implementation
 
+function TPluginDecimateGUI.SetupParameterControls(
+  ALeft,
+  ATop: Integer;
+  ACaption: string;
+  AMin,
+  AMax,
+  AValue: Single;
+  AParameter: TDecimateParameter): TParameterControl;
+begin
+  Result := TParameterControl.Create(Self);
+  Result.Left := ALeft;
+  Result.Top := ATop;
+  Result.Width := 60;
+  Result.Height := 10;
+  Result.Caption := ACaption;
+  Result.Min := AMin;
+  Result.Max := AMax;
+  Result.Value := AValue;
+  Result.Parent := Self;
+  Result.Tag := Integer(AParameter);
+  Result.OnChange := @DoParameterChange;
+  Result.OnStartChange := @DoParameterStartChange;
+end;
+
 constructor TPluginDecimateGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FBits := TParameterControl.Create(Self);
-  FBits.Left := 10;
-  FBits.Top := 10;
-  FBits.Width := 60;
-  FBits.Height := 10;
-  FBits.Caption := 'Drive';
-  FBits.Min := 1;
-  FBits.Max := 10;
-  FBits.Value := 1;
-  FBits.Parent := Self;
-  FBits.OnChange := @BitsChange;
-  FBits.OnStartChange := @BitsStartChange;
-
-  FBits := TParameterControl.Create(Self);
-  FBits.Left := 10;
-  FBits.Top := 10;
-  FBits.Width := 60;
-  FBits.Height := 10;
-  FBits.Caption := 'Drive';
-  FBits.Min := 1;
-  FBits.Max := 10;
-  FBits.Value := 1;
-  FBits.Parent := Self;
-  FBits.OnChange := @BitsChange;
-  FBits.OnStartChange := @BitsStartChange;
+  FBits := SetupParameterControls(10, 10, 'Bits', 1, 16, 16, dpBits);
+  FSampleRate := SetupParameterControls(10, 30, 'Samplerate', 1,
+    GSettings.SampleRate, GSettings.SampleRate, dpSampleRate);
 end;
 
 destructor TPluginDecimateGUI.Destroy;
@@ -66,37 +71,44 @@ procedure TPluginDecimateGUI.Update(Subject: THybridPersistentModel);
 begin
   if Subject is TPluginDecimate then
   begin
-    FBits.Value := TPluginDecimate(Subject).Drive;
+    FBits.Value := TPluginDecimate(Subject).Bits;
+    FSampleRate.Value := TPluginDecimate(Subject).SampleRate;
   end;
 end;
 
-procedure TPluginDecimateGUI.BitsStartChange(Sender: TObject);
+procedure TPluginDecimateGUI.DoParameterStartChange(Sender: TObject);
 var
-  lDecimateCommand: TDecimateCommand;
+  lGenericCommand: TDecimateParameterCommand;
 begin
-  lDecimateCommand := TDecimateCommand.Create(Self.ObjectID);
+  lGenericCommand := TDecimateParameterCommand.Create(Self.ObjectID);
   try
-    lDecimateCommand.Drive := FBits.Value;
-    lDecimateCommand.Persist := True;
+    lGenericCommand.Parameter := TDecimateParameter(TParameterControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TParameterControl(Sender).Value;
+    lGenericCommand.Persist := True;
 
-    GCommandQueue.PushCommand(lDecimateCommand);
+    GCommandQueue.PushCommand(lGenericCommand);
   except
-    lDecimateCommand.Free;
+    lGenericCommand.Free;
   end;
 end;
 
-procedure TPluginDecimateGUI.BitsChange(Sender: TObject);
+procedure TPluginDecimateGUI.DoParameterChange(Sender: TObject);
 var
-  lDecimateCommand: TDecimateCommand;
+  lGenericCommand: TDecimateParameterCommand;
 begin
-  lDecimateCommand := TDecimateCommand.Create(Self.ObjectID);
+  lGenericCommand := TDecimateParameterCommand.Create(Self.ObjectID);
   try
-    lDecimateCommand.Drive := FBits.Value;
-    lDecimateCommand.Persist := False;
+    lGenericCommand.Parameter := TDecimateParameter(TParameterControl(Sender).Tag);
+    lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lGenericCommand.ObjectID := Self.ObjectID;
+    lGenericCommand.Value := TParameterControl(Sender).Value;
+    lGenericCommand.Persist := False;
 
-    GCommandQueue.PushCommand(lDecimateCommand);
+    GCommandQueue.PushCommand(lGenericCommand);
   except
-    lDecimateCommand.Free;
+    lGenericCommand.Free;
   end;
 end;
 

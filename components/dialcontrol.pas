@@ -36,6 +36,7 @@ const
   KNOBSTYLE2 = 'SimpleKnob';
   DIVBY100 = 1 / 100;
   DIVBY20 = 1 / 20;
+  LISTITEM_HEIGHT = 14;
 
 Type
   PPSingle = ^PSingle;
@@ -152,6 +153,31 @@ Type
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+  end;
+
+  { TListSelect }
+
+  TListSelect = class(TCustomControl)
+  private
+    FItems: TStringList;
+    FItemIndex: Integer;
+    FListOpen: Boolean;
+    FPreSelectedItemIndex: Integer;
+    FOnChange: TNotifyEvent;
+    procedure SetItemIndex(AValue: Integer);
+  protected
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+//    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
+    procedure EraseBackground(DC: HDC); override;
+    procedure Paint; override;
+  public
+    constructor Create(AOwner : TComponent); override;
+    destructor Destroy; override;
+  published
+    property Items: TStringList read FItems write FItems;
+    property ItemIndex: Integer read FItemIndex write SetItemIndex;
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
   end;
 
   TOrientation = (oHorizontal, oVertical, oBalance);
@@ -507,7 +533,192 @@ procedure Register;
 begin
   RegisterComponents('HybridComponentPack', [TDialControl, TTimeControl,
     TValueControl, TToggleControl, TVolumeControl, TFilteredShellTreeView,
-    TCollapseSplitter, TFloatSpinEditControl, TParameterControl]);
+    TCollapseSplitter, TFloatSpinEditControl, TParameterControl, TListSelect]);
+end;
+
+{ TListSelect }
+
+procedure TListSelect.SetItemIndex(AValue: Integer);
+begin
+  FItemIndex := AValue;
+
+  Invalidate;
+end;
+
+procedure TListSelect.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  BringToFront;
+
+  if CanFocus then
+  begin
+    SetFocus;
+  end;
+
+  if Y < LISTITEM_HEIGHT then
+  begin
+    FListOpen := not FListOpen;
+  end;
+
+  inherited MouseDown(Button, Shift, X, Y);
+end;
+
+procedure TListSelect.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+var
+  lItemIndex: Integer;
+begin
+  if Y >= LISTITEM_HEIGHT then
+  begin
+    lItemIndex := Pred(Y div LISTITEM_HEIGHT);
+    if FItemIndex <> lItemIndex then
+    begin
+      FItemIndex := lItemIndex;
+      if Assigned(FOnChange) then
+      begin
+        FOnChange(Self);
+      end;
+    end;
+
+    FListOpen := False;
+  end;
+
+  Invalidate;
+
+  inherited MouseUp(Button, Shift, X, Y);
+end;
+
+{procedure TListSelect.KeyDown(var Key: Word; Shift: TShiftState);
+begin
+  if Key = VK_UP then
+  begin
+    if FPreSelectedItemIndex > 0 then
+    begin
+      Dec(FPreSelectedItemIndex);
+      Invalidate;
+    end;
+  end
+  else if Key = VK_DOWN then
+  begin
+    if FPreSelectedItemIndex < Pred(FItems.Count) then
+    begin
+      Inc(FPreSelectedItemIndex);
+      Invalidate;
+    end;
+  end
+  else if Key = VK_RETURN then
+  begin
+    ItemIndex := FPreSelectedItemIndex;
+  end;
+end;}
+
+procedure TListSelect.EraseBackground(DC: HDC);
+begin
+  inherited EraseBackground(DC);
+end;
+
+procedure TListSelect.Paint;
+var
+  lBGRABitmap: TBGRABitmap;
+  lCaption: string;
+  lCenter: Integer;
+  lItemIndex: Integer;
+begin
+  lBGRABitmap := TBGRABitmap.Create(Width, Height);
+  try
+    if FListOpen then
+    begin
+      Height := (FItems.Count + 1) * LISTITEM_HEIGHT;
+      lBGRABitmap.Rectangle(
+        0,
+        0,
+        Width,
+        Height,
+        ColorToBGRA(clBlack),
+        ColorToBGRA(clLtGray),
+        dmSet);
+
+      lBGRABitmap.FontHeight := Pred(LISTITEM_HEIGHT);
+      if FItemIndex <> -1 then
+      begin
+        lBGRABitmap.TextOut(
+          1,
+          1,
+          FItems[FItemIndex],
+          ColorToBGRA(ColorToRGB(clBtnText)));
+      end;
+
+      // Show selectable items
+      lBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
+      for lItemIndex := 0 to Pred(FItems.Count) do
+      begin
+        {if lItemIndex = FPreSelectedItemIndex then
+        begin
+          lBGRABitmap.Rectangle(
+            0,
+            Succ(lItemIndex) * LISTITEM_HEIGHT,
+            Width,
+            LISTITEM_HEIGHT,
+            ColorToBGRA(clBlack),
+            ColorToBGRA(clBlue),
+            dmSet);
+        end;}
+
+        lBGRABitmap.TextOut(
+          1,
+          Succ(lItemIndex) * LISTITEM_HEIGHT + 1,
+          FItems[lItemIndex],
+          ColorToBGRA(ColorToRGB(clBtnText)));
+
+      end;
+    end
+    else
+    begin
+      Height := LISTITEM_HEIGHT;
+      lBGRABitmap.Rectangle(
+        0,
+        0,
+        Width,
+        Height,
+        ColorToBGRA(clBlack),
+        ColorToBGRA(clLtGray),
+        dmSet);
+
+      if FItemIndex <> -1 then
+      begin
+        lBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
+        lBGRABitmap.TextOut(
+          1,
+          1,
+          FItems[FItemIndex],
+          ColorToBGRA(ColorToRGB(clBtnText)));
+      end;
+    end;
+
+    lBGRABitmap.Draw(Canvas, 0, 0, True);
+  finally
+    lBGRABitmap.Free;
+  end;
+end;
+
+constructor TListSelect.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  FItems := TStringList.Create;
+  FListOpen := False;
+  Width := 60;
+  Height := LISTITEM_HEIGHT;
+
+  FItemIndex := -1;
+  FPreSelectedItemIndex := FItemIndex;
+end;
+
+destructor TListSelect.Destroy;
+begin
+  FItems.Free;
+
+  inherited Destroy;
 end;
 
 { TParameterControl }

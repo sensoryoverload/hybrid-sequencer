@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, plugin, global_command, freereverb, global;
 
 type
-  TReverbParameter = (rpRoomSize, rpDamp, rpWidth, rpDry, rpWet, rpMode);
+  TReverbParameter = (rpRoomSize, rpDamp, rpWidth, rpDry, rpWet, rpMode, rpPreDelay);
 
   { TPluginFreeverb }
 
@@ -21,12 +21,14 @@ type
     function GetRoomSize: Single;
     function GetWet: Single;
     function GetWidth: Single;
+    function GetPreDelay: Single;
     procedure SetDamp(AValue: Single);
     procedure SetDry(AValue: Single);
     procedure SetMode(AValue: Single);
     procedure SetRoomSize(AValue: Single);
     procedure SetWet(AValue: Single);
     procedure SetWidth(AValue: Single);
+    procedure SetPreDelay(AValue: Single);
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
@@ -38,6 +40,7 @@ type
     property Dry: Single read GetDry write SetDry;
     property Wet: Single read GetWet write SetWet;
     property Mode: Single read GetMode write SetMode;
+    property PreDelay: Single read GetPreDelay write SetPreDelay;
   end;
 
 
@@ -105,6 +108,11 @@ begin
       FOldValue := FFreeverb.Width;
       FFreeverb.Width := FValue;
     end;
+    rpPreDelay:
+    begin
+      FOldValue := FFreeverb.PreDelay;
+      FFreeverb.PreDelay := FValue;
+    end;
   end;
 
   FFreeverb.EndUpdate;
@@ -138,6 +146,10 @@ begin
     rpWidth:
     begin
       FFreeverb.Width := FOldValue;
+    end;
+    rpPreDelay:
+    begin
+      FFreeverb.PreDelay := FOldValue;
     end;
   end;
 
@@ -188,6 +200,11 @@ begin
   Result := FReverb.getwidth;
 end;
 
+function TPluginFreeverb.GetPreDelay: Single;
+begin
+  Result := FReverb.getpredelay;
+end;
+
 procedure TPluginFreeverb.SetDamp(AValue: Single);
 begin
   FReverb.setdamp(AValue);
@@ -216,6 +233,11 @@ end;
 procedure TPluginFreeverb.SetWidth(AValue: Single);
 begin
   FReverb.setwidth(AValue);
+end;
+
+procedure TPluginFreeverb.SetPreDelay(AValue: Single);
+begin
+  FReverb.setpredelay(AValue);
 end;
 
 constructor TPluginFreeverb.Create(AObjectOwnerID: string; AMapped: Boolean = True);

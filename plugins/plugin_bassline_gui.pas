@@ -9,17 +9,17 @@ uses
   globalconst, tb303;
 
 type
-
   { TPluginBasslineGUI }
 
   TPluginBasslineGUI = class(TGenericPluginGUI)
   private
-    FPitch: TParameterControl;
     FCutoff: TParameterControl;
     FReso: TParameterControl;
     FEnvMod: TParameterControl;
     FDecay: TParameterControl;
     FAccent: TParameterControl;
+    FWave: TParameterControl;
+    FOverDrive: TParameterControl;
   protected
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
@@ -27,7 +27,6 @@ type
       AMin, AMax, AValue: Single; ATbParameter: TTbParameter): TParameterControl;
   public
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); override;
   end;
 
@@ -97,29 +96,26 @@ constructor TPluginBasslineGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FPitch := SetupParameterControls(10, 60, 'Pitch', 0, 1, 0.5, tbPitch);
-  FCutoff := SetupParameterControls(10, 80, 'Cutoff', 0, 1, 1, tbCutoff);
-  FReso := SetupParameterControls(10, 100, 'Reso', 0, 1, 0, tbReso);
-  FEnvMod := SetupParameterControls(10, 120, 'EnvMod', 0, 1, 0.5, tbEnvMod);
-  FDecay := SetupParameterControls(10, 140, 'Decay', 0, 1, 0.5, tbDecay);
-  FAccent := SetupParameterControls(10, 160, 'Accent', 0, 1, 0, tbAccent);
-end;
-
-destructor TPluginBasslineGUI.Destroy;
-begin
-  inherited Destroy;
+  FCutoff := SetupParameterControls(10, 30, 'Cutoff', 0, 1, 1, tbCutoff);
+  FReso := SetupParameterControls(10, 50, 'Reso', 0, 1, 0, tbReso);
+  FEnvMod := SetupParameterControls(10, 70, 'EnvMod', 0, 1, 0.5, tbEnvMod);
+  FDecay := SetupParameterControls(10, 90, 'Decay', 0, 1, 0.5, tbDecay);
+  FAccent := SetupParameterControls(10, 110, 'Accent', 0, 1, 0, tbAccent);
+  FWave := SetupParameterControls(10, 130, 'Wave', 0, 1, 0, tbWave);
+  FOverDrive := SetupParameterControls(10, 150, 'OverDrive', 3, 20, 3, tbOverdrive);
 end;
 
 procedure TPluginBasslineGUI.Update(Subject: THybridPersistentModel);
 begin
   if Subject is TPluginBassline then
   begin
-    FPitch.Value := TPluginBassline(Subject).Pitch;
     FCutoff.Value := TPluginBassline(Subject).Cutoff;
     FReso.Value := TPluginBassline(Subject).Reso;
     FEnvMod.Value := TPluginBassline(Subject).EnvMod;
     FDecay.Value := TPluginBassline(Subject).Decay;
     FAccent.Value := TPluginBassline(Subject).Accent;
+    FWave.Value := TPluginBassline(Subject).Wave;
+    FOverDrive.Value := TPluginBassline(Subject).OverDrive;
   end;
 end;
 

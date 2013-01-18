@@ -20,6 +20,7 @@ type
     FMode: TParameterControl;
     FDry: TParameterControl;
     FWet: TParameterControl;
+    FPreDelay: TParameterControl;
   protected
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
@@ -27,11 +28,13 @@ type
       AMin, AMax, AValue: Single; AReverbParameter: TReverbParameter): TParameterControl;
   public
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); override;
   end;
 
 implementation
+
+uses
+  global;
 
 procedure TPluginFreeverbGUI.DoParameterChange(Sender: TObject);
 var
@@ -97,17 +100,13 @@ constructor TPluginFreeverbGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FRoomSize := SetupParameterControls(10, 60, 'Roomsize', 0, 1, initialroom, rpRoomSize);
-  FDamp := SetupParameterControls(10, 80, 'Damp', 0, 1, initialdamp, rpDamp);
-  FWidth := SetupParameterControls(10, 100, 'Width', 0, 1, initialwidth, rpWidth);
-  FMode := SetupParameterControls(10, 120, 'Mode', 0, 1, initialmode, rpMode);
-  FDry := SetupParameterControls(10, 140, 'Dry', 0, 1, initialdry, rpDry);
-  FWet := SetupParameterControls(10, 160, 'Wet', 0, 1, initialwet, rpWet);
-end;
-
-destructor TPluginFreeverbGUI.Destroy;
-begin
-  inherited Destroy;
+  FRoomSize := SetupParameterControls(10, 60, 'roomsize', 0, 1, initialroom, rpRoomSize);
+  FDamp := SetupParameterControls(10, 80, 'damp', 0, 1, initialdamp, rpDamp);
+  FWidth := SetupParameterControls(10, 100, 'width', 0, 1, initialwidth, rpWidth);
+  FMode := SetupParameterControls(10, 120, 'mode', 0, 1, initialmode, rpMode);
+  FDry := SetupParameterControls(10, 140, 'dry', 0, 1, initialdry, rpDry);
+  FWet := SetupParameterControls(10, 160, 'wet', 0, 1, initialwet, rpWet);
+  FPreDelay := SetupParameterControls(10, 180, 'pre-delay', 0, GSettings.SampleRate / 2, 0, rpPreDelay);
 end;
 
 procedure TPluginFreeverbGUI.Update(Subject: THybridPersistentModel);
@@ -120,6 +119,7 @@ begin
     FMode.Value := TPluginFreeverb(Subject).Mode;
     FDry.Value := TPluginFreeverb(Subject).Dry;
     FWet.Value := TPluginFreeverb(Subject).Wet;
+    FPreDelay.Value := TPluginFreeverb(Subject).PreDelay;
   end;
 end;
 

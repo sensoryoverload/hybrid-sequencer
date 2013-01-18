@@ -34,6 +34,29 @@ uses
   
 type
 
+  { TAudioRingBuffer }
+
+  TAudioRingBuffer = class
+  private
+    FDelayMs: Integer;
+    FDelaySmp: Integer;
+    FWritePtr: Integer;
+    FReadPtr: Integer;
+    FBuffer: PSingle;
+    FBufferSize: Integer;
+    FChannels: Integer;
+    FSampleRate: Integer;
+    procedure SetDelayMs(AValue: Integer);
+    procedure SetDelaySmp(AValue: Integer);
+  public
+    constructor Create(ASampleRate: Integer; AChannels: Integer);
+    destructor Destroy; override;
+    function Process(input: Single): Single;
+    property DelayMs: Integer read FDelayMs write SetDelayMs;
+    property DelaySmp: Integer read FDelaySmp write SetDelaySmp;
+  end;
+
+
   { TFIFOAudioBuffer }
 
   TFIFOAudioBuffer = class
@@ -115,6 +138,58 @@ const
   c6      : Single =  6;
   c12     : Single = 12;
   c24     : Single = 24;
+
+{ TAudioRingBuffer }
+
+procedure TAudioRingBuffer.SetDelayMs(AValue: Integer);
+begin
+  if FDelayMs = AValue then Exit;
+  FDelayMs := AValue;
+end;
+
+procedure TAudioRingBuffer.SetDelaySmp(AValue: Integer);
+begin
+  if FDelaySmp = AValue then Exit;
+  FDelaySmp := AValue;
+
+  FWritePtr := FDelaySmp * FChannels;
+  FReadPtr := 0;
+end;
+
+constructor TAudioRingBuffer.Create(ASampleRate: Integer; AChannels: Integer);
+begin
+  FChannels := AChannels;
+  FSampleRate := FSampleRate;
+  FBufferSize := ASampleRate * AChannels;
+  FBuffer := Getmem(FBufferSize * SizeOf(Single));
+
+  // Zero delay by default
+  FWritePtr := 0;
+  FReadPtr := 0;
+end;
+
+destructor TAudioRingBuffer.Destroy;
+begin
+  FreeMem(FBuffer);
+
+  inherited Destroy;
+end;
+
+function TAudioRingBuffer.Process(input: Single): Single;
+begin
+  FBuffer[FWritePtr] := input;
+  Result := FBuffer[FReadPtr];
+  Inc(FWritePtr, FChannels);
+  if FWritePtr > FBufferSize then
+  begin
+    Dec(FWritePtr, FBufferSize);
+  end;
+  Inc(FReadPtr, FChannels);
+  if FReadPtr > FBufferSize then
+  begin
+    Dec(FReadPtr, FBufferSize);
+  end;
+end;
 
 { TFIFOAudioBuffer }
 

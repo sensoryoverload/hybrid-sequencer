@@ -5,15 +5,17 @@ unit plugin_decimate;
 interface
 
 uses
-  Classes, SysUtils, plugin, global_command, freereverb;
+  Classes, SysUtils, plugin, global_command;
 
 type
-  { TDecimateFX }
+  TDecimateParameter = (dpSampleRate, dpBits);
+
+  { TPluginDecimate }
 
   // Bit/Samplerate -reducer
   // bits: 1..32
   // rate: 0..1 (1 is original samplerate)
-  TDecimateFX = class(TPluginNode)
+  TPluginDecimate = class(TPluginNode)
   private
     FBits: longint;
     y,
@@ -22,7 +24,7 @@ type
     procedure SetBits(AValue: Integer);
     procedure SetSampleRate(AValue: Single);
   public
-    constructor Create(AObjectOwnerID: string);
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     function Decimate(i: single): single;
     procedure Init(ABits: integer; ASampleRate: single);
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
@@ -31,29 +33,103 @@ type
     property SampleRate: Single read FSampleRate write SetSampleRate;
   end;
 
+  { TDecimateCommand }
+
+  TDecimateCommand = class(TCommand)
+  private
+    FDecimate: TPluginDecimate;
+  public
+    procedure Initialize; override;
+  end;
+
+  { TDecimateParameterCommand }
+
+  TDecimateParameterCommand = class(TDecimateCommand)
+  private
+    FOldValue: Variant;
+    FValue: Variant;
+    FParameter: TDecimateParameter;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property Value: Variant read FValue write FValue;
+    property Parameter: TDecimateParameter read FParameter write FParameter;
+  end;
+
 implementation
 
-{ TDecimateFX }
+uses
+  global;
 
-function TDecimateFX.Decimate(i: single): single;
+{ TDecimateParameterCommand }
+
+procedure TDecimateParameterCommand.DoExecute;
 begin
-  FRateSkip:= FRateSkip + FSampleRate;
-  if FRateSkip > 1 then
-  begin
-    FRateSkip:= FRateSkip - 1;
-    y:= round(i * FBits) / FBits;
+  FDecimate.BeginUpdate;
+
+  case FParameter of
+    dpBits:
+    begin
+      FOldValue := FDecimate.Bits;
+      FDecimate.Bits := FValue;
+    end;
+    dpSampleRate:
+    begin
+      FOldValue := FDecimate.SampleRate;
+      FDecimate.SampleRate := FValue;
+    end;
   end;
-  result:= y;
+
+  FDecimate.EndUpdate;
 end;
 
-procedure TDecimateFX.Init(ABits: integer; ASampleRate: single);
+procedure TDecimateParameterCommand.DoRollback;
 begin
-  FBits:= 1 shl (ABits - 1);
-  FRateSkip:= 1;
+  FDecimate.BeginUpdate;
+
+  case FParameter of
+    dpBits:
+    begin
+      FDecimate.Bits := FOldValue;
+    end;
+    dpSampleRate:
+    begin
+      FDecimate.SampleRate := FOldValue;
+    end;
+  end;
+
+  FDecimate.EndUpdate;
+end;
+
+{ TDecimateCommand }
+
+procedure TDecimateCommand.Initialize;
+begin
+  FDecimate := TPluginDecimate(GObjectMapper.GetModelObject(ObjectID));
+end;
+
+{ TPluginDecimate }
+
+function TPluginDecimate.Decimate(i: single): single;
+begin
+  FRateSkip := FRateSkip + FSampleRate;
+  if FRateSkip > 1 then
+  begin
+    FRateSkip := FRateSkip - 1;
+    y := round(i * FBits) / FBits;
+  end;
+  result := y;
+end;
+
+procedure TPluginDecimate.Init(ABits: integer; ASampleRate: single);
+begin
+  FBits := 1 shl (ABits - 1);
+  FRateSkip := 1;
   FSampleRate:= ASampleRate;
 end;
 
-procedure TDecimateFX.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginDecimate.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
@@ -63,7 +139,7 @@ begin
   end;
 end;
 
-procedure TDecimateFX.SetBits(AValue: Integer);
+procedure TPluginDecimate.SetBits(AValue: Integer);
 begin
   if FBits = AValue then Exit;
   FBits := AValue;
@@ -71,7 +147,7 @@ begin
   Init(FBits, FSampleRate);
 end;
 
-procedure TDecimateFX.SetSampleRate(AValue: Single);
+procedure TPluginDecimate.SetSampleRate(AValue: Single);
 begin
   if FSampleRate = AValue then Exit;
   FSampleRate := AValue;
@@ -79,9 +155,9 @@ begin
   Init(FBits, FSampleRate);
 end;
 
-constructor TDecimateFX.Create(AObjectOwnerID: string);
+constructor TPluginDecimate.Create(AObjectOwnerID: string; AMapped: Boolean = True);
 begin
-  inherited Create(AObjectOwnerID);
+  inherited Create(AObjectOwnerID, AMapped);
 
   // Default to this
   Init(16, 44100);

@@ -128,6 +128,9 @@ procedure DBLog(AFormat: string; AMessage: string);
 procedure DBLog(AFormat: string; AMessage: single);
 procedure DBLog(AFormat: string; AMessage: integer);
 
+procedure StartTimer;
+procedure StopTimer(ALogMessage: string);
+
 function hermite4(frac_pos, xm1, x0, x1, x2: single): single; inline;
 
 function DumpExceptionCallStack(E: Exception): string;
@@ -144,6 +147,12 @@ var
   GNoteToFreq: Array[0..127] of single;
 
 implementation
+
+uses
+  LCLIntf;
+
+var
+  FTimer: Integer;
 
 
 { THybridLogger }
@@ -450,6 +459,15 @@ begin
   dec(FStackDepth);
 end;
 
+procedure StartTimer;
+begin
+  FTimer := GetTickCount;
+end;
+
+procedure StopTimer(ALogMessage: string);
+begin
+  writeln(Format(ALogMessage + ': %d ms', [GetTickCount - FTimer]));
+end;
 
 // laurent de soras
 // Hermite Interpolation

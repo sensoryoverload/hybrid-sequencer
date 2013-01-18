@@ -60,20 +60,6 @@ type
   { TSampleView }
 
   TSampleView = class(TFrame, IObserver)
-    cbCutoffModSource: TComboBox;
-    cbLowNote: TComboBox;
-    cbHighNote: TComboBox;
-    cbBaseNote: TComboBox;
-    cbOsc1WaveSelector: TComboBox;
-    cbOsc1ModSource: TComboBox;
-    cbLFO1WaveSelector: TComboBox;
-    cbOsc2WaveSelector: TComboBox;
-    cbOsc2ModSource: TComboBox;
-    cbLFO2WaveSelector: TComboBox;
-    cbOsc3WaveSelector: TComboBox;
-    cbOsc3ModSource: TComboBox;
-    cbLFO3WaveSelector: TComboBox;
-    cbFilterType: TComboBox;
     dcCutoffModAmount: TDialControl;
     dcEnvModAmount: TDialControl;
     dcOsc1PW: TDialControl;
@@ -107,7 +93,6 @@ type
     dcSaturateDrivePreFilter: TDialControl;
     dcSaturateDrivePostFilter: TDialControl;
     gbLFO: TGroupBox;
-    gbWaveform: TGroupBox;
     lblBaseNote: TLabel;
     lblLowNote: TLabel;
     lblHighNote: TLabel;
@@ -130,12 +115,25 @@ type
     lblOSC2ModAmount: TLabel;
     lblOSC3: TLabel;
     lblOSC3ModAmount: TLabel;
+    lsFilterSelect: TListSelect;
+    lsCutoffModSource: TListSelect;
+    lsLFO1WaveSelector: TListSelect;
+    lsLFO2WaveSelector: TListSelect;
+    lsLFO3WaveSelector: TListSelect;
+    lsLowNote: TListSelect;
+    lsBaseNote: TListSelect;
+    lsHighNote: TListSelect;
+    lsOsc1WaveSelector: TListSelect;
+    lsOsc1ModSource: TListSelect;
+    lsOsc2ModSource: TListSelect;
+    lsOsc3ModSource: TListSelect;
+    lsOsc2WaveSelector: TListSelect;
+    lsOsc3WaveSelector: TListSelect;
     PairSplitter1: TPairSplitter;
     PairSplitterSide1: TPairSplitterSide;
     PairSplitterSide2: TPairSplitterSide;
     pnlControls: TPanel;
     tcFilterSwith: TToggleControl;
-    procedure DoSelectionChange(Sender: TObject);
     procedure DoParameterChange(Sender: TObject);
     procedure DoToggleChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
@@ -147,9 +145,9 @@ type
     FModel: TSample;
     FObjectOwner: TObject;
     FEnabled: Boolean;
-    FWaveEdit: TWaveEdit;
 
     //FKeyboard: TSampleKeyboardControl;
+    procedure DoListSelectionChange(Sender: TObject);
     procedure SetEnableControls(const AValue: Boolean);
   public
     { public declarations }
@@ -261,15 +259,15 @@ begin
   end;
 end;
 
-procedure TSampleView.DoSelectionChange(Sender: TObject);
+procedure TSampleView.DoListSelectionChange(Sender: TObject);
 var
   lGenericCommand: TSampleParameterCommand;
 begin
   lGenericCommand := TSampleParameterCommand.Create(ObjectOwnerID);
   try
-    lGenericCommand.Parameter := TSampleParameter(TCustomComboBox(Sender).Tag);
+    lGenericCommand.Parameter := TSampleParameter(TListSelect(Sender).Tag);
     lGenericCommand.ObjectID := Self.ObjectID;
-    lGenericCommand.Value := TCustomComboBox(Sender).ItemIndex;
+    lGenericCommand.Value := TListSelect(Sender).ItemIndex;
     lGenericCommand.Persist := True;
 
     GCommandQueue.PushCommand(lGenericCommand);
@@ -314,6 +312,10 @@ begin
       if Components[lIndex] is TDialControl then
       begin
         TDialControl(Components[lIndex]).Enabled := FEnabled;
+      end
+      else if Components[lIndex] is TListSelect then
+      begin
+        TListSelect(Components[lIndex]).Enabled := FEnabled;
       end;
     end;
   end;
@@ -321,53 +323,53 @@ end;
 
 constructor TSampleView.Create(AOwner: TComponent);
 
-  procedure FillWaveSelectionComboBox(AComboBox: TComboBox; ASampleParamter: TSampleParameter);
+  procedure FillWaveSelectionComboBox(AListSelect: TListSelect; ASampleParamter: TSampleParameter);
   var
     lIndex: Integer;
   begin
     for lIndex := Low(WFStrings) to High(WFStrings) do
     begin
-      AComboBox.Items.Add(WFStrings[lIndex]);
+      AListSelect.Items.Add(WFStrings[lIndex]);
     end;
-    AComboBox.Tag := Integer(ASampleParamter);
-    AComboBox.OnChange := @DoSelectionChange;
+    AListSelect.Tag := Integer(ASampleParamter);
+    AListSelect.OnChange := @DoListSelectionChange;
   end;
 
-  procedure FillModSourceComboBox(AComboBox: TComboBox; ASampleParamter: TSampleParameter);
+  procedure FillModSourceComboBox(AListSelect: TListSelect; ASampleParamter: TSampleParameter);
   var
     lIndex: Integer;
   begin
     for lIndex := Low(ModSourceDescr) to High(ModSourceDescr) do
     begin
-      AComboBox.Items.Add(ModSourceDescr[lIndex]);
+      AListSelect.Items.Add(ModSourceDescr[lIndex]);
     end;
-    AComboBox.Tag := Integer(ASampleParamter);
-    AComboBox.OnChange := @DoSelectionChange;
+    AListSelect.Tag := Integer(ASampleParamter);
+    AListSelect.OnChange := @DoListSelectionChange;
   end;
 
-  procedure FillNoteComboBox(AComboBox: TComboBox; ASampleParamter: TSampleParameter);
+  procedure FillNoteComboBox(AListSelect: TListSelect; ASampleParamter: TSampleParameter);
   var
     lIndex: Integer;
   begin
     for lIndex := 0 to 127 do
     begin
-      AComboBox.Items.Add(IntToStr(lIndex));
+      AListSelect.Items.Add(IntToStr(lIndex));
     end;
-    AComboBox.Tag := Integer(ASampleParamter);
-    AComboBox.OnChange := @DoSelectionChange;
+    AListSelect.Tag := Integer(ASampleParamter);
+    AListSelect.OnChange := @DoListSelectionChange;
   end;
 
-  procedure FillFilterTypeComboBox(AComboBox: TComboBox; ASampleParamter: TSampleParameter);
+  procedure FillFilterTypeListSelect(AListSelect: TListSelect; ASampleParamter: TSampleParameter);
   begin
-    AComboBox.Items.Add('Lowpass');
-    AComboBox.Items.Add('Highpass');
-    AComboBox.Items.Add('Bandpass');
-    AComboBox.Items.Add('Notch');
-    AComboBox.Items.Add('Moog');
-    AComboBox.Items.Add('303ish');
-    AComboBox.Items.Add('Trans');
-    AComboBox.Tag := Integer(ASampleParamter);
-    AComboBox.OnChange := @DoSelectionChange;
+    AListSelect.Items.Add('Lowpass');
+    AListSelect.Items.Add('Highpass');
+    AListSelect.Items.Add('Bandpass');
+    AListSelect.Items.Add('Notch');
+    AListSelect.Items.Add('Moog');
+    AListSelect.Items.Add('303ish');
+    AListSelect.Items.Add('Trans');
+    AListSelect.Tag := Integer(ASampleParamter);
+    AListSelect.OnChange := @DoListSelectionChange;
   end;
 
   procedure SetupDialControl(ADialControl: TDialControl; ASampleParamter: TSampleParameter;
@@ -392,10 +394,6 @@ constructor TSampleView.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FWaveEdit := TWaveEdit.Create(Self);
-  FWaveEdit.Align := alClient;
-  FWaveEdit.Parent := gbWaveform;
-
 {  FKeyboard := TSampleKeyboardControl.Create(Self);
   FKeyboard.OnKeyChange := @DoKeyChange;
   FKeyboard.Height := 50;}
@@ -409,33 +407,33 @@ begin
 
   // Filter
   SetupDialControl(dcLpCutoff, spFilter_Cutoff, 0, 1, 1);
-  FillModSourceComboBox(cbCutoffModSource, spFilter_Cutoff_ModSource);
+  FillModSourceComboBox(lsCutoffModSource, spFilter_Cutoff_ModSource);
   SetupDialControl(dcCutoffModAmount, spFilter_Cutoff_ModAmount, 0, 0.3, 0);
   SetupToggleControl(tcFilterSwith, spFilter_Active, True);
 
   SetupDialControl(dcLpResonance, spFilter_Resonance, 0, 1, 0);
   SetupDialControl(dcEnvModAmount, spFilter_Envelope_Amount, 0, 0.3, 0);
 
-  FillFilterTypeComboBox(cbFilterType, spFilter_Type);
+  FillFilterTypeListSelect(lsFilterSelect, spFilter_Type);
 
   // Oscillators
   SetupDialControl(dcOsc1Pitch, spOSC1_Pitch, -24, 24, 0);
-  FillWaveSelectionComboBox(cbOsc1WaveSelector, spOSC1_Waveform);
-  FillModSourceComboBox(cbOsc1ModSource, spOSC1_ModSource);
+  FillWaveSelectionComboBox(lsOsc1WaveSelector, spOSC1_Waveform);
+  FillModSourceComboBox(lsOsc1ModSource, spOSC1_ModSource);
   SetupDialControl(dcOsc1ModAmount, spOSC1_ModAmount, 0, 1, 0);
   SetupDialControl(dcOSC1Level, spOSC1_Level, 0, 1, 0.3);
   SetupDialControl(dcOsc1PW, spOSC1_PulseWidth, 0.01, 1, 1);
 
   SetupDialControl(dcOsc2Pitch, spOSC2_Pitch, -24, 24, 0);
-  FillWaveSelectionComboBox(cbOsc2WaveSelector, spOSC2_Waveform);
-  FillModSourceComboBox(cbOsc2ModSource, spOSC2_ModSource);
+  FillWaveSelectionComboBox(lsOsc2WaveSelector, spOSC2_Waveform);
+  FillModSourceComboBox(lsOsc2ModSource, spOSC2_ModSource);
   SetupDialControl(dcOsc2ModAmount, spOSC2_ModAmount, 0, 1, 0);
   SetupDialControl(dcOSC2Level, spOSC2_Level, 0, 1, 0);
   SetupDialControl(dcOsc2PW, spOSC2_PulseWidth, 0.01, 1, 1);
 
   SetupDialControl(dcOsc3Pitch, spOSC3_Pitch, -24, 24, 0);
-  FillWaveSelectionComboBox(cbOsc3WaveSelector, spOSC3_Waveform);
-  FillModSourceComboBox(cbOsc3ModSource, spOSC3_ModSource);
+  FillWaveSelectionComboBox(lsOsc3WaveSelector, spOSC3_Waveform);
+  FillModSourceComboBox(lsOsc3ModSource, spOSC3_ModSource);
   SetupDialControl(dcOsc3ModAmount, spOSC3_ModAmount, 0, 1, 0);
   SetupDialControl(dcOSC3Level, spOSC3_Level, 0, 1, 0);
   SetupDialControl(dcOsc3PW, spOSC3_PulseWidth, 0.01, 1, 1);
@@ -457,17 +455,17 @@ begin
   SetupDialControl(dcPitchEnvelopeRelease, spPitchEnv_Release, 0.01, 1, 0.01);
 
   SetupDialControl(dcLFO1Rate, spLFO1_Rate, 0, 1, 0.3);
-  FillWaveSelectionComboBox(cbLFO1WaveSelector, spLFO1_Waveform);
+  FillWaveSelectionComboBox(lsLFO1WaveSelector, spLFO1_Waveform);
   SetupDialControl(dcLFO2Rate, spLFO2_Rate, 0, 1, 0.3);
-  FillWaveSelectionComboBox(cbLFO2WaveSelector, spLFO2_Waveform);
+  FillWaveSelectionComboBox(lsLFO2WaveSelector, spLFO2_Waveform);
   SetupDialControl(dcLFO3Rate, spLFO3_Rate, 0, 1, 0.3);
-  FillWaveSelectionComboBox(cbLFO3WaveSelector, spLFO3_Waveform);
+  FillWaveSelectionComboBox(lsLFO3WaveSelector, spLFO3_Waveform);
 
   SetupDialControl(dcGlobalLevel, spGlobal_Level, 0.01, 2, 1);
 
-  FillNoteComboBox(cbLowNote, spLow_Note);
-  FillNoteComboBox(cbHighNote, spHigh_Note);
-  FillNoteComboBox(cbBaseNote, spBase_Note);
+  FillNoteComboBox(lsLowNote, spLow_Note);
+  FillNoteComboBox(lsHighNote, spHigh_Note);
+  FillNoteComboBox(lsBaseNote, spBase_Note);
 
   SetupDialControl(dcSaturateDrivePreFilter, spSaturateDrivePreFilter, 1, 10, 1);
   SetupDialControl(dcSaturateDrivePostFilter, spPostFilterFeedback, 1, 5, 1);
@@ -482,64 +480,34 @@ begin
 end;
 
 procedure TSampleView.Update(Subject: THybridPersistentModel);
-var
-  lHasSample: Boolean;
 begin
   DBLog('start TSampleView.Update');
 
-  lHasSample := False;
-  if Assigned(TSample(Subject).Wave) then
-  begin
-    if Assigned(TSample(Subject).Wave.ChannelList) then
-    begin
-      if TSample(Subject).Wave.ChannelCount > 0 then
-      begin
-        if Assigned(TChannel(TSample(Subject).Wave.ChannelList[0])) then
-        begin
-          lHasSample := True;
-        end;
-      end;
-    end;
-  end;
-
-  if lHasSample then
-  begin
-    FWaveEdit.Data := TChannel(TSample(Subject).Wave.ChannelList[0]).Buffer;
-    FWaveEdit.DataSize := TChannel(TSample(Subject).Wave.ChannelList[0]).BufferSize;
-    FWaveEdit.ChannelCount := TSample(Subject).Wave.ChannelCount;
-  end
-  else
-  begin
-    FWaveEdit.Data := GWaveformTable.Table[TSample(Subject).Osc1.WaveForm];
-    FWaveEdit.DataSize := LUT_SIZE * SizeOf(Single);
-  end;
-  FWaveEdit.Invalidate;
-
   dcLpCutoff.Value := TSample(Subject).Filter.Frequency;
   dcLpResonance.Value := TSample(Subject).Filter.Resonance;
-  cbCutoffModSource.ItemIndex := Integer(TSample(Subject).Filter.FreqModSource);
+  lsCutoffModSource.ItemIndex := Integer(TSample(Subject).Filter.FreqModSource);
   dcCutoffModAmount.Value := TSample(Subject).Filter.FreqModAmount;
   dcEnvModAmount.Value := TSample(Subject).Filter.EnvelopeAmount;
   tcFilterSwith.SwitchedOn := TSample(Subject).Filter.Active;
-  cbFilterType.ItemIndex := Integer(TSample(Subject).Filter.FilterType);
+  lsFilterSelect.ItemIndex := Integer(TSample(Subject).Filter.FilterType);
 
   dcOsc1Pitch.Value := TSample(Subject).Osc1.Pitch;
-  cbOsc1WaveSelector.ItemIndex := Integer(TSample(Subject).Osc1.WaveForm);
-  cbOsc1ModSource.ItemIndex := Integer(TSample(Subject).Osc1.ModSource);
+  lsOsc1WaveSelector.ItemIndex := Integer(TSample(Subject).Osc1.WaveForm);
+  lsOsc1ModSource.ItemIndex := Integer(TSample(Subject).Osc1.ModSource);
   dcOsc1ModAmount.Value := TSample(Subject).Osc1.ModAmount;
   dcOSC1Level.Value := TSample(Subject).Osc1.Level;
   dcOsc1PW.Value := TSample(Subject).Osc1.PulseWidth;
 
   dcOsc2Pitch.Value := TSample(Subject).Osc2.Pitch;
-  cbOsc2WaveSelector.ItemIndex := Integer(TSample(Subject).Osc2.WaveForm);
-  cbOsc2ModSource.ItemIndex := Integer(TSample(Subject).Osc2.ModSource);
+  lsOsc2WaveSelector.ItemIndex := Integer(TSample(Subject).Osc2.WaveForm);
+  lsOsc2ModSource.ItemIndex := Integer(TSample(Subject).Osc2.ModSource);
   dcOsc2ModAmount.Value := TSample(Subject).Osc2.ModAmount;
   dcOSC2Level.Value := TSample(Subject).Osc2.Level;
   dcOsc2PW.Value := TSample(Subject).Osc2.PulseWidth;
 
   dcOsc3Pitch.Value := TSample(Subject).Osc3.Pitch;
-  cbOsc3WaveSelector.ItemIndex := Integer(TSample(Subject).Osc3.WaveForm);
-  cbOsc3ModSource.ItemIndex := Integer(TSample(Subject).Osc3.ModSource);
+  lsOsc3WaveSelector.ItemIndex := Integer(TSample(Subject).Osc3.WaveForm);
+  lsOsc3ModSource.ItemIndex := Integer(TSample(Subject).Osc3.ModSource);
   dcOsc3ModAmount.Value := TSample(Subject).Osc3.ModAmount;
   dcOSC3Level.Value := TSample(Subject).Osc3.Level;
   dcOsc3PW.Value := TSample(Subject).Osc3.PulseWidth;
@@ -560,16 +528,16 @@ begin
   dcPitchEnvelopeRelease.Value := TSample(Subject).PitchEnvelope.Release;
 
   dcLFO1Rate.Value := TSample(Subject).LFO1.Pitch;
-  cbLFO1WaveSelector.ItemIndex := Integer(TSample(Subject).LFO1.WaveForm);
+  lsLFO1WaveSelector.ItemIndex := Integer(TSample(Subject).LFO1.WaveForm);
   dcLFO2Rate.Value := TSample(Subject).LFO2.Pitch;
-  cbLFO2WaveSelector.ItemIndex := Integer(TSample(Subject).LFO2.WaveForm);
+  lsLFO2WaveSelector.ItemIndex := Integer(TSample(Subject).LFO2.WaveForm);
   dcLFO3Rate.Value := TSample(Subject).LFO3.Pitch;
-  cbLFO3WaveSelector.ItemIndex := Integer(TSample(Subject).LFO3.WaveForm);
+  lsLFO3WaveSelector.ItemIndex := Integer(TSample(Subject).LFO3.WaveForm);
 
   dcGlobalLevel.Value := TSample(Subject).GlobalLevel;
-  cbLowNote.ItemIndex := TSample(Subject).LowNote;
-  cbHighNote.ItemIndex := TSample(Subject).HighNote;
-  cbBaseNote.ItemIndex := TSample(Subject).Key;
+  lsLowNote.ItemIndex := TSample(Subject).LowNote;
+  lsHighNote.ItemIndex := TSample(Subject).HighNote;
+  lsBaseNote.ItemIndex := TSample(Subject).Key;
 
   dcSaturateDrivePreFilter.Value := TSample(Subject).SaturateDrivePreFilter;
   dcSaturateDrivePostFilter.Value := TSample(Subject).SaturateDrivePostFilter;
