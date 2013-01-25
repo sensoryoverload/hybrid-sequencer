@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, StdCtrls, Spin,
-  ExtCtrls, ComCtrls, globalconst, dialcontrol, wavegui, pattern, wave;
+  ExtCtrls, ComCtrls, globalconst, dialcontrol, wavegui, pattern, wave,
+  pluginhost, pluginhostgui;
 
 type
 
@@ -21,6 +22,7 @@ type
     Panel1: TPanel;
     pcBPM: TParameterControl;
     pcPitch: TParameterControl;
+    sbBottom: TScrollBox;
     tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
     TrackBar1: TTrackBar;
@@ -177,8 +179,6 @@ var
 begin
   lTogglePitchCommand := TTogglePitchCommand.Create(FObjectID);
   try
-//    lTogglePitchCommand.State := cbPitched.Checked;
-
     GCommandQueue.PushCommand(lTogglePitchCommand);
   except
     lTogglePitchCommand.Free;
@@ -237,7 +237,6 @@ begin
   except
     lChangeQuantizeCommand.Free;
   end;
-
 end;
 
 procedure TWavePatternControlGUI.DoChancheRealBPMCommand(APersist: Boolean);
@@ -348,7 +347,7 @@ begin
 
   FWaveGUI := TWaveGUI.Create(nil);
   FWaveGUI.Align := alClient;
-  FWaveGUI.Parent := Self;
+  FWaveGUI.Parent := sbBottom;
 end;
 
 destructor TWavePatternControlGUI.Destroy;

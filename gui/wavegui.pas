@@ -315,6 +315,9 @@ constructor TWaveGUI.Create(Aowner: Tcomponent);
 begin
   inherited Create(Aowner);
 
+  Width := 1000;
+  DoubleBuffered := True;
+
   // Loop markers
   FLoopStart := TLoopMarkerGUI.Create(ObjectID, ltStart);
   FLoopEnd := TLoopMarkerGUI.Create(ObjectID, ltEnd);
@@ -343,9 +346,6 @@ begin
 
   FSliceListGUI := TObjectList.Create(True);
   FCurrentSliceIndex:= 0;
-
-
-  {ChangeControlStyle(Self, [csDisplayDragImage], [], True); }
 end;
 
 destructor TWaveGUI.Destroy;
@@ -434,7 +434,7 @@ end;
 procedure TWaveGUI.EraseBackground(DC: HDC);
 begin
   // Uncomment this to enable default background erasing
-  inherited EraseBackground(DC);
+//  inherited EraseBackground(DC);
 end;
 
 procedure TWaveGUI.Paint;
@@ -463,302 +463,299 @@ begin
 
   FBitmap := TBitmap.Create;
   try
-    if FCacheIsDirty then
-    begin
-      FBitmap.Canvas.Clear;
+    FBitmap.Canvas.Clear;
 
-      // Initializes the Bitmap Size
-      FBitmap.Height := Height;
-      FBitmap.Width := Width;
+    // Initializes the Bitmap Size
+    FBitmap.Height := Height;
+    FBitmap.Width := Width;
 
-      // Draw loopmarker bar
-      FBitmap.Canvas.Pen.Width := 1;
-      FBitmap.Canvas.Pen.Color := GRAYSCALE_80;
-      FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
-      FBitmap.Canvas.Rectangle(
-        0,
-        0,
-        Width,
-        FTransportBarHeight);
+    // Draw loopmarker bar
+    FBitmap.Canvas.Pen.Width := 1;
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_80;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
+    FBitmap.Canvas.Rectangle(
+      0,
+      0,
+      Width,
+      FTransportBarHeight);
 
-      // Draw samplemarker bar
-      FBitmap.Canvas.Pen.Color := GRAYSCALE_60;
-      FBitmap.Canvas.Line(
-        0,
-        9,
-        Width,
-        9);
+    // Draw samplemarker bar
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Line(
+      0,
+      9,
+      Width,
+      9);
 
-      // Draw slicemarker bar
-      FBitmap.Canvas.Pen.Color := GRAYSCALE_60;
-      FBitmap.Canvas.Line(
-        0,
-        19,
-        Width,
-        19);
+    // Draw slicemarker bar
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Line(
+      0,
+      19,
+      Width,
+      19);
 
-      // Draw sample start to end bar
-      SliceLeft := Round(SampleStart.Location * FZoomFactorToScreen - FOffset);
-      SliceRight := Round(SampleEnd.Location * FZoomFactorToScreen - FOffset);
-      FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
-      FBitmap.Canvas.FillRect(
-        SliceLeft,
-        10,
-        SliceRight,
-        19);
+    // Draw sample start to end bar
+    SliceLeft := Round(SampleStart.Location * FZoomFactorToScreen - FOffset);
+    SliceRight := Round(SampleEnd.Location * FZoomFactorToScreen - FOffset);
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
+    FBitmap.Canvas.FillRect(
+      SliceLeft,
+      10,
+      SliceRight,
+      19);
 
-      // Start of sample
-      FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
-      FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
-      FBitmap.Canvas.Pen.Width:= 1;
-      FBitmap.Canvas.Rectangle(
-        SliceLeft - 5,
-        10,
-        SliceLeft + 5,
-        19);
+    // Start of sample
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Pen.Width:= 1;
+    FBitmap.Canvas.Rectangle(
+      SliceLeft - 5,
+      10,
+      SliceLeft + 5,
+      19);
 
-      // End of sample
-      FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
-      FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
-      FBitmap.Canvas.Pen.Width:= 1;
-      FBitmap.Canvas.Rectangle(
-        SliceRight - 5,
-        10,
-        SliceRight + 5,
-        19);
+    // End of sample
+    FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_60;
+    FBitmap.Canvas.Pen.Width:= 1;
+    FBitmap.Canvas.Rectangle(
+      SliceRight - 5,
+      10,
+      SliceRight + 5,
+      19);
 
-      // Full background
-      FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
-      FBitmap.Canvas.FillRect(
-        0,
-        FTransportBarHeight,
-        Width,
-        Height);
+    // Full background
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
+    FBitmap.Canvas.FillRect(
+      0,
+      FTransportBarHeight,
+      Width,
+      Height);
 
-      // Sample overlay background
-      FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
-      FBitmap.Canvas.FillRect(
-        SliceLeft,
-        FTransportBarHeight,
-        SliceRight,
-        Height);
+    // Sample overlay background
+    FBitmap.Canvas.Brush.Color := GRAYSCALE_90;
+    FBitmap.Canvas.FillRect(
+      SliceLeft,
+      FTransportBarHeight,
+      SliceRight,
+      Height);
 
 (*  DEBUG CODE
 
-      case FModel.SliceState of
-        ssAuto: FBitmap.Canvas.Brush.Color := clYellow;
-        ssCustom: FBitmap.Canvas.Brush.Color := clLtGray;
-      end;
-      FBitmap.Canvas.FillRect(
-        Round(FModel.SliceStartLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset),
-        FTransportBarHeight,
-        Round(FModel.SliceEndLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset),
-        Height);
+    case FModel.SliceState of
+      ssAuto: FBitmap.Canvas.Brush.Color := clYellow;
+      ssCustom: FBitmap.Canvas.Brush.Color := clLtGray;
+    end;
+    FBitmap.Canvas.FillRect(
+      Round(FModel.SliceStartLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset),
+      FTransportBarHeight,
+      Round(FModel.SliceEndLocation * FModel.SampleScaleInverse * FZoomFactorToScreen - FOffset),
+      Height);
 *)
 
-      // Draw measurements
-      FBitmap.Canvas.Pen.Width := 1;
+    // Draw measurements
+    FBitmap.Canvas.Pen.Width := 1;
 
-      // 120 BPM => 2 beats/sec => 1/4th beat = 0.125 (1 / 8)
-      QuarterBeatMarkerSpacing :=
-        FZoomFactorToScreen * Round(GSettings.SampleRate * 0.125);
+    // 120 BPM => 2 beats/sec => 1/4th beat = 0.125 (1 / 8)
+    QuarterBeatMarkerSpacing :=
+      FZoomFactorToScreen * Round(GSettings.SampleRate * 0.125);
 
-      // Draw marker white every 4 markers ( = 1 beat )
-      for TimeMarker := 0 to Round(Width / QuarterBeatMarkerSpacing) do
+    // Draw marker white every 4 markers ( = 1 beat )
+    for TimeMarker := 0 to Round(Width / QuarterBeatMarkerSpacing) do
+    begin
+      if TimeMarker and 3 = 0 then
       begin
-        if TimeMarker and 3 = 0 then
-        begin
-          FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
-        {end
-        else
-        begin
-          FBitmap.Canvas.Pen.Color := GRAYSCALE_90;
-        end;}
-        TimeMarkerLocation := Round((TimeMarker * QuarterBeatMarkerSpacing) - FOffset);
-        FBitmap.Canvas.Line(TimeMarkerLocation, FTransportBarHeight, TimeMarkerLocation, Height);
+        FBitmap.Canvas.Pen.Color := GRAYSCALE_70;
+      {end
+      else
+      begin
+        FBitmap.Canvas.Pen.Color := GRAYSCALE_90;
+      end;}
+      TimeMarkerLocation := Round((TimeMarker * QuarterBeatMarkerSpacing) - FOffset);
+      FBitmap.Canvas.Line(TimeMarkerLocation, FTransportBarHeight, TimeMarkerLocation, Height);
 
-        //FBitmap.Canvas.TextOut(TimeMarkerLocation + 2, 75, Format('%d', [TimeMarkerLocation]));
-        end;
+      //FBitmap.Canvas.TextOut(TimeMarkerLocation + 2, 75, Format('%d', [TimeMarkerLocation]));
       end;
+    end;
 
-      if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and
-        (FModel.Wave.Frames > 0) then
+    if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and
+      (FModel.Wave.Frames > 0) then
+    begin
+      // Bound parameters
+      FOffset := GSettings.CursorPosition;
+
+      ChannelHeight := (FBitmap.Height - FTransportBarHeight) div FModel.Wave.ChannelCount;
+      for ChannelLoop := 0 to Pred(FModel.Wave.ChannelCount) do
       begin
-        // Bound parameters
-        FOffset := GSettings.CursorPosition;
+        FBitmap.Canvas.Pen.Width := 1;
+        FBitmap.Canvas.Pen.Color := clBlack;
+        FBitmap.Canvas.Line(0, ChannelHeight * ChannelLoop + FTransportBarHeight, Width, ChannelHeight * ChannelLoop + FTransportBarHeight);
 
-        ChannelHeight := (FBitmap.Height - FTransportBarHeight) div FModel.Wave.ChannelCount;
-        for ChannelLoop := 0 to Pred(FModel.Wave.ChannelCount) do
+        // First point
+        ChannelScreenOffset := ChannelLoop * ChannelHeight + ChannelHeight shr 1 + FTransportBarHeight;
+        ChannelZeroLine := ChannelHeight div 2;
+        FBitmap.Canvas.Pen.Color := RGBToColor(35, 40, 52);
+        FBitmap.Canvas.Pen.Width := 1;
+        FBitmap.Canvas.Line(0, ChannelZeroLine + ChannelScreenOffset, Width, ChannelZeroLine + ChannelScreenOffset);
+        FBitmap.Canvas.MoveTo(Round(FSampleStartLocation * FZoomFactorToScreen) - FOffset, ChannelScreenOffset);
+
+        for SliceLoop := 0 to SliceListGUI.Count - 2 do
         begin
-          FBitmap.Canvas.Pen.Width := 1;
-          FBitmap.Canvas.Pen.Color := clBlack;
-          FBitmap.Canvas.Line(0, ChannelHeight * ChannelLoop + FTransportBarHeight, Width, ChannelHeight * ChannelLoop + FTransportBarHeight);
+          AdderFactor := TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate;
 
-          // First point
-          ChannelScreenOffset := ChannelLoop * ChannelHeight + ChannelHeight shr 1 + FTransportBarHeight;
-          ChannelZeroLine := ChannelHeight div 2;
-          FBitmap.Canvas.Pen.Color := RGBToColor(35, 40, 52);
-          FBitmap.Canvas.Pen.Width := 1;
-          FBitmap.Canvas.Line(0, ChannelZeroLine + ChannelScreenOffset, Width, ChannelZeroLine + ChannelScreenOffset);
-          FBitmap.Canvas.MoveTo(Round(FSampleStartLocation * FZoomFactorToScreen) - FOffset, ChannelScreenOffset);
+          SliceLeft :=
+            Round(TMarkerGUI(SliceListGUI[SliceLoop]).Location *
+            FBpmFactor * FZoomFactorToScreen - FOffset);
 
-          for SliceLoop := 0 to SliceListGUI.Count - 2 do
+          SliceRight :=
+            Round(TMarkerGUI(SliceListGUI[SliceLoop + 1]).Location *
+            FBpmFactor * FZoomFactorToScreen - FOffset);
+
+          Adder :=
+            TMarkerGUI(SliceListGUI[SliceLoop]).OriginalLocation *
+            FBpmFactor * FZoomFactorToScreen - FOffset;
+
+          // Only render data within view
+          if (SliceRight > 0) and (SliceLeft < Width) then
           begin
-            AdderFactor := TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate;
-
-            SliceLeft :=
-              Round(TMarkerGUI(SliceListGUI[SliceLoop]).Location *
-              FBpmFactor * FZoomFactorToScreen - FOffset);
-
-            SliceRight :=
-              Round(TMarkerGUI(SliceListGUI[SliceLoop + 1]).Location *
-              FBpmFactor * FZoomFactorToScreen - FOffset);
-
-            Adder :=
-              TMarkerGUI(SliceListGUI[SliceLoop]).OriginalLocation *
-              FBpmFactor * FZoomFactorToScreen - FOffset;
-
-            // Only render data within view
-            if (SliceRight > 0) and (SliceLeft < Width) then
+            for ScreenLoop := SliceLeft to Pred(SliceRight) do
             begin
-              for ScreenLoop := SliceLeft to Pred(SliceRight) do
+              PositionInData1 :=
+                (FOffset + Adder) * FBpmAdder * FZoomFactorToData;
+              PositionInData2 :=
+                (FOffset + Adder + AdderFactor) * FBpmAdder * FZoomFactorToData;
+
+              // Initialize to opposite maxima
+              MinValue := 1;
+              MaxValue := -1;
+
+              if (ScreenLoop >= 0) and (ScreenLoop < Width) then
               begin
-                PositionInData1 :=
-                  (FOffset + Adder) * FBpmAdder * FZoomFactorToData;
-                PositionInData2 :=
-                  (FOffset + Adder + AdderFactor) * FBpmAdder * FZoomFactorToData;
-
-                // Initialize to opposite maxima
-                MinValue := 1;
-                MaxValue := -1;
-
-                if (ScreenLoop >= 0) and (ScreenLoop < Width) then
+                if FZoomFactorToData > 50 then
                 begin
-                  if FZoomFactorToData > 50 then
+                  // Subsampling sample values when zoomed in
+                  DataValue := FModel.DecimatedData[
+                    Round(PositionInData1 *
+                    FModel.Wave.ChannelCount + ChannelLoop) div
+                    DECIMATED_CACHE_DISTANCE];
+
+                  // Seek maxima
+                  for SubSampleLoop := Round(PositionInData1) to Round(PositionInData2) - 1 do
                   begin
-                    // Subsampling sample values when zoomed in
                     DataValue := FModel.DecimatedData[
-                      Round(PositionInData1 *
-                      FModel.Wave.ChannelCount + ChannelLoop) div
-                      DECIMATED_CACHE_DISTANCE];
+                        (SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div
+                        DECIMATED_CACHE_DISTANCE];
 
-                    // Seek maxima
-                    for SubSampleLoop := Round(PositionInData1) to Round(PositionInData2) - 1 do
-                    begin
-                      DataValue := FModel.DecimatedData[
-                          (SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div
-                          DECIMATED_CACHE_DISTANCE];
+                    if DataValue < MinValue then MinValue := DataValue;
+                    if DataValue > MaxValue then MaxValue := DataValue;
+                  end;
 
-                      if DataValue < MinValue then MinValue := DataValue;
-                      if DataValue > MaxValue then MaxValue := DataValue;
-                    end;
+                  // Make sure the value is limited to the screen range
+                  if MaxValue > 1 then MaxValue := 1;
+                  if MinValue < -1 then MinValue := -1;
 
+                  FBitmap.Canvas.Line(
+                    FSampleStartLocation + ScreenLoop,
+                    Round(MinValue * ChannelZeroLine) + ChannelScreenOffset,
+                    FSampleStartLocation + ScreenLoop,
+                    Round(MaxValue * ChannelZeroLine) + ChannelScreenOffset);
+                end
+                else
+                begin
+                  // Pixelview
+                  DataValue := FModel.DecimatedData[
+                    (Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div
+                    DECIMATED_CACHE_DISTANCE];
+
+                  if PositionInData1 < FModel.Wave.ReadCount then
+                  begin
                     // Make sure the value is limited to the screen range
-                    if MaxValue > 1 then MaxValue := 1;
-                    if MinValue < -1 then MinValue := -1;
+                    if DataValue > 1 then DataValue := 1;
+                    if DataValue < -1 then DataValue := -1;
 
-                    FBitmap.Canvas.Line(
+                    FBitmap.Canvas.LineTo(
                       FSampleStartLocation + ScreenLoop,
-                      Round(MinValue * ChannelZeroLine) + ChannelScreenOffset,
-                      FSampleStartLocation + ScreenLoop,
-                      Round(MaxValue * ChannelZeroLine) + ChannelScreenOffset);
-                  end
-                  else
-                  begin
-                    // Pixelview
-                    DataValue := FModel.DecimatedData[
-                      (Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div
-                      DECIMATED_CACHE_DISTANCE];
-
-                    if PositionInData1 < FModel.Wave.ReadCount then
-                    begin
-                      // Make sure the value is limited to the screen range
-                      if DataValue > 1 then DataValue := 1;
-                      if DataValue < -1 then DataValue := -1;
-
-                      FBitmap.Canvas.LineTo(
-                        FSampleStartLocation + ScreenLoop,
-                        Round(DataValue * ChannelZeroLine) + ChannelScreenOffset);
-                    end;
+                      Round(DataValue * ChannelZeroLine) + ChannelScreenOffset);
                   end;
                 end;
-                Adder := Adder + AdderFactor;
               end;
+              Adder := Adder + AdderFactor;
             end;
           end;
-
-          FBitmap.Canvas.Pen.Color := clLime;
-          FBitmap.Canvas.MoveTo(0, ChannelScreenOffset);
-
-          for SliceLoop := 0 to Pred(SliceListGUI.Count) do
-          begin
-            SliceLeft := Round(
-              FSampleStartLocation +
-              TMarkerGUI(SliceListGUI[SliceLoop]).Location *
-              FBpmFactor * FZoomFactorToScreen - FOffset);
-
-            // SliceMarker
-            case TMarkerGUI(SliceListGUI[SliceLoop]).SliceType of
-            SLICE_UNDELETABLE: Canvas.Pen.Color := clYellow;
-            SLICE_NORMAL: Canvas.Pen.Color := clRed;
-            SLICE_VIRTUAL: Canvas.Pen.Color := clGray;
-            end;
-
-            if TMarkerGUI(SliceListGUI[SliceLoop]).Selected then
-              FBitmap.Canvas.Pen.Color := clGreen;
-
-            FBitmap.Canvas.Pen.Width := 1;
-            FBitmap.Canvas.Pen.Color := clBlack;
-            FBitmap.Canvas.Line(
-              SliceLeft,
-              Succ(FTransportBarHeight),
-              SliceLeft,
-              Height);
-
-            if TMarkerGUI(SliceListGUI[SliceLoop]).Locked then
-            begin
-              FBitmap.Canvas.Brush.Color := clYellow;
-              FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
-            end
-            else
-            begin
-              FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
-              FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
-            end;
-
-            //FBitmap.Canvas.TextOut(SliceLeft + 2, 60, Format('%d', [TMarkerGUI(SliceListGUI[SliceLoop]).Location]));
-            //FBitmap.Canvas.TextOut(SliceLeft + 5, 60, Format('%f', [TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
-            //FBitmap.Canvas.TextOut(SliceLeft + 5, 70, Format('%f', [1 /TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
-          end;
-
-          SliceLeft := Round(LoopStart.Location * FZoomFactorToScreen - FOffset);
-          FBitmap.Canvas.Pen.Color := clRed;
-          FBitmap.Canvas.Brush.Color := REDSCALE_70;
-          FBitmap.Canvas.Pen.Width := 3;
-          FBitmap.Canvas.Line(
-            SliceLeft,
-            Succ(FTransportBarHeight),
-            SliceLeft,
-            Height);
-          FBitmap.Canvas.Pen.Width := 1;
-          FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
-          FBitmap.Canvas.TextOut(SliceLeft + 10, 50, Format('LoopStart %d', [LoopStart.Location]));
-
-          SliceLeft := Round(LoopEnd.Location * FZoomFactorToScreen - FOffset);
-          FBitmap.Canvas.Pen.Color := clRed;
-          FBitmap.Canvas.Brush.Color := REDSCALE_70;
-          FBitmap.Canvas.Pen.Width := 3;
-          FBitmap.Canvas.Line(
-            SliceLeft,
-            Succ(FTransportBarHeight),
-            SliceLeft,
-            Height);
-          FBitmap.Canvas.Pen.Width := 1;
-          FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
-          FBitmap.Canvas.TextOut(SliceLeft + 10, 50, Format('LoopEnd %d', [LoopEnd.Location]));
-
-          FCacheIsDirty := False;
         end;
+
+        FBitmap.Canvas.Pen.Color := clLime;
+        FBitmap.Canvas.MoveTo(0, ChannelScreenOffset);
+
+        for SliceLoop := 0 to Pred(SliceListGUI.Count) do
+        begin
+          SliceLeft := Round(
+            FSampleStartLocation +
+            TMarkerGUI(SliceListGUI[SliceLoop]).Location *
+            FBpmFactor * FZoomFactorToScreen - FOffset);
+
+          // SliceMarker
+          case TMarkerGUI(SliceListGUI[SliceLoop]).SliceType of
+          SLICE_UNDELETABLE: Canvas.Pen.Color := clYellow;
+          SLICE_NORMAL: Canvas.Pen.Color := clRed;
+          SLICE_VIRTUAL: Canvas.Pen.Color := clGray;
+          end;
+
+          if TMarkerGUI(SliceListGUI[SliceLoop]).Selected then
+            FBitmap.Canvas.Pen.Color := clGreen;
+
+          FBitmap.Canvas.Pen.Width := 1;
+          FBitmap.Canvas.Pen.Color := clBlack;
+          FBitmap.Canvas.Line(
+            SliceLeft,
+            Succ(FTransportBarHeight),
+            SliceLeft,
+            Height);
+
+          if TMarkerGUI(SliceListGUI[SliceLoop]).Locked then
+          begin
+            FBitmap.Canvas.Brush.Color := clYellow;
+            FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+          end
+          else
+          begin
+            FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
+            FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+          end;
+
+          //FBitmap.Canvas.TextOut(SliceLeft + 2, 60, Format('%d', [TMarkerGUI(SliceListGUI[SliceLoop]).Location]));
+          //FBitmap.Canvas.TextOut(SliceLeft + 5, 60, Format('%f', [TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
+          //FBitmap.Canvas.TextOut(SliceLeft + 5, 70, Format('%f', [1 /TMarkerGUI(SliceListGUI[SliceLoop]).DecayRate]));
+        end;
+
+        SliceLeft := Round(LoopStart.Location * FZoomFactorToScreen - FOffset);
+        FBitmap.Canvas.Pen.Color := clRed;
+        FBitmap.Canvas.Brush.Color := REDSCALE_70;
+        FBitmap.Canvas.Pen.Width := 3;
+        FBitmap.Canvas.Line(
+          SliceLeft,
+          Succ(FTransportBarHeight),
+          SliceLeft,
+          Height);
+        FBitmap.Canvas.Pen.Width := 1;
+        FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
+        FBitmap.Canvas.TextOut(SliceLeft + 10, 50, Format('LoopStart %d', [LoopStart.Location]));
+
+        SliceLeft := Round(LoopEnd.Location * FZoomFactorToScreen - FOffset);
+        FBitmap.Canvas.Pen.Color := clRed;
+        FBitmap.Canvas.Brush.Color := REDSCALE_70;
+        FBitmap.Canvas.Pen.Width := 3;
+        FBitmap.Canvas.Line(
+          SliceLeft,
+          Succ(FTransportBarHeight),
+          SliceLeft,
+          Height);
+        FBitmap.Canvas.Pen.Width := 1;
+        FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
+        FBitmap.Canvas.TextOut(SliceLeft + 10, 50, Format('LoopEnd %d', [LoopEnd.Location]));
+
+        FCacheIsDirty := False;
       end;
     end;
 

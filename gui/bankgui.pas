@@ -27,13 +27,13 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, ExtCtrls, globalconst,
   sampler, samplegui, Controls, Contnrs, global, utils, Graphics, LCLType,
-  StdCtrls, DBGrids, Grids, Menus, ActnList;
+  StdCtrls, DBGrids, Grids, Menus, ActnList, pluginnodegui;
 
 type
 
   { TBankView }
 
-  TBankView = class(TFrame, IObserver)
+  TBankView = class(TGenericPluginGUI)
     actDeleteSample: TAction;
     actNewSample: TAction;
     alSampleSelect: TActionList;
@@ -54,14 +54,12 @@ type
       State: TDragState; var Accept: Boolean);
   private
     { private declarations }
-    FModel: TSampleBank;
+    FPluginName: string;
     FSampleListGUI: TObjectList;
-    FObjectOwnerID: string;
-    FObjectID: string;
     FSelectedSampleGUI: TSampleView;
     FOldSelectedSample: string;
-
     FSampleView: TSampleView;
+
     procedure CreateSampleGUI(AObjectID: string);
     procedure DeleteSampleGUI(AObjectID: string);
     procedure DoChangeSelectedSample(Subject: THybridPersistentModel);
@@ -69,45 +67,11 @@ type
     { public declarations }
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Connect;
-    procedure Disconnect;
-    procedure Update(Subject: THybridPersistentModel); reintroduce;
-    function GetObjectOwnerID: string;
-    procedure SetObjectOwnerID(const AValue: string);
-    function GetObjectID: string;
-    procedure SetObjectID(AObjectID: string);
-    function GetModel: THybridPersistentModel;
-    procedure SetModel(AModel: THybridPersistentModel);
+    procedure Connect; override;
+    procedure Disconnect; override;
+    procedure Update(Subject: THybridPersistentModel); override;
     property SampleListGUI: TObjectList read FSampleListGUI write FSampleListGUI;
-    property ObjectID: string read GetObjectID write SetObjectID;
-    property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
-    property Model: TSampleBank read FModel write FModel;
-  end;
-
-  TBankSelectControl = class(TPersistentCustomControl)
-  private
-    FCaption: string;
-    FCaptionWidth: Integer;
-    FOnChange: TChangeSelectSample;
-    FSelected: Boolean;
-    FSampleBank: TSampleBank;
-
-    procedure SetCaption(const AValue: string);
-  public
-    constructor Create(AOwner : TComponent); override;
-    destructor Destroy; override;
-    procedure EraseBackground(DC: HDC); override;
-    procedure Paint; override;
-    procedure UpdateControl;
-    procedure Update(Subject: THybridPersistentModel); reintroduce;
-    property SampleBank: TSampleBank read FSampleBank write FSampleBank;
-  published
-    property Caption: string read FCaption write SetCaption;
-    property OnChange: TChangeSelectSample read FOnChange write FOnChange;
-    property Selected: Boolean read FSelected write FSelected;
-  protected
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    property PluginName: string read FPluginName write FPluginName;
   end;
 
 implementation
@@ -123,17 +87,15 @@ begin
 
   FSampleListGUI := TObjectList.Create;
 
-  FSampleView := TSampleView.Create(nil);
+  FSampleView := TSampleView.Create(Self);
   FSampleView.Enabled := False;
   FSampleView.EnableControls := False;
+  FSampleView.Align := alClient;
   FSampleView.Parent := Self;
 end;
 
 destructor TBankView.Destroy;
 begin
-  if Assigned(FSampleView) then
-    FSampleView.Free;
-
   if Assigned(FSampleListGUI) then
     FSampleListGUI.Free;
 
@@ -161,30 +123,34 @@ begin
 end;
 
 procedure TBankView.Disconnect;
+var
+  lSampleIndex: Integer;
+  lSample: TSample;
+  lSampleSelectControl: TSampleSelectControl;
+  lOldSelectedSample: TSample;
 begin
+  // Detach all sampleselect controls
   lbSampleSelector.Clear;
+  for lSampleIndex := Pred(FSampleListGUI.Count) downto 0 do
+  begin
+    lSampleSelectControl := TSampleSelectControl(FSampleListGUI[lSampleIndex]);
+    lSample := TSample(GObjectMapper.GetModelObject(lSampleSelectControl.ObjectID));
+
+    lSample.Detach(lSampleSelectControl);
+    FSampleListGUI.Remove(lSampleSelectControl);
+  end;
   FSampleListGUI.Clear;
-end;
 
+  // Detach the sampleview if attached (ie controls are active)
+  if FOldSelectedSample <> '' then
+  begin
+    lOldSelectedSample := TSample(GObjectMapper.GetModelObject(FOldSelectedSample));
 
-function TBankView.GetObjectID: string;
-begin
-  Result := FObjectID;
-end;
-
-procedure TBankView.SetObjectID(AObjectID: string);
-begin
-  FObjectID := AObjectID;
-end;
-
-function TBankView.GetModel: THybridPersistentModel;
-begin
-  Result := THybridPersistentModel(FModel);
-end;
-
-procedure TBankView.SetModel(AModel: THybridPersistentModel);
-begin
-  FModel := TSampleBank(AModel);
+    if Assigned(lOldSelectedSample) then
+    begin
+      lOldSelectedSample.Detach(FSampleView);
+    end;
+  end;
 end;
 
 procedure TBankView.sbSamplesDragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -352,7 +318,6 @@ var
 begin
   DBLog('start TBankView.DeleteSampleGUI');
 
-  // update track gui
   FSelectedSampleGUI := nil;
 
   for lIndex := Pred(FSampleListGUI.Count) downto 0 do
@@ -399,13 +364,13 @@ begin
     end;
   end;
 
-  if lNewObjectID = '' then exit;
-
-  //
-  for lSampleIndex := 0 to Pred(FSampleListGUI.Count) do
+  if lNewObjectID <> '' then
   begin
-    TSampleSelectControl(FSampleListGUI[lSampleIndex]).Selected :=
-      (TSampleSelectControl(FSampleListGUI[lSampleIndex]).ObjectID = lNewObjectID);
+    for lSampleIndex := 0 to Pred(FSampleListGUI.Count) do
+    begin
+      TSampleSelectControl(FSampleListGUI[lSampleIndex]).Selected :=
+        (TSampleSelectControl(FSampleListGUI[lSampleIndex]).ObjectID = lNewObjectID);
+    end;
   end;
 
   // Can be unassigned when first used
@@ -443,127 +408,6 @@ begin
   end;
 
   DBLog('end TBankView.DoChangeSelectedSample');
-end;
-
-function TBankView.GetObjectOwnerID: string;
-begin
-  Result := FObjectOwnerID;
-end;
-
-procedure TBankView.SetObjectOwnerID(const AValue: string);
-begin
-  FObjectOwnerID := AValue;
-end;
-
-{ TBankSelectControl }
-
-procedure TBankSelectControl.SetCaption(const AValue: string);
-begin
-  FCaption := AValue;
-end;
-
-constructor TBankSelectControl.Create(AOwner: TComponent);
-begin
-  inherited Create(AOwner);
-
-  ControlStyle := ControlStyle + [csDisplayDragImage];
-
-  Constraints.MinWidth := 50;
-  Constraints.MaxWidth := 50;
-  Constraints.MinHeight := 30;
-  Constraints.MaxHeight := 30;
-  Width := 50;
-  Height := 30;
-end;
-
-destructor TBankSelectControl.Destroy;
-begin
-  inherited Destroy;
-end;
-
-procedure TBankSelectControl.EraseBackground(DC: HDC);
-begin
-  inherited EraseBackground(DC);
-end;
-
-procedure TBankSelectControl.Paint;
-var
-  Bitmap: TBitmap;
-begin
-  Bitmap := TBitmap.Create;
-  try
-    Bitmap.Canvas.Font.Size:= 7;
-
-    // Initializes the Bitmap Size
-    Bitmap.Height := Height;
-    Bitmap.Width := Width;
-
-    // Outline color
-    Bitmap.Canvas.Pen.Style:= psSolid;
-    Bitmap.Canvas.Pen.Color:= clBlack;
-
-    Bitmap.Canvas.Brush.Color := clLtGray;
-    Bitmap.Canvas.Rectangle(0, 0, Width, Height);
-
-    // Switched on/off state color
-    if FSelected then
-      Bitmap.Canvas.Brush.Color := clLime
-    else
-      Bitmap.Canvas.Brush.Color := Color;
-
-    FCaptionWidth := Canvas.TextWidth(FCaption);
-
-    Bitmap.Canvas.Rectangle(3, 3, Width - 3, Height - 3);
-    Bitmap.Canvas.TextOut((Width shr 1) - (FCaptionWidth shr 1), 1, FCaption);
-
-    Canvas.Draw(0, 0, Bitmap);
-  finally
-    Bitmap.Free;
-  end;
-
-  inherited Paint;
-end;
-
-procedure TBankSelectControl.UpdateControl;
-begin
-  Invalidate;
-end;
-
-procedure TBankSelectControl.Update(Subject: THybridPersistentModel);
-begin
-  writeln('start TBankSelectControl.Update');
-
-  FCaption := TSample(Subject).SampleName;
-
-  writeln('end TBankSelectControl.Update');
-end;
-
-procedure TBankSelectControl.MouseDown(Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  inherited MouseDown(Button, Shift, X, Y);
-
-  case Button of
-    mbLeft:
-    begin
-      FSelected := True;
-
-      // Callback will toggle all selected samplecontrols to false and set this one
-      // true; Also changes viewed sample editor
-      if Assigned(FOnChange) then
-      begin
-        FOnChange(Self, ObjectID);
-      end;
-    end;
-  end;
-end;
-
-procedure TBankSelectControl.MouseUp(Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  inherited MouseUp(Button, Shift, X, Y);
-
-  Invalidate;
 end;
 
 initialization

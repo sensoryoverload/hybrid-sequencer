@@ -58,8 +58,8 @@ type
     procedure EraseBackground(DC: HDC); override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
-    procedure CreateNodeGUI(AObjectID: string);
-    procedure DeleteNodeGUI(AObjectID: string);
+    procedure CreatePluginNodeGUI(AObjectID: string);
+    procedure DeletePluginNodeGUI(AObjectID: string);
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
     function GetObjectID: string;
@@ -141,6 +141,8 @@ begin
 
   inherited Create(AOwner);
 
+  Height := 143;
+
   FNodeListGUI := TObjectList.create(True);
 
   DBLog('end TPluginProcessorGUI.Create');
@@ -167,8 +169,8 @@ begin
   DiffLists(
     TPluginProcessor(Subject).NodeList,
     NodeListGUI,
-    @CreateNodeGUI,
-    @DeleteNodeGUI);
+    @CreatePluginNodeGUI,
+    @DeletePluginNodeGUI);
 
   DBLog('end TPluginProcessorGUI.Update');
 end;
@@ -184,11 +186,21 @@ begin
 end;
 
 procedure TPluginProcessorGUI.Disconnect;
+var
+  lIndex: Integer;
+  lPluginNodeGUI: TGenericPluginGUI;
 begin
-  //
+  for lIndex := Pred(FNodeListGUI.Count) downto 0 do
+  begin
+    lPluginNodeGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
+
+    lPluginNodeGUI.Disconnect;
+    TPluginNode(lPluginNodeGUI.Model).Detach(lPluginNodeGUI);
+    FNodeListGUI.Remove(lPluginNodeGUI);
+  end;
 end;
 
-procedure TPluginProcessorGUI.CreateNodeGUI(AObjectID: string);
+procedure TPluginProcessorGUI.CreatePluginNodeGUI(AObjectID: string);
 var
   lPluginNode: TPluginNode;
   lPluginNodeGUI: TGenericPluginGUI;
@@ -226,6 +238,7 @@ begin
 
       FNodeListGUI.Add(lPluginNodeGUI);
       lPluginNode.Attach(lPluginNodeGUI);
+      lPluginNodeGUI.Connect;
     end;
     ptSampler:
     begin
@@ -233,12 +246,13 @@ begin
       lSampleBankGUI.ObjectID := AObjectID;
       lSampleBankGUI.ObjectOwnerID := Self.ObjectID;
       lSampleBankGUI.Model := TSampleBank(lPluginNode);
-//      lSampleBankGUI.PluginName := lPluginNode.PluginName;
-      lSampleBankGUI.Parent := pnlPlugin;
+      lSampleBankGUI.PluginName := lPluginNode.PluginName;
       lSampleBankGUI.Align := alLeft;
+      lSampleBankGUI.Parent := pnlPlugin;
 
       FNodeListGUI.Add(lSampleBankGUI);
       TSampleBank(lPluginNode).Attach(lSampleBankGUI);
+      lSampleBankGUI.Connect;
     end;
     ptDistortion:
     begin
@@ -247,12 +261,13 @@ begin
       lPluginDistortionGUI.ObjectOwnerID := Self.ObjectID;
       lPluginDistortionGUI.Model := TPluginDistortion(lPluginNode);
       lPluginDistortionGUI.PluginName := lPluginNode.PluginName;
-      lPluginDistortionGUI.Parent := pnlPlugin;
       lPluginDistortionGUI.Width := 100;
       lPluginDistortionGUI.Align := alLeft;
+      lPluginDistortionGUI.Parent := pnlPlugin;
 
       FNodeListGUI.Add(lPluginDistortionGUI);
       TPluginDistortion(lPluginNode).Attach(lPluginDistortionGUI);
+      lPluginDistortionGUI.Connect;
     end;
     ptReverb:
     begin
@@ -267,6 +282,7 @@ begin
 
       FNodeListGUI.Add(lPluginFreeverbGUI);
       TPluginFreeverb(lPluginNode).Attach(lPluginFreeverbGUI);
+      lPluginFreeverbGUI.Connect;
     end;
     ptBassline:
     begin
@@ -281,6 +297,7 @@ begin
 
       FNodeListGUI.Add(lPluginBasslineGUI);
       TPluginBassline(lPluginNode).Attach(lPluginBasslineGUI);
+      lPluginBasslineGUI.Connect;
     end;
     ptDecimate:
     begin
@@ -295,6 +312,7 @@ begin
 
       FNodeListGUI.Add(lPluginDecimateGUI);
       TPluginDecimate(lPluginNode).Attach(lPluginDecimateGUI);
+      lPluginDecimateGUI.Connect;
     end;
     end;
   end;
@@ -302,21 +320,38 @@ begin
   DBLog('end TPluginProcessorGUI.CreateNodeGUI');
 end;
 
-procedure TPluginProcessorGUI.DeleteNodeGUI(AObjectID: string);
+procedure TPluginProcessorGUI.DeletePluginNodeGUI(AObjectID: string);
 var
   lPluginNodeGUI: TGenericPluginGUI;
+  lSamplerNodeGUI: TBankView;
   lIndex: Integer;
 begin
   DBLog('start TPluginProcessorGUI.DeleteNodeGUI ' + AObjectID);
 
   for lIndex := Pred(FNodeListGUI.Count) downto 0 do
   begin
-    lPluginNodeGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
-
-    if lPluginNodeGUI.ObjectID = AObjectID then
+    // TBankView has a different ancestor so handle this special case
+    if FNodeListGUI[lIndex] is TBankView then
     begin
-      TPluginNode(lPluginNodeGUI.Model).Detach(lPluginNodeGUI);
-      FNodeListGUI.Remove(lPluginNodeGUI);
+      lSamplerNodeGUI := TBankView(FNodeListGUI[lIndex]);
+
+      if lSamplerNodeGUI.ObjectID = AObjectID then
+      begin
+        lSamplerNodeGUI.Disconnect;
+        TPluginNode(lSamplerNodeGUI.Model).Detach(lSamplerNodeGUI);
+        FNodeListGUI.Remove(lSamplerNodeGUI);
+      end;
+    end
+    else
+    begin
+      lPluginNodeGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
+
+      if lPluginNodeGUI.ObjectID = AObjectID then
+      begin
+        lPluginNodeGUI.Disconnect;
+        TPluginNode(lPluginNodeGUI.Model).Detach(lPluginNodeGUI);
+        FNodeListGUI.Remove(lPluginNodeGUI);
+      end;
     end;
   end;
 

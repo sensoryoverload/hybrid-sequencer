@@ -252,10 +252,6 @@ type
 
     FMidiBuffer: TMidiBuffer;
 
-    // Private sampler, not a plugin so it's more thightly integrated
-    FSampleBank: TSampleBank;
-    FSampleBankEngine: TSampleBankEngine;
-
     function GetEnabled: Boolean;
     function NoteByObjectID(AObjectID: string): TMidiNote;
     procedure SetQuantizeSetting(AValue: Integer);
@@ -282,9 +278,9 @@ type
       Engine
     }
     property MidiBuffer: TMidiBuffer read FMidiBuffer write FMidiBuffer;
-    property SampleBankEngine: TSampleBankEngine read FSampleBankEngine write FSampleBankEngine;
+//    property SampleBankEngine: TSampleBankEngine read FSampleBankEngine write FSampleBankEngine;
   published
-    property SampleBank: TSampleBank read FSampleBank write FSampleBank;
+//    property SampleBank: TSampleBank read FSampleBank write FSampleBank;
     property NoteList: TObjectList read FNoteList write FNoteList;
     property QuantizeSetting: Integer read FQuantizeSetting write SetQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 1;
@@ -337,29 +333,22 @@ begin
 
   QuantizeSetting := 3;
 
-  FSampleBank := TSampleBank.Create(AObjectOwner, AMapped);
-  FSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
-
   LoopStart.Value := 0;
   LoopLength.Value := Round(GSettings.SampleRate * 2);
   LoopEnd.Value := LoopStart.Value + LoopLength.Value;
   FLooped := False;
-
-  FSampleBankEngine.SampleBank := FSampleBank;
-
-  //PluginProcessor.InsertNode(FSampleBank, PluginProcessor.AudioOut, PluginProcessor.AudioIn);
 
   DBLog('end TMidiGrid.Create');
 end;
 
 destructor TMidiPattern.Destroy;
 begin
-  FSampleBankEngine.Free;
+{  FSampleBankEngine.Free;
 
   if Assigned(FSampleBank) then
   begin
     FSampleBank.Free;
-  end;
+  end;}
 
   if Assigned(FMidiBuffer) then
     FMidiBuffer.Free;

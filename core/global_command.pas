@@ -170,7 +170,7 @@ var
 implementation
 
 uses
-  trackgui, pattern, sampler;
+  pattern, sampler;
 
 { TMidiMappingTable }
 

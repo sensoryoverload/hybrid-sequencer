@@ -82,17 +82,17 @@ begin
 
     for lRow := 0 to Pred(FMaps.Count) do
     begin
-      StringGrid1.Cells[1, lRow] := THybridPersistentModel(FMaps.Objects[lRow]).ObjectID;
+      StringGrid1.Cells[0, lRow] := THybridPersistentModel(FMaps.Objects[lRow]).ObjectID;
       if Assigned(FMaps.Objects[lRow]) then
       begin
         if Assigned(THybridPersistentModel(FMaps.Objects[lRow])) then
         begin
           lTempStr := THybridPersistentModel(FMaps.Objects[lRow]).ClassName;
-          StringGrid1.Cells[2, lRow] := lTempStr;
+          StringGrid1.Cells[1, lRow] := lTempStr;
         end;
       end;
-      StringGrid1.ColWidths[1] := 350;
-      StringGrid1.ColWidths[2] := 200;
+      StringGrid1.ColWidths[0] := 200;
+      StringGrid1.ColWidths[1] := 150;
     end;
   end;
 end;

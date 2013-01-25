@@ -405,7 +405,7 @@ begin
     //SendDebug(AMessage);
     //writeln(AMessage);
     //FLogger.RingbufferWrite(shortstring(AMessage), 256);
-    GLogger.PushMessage(AMessage);
+    GLogger.PushMessage(Format('%s: %s', [DateTimeToStr(Now), AMessage]));
   end;
 end;
 

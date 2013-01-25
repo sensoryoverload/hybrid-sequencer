@@ -13,19 +13,16 @@ object PatternView: TPatternView
     Height = 628
     Top = 0
     Width = 976
-    ActivePage = tsWave
+    ActivePage = tsPattern
     Align = alClient
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 0
-    TabPosition = tpLeft
-    object tsMIDI: TTabSheet
+    object tsPattern: TTabSheet
       Caption = 'Pattern'
+      TabVisible = False
     end
-    object tsWave: TTabSheet
-      Caption = 'Pattern'
-    end
-    object tsPlugins: TTabSheet
-      Caption = 'Plugins'
+    object tsEffects: TTabSheet
+      Caption = 'Effects'
     end
   end
 end

@@ -882,7 +882,18 @@ end;
 
 procedure THybridPersistentModel.Attach(AObserver: IObserver);
 begin
-  DBLog(Format('start %s.Attach', [Self.ClassName]));
+  if Assigned(GObjectMapper.GetModelObject(AObserver.ObjectID)) then
+  begin
+    DBLog(Format('start %s.Attach of type %s which has %d observers',
+      [Self.ClassName,
+      GObjectMapper.GetModelObject(AObserver.ObjectID).ClassName,
+      FObservers.Count]));
+  end
+  else
+  begin
+    DBLog(Format('start %s.Attach',
+      [Self.ClassName]));
+  end;
 
   FObservers.Add(AObserver);
   AObserver.Model := Self;
@@ -914,7 +925,7 @@ procedure THybridPersistentModel.Detach(AObserver: IObserver);
 begin
   DBLog(Format('start %s.Detach', [Self.ClassName]));
 
-  { not sure if this would break existing code, it shoudn't.. }
+  { not sure if this would break existing code, it shouldn't.. }
   //AObserver.Disconnect;
   AObserver.ObjectID := '';
   AObserver.ObjectOwnerID := '';{}
@@ -927,15 +938,25 @@ end;
 procedure THybridPersistentModel.Notify;
 var
   i: Integer;
+  lObserverlist: string;
 begin
-  DBLog(Format('start %s.Notify', [Self.ClassName]));
+  if FObservers <> nil then
+  begin
+    DBLog(Format('start %s.Notify having %d observers',
+      [Self.ClassName, FObservers.Count]));
+  end;
 
   try
     if FObservers <> nil then
     begin
       for i := 0 to Pred(FObservers.Count) do
       begin
-        (FObservers[i] as IObserver).Update(Self);
+        if FObservers[i] is IObserver then
+        begin
+          DBLog(Format('Calling Update method of %s',
+            [GObjectMapper.GetModelObject((FObservers[i] as IObserver).ObjectID).ClassType]));
+          (FObservers[i] as IObserver).Update(Self);
+        end;
       end;
     end;
 

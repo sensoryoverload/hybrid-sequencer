@@ -10,8 +10,7 @@ uses
   bankgui, global;
 
 type
-
-  { TMidiPatternControlGUI }
+{ TMidiPatternControlGUI }
 
   TMidiPatternControlGUI = class(TFrame, IObserver)
     cbMidiChannel: TComboBox;
@@ -32,9 +31,6 @@ type
     { private declarations }
     FMidiPatternGUI: TMidiPatternGUI;
     FMidigridOverview: TMidigridOverview;
-
-    FSampleBank: TSampleBank;
-    FSampleBankGUI: TBankView;
 
     FRootNote: Integer;
     FMidiChannel: Integer;
@@ -81,7 +77,6 @@ begin
   FConnected := False;
 
   FMidiPatternGUI := TMidiPatternGUI.Create(nil);
-  FSampleBankGUI := TBankView.Create(nil);
   FMidigridOverview := TMidigridOverview.Create(nil);
   FMidigridOverview.ZoomCallback := @FMidiPatternGUI.HandleZoom;
 
@@ -116,14 +111,7 @@ begin
   cbMidiChannel.Items.Add('15');
   cbMidiChannel.Items.Add('16');
 
-  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
-
   pnlMidiGrid.Align := alNone;
-
-  FSampleBankGUI.Align := alBottom;
-  FSampleBankGUI.Parent := nil;
-  FSampleBankGUI.Parent := Self;
-
   pnlMidiGrid.Align := alClient;
 
   FMidigridOverview.Parent := nil;
@@ -133,13 +121,11 @@ begin
   FMidiPatternGUI.Align := alClient;
   FMidiPatternGUI.Parent := nil;
   FMidiPatternGUI.Parent := pnlMidiGrid;
-
 end;
 
 destructor TMidiPatternControlGUI.Destroy;
 begin
   FMidiPatternGUI.Free;
-  FSampleBankGUI.Free;
   FMidigridOverview.Free;
 
   inherited Destroy;
@@ -149,13 +135,9 @@ procedure TMidiPatternControlGUI.Connect;
 begin
   if Assigned(FModel) then
   begin
-    FSampleBank := FModel.SampleBank;
-
     FModel.Attach(FMidiPatternGUI);
 
     FModel.Attach(FMidigridOverview);
-
-    FSampleBank.Attach(FSampleBankGUI);
 
     FMidiPatternGUI.ZoomFactorX := 1000;
     FMidiPatternGUI.ZoomFactorY := 1000;
@@ -170,9 +152,6 @@ procedure TMidiPatternControlGUI.Disconnect;
 begin
   if Assigned(FModel) then
   begin
-    FSampleBankGUI.Disconnect;
-    FSampleBank.Detach(FSampleBankGUI);
-
     FMidigridOverview.Disconnect;
     FModel.Detach(FMidigridOverview);
 

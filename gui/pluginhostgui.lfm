@@ -1,30 +1,30 @@
 object PluginProcessorGUI: TPluginProcessorGUI
   Left = 0
-  Height = 455
+  Height = 193
   Top = 0
   Width = 784
-  ClientHeight = 455
+  ClientHeight = 193
   ClientWidth = 784
   TabOrder = 0
   DesignLeft = 258
   DesignTop = 162
   object gbPlugin: TGroupBox
     Left = 0
-    Height = 455
+    Height = 193
     Top = 0
-    Width = 207
+    Width = 119
     Align = alLeft
     Caption = 'Plugin'
     ParentColor = False
     TabOrder = 0
   end
   object pnlPlugin: TPanel
-    Left = 207
-    Height = 455
+    Left = 119
+    Height = 193
     Top = 0
-    Width = 577
+    Width = 665
     Align = alClient
-    Caption = 'pnlPlugin'
+    BevelOuter = bvNone
     ParentColor = False
     TabOrder = 1
     OnDragDrop = pnlPluginDragDrop

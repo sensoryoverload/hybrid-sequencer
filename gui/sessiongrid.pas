@@ -165,7 +165,7 @@ type
 
   { TSessionGrid }
 
-  TSessionGrid = class(TPersistentPanel{TPersistentCustomControl})
+  TSessionGrid = class(TPersistentPanel)
   private
     FBGRABitmap: TBGRABitmap;
     FDragStart: TDragPosition;
@@ -735,6 +735,8 @@ begin
   inherited Create(AOwner);
 
   ControlStyle := ControlStyle + [csAcceptsControls];
+
+  DoubleBuffered := True;
 
   FBGRABitmap := TBGRABitmap.Create(Width, Height);
 

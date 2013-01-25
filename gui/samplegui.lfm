@@ -1,16 +1,15 @@
 object SampleView: TSampleView
   Left = 0
-  Height = 193
+  Height = 143
   Top = 0
   Width = 993
-  Align = alClient
-  ClientHeight = 193
+  ClientHeight = 143
   ClientWidth = 993
-  Constraints.MaxHeight = 193
-  Constraints.MinHeight = 193
+  Constraints.MaxHeight = 143
+  Constraints.MinHeight = 143
   TabOrder = 0
-  DesignLeft = 285
-  DesignTop = 405
+  DesignLeft = 114
+  DesignTop = 348
   object pnlControls: TPanel
     Left = 0
     Height = 140
@@ -68,9 +67,9 @@ object SampleView: TSampleView
         ParentColor = False
       end
       object lblBaseNote: TLabel
-        Left = 107
+        Left = 92
         Height = 14
-        Top = -1
+        Top = -2
         Width = 49
         Caption = 'Base note'
         ParentColor = False
@@ -99,7 +98,7 @@ object SampleView: TSampleView
         ItemIndex = -1
       end
       object lsBaseNote: TListSelect
-        Left = 105
+        Left = 90
         Height = 14
         Top = 13
         Width = 46
@@ -212,14 +211,14 @@ object SampleView: TSampleView
         ItemIndex = -1
       end
       object lsLFO2WaveSelector: TListSelect
-        Left = 39
+        Left = 38
         Height = 14
         Top = 55
         Width = 61
         ItemIndex = -1
       end
       object lsLFO3WaveSelector: TListSelect
-        Left = 39
+        Left = 38
         Height = 14
         Top = 92
         Width = 61
@@ -584,7 +583,6 @@ object SampleView: TSampleView
         SwitchedOn = True
         CaptionOn = 'ON'
         CaptionOff = 'OFF'
-        OnChange = tcFilterSwithChange
         Color = clLime
         Constraints.MaxHeight = 14
         Constraints.MinHeight = 14
@@ -592,14 +590,14 @@ object SampleView: TSampleView
       object lsFilterSelect: TListSelect
         Left = 4
         Height = 14
-        Top = 40
+        Top = 55
         Width = 61
         ItemIndex = -1
       end
       object lsCutoffModSource: TListSelect
         Left = 3
         Height = 14
-        Top = 93
+        Top = 92
         Width = 61
         ItemIndex = -1
       end
@@ -895,14 +893,14 @@ object SampleView: TSampleView
       object lsOsc3WaveSelector: TListSelect
         Left = 4
         Height = 14
-        Top = 93
+        Top = 92
         Width = 61
         ItemIndex = -1
       end
       object lsOsc1ModSource: TListSelect
         Left = 137
         Height = 14
-        Top = 16
+        Top = 13
         Width = 61
         ItemIndex = -1
       end
@@ -914,9 +912,9 @@ object SampleView: TSampleView
         ItemIndex = -1
       end
       object lsOsc3ModSource: TListSelect
-        Left = 135
+        Left = 137
         Height = 14
-        Top = 93
+        Top = 92
         Width = 61
         ItemIndex = -1
       end

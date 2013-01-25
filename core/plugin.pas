@@ -75,7 +75,7 @@ type
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); virtual;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;

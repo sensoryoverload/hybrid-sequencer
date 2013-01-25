@@ -11,8 +11,8 @@ LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   +'ol'#7#11'edtFilename'#28'EditLabel.AnchorSideTop.Side'#7#9'asrCenter!EditLa'
   +'bel.AnchorSideRight.Control'#7#11'edtFilename"EditLabel.AnchorSideBottom.Co'
   +'ntrol'#7#11'edtFilename'#31'EditLabel.AnchorSideBottom.Side'#7#9'asrBottom'
-  +#14'EditLabel.Left'#2#4#16'EditLabel.Height'#2#13#13'EditLabel.Top'#2#6#15'E'
-  +'ditLabel.Width'#2#16#17'EditLabel.Caption'#6#4'file'#21'EditLabel.ParentCol'
+  +#14'EditLabel.Left'#2#3#16'EditLabel.Height'#2#14#13'EditLabel.Top'#2#5#15'E'
+  +'ditLabel.Width'#2#17#17'EditLabel.Caption'#6#4'file'#21'EditLabel.ParentCol'
   +'or'#8#13'LabelPosition'#7#6'lpLeft'#8'TabOrder'#2#0#0#0#14'TToggleControl'
   +#14'ToggleControl1'#4'Left'#3#231#2#6'Height'#2#14#3'Top'#2#6#5'Width'#2'0'
   +#10'SwitchedOn'#8#9'CaptionOn'#6#4'Loop'#10'CaptionOff'#6#4'Loop'#21'Constra'
@@ -40,5 +40,8 @@ LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   +'lue'#5#0#0#0#0#0#0#0#128#255'?'#3'Min'#5#0#0#0#0#0#0#0#128#254'?'#3'Max'#5#0
   +#0#0#0#0#0#0#128#0'@'#7'Caption'#6#5'Pitch'#9'ShowValue'#9#11'Orientation'#7
   +#11'oHorizontal'#4'Size'#2'd'#8'OnChange'#7#13'pcPitchChange'#13'OnStartChan'
-  +'ge'#7#18'pcPitchStartChange'#0#0#0#0
+  +'ge'#7#18'pcPitchStartChange'#0#0#0#10'TScrollBox'#8'sbBottom'#4'Left'#2#0#6
+  +'Height'#3#18#1#3'Top'#2#29#5'Width'#3';'#4#18'HorzScrollBar.Page'#3'9'#4#22
+  +'HorzScrollBar.Tracking'#9#18'VertScrollBar.Page'#3#16#1#5'Align'#7#8'alClie'
+  +'nt'#8'TabOrder'#2#1#0#0#0
 ]);

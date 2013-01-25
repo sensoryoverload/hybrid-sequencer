@@ -28,10 +28,10 @@ object WavePatternControlGUI: TWavePatternControlGUI
       EditLabel.AnchorSideRight.Control = edtFilename
       EditLabel.AnchorSideBottom.Control = edtFilename
       EditLabel.AnchorSideBottom.Side = asrBottom
-      EditLabel.Left = 4
-      EditLabel.Height = 13
-      EditLabel.Top = 6
-      EditLabel.Width = 16
+      EditLabel.Left = 3
+      EditLabel.Height = 14
+      EditLabel.Top = 5
+      EditLabel.Width = 17
       EditLabel.Caption = 'file'
       EditLabel.ParentColor = False
       LabelPosition = lpLeft
@@ -141,5 +141,16 @@ object WavePatternControlGUI: TWavePatternControlGUI
       OnChange = pcPitchChange
       OnStartChange = pcPitchStartChange
     end
+  end
+  object sbBottom: TScrollBox
+    Left = 0
+    Height = 274
+    Top = 29
+    Width = 1083
+    HorzScrollBar.Page = 1081
+    HorzScrollBar.Tracking = True
+    VertScrollBar.Page = 272
+    Align = alClient
+    TabOrder = 1
   end
 end

@@ -157,7 +157,7 @@ type
   public
     MainCounter: Double;
 
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); override;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
@@ -219,7 +219,7 @@ end;
 
 constructor TAudioStructure.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
-  inherited Create(AObjectOwner, AMapped);
+  inherited;// Create(AObjectOwner, AMapped);
 
   FTrack := TTrackList.create(True);
 

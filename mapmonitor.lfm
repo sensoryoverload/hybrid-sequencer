@@ -7,13 +7,13 @@ object fmMappingMonitor: TfmMappingMonitor
   Caption = 'Mapping Monitor'
   ClientHeight = 343
   ClientWidth = 590
-  LCLVersion = '0.9.29'
+  LCLVersion = '1.0.4.0'
   object StringGrid1: TStringGrid
     Left = 5
     Height = 577
     Top = 9
     Width = 889
-    ColCount = 3
+    ColCount = 2
     Columns = <    
       item
         Title.Caption = 'ObjectID'
@@ -21,6 +21,7 @@ object fmMappingMonitor: TfmMappingMonitor
       item
         Title.Caption = 'Model'
       end>
+    FixedCols = 0
     Flat = True
     ScrollBars = ssBoth
     TabOrder = 0

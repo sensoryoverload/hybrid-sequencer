@@ -137,7 +137,6 @@ type
     procedure DoParameterChange(Sender: TObject);
     procedure DoToggleChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
-    procedure tcFilterSwithChange(Sender: TObject);
   private
     { private declarations }
     FObjectOwnerID: string;
@@ -183,7 +182,7 @@ type
     procedure SetCaption(const AValue: string);
 
   public
-    procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure Update(Subject: THybridPersistentModel); override;
     property SampleView: TSampleView read FSampleView write FSampleView;
     property SampleLocation: string read FSampleLocation write FSampleLocation;
   published
@@ -206,7 +205,7 @@ type
     destructor Destroy; override;
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
-    procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure Update(Subject: THybridPersistentModel); override;
     property SampleView: TSampleView read FSampleView write FSampleView;
     property SelectedKey: Integer read FSelectedKey write FSelectedKey;
   published
@@ -292,11 +291,6 @@ begin
   except
     lGenericCommand.Free;
   end;
-end;
-
-procedure TSampleView.tcFilterSwithChange(Sender: TObject);
-begin
-  //
 end;
 
 procedure TSampleView.SetEnableControls(const AValue: Boolean);
@@ -393,6 +387,8 @@ constructor TSampleView.Create(AOwner: TComponent);
 
 begin
   inherited Create(AOwner);
+
+  Height := 143;
 
 {  FKeyboard := TSampleKeyboardControl.Create(Self);
   FKeyboard.OnKeyChange := @DoKeyChange;

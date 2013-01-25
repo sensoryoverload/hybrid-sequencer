@@ -376,28 +376,26 @@ type
     property SampleLocation: string read FSampleLocation write FSampleLocation;
   end;
 
-  TSampleBankEngine = class;
-
   { TSampleBank }
 
-  TSampleBank = class({THybridPersistentModel}TPluginNode)
+  TSampleBank = class(TPluginNode)
   private
     FBankName: string;
     FMidiChannel: Integer; // Needed??
     FSampleList: TObjectList; // type TSampleEngine
+    FSampleEngineList: TObjectList;
     FSelected: Boolean;
     FSelectedSample: TSample;
-    FEngine: TSampleBankEngine;
     procedure AssignBank(Source: TSampleBank);
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
+    procedure RefreshEngine;
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); override;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
     procedure Assign(Source:TPersistent); override;
-    property Engine: TSampleBankEngine read FEngine write FEngine;
     property Selected: Boolean read FSelected write FSelected;
     property SelectedSample: TSample read FSelectedSample write FSelectedSample;
   published
@@ -644,24 +642,6 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 
     property Sample: TSample read FSample write SetSample;
-  end;
-
-  { TSampleBankEngine }
-
-  TSampleBankEngine = class(TBaseEngine)
-  private
-    FSampleBank: TSampleBank;
-    FSampleEngineList: TObjectList;
-
-    procedure SetSampleBank(const AValue: TSampleBank);
-  public
-    constructor Create(AFrames: Integer); override;
-    destructor Destroy; override;
-    procedure Initialize; override;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
-    procedure RefreshEngine;
-
-    property SampleBank: TSampleBank read FSampleBank write SetSampleBank;
   end;
 
 var
@@ -1837,13 +1817,12 @@ begin
   begin
     lSample := TSample.Create(ObjectID, MAPPED);
     lSample.ObjectOwnerID := ObjectID;
-    //lSample.Initialize;
 
     AObject := lSample;
 
     SampleList.Add(lSample);
 
-    Engine.RefreshEngine;
+    RefreshEngine;
   end;
 end;
 
@@ -1852,12 +1831,15 @@ begin
   inherited Create(AObjectOwner, AMapped);
 
   FSampleList := TObjectList.create(False);
+  FSampleEngineList := TObjectList.Create(True);
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 end;
 
 destructor TSampleBank.Destroy;
 begin
+  FSampleEngineList.Free;
+
   if Assigned(FSampleList) then
   begin
     FSampleList.Clear;
@@ -1868,7 +1850,14 @@ begin
 end;
 
 procedure TSampleBank.Initialize;
+var
+  lSampleEngineIndex: Integer;
 begin
+  for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
+  begin
+    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Initialize;
+  end;
+
   Notify;
 end;
 
@@ -1882,12 +1871,12 @@ end;
 }
 procedure TSampleBank.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
-  lSampleIndex: Integer;
+  lSampleEngineIndex: Integer;
 begin
-
-  for lSampleIndex := 0 to Pred(FSampleList.Count) do
+  for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
   begin
-    TSampleEngine(FSampleList[lSampleIndex]).Process(AMidiBuffer, ABuffer, AFrames);
+    // Listens to AMidiPattern midi buffer and mixes samples to ABuffer for a length of
+    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Process(AMidiBuffer, ABuffer, AFrames);
   end;
 
 end;
@@ -1903,6 +1892,59 @@ begin
     inherited Assign(Source);
 end;
 
+
+procedure TSampleBank.RefreshEngine;
+var
+  lSampleEngineIndex: Integer;
+  lSampleIndex: Integer;
+  lSampleEngine: TSampleEngine;
+  lFound: Boolean;
+begin
+  // Destroy running sample engines not in samplebank anymore
+  for lSampleEngineIndex := Pred(FSampleEngineList.Count) downto 0 do
+  begin
+    lFound := False;
+
+    for lSampleIndex := 0 to Pred(FSampleList.Count) do
+    begin
+      if TSample(FSampleList[lSampleIndex]).ObjectID =
+        TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Sample.ObjectID then
+      begin
+        lFound := True;
+        break;
+      end;
+    end;
+
+    if not lFound then
+    begin
+      FSampleEngineList[lSampleEngineIndex].Free;
+    end;
+  end;
+
+  // Now create the sample-engines for new samples
+  for lSampleIndex := 0 to Pred(FSampleList.Count) do
+  begin
+    lFound := False;
+
+    for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
+    begin
+      if TSample(FSampleList[lSampleIndex]).ObjectID =
+        TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Sample.ObjectID then
+      begin
+        lFound := True;
+        break;
+      end;
+    end;
+
+    if not lFound then
+    begin
+      lSampleEngine := TSampleEngine.Create(Frames);
+      lSampleEngine.Sample := TSample(FSampleList[lSampleIndex]);
+
+      FSampleEngineList.Add(lSampleEngine);
+    end;
+  end;
+end;
 
 { TDeleteSampleCommand }
 
@@ -1997,7 +2039,7 @@ begin
 
     FSampleBank.SampleList.Add(lSample);
 
-    FSampleBank.Engine.RefreshEngine;
+    FSampleBank.RefreshEngine;
 
     DBLog('Add sample to samplelist: %s', lSample.ObjectID);
 
@@ -2719,108 +2761,6 @@ end;
 function TSampleVoiceEngine.RunningNote: Integer;
 begin
   Result := FNote;
-end;
-
-{ TSampleBankEngine }
-
-procedure TSampleBankEngine.RefreshEngine;
-var
-  lSampleEngineIndex: Integer;
-  lSampleIndex: Integer;
-  lSampleEngine: TSampleEngine;
-  lFound: Boolean;
-begin
-  // Destroy running sample engines not in samplebank anymore
-  for lSampleEngineIndex := Pred(FSampleEngineList.Count) downto 0 do
-  begin
-    lFound := False;
-
-    for lSampleIndex := 0 to Pred(FSampleBank.SampleList.Count) do
-    begin
-      if TSample(FSampleBank.SampleList[lSampleIndex]).ObjectID =
-        TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Sample.ObjectID then
-      begin
-        lFound := True;
-        break;
-      end;
-    end;
-
-    if not lFound then
-    begin
-      FSampleEngineList[lSampleEngineIndex].Free;
-    end;
-  end;
-
-  // Now create the sample-engines for new samples
-  for lSampleIndex := 0 to Pred(FSampleBank.SampleList.Count) do
-  begin
-    lFound := False;
-
-    for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
-    begin
-      if TSample(FSampleBank.SampleList[lSampleIndex]).ObjectID =
-        TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Sample.ObjectID then
-      begin
-        lFound := True;
-        break;
-      end;
-    end;
-
-    if not lFound then
-    begin
-      lSampleEngine := TSampleEngine.Create(Frames);
-      lSampleEngine.Sample := TSample(FSampleBank.SampleList[lSampleIndex]);
-
-      FSampleEngineList.Add(lSampleEngine);
-    end;
-  end;
-end;
-
-procedure TSampleBankEngine.SetSampleBank(const AValue: TSampleBank);
-begin
-  FSampleBank := AValue;
-
-  FSampleBank.Engine := Self;
-
-  RefreshEngine;
-end;
-
-constructor TSampleBankEngine.Create(AFrames: Integer);
-begin
-  inherited Create(AFrames);
-
-  FSampleEngineList := TObjectList.Create(True);
-end;
-
-destructor TSampleBankEngine.Destroy;
-begin
-  FSampleEngineList.Free;
-
-  inherited Destroy;
-end;
-
-procedure TSampleBankEngine.Initialize;
-var
-  lSampleEngineIndex: Integer;
-begin
-  inherited Initialize;
-
-  for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
-  begin
-    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Initialize;
-  end;
-end;
-
-procedure TSampleBankEngine.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle;
-  AFrames: Integer);
-var
-  lSampleEngineIndex: Integer;
-begin
-  for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
-  begin
-    // Listens to AMidiPattern midi buffer and mixes samples to ABuffer for a length of
-    TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Process(AMidiBuffer, ABuffer, AFrames);
-  end;
 end;
 
 function TSampleVoiceEngine.GetSourceAmountPtr(AModSource: TModSource): PSingle;

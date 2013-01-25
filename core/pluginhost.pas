@@ -58,9 +58,10 @@ type
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
     procedure SortPlugins;
   public
-    constructor Create(AFrames: Integer; AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AFrames: Integer; AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Initialize; override;
+    procedure Finalize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
     procedure InsertNode(ANode: TPluginNode);
     procedure RemoveNode(ANode: TPluginNode);
@@ -245,6 +246,11 @@ begin
   //
 end;
 
+procedure TPluginProcessor.Finalize;
+begin
+  //
+end;
+
 procedure TPluginProcessor.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
 var
   lIndex: Integer;
@@ -365,7 +371,6 @@ var
   lPluginBassline: TPluginBassline;
   lPluginDecimate: TPluginDecimate;
   lSampleBank: TSampleBank;
-  lSampleBankEngine: TSampleBankEngine;
 begin
   DBLog('start TCreateNodesCommand.DoExecute');
 
@@ -387,8 +392,6 @@ begin
       lSampleBank := TSampleBank.Create(FPluginProcessor.ObjectID, MAPPED);
       lSampleBank.PluginName := 'Sampler';
       lSampleBank.PluginType := ptSampler;
-      lSampleBankEngine := TSampleBankEngine.Create(GSettings.Frames);
-      lSampleBankEngine.SampleBank := lSampleBank;
 
       FPluginProcessor.NodeList.Add(lSampleBank);
 

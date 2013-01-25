@@ -1,31 +1,34 @@
-object BankView: TBankView
-  Left = 0
-  Height = 190
-  Top = 0
+inherited BankView: TBankView
+  Height = 232
   Width = 922
   Align = alClient
-  ClientHeight = 190
+  ClientHeight = 232
   ClientWidth = 922
-  Constraints.MaxHeight = 190
-  Constraints.MinHeight = 190
-  TabOrder = 0
   DesignLeft = 233
   DesignTop = 266
-  object gbSampleSelect: TGroupBox
+  inherited pnlControls: TPanel
+    Left = 99
+    Height = 232
+    Width = 823
+    TabOrder = 1
+  end
+  object gbSampleSelect: TGroupBox[1]
     Left = 0
-    Height = 190
+    Height = 232
     Top = 0
-    Width = 91
+    Width = 99
     Align = alLeft
     Caption = 'Samples'
-    ClientHeight = 175
-    ClientWidth = 87
+    ClientHeight = 217
+    ClientWidth = 95
+    Constraints.MaxWidth = 99
+    Constraints.MinWidth = 99
     TabOrder = 0
     object lbSampleSelector: TListBox
       Left = 0
-      Height = 175
+      Height = 217
       Top = 0
-      Width = 87
+      Width = 95
       Align = alClient
       BorderStyle = bsNone
       ItemHeight = 0
@@ -34,12 +37,12 @@ object BankView: TBankView
       OnDragDrop = lbSampleSelectorDragDrop
       OnDragOver = lbSampleSelectorDragOver
       PopupMenu = pmSampleSelect
-      ScrollWidth = 87
+      ScrollWidth = 95
       TabOrder = 0
       TopIndex = -1
     end
   end
-  object pmSampleSelect: TPopupMenu
+  object pmSampleSelect: TPopupMenu[2]
     left = 276
     top = 55
     object miNewSample: TMenuItem
@@ -49,7 +52,7 @@ object BankView: TBankView
       Action = actDeleteSample
     end
   end
-  object alSampleSelect: TActionList
+  object alSampleSelect: TActionList[3]
     left = 369
     top = 55
     object actNewSample: TAction

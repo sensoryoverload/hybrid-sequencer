@@ -16,7 +16,7 @@ type
   private
     FDrive: single;
   public
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); override;
     procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
   published
     property Drive: single read FDrive write FDrive;
@@ -87,7 +87,7 @@ end;
 
 constructor TPluginDistortion.Create(AObjectOwnerID: string; AMapped: Boolean);
 begin
-  Inherited Create(AObjectOwnerID, AMapped);
+  inherited;
 
   FDrive := 1;
 end;

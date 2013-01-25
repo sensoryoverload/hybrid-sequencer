@@ -29,7 +29,7 @@ uses
   ContNrs, transport, FileCtrl, PairSplitter, Utils, ComCtrls, GlobalConst,
   Menus, ActnList, dialcontrol, bpm,
   TypInfo, FileUtil, global_command, LCLType, LCLIntf,
-  ShellCtrls, Grids, TrackGUI, wavegui, global, track, pattern,
+  ShellCtrls, Grids, wavegui, global, track, pattern,
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
   ringbuffer, optionsgui, wavepatterngui, midipatterngui, patterngui, sampler,
@@ -208,8 +208,6 @@ type
 
     procedure CustomExceptionHandler(Sender: TObject; E: Exception);
     procedure UpdateTracks(TrackObject: TTrack);
-
-    function CreateTrack(AFileLocation: string; ATrackType: Integer = 0): TTrackGUI;
 
     function HasSubFolder(const Directory: string): Boolean;
     procedure LoadTreeDirectory;
@@ -623,10 +621,6 @@ begin
               if lPlayingPattern is TMidiPattern then
               begin
                 FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
-                TMidiPattern(lPlayingPattern).SampleBankEngine.Process(
-                  TMidiPattern(lPlayingPattern).MidiBuffer,
-                  lTrack.OutputBuffer,
-                  nframes);
 
                 // Effects chain
                 TMidiPattern(lPlayingPattern).PluginProcessor.Process(
@@ -1075,8 +1069,6 @@ var
 begin
   Application.ProcessMessages;
   try
-    FSimpleWaveForm.Invalidate;
-
     acUndoUpdate(Self);
     acRedoUpdate(Self);
 
@@ -1087,6 +1079,10 @@ begin
       begin
         MainApp.MappingMonitor.UpdateGrid;
       end;
+    end
+    else
+    begin
+      FSimpleWaveForm.Invalidate;
     end;
 
     // Update session grid
@@ -1174,14 +1170,8 @@ begin
   if Assigned(buffer_allocate2) then
     Freemem(buffer_allocate2);
 
-  if Assigned(FSimpleWaveForm) then
-    FSimpleWaveForm.Free;
-
   if Assigned(FSessionGrid) then
     FSessionGrid.Free;
-
-//  if Assigned(FPatternView) then
-//    FPatternView.Free;
 
   if Assigned(FMappingMonitor) then
     FMappingMonitor.Free;
@@ -1197,7 +1187,7 @@ var
 begin
   DBLog('start TMainApp.FormCreate');
 
-  //Application.OnException := @CustomExceptionHandler;
+  Application.OnException := @CustomExceptionHandler;
 
   FNoJackMode := FindCmdLineSwitch('nojack', ['/', '-'], True);
 
@@ -1303,19 +1293,24 @@ begin
 
   Getmem(buffer_allocate2, 200000 * SizeOf(jack_default_audio_sample_t));
 
-  FSimpleWaveForm := TSimpleWaveForm.Create(Self);
-  FSimpleWaveForm.Data := buffer_allocate2;
-  FSimpleWaveForm.Top := 0;
-  FSimpleWaveForm.Left := 0;
-  FSimpleWaveForm.Width := pnlVarious.Width;
-  FSimpleWaveForm.Align := alClient;
-  FSimpleWaveForm.Parent := pnlVarious;
-  
   FMappingMonitor := TfmMappingMonitor.Create(Self);
   FMappingMonitor.Maps := GObjectMapper.Maps;
   if FShowMapping then
   begin
     FMappingMonitor.Show;
+    FMappingMonitor.Width := pnlVarious.Width;
+    FMappingMonitor.Align := alClient;
+    FMappingMonitor.Parent := pnlVarious;
+  end
+  else
+  begin
+    FSimpleWaveForm := TSimpleWaveForm.Create(Self);
+    FSimpleWaveForm.Data := buffer_allocate2;
+    FSimpleWaveForm.Top := 0;
+    FSimpleWaveForm.Left := 0;
+    FSimpleWaveForm.Width := pnlVarious.Width;
+    FSimpleWaveForm.Align := alClient;
+    FSimpleWaveForm.Parent := pnlVarious;
   end;
 
   GAudioStruct.Attach(MainApp);
@@ -1382,10 +1377,6 @@ begin
         lSavePatternDialog.Free;
       end;
     end;
-  end
-  else if Source is TTrackGUI then
-  begin
-    lTrack := TTrackGUI(Source).Track;
   end;
 end;
 
@@ -1393,10 +1384,6 @@ procedure TMainApp.TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 begin
   if Source is TWavePatternGUI then
-  begin
-    Accept := True;
-  end
-  else if Source is TTrackGUI then
   begin
     Accept := True;
   end
@@ -1448,41 +1435,6 @@ begin
       begin
         TTrack(GAudioStruct.Tracks.Items[i]).Selected:= False;
       end;
-    end;
-  end;
-end;
-
-function TMainApp.CreateTrack(AFileLocation: string; ATrackType: Integer = 0): TTrackGUI;
-var
-  lCreateTrack: TCreateTrackCommand;
-begin
-  lCreateTrack := TCreateTrackCommand.Create(GAudioStruct.ObjectID);
-  try
-    case ATrackType of
-      0:
-      begin
-        lCreateTrack.SourceType := fsWave;
-        lCreateTrack.SourceLocation := AFileLocation;
-        lCreateTrack.PatternName := ExtractFileNameWithoutExt(AFileLocation);
-      end;
-      1:
-      begin
-        lCreateTrack.SourceType := fsMIDI;
-        lCreateTrack.SourceLocation := AFileLocation;
-        lCreateTrack.PatternName := ExtractFileNameWithoutExt(AFileLocation);
-      end;
-      2:
-      begin
-        lCreateTrack.SourceType := fsEmpty;
-      end;
-    end;
-
-    GCommandQueue.PushCommand(lCreateTrack);
-  except
-    on e: Exception do
-    begin
-      DBLog('HybridError: ' + e.Message);
-      lCreateTrack.Free;
     end;
   end;
 end;
