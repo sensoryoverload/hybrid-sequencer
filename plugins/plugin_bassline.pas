@@ -39,7 +39,8 @@ type
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   published
     property EnvMod: Single read GetEnvMod write SetEnvMod;
     property Pitch: Single read GetPitch write SetPitch;
@@ -185,7 +186,8 @@ end;
 
 { TPluginBassline }
 
-procedure TPluginBassline.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginBassline.Process(AMidiBuffer: TMidiBuffer;
+  AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
   lOutput: single;
@@ -230,8 +232,8 @@ begin
       FLength := FLength - GAudioStruct.BPMScale;
     end;
     lOutput :=  tanh2(FTB303.Process * FOverDrive);
-    ABuffer[lOffsetL] := lOutput;
-    ABuffer[lOffsetR] := lOutput;
+    AOutputBuffer[lOffsetL] := lOutput;
+    AOutputBuffer[lOffsetR] := lOutput;
     Inc(lOffsetL, 2);
     Inc(lOffsetR, 2);
   end;

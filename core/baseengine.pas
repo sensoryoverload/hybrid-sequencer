@@ -12,17 +12,20 @@ type
 
   TBaseEngine = class
   private
+    FAllowModifier: Boolean;
     FSampleRate: single;
     FFrames: Integer;
     FModifier: PSingle;
     FModAmount: single;
     FInternalModifier: single;
+
   public
     constructor Create(AFrames: Integer); virtual;
     procedure Initialize; virtual;
     procedure ResetModifier;
     property SampleRate: Single read FSampleRate write FSampleRate;
     property Frames: Integer read FFrames write FFrames;
+    property AllowModifier: Boolean read FAllowModifier write FAllowModifier;
     property Modifier: PSingle read FModifier write FModifier;
     property ModAmount: single read FModAmount write FModAmount;
   end;
@@ -38,6 +41,8 @@ begin
   DBLog(Format('Creating class: %s', [Self.ClassName]));
 
   FFrames := AFrames;
+
+  AllowModifier := True;
 
 {  // Descendants initalize samplerate at constructor call
   Initialize;}

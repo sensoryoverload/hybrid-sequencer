@@ -26,7 +26,8 @@ type
   public
     constructor Create(AObjectOwnerID: string);
     function Process(const I : Single):Single;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   published
     property Frequency: single read fF write SetFrequency;
     property SampleRate: single read fFS write SetFS;
@@ -125,13 +126,14 @@ begin
  Result:=fOld;
 end;
 
-procedure TMoogFilter.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TMoogFilter.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+  AOutputBuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
   for i := 0 to Pred(AFrames) do
   begin
-    ABuffer[i] := Process(ABuffer[i]);
+    AOutputBuffer[i] := Process(AInputBuffer[i]);
   end;
 end;
 

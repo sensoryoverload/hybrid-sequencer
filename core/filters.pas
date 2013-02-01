@@ -155,6 +155,7 @@ type
 
     FFrequency: Single;
     FResonance: Single;
+    FInternalFrequency: Single;
     FSmoothCutoff: TParamSmooth;
     b0,b1,b2,b3,b4: single;
     t1,t2,t3: single;
@@ -174,6 +175,7 @@ type
     procedure Initialize; override;
     property Frequency: Single read FFrequency write SetFrequency; // 0..1
     property Resonance: Single read FResonance write SetResonance; // 0..1 ?
+    property InternalFrequency: Single read FInternalFrequency write FInternalFrequency;
   end;
 
   {
@@ -312,6 +314,8 @@ begin
       FTransistorLadderFilter.set_q(lInternalResonance);
     end;
   end;
+
+  FInternalFrequency := lInternalFrequency;
 end;
 
 procedure TDspFilter.Initialize;

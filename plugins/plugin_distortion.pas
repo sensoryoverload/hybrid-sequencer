@@ -17,7 +17,8 @@ type
     FDrive: single;
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); override;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   published
     property Drive: single read FDrive write FDrive;
   end;
@@ -92,14 +93,15 @@ begin
   FDrive := 1;
 end;
 
-procedure TPluginDistortion.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle;
+procedure TPluginDistortion.Process(AMidiBuffer: TMidiBuffer;
+  AInputBuffer: PSingle; AOutputBuffer: PSingle;
   AFrames: Integer);
 var
   lIndex: Integer;
 begin
   for lIndex := 0 to Pred(AFrames * Channels) do
   begin
-    ABuffer[lIndex] := tanh2(ABuffer[lIndex] * FDrive);
+    AOutputBuffer[lIndex] := tanh2(AInputBuffer[lIndex] * FDrive);
   end;
 end;
 

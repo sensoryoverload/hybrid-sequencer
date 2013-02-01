@@ -194,7 +194,6 @@ begin
   begin
     lPluginNodeGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
 
-    lPluginNodeGUI.Disconnect;
     TPluginNode(lPluginNodeGUI.Model).Detach(lPluginNodeGUI);
     FNodeListGUI.Remove(lPluginNodeGUI);
   end;
@@ -238,7 +237,6 @@ begin
 
       FNodeListGUI.Add(lPluginNodeGUI);
       lPluginNode.Attach(lPluginNodeGUI);
-      lPluginNodeGUI.Connect;
     end;
     ptSampler:
     begin
@@ -247,12 +245,12 @@ begin
       lSampleBankGUI.ObjectOwnerID := Self.ObjectID;
       lSampleBankGUI.Model := TSampleBank(lPluginNode);
       lSampleBankGUI.PluginName := lPluginNode.PluginName;
+      lSampleBankGUI.Width := 955;
       lSampleBankGUI.Align := alLeft;
       lSampleBankGUI.Parent := pnlPlugin;
 
       FNodeListGUI.Add(lSampleBankGUI);
       TSampleBank(lPluginNode).Attach(lSampleBankGUI);
-      lSampleBankGUI.Connect;
     end;
     ptDistortion:
     begin
@@ -267,7 +265,6 @@ begin
 
       FNodeListGUI.Add(lPluginDistortionGUI);
       TPluginDistortion(lPluginNode).Attach(lPluginDistortionGUI);
-      lPluginDistortionGUI.Connect;
     end;
     ptReverb:
     begin
@@ -282,7 +279,6 @@ begin
 
       FNodeListGUI.Add(lPluginFreeverbGUI);
       TPluginFreeverb(lPluginNode).Attach(lPluginFreeverbGUI);
-      lPluginFreeverbGUI.Connect;
     end;
     ptBassline:
     begin
@@ -297,7 +293,6 @@ begin
 
       FNodeListGUI.Add(lPluginBasslineGUI);
       TPluginBassline(lPluginNode).Attach(lPluginBasslineGUI);
-      lPluginBasslineGUI.Connect;
     end;
     ptDecimate:
     begin
@@ -312,7 +307,6 @@ begin
 
       FNodeListGUI.Add(lPluginDecimateGUI);
       TPluginDecimate(lPluginNode).Attach(lPluginDecimateGUI);
-      lPluginDecimateGUI.Connect;
     end;
     end;
   end;
@@ -337,7 +331,6 @@ begin
 
       if lSamplerNodeGUI.ObjectID = AObjectID then
       begin
-        lSamplerNodeGUI.Disconnect;
         TPluginNode(lSamplerNodeGUI.Model).Detach(lSamplerNodeGUI);
         FNodeListGUI.Remove(lSamplerNodeGUI);
       end;
@@ -348,7 +341,6 @@ begin
 
       if lPluginNodeGUI.ObjectID = AObjectID then
       begin
-        lPluginNodeGUI.Disconnect;
         TPluginNode(lPluginNodeGUI.Model).Detach(lPluginNodeGUI);
         FNodeListGUI.Remove(lPluginNodeGUI);
       end;

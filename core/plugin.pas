@@ -65,7 +65,8 @@ type
     FParameterList: TObjectList;
     FReturnBuffer: PSingle;
     FMidiBuffer: TMidiBuffer;
-    FBuffer: PSingle;
+    FInputBuffer: PSingle;
+    FOutputBuffer: PSingle;
     FFrames: Integer;
     FNodeType: TPluginNodeType;
     FPluginName: string;
@@ -83,11 +84,12 @@ type
     procedure Activate; virtual;
     procedure Deactivate; virtual;
     procedure Clean; virtual;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); virtual; abstract;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); virtual; abstract;
     procedure Clear;
     property PortList: TObjectList read FPortList write FPortList;
     property NodeType: TPluginNodeType read FNodeType write FNodeType;
-    property Buffer: psingle read FBuffer write FBuffer;
+    property InputBuffer: psingle read FInputBuffer write FInputBuffer;
+    property OutputBuffer: psingle read FOutputBuffer write FOutputBuffer;
   published
     property PluginName: string read FPluginName write FPluginName;
     property PluginType: TPluginType read FPluginType write FPluginType;
@@ -102,7 +104,7 @@ type
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TLADSPANode }
@@ -115,14 +117,16 @@ type
     procedure Clean; override;
     procedure LoadByID(AId: Integer);
     procedure LoadByName(AName: string);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TMementoNode }
 
   TMementoNode = class(TPluginNode)
   public
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
 
   { TInternalNode }
@@ -136,7 +140,8 @@ type
   private
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
 
 implementation
@@ -190,7 +195,8 @@ begin
   // GLadspaPluginFactory.Discover;
 end;
 
-procedure TLADSPANode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TLADSPANode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+  AOutputBuffer: PSingle; AFrames: Integer);
 begin
   //  FLADSPA.Run
 end;
@@ -210,13 +216,15 @@ begin
 
   FFrames := lPluginProcessor.Frames;
   FChannels := 2;
-  FBuffer := GetMem(FFrames * SizeOf(Single) * FChannels);
+  FInputBuffer := GetMem(FFrames * SizeOf(Single) * FChannels);
+  FOutputBuffer := GetMem(FFrames * SizeOf(Single) * FChannels);
 
   FParameterList := TObjectList.Create(False);
 
   for i := 0 to Pred(FFrames * FChannels) do
   begin
-    FBuffer[i] := 0;
+    FInputBuffer[i] := 0;
+    FOutputBuffer[i] := 0;
   end;
 end;
 
@@ -225,7 +233,8 @@ begin
   DBLog('start TPluginNode.Destroy: ' + ClassName);
 
   FParameterList.Free;
-  FreeMem(FBuffer);
+  FreeMem(FInputBuffer);
+  FreeMem(FOutputBuffer);
 
   inherited Destroy;
 
@@ -275,7 +284,7 @@ var
 begin
   for i := 0 to Pred(FFrames) do
   begin
-    FBuffer[i] := 0;
+    FInputBuffer[i] := 0;
   end;
 end;
 
@@ -286,14 +295,16 @@ begin
   //
 end;
 
-procedure TExternalNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TExternalNode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+  AOutputBuffer: PSingle; AFrames: Integer);
 begin
   //
 end;
 
 { TMementoNode }
 
-procedure TMementoNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TMementoNode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+  AOutputBuffer: PSingle; AFrames: Integer);
 begin
   // Virtual base method
 end;
@@ -312,8 +323,8 @@ begin
   inherited Destroy;
 end;
 
-procedure TScriptNode.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle;
-  AFrames: Integer);
+procedure TScriptNode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+  AOutputBuffer: PSingle; AFrames: Integer);
 begin
   //
 end;

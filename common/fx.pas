@@ -92,7 +92,8 @@ type
   TDummyFilter = class(TInternalNode)
   public
     constructor Create(AObjectOwnerID: string);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
 
   TLFOType = (lfoTriangle, lfoSine);
@@ -404,13 +405,14 @@ begin
   Inherited Create(AObjectOwnerID);
 end;
 
-procedure TDummyFilter.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TDummyFilter.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+  AOutputBuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
   for i := 0 to Pred(AFrames) do
   begin
-    ABuffer[i] := ABuffer[i];
+    AOutputBuffer[i] := AInputBuffer[i];
   end;
 end;
 

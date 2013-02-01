@@ -29,6 +29,13 @@ uses
   ExtCtrls, typinfo, variants, DOM, XMLWrite, XMLRead;
 
 const
+  MONO = 1;
+  STEREO = 2;
+  THREE_CHANNEL = 3;
+  FOUR_CHANNEL = 4;
+  FIVE_CHANNEL = 5;
+  SIX_CHANNEL = 6;
+
   MAX_LATENCY = 20000;
   DECIMATED_CACHE_DISTANCE = 64;
 
@@ -834,7 +841,9 @@ procedure TWaveData.LoadData(ASource: PJack_default_audio_sample_t;
   ASize: Integer);
 begin
   if Assigned(FData) then
+  begin
     Freemem(FData);
+  end;
 
   FData := Getmem(Frames * FrameSize * Channels);
 end;
@@ -899,6 +908,7 @@ begin
   AObserver.Model := Self;
   AObserver.ObjectID := Self.ObjectID;
   AObserver.ObjectOwnerID := Self.ObjectOwnerID;
+  AObserver.Connect;
 
   Notify;
 
@@ -925,10 +935,9 @@ procedure THybridPersistentModel.Detach(AObserver: IObserver);
 begin
   DBLog(Format('start %s.Detach', [Self.ClassName]));
 
-  { not sure if this would break existing code, it shouldn't.. }
-  //AObserver.Disconnect;
+  AObserver.Disconnect;
   AObserver.ObjectID := '';
-  AObserver.ObjectOwnerID := '';{}
+  AObserver.ObjectOwnerID := '';
 
   FObservers.Remove(AObserver);
 
@@ -953,8 +962,6 @@ begin
       begin
         if FObservers[i] is IObserver then
         begin
-          DBLog(Format('Calling Update method of %s',
-            [GObjectMapper.GetModelObject((FObservers[i] as IObserver).ObjectID).ClassType]));
           (FObservers[i] as IObserver).Update(Self);
         end;
       end;
@@ -1181,8 +1188,6 @@ begin
               lPropXMLNode := AXMLNode.OwnerDocument.CreateElement(PropName);
               TDOMElement(lPropXMLNode).SetAttribute('DataType', THybridPersistentModel(lObjectList[j]).ClassName);
               TDOMElement(lPropXMLNode).SetAttribute('Kind', 'Iterate');
-              {TDOMElement(lPropXMLNode).SetAttribute('ObjectOwnerID', THybridPersistentModel(lObjectList[j]).ObjectOwnerID);
-              TDOMElement(lPropXMLNode).SetAttribute('ObjectID', THybridPersistentModel(lObjectList[j]).ObjectID);}
 
               THybridPersistentModel(lObjectList[j]).SaveToXML(pVisitor, ALevel, lPropXMLNode);
               AXMLNode.Appendchild(lPropXMLNode);
@@ -1194,8 +1199,6 @@ begin
           lPropXMLNode := AXMLNode.OwnerDocument.CreateElement(PropName);
           TDOMElement(lPropXMLNode).SetAttribute('DataType', THybridPersistentModel(lVisited).ClassName);
           TDOMElement(lPropXMLNode).SetAttribute('Kind', 'Recurse');
-          {TDOMElement(lPropXMLNode).SetAttribute('ObjectOwnerID', THybridPersistentModel(lVisited).ObjectOwnerID);
-          TDOMElement(lPropXMLNode).SetAttribute('ObjectID', THybridPersistentModel(lVisited).ObjectID);}
 
           THybridPersistentModel(lVisited).SaveToXML(pVisitor, ALevel, lPropXMLNode);
           AXMLNode.Appendchild(lPropXMLNode);
@@ -1316,10 +1319,10 @@ end;
 
 destructor THybridPersistentView.Destroy;
 begin
-  {if Assigned(FModel) then
+  if Assigned(FModel) then
   begin
     FModel.Detach(Self);
-  end;}
+  end;
 
   inherited Destroy;
 end;
@@ -1552,7 +1555,6 @@ procedure TSampleMarkerGUI.Update(Subject: THybridPersistentModel);
 begin
   Self.Location := TSampleMarker(Subject).Value;
 end;
-
 
 end.
 

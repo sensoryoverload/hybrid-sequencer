@@ -911,13 +911,14 @@ begin
       ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset
       );
 
+    { note value debug code
     if FZoomNoteHeight > 8 then
     begin
       FBitmap.Canvas.TextOut(
         ConvertTimeToScreen(lNote.NoteLocation) + FLocationOffset,
         ConvertNoteToScreen(lNote.Note) + FNoteOffset,
         Format('%d, %d', [lNote.Note, lNote.NoteLocation]));
-    end;
+    end; }
   end;
 
   // Draw keyboard

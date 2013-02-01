@@ -626,6 +626,7 @@ begin
                 TMidiPattern(lPlayingPattern).PluginProcessor.Process(
                   TMidiPattern(lPlayingPattern).MidiBuffer,
                   lTrack.OutputBuffer,
+                  lTrack.OutputBuffer,
                   nframes);
               end
               else
@@ -633,6 +634,7 @@ begin
                 // Effects chain
                 TWavePattern(lPlayingPattern).PluginProcessor.Process(
                   nil,
+                  lTrack.OutputBuffer,
                   lTrack.OutputBuffer,
                   nframes);
               end;

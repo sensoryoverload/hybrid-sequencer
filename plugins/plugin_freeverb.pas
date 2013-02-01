@@ -32,7 +32,8 @@ type
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     destructor Destroy; override;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+        AOutputBuffer: PSingle; AFrames: Integer); override;
   published
     property RoomSize: Single read GetRoomSize write SetRoomSize;
     property Damp: Single read GetDamp write SetDamp;
@@ -165,9 +166,10 @@ end;
 
 { TPluginFreeverb }
 
-procedure TPluginFreeverb.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginFreeverb.Process(AMidiBuffer: TMidiBuffer;
+  AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer);
 begin
-  FReverb.process(ABuffer, ABuffer, AFrames);
+  FReverb.process(AInputBuffer, AOutputBuffer, AFrames);
 end;
 
 function TPluginFreeverb.GetDamp: Single;

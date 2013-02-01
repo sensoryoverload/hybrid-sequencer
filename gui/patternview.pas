@@ -43,6 +43,8 @@ type
     pcEditor: TPageControl;
     tsEffects: TTabSheet;
     tsPattern: TTabSheet;
+    procedure pcEditorDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
   private
     FObjectOwnerID: string;
     FObjectID: string;
@@ -137,11 +139,9 @@ begin
         lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
         if Assigned(lWavePattern) then
         begin
-          FWavePatternControlGUI.Disconnect;
           lWavePattern.Detach(FWavePatternControlGUI);
           FWavePatternControlGUI.Parent := nil;
 
-          FPluginProcessorGUI.Disconnect;
           lWavePattern.PluginProcessor.Detach(FPluginProcessorGUI);
         end;
       end
@@ -150,11 +150,9 @@ begin
         lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
         if Assigned(lMidiPattern) then
         begin
-          FMidiPatternControlGUI.Disconnect;
           lMidiPattern.Detach(FMidiPatternControlGUI);
           FMidiPatternControlGUI.Parent := nil;
 
-          FPluginProcessorGUI.Disconnect;
           lMidiPattern.PluginProcessor.Detach(FPluginProcessorGUI);
         end;
       end;
@@ -177,11 +175,9 @@ begin
           lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
           if Assigned(lMidiPattern) then
           begin
-            FMidiPatternControlGUI.Disconnect;
             lMidiPattern.Detach(FMidiPatternControlGUI);
             FMidiPatternControlGUI.Parent := nil;
 
-            FPluginProcessorGUI.Disconnect;
             lMidiPattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
@@ -190,11 +186,9 @@ begin
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
-            FWavePatternControlGUI.Connect;
             FWavePatternControlGUI.Parent := tsPattern;
 
             lWavePattern.PluginProcessor.Attach(FPluginProcessorGUI);
-            FPluginProcessorGUI.Connect;
           end;
         end
         else if GSettings.OldSelectedPattern is TWavePattern then
@@ -203,10 +197,7 @@ begin
           lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
           if Assigned(lWavePattern) then
           begin
-            FWavePatternControlGUI.Disconnect;
             lWavePattern.Detach(FWavePatternControlGUI);
-
-            FPluginProcessorGUI.Disconnect;
             lWavePattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
@@ -215,10 +206,7 @@ begin
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
-            FWavePatternControlGUI.Connect;
-
             lWavePattern.PluginProcessor.Attach(FPluginProcessorGUI);
-            FPluginProcessorGUI.Connect;
           end;
         end
         else
@@ -240,11 +228,8 @@ begin
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
-            FWavePatternControlGUI.Connect;
             FWavePatternControlGUI.Parent := tsPattern;
-
             lWavePattern.PluginProcessor.Attach(FPluginProcessorGUI);
-            FPluginProcessorGUI.Connect;
           end;
         end
         else
@@ -272,11 +257,9 @@ begin
           lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
           if Assigned(lWavePattern) then
           begin
-            FWavePatternControlGUI.Disconnect;
             lWavePattern.Detach(FWavePatternControlGUI);
             FWavePatternControlGUI.Parent := nil;
 
-            FPluginProcessorGUI.Disconnect;
             lWavePattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
@@ -284,11 +267,8 @@ begin
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
-            FMidiPatternControlGUI.Connect;
             FMidiPatternControlGUI.Parent := tsPattern;
-
             lMidiPattern.PluginProcessor.Attach(FPluginProcessorGUI);
-            FPluginProcessorGUI.Connect;
           end;
 
           tsPattern.TabVisible := True;
@@ -300,11 +280,9 @@ begin
           lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
           if Assigned(lMidiPattern) then
           begin
-            FMidiPatternControlGUI.Disconnect;
             lMidiPattern.Detach(FMidiPatternControlGUI);
             FMidiPatternControlGUI.Parent := nil;
 
-            FPluginProcessorGUI.Disconnect;
             lMidiPattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
@@ -312,11 +290,8 @@ begin
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
-            FMidiPatternControlGUI.Connect;
             FMidiPatternControlGUI.Parent := tsPattern;
-
             lMidiPattern.PluginProcessor.Attach(FPluginProcessorGUI);
-            FPluginProcessorGUI.Connect;
           end;
         end
         else
@@ -334,11 +309,8 @@ begin
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
-            FMidiPatternControlGUI.Connect;
             FMidiPatternControlGUI.Parent := tsPattern;
-
             lMidiPattern.PluginProcessor.Attach(FPluginProcessorGUI);
-            FPluginProcessorGUI.Connect;
           end;
 
           tsPattern.TabVisible := True;
@@ -475,6 +447,21 @@ end;
 procedure TPatternView.SetObjectOwnerID(const AObjectOwnerID: string);
 begin
   FObjectOwnerID := AObjectOwnerID;
+end;
+
+procedure TPatternView.pcEditorDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+var
+  lTabIndex: Integer;
+begin
+  if Sender Is TPageControl then
+  begin
+    lTabIndex := TPageControl(Sender).IndexOfTabAt(X, Y);
+    if lTabIndex >= 0 then
+    begin
+      TPageControl(Sender).ActivePageIndex := lTabIndex;
+    end;
+  end;
 end;
 
 procedure TPatternView.CreateTrackGUI(AObjectID: string);

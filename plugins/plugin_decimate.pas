@@ -27,7 +27,8 @@ type
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
     function Decimate(i: single): single;
     procedure Init(ABits: integer; ASampleRate: single);
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer); override;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer); override;
   published
     property Bits: Integer read FBits write SetBits;
     property SampleRate: Single read FSampleRate write SetSampleRate;
@@ -129,13 +130,14 @@ begin
   FSampleRate:= ASampleRate;
 end;
 
-procedure TPluginDecimate.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginDecimate.Process(AMidiBuffer: TMidiBuffer;
+  AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer);
 var
   i: Integer;
 begin
   for i := 0 to Pred(AFrames) do
   begin
-    ABuffer[i] := Decimate(ABuffer[i]);
+    AOutputBuffer[i] := Decimate(AInputBuffer[i]);
   end;
 end;
 

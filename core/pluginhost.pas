@@ -62,7 +62,8 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
-    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+      AOutputBuffer: PSingle; AFrames: Integer);
     procedure InsertNode(ANode: TPluginNode);
     procedure RemoveNode(ANode: TPluginNode);
     property Buffer: PSingle read FBuffer write FBuffer;
@@ -251,26 +252,42 @@ begin
   //
 end;
 
-procedure TPluginProcessor.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrames: Integer);
+procedure TPluginProcessor.Process(AMidiBuffer: TMidiBuffer;
+  AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer);
 var
   lIndex: Integer;
+  lPreviousOutputBuffer: PSingle;
 begin
   if FNodeList.Count > 0 then
   begin
     // Push audio into pluginchain
-    Move(ABuffer^, TPluginNode(FNodeList.First).Buffer^, AFrames * sizeof(single) * FChannels);
+    //Move(AInputBuffer^, TPluginNode(FNodeList.First).InputBuffer^, AFrames * sizeof(single) * FChannels);
 
     // Process the complete chain
     for lIndex := 0 to Pred(FNodeList.Count) do
     begin
-      TPluginNode(FNodeList[lIndex]).Process(
-        AMidiBuffer,
-        TPluginNode(FNodeList[lIndex]).Buffer,
-        AFrames);
+      if lIndex = 0 then
+      begin
+        TPluginNode(FNodeList[lIndex]).Process(
+          AMidiBuffer,
+          AInputBuffer,
+          TPluginNode(FNodeList[lIndex]).OutputBuffer,
+          AFrames);
+      end
+      else
+      begin
+        TPluginNode(FNodeList[lIndex]).Process(
+          AMidiBuffer,
+          lPreviousOutputBuffer,
+          TPluginNode(FNodeList[lIndex]).OutputBuffer,
+          AFrames);
+      end;
+
+      lPreviousOutputBuffer := TPluginNode(FNodeList[lIndex]).OutputBuffer;
     end;
 
     // Pull audio from pluginchain
-    Move(TPluginNode(FNodeList.Last).Buffer^, ABuffer^, AFrames * sizeof(single) * FChannels);
+    Move(TPluginNode(FNodeList.Last).OutputBuffer^, AOutputBuffer^, AFrames * sizeof(single) * FChannels);
   end;
 end;
 
@@ -382,6 +399,7 @@ begin
       lPluginDistortion := TPluginDistortion.Create(FPluginProcessor.ObjectID, MAPPED);
       lPluginDistortion.PluginName := FPluginName;
       lPluginDistortion.PluginType := ptDistortion;
+      lPluginDistortion.SequenceNr := FPluginProcessor.NodeList.Count;
 
       FPluginProcessor.NodeList.Add(lPluginDistortion);
 
@@ -392,6 +410,7 @@ begin
       lSampleBank := TSampleBank.Create(FPluginProcessor.ObjectID, MAPPED);
       lSampleBank.PluginName := 'Sampler';
       lSampleBank.PluginType := ptSampler;
+      lSampleBank.SequenceNr := FPluginProcessor.NodeList.Count;
 
       FPluginProcessor.NodeList.Add(lSampleBank);
 
@@ -402,6 +421,7 @@ begin
       lPluginFreeverb := TPluginFreeverb.Create(FPluginProcessor.ObjectID, MAPPED);
       lPluginFreeverb.PluginName := FPluginName;
       lPluginFreeverb.PluginType := ptReverb;
+      lPluginFreeverb.SequenceNr := FPluginProcessor.NodeList.Count;
 
       FPluginProcessor.NodeList.Add(lPluginFreeverb);
 
@@ -412,6 +432,7 @@ begin
       lPluginBassline := TPluginBassline.Create(FPluginProcessor.ObjectID, MAPPED);
       lPluginBassline.PluginName := FPluginName;
       lPluginBassline.PluginType := ptBassline;
+      lPluginBassline.SequenceNr := FPluginProcessor.NodeList.Count;
 
       FPluginProcessor.NodeList.Add(lPluginBassline);
 
@@ -422,6 +443,7 @@ begin
       lPluginDecimate := TPluginDecimate.Create(FPluginProcessor.ObjectID, MAPPED);
       lPluginDecimate.PluginName := FPluginName;
       lPluginDecimate.PluginType := ptDecimate;
+      lPluginDecimate.SequenceNr := FPluginProcessor.NodeList.Count;
 
       FPluginProcessor.NodeList.Add(lPluginDecimate);
 

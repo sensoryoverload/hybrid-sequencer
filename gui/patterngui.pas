@@ -60,8 +60,6 @@ type
     procedure RecalculateSynchronize;
     procedure Connect; override;
     procedure Disconnect; override;
-    {function GetModel: THybridPersistentModel; reintroduce; override;
-    procedure SetModel(AModel: THybridPersistentModel); reintroduce; override;}
 
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property Position: Integer read FPosition write SetPosition;
@@ -112,8 +110,6 @@ begin
   RecalculateSynchronize;
 
   FOkToPlay := False;
-
-  {ChangeControlStyle(Self, [csDisplayDragImage], [], True);}
 end;
 
 destructor TPatternGUI.Destroy;
@@ -145,8 +141,6 @@ procedure TPatternGUI.Connect;
 begin
   DBLog('start TPatternGUI.Connect');
 
-  //Pattern.Attach(Self);
-
   DBLog('end TPatternGUI.Connect');
 end;
 
@@ -154,20 +148,8 @@ procedure TPatternGUI.Disconnect;
 begin
   DBLog('start TPatternGUI.Disconnect');
 
-  //Pattern.Detach(Self);
-
   DBLog('end TPatternGUI.Disconnect');
 end;
-
-{function TPatternGUI.GetModel: THybridPersistentModel;
-begin
-  Result := THybridPersistentModel(FModel);
-end;
-
-procedure TPatternGUI.SetModel(AModel: THybridPersistentModel);
-begin
-  FModel := TPattern(AModel);
-end;}
 
 initialization
   RegisterClass(TPatternGUI);

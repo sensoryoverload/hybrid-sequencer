@@ -100,6 +100,7 @@ type
     lblLFO1: TLabel;
     lblLFO2: TLabel;
     lblLFO3: TLabel;
+    lblFilterSelect: TLabel;
     lblPitch: TLabel;
     lblAmp: TLabel;
     lblFilter: TLabel;

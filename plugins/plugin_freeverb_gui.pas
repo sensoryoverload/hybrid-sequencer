@@ -100,13 +100,13 @@ constructor TPluginFreeverbGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FRoomSize := SetupParameterControls(10, 60, 'roomsize', 0, 1, initialroom, rpRoomSize);
-  FDamp := SetupParameterControls(10, 80, 'damp', 0, 1, initialdamp, rpDamp);
-  FWidth := SetupParameterControls(10, 100, 'width', 0, 1, initialwidth, rpWidth);
-  FMode := SetupParameterControls(10, 120, 'mode', 0, 1, initialmode, rpMode);
-  FDry := SetupParameterControls(10, 140, 'dry', 0, 1, initialdry, rpDry);
-  FWet := SetupParameterControls(10, 160, 'wet', 0, 1, initialwet, rpWet);
-  FPreDelay := SetupParameterControls(10, 180, 'pre-delay', 0, GSettings.SampleRate / 2, 0, rpPreDelay);
+  FRoomSize := SetupParameterControls(10, 10, 'roomsize', 0, 1, initialroom, rpRoomSize);
+  FDamp := SetupParameterControls(10, 30, 'damp', 0, 1, initialdamp, rpDamp);
+  FWidth := SetupParameterControls(10, 50, 'width', 0, 1, initialwidth, rpWidth);
+  FMode := SetupParameterControls(10, 70, 'mode', 0, 1, initialmode, rpMode);
+  FDry := SetupParameterControls(10, 90, 'dry', 0, 1, initialdry, rpDry);
+  FWet := SetupParameterControls(10, 110, 'wet', 0, 1, initialwet, rpWet);
+  FPreDelay := SetupParameterControls(10, 130, 'pre-delay', 0, GSettings.SampleRate / 2, 0, rpPreDelay);
 end;
 
 procedure TPluginFreeverbGUI.Update(Subject: THybridPersistentModel);

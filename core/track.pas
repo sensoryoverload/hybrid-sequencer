@@ -481,7 +481,7 @@ begin
 
   if Active then
   begin
-    FPluginProcessor.Process(nil, ABuffer, AFrameCount);
+    FPluginProcessor.Process(nil, ABuffer, ABuffer, AFrameCount);
 
     for i := 0 to Pred(AFrameCount) do
     begin
