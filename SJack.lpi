@@ -254,7 +254,7 @@
         <EditorIndex Value="40"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="1" Y="1"/>
+        <CursorPos X="15" Y="20"/>
         <UsageCount Value="212"/>
         <Bookmarks Count="1">
           <Item0 X="3" Y="62" ID="7"/>
@@ -279,15 +279,15 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="51"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2370"/>
-        <CursorPos X="1" Y="2394"/>
+        <TopLine Value="2376"/>
+        <CursorPos X="1" Y="2433"/>
         <UsageCount Value="212"/>
         <Bookmarks Count="5">
-          <Item0 X="1" Y="579" ID="3"/>
-          <Item1 X="29" Y="2806" ID="5"/>
-          <Item2 X="1" Y="2365" ID="6"/>
-          <Item3 X="3" Y="2273" ID="2"/>
-          <Item4 X="3" Y="2304" ID="1"/>
+          <Item0 X="41" Y="2796" ID="5"/>
+          <Item1 X="1" Y="2386" ID="6"/>
+          <Item2 X="30" Y="2748" ID="3"/>
+          <Item3 X="1" Y="2599" ID="2"/>
+          <Item4 X="22" Y="1803" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit20>
@@ -974,7 +974,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="4766"/>
         <CursorPos X="3" Y="4771"/>
-        <UsageCount Value="74"/>
+        <UsageCount Value="75"/>
         <Loaded Value="True"/>
       </Unit87>
       <Unit88>
@@ -1163,7 +1163,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="8661"/>
         <CursorPos X="29" Y="8677"/>
-        <UsageCount Value="77"/>
+        <UsageCount Value="78"/>
         <Loaded Value="True"/>
       </Unit105>
       <Unit106>
@@ -1173,7 +1173,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="2191"/>
         <CursorPos X="15" Y="2206"/>
-        <UsageCount Value="74"/>
+        <UsageCount Value="75"/>
         <Loaded Value="True"/>
       </Unit106>
       <Unit107>
@@ -1212,7 +1212,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="70"/>
         <CursorPos X="3" Y="79"/>
-        <UsageCount Value="61"/>
+        <UsageCount Value="62"/>
         <Loaded Value="True"/>
       </Unit111>
       <Unit112>
@@ -1226,123 +1226,123 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2479" Column="14" TopLine="2456"/>
+        <Caret Line="2573" Column="16" TopLine="2536"/>
       </Position1>
       <Position2>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2500" Column="14" TopLine="2477"/>
+        <Caret Line="2753" Column="30" TopLine="2722"/>
       </Position2>
       <Position3>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2530" Column="16" TopLine="2507"/>
+        <Caret Line="2441" Column="18" TopLine="2420"/>
       </Position3>
       <Position4>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2531" Column="16" TopLine="2508"/>
+        <Caret Line="2579" Column="1" TopLine="2557"/>
       </Position4>
       <Position5>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2532" Column="16" TopLine="2509"/>
+        <Caret Line="2637" Column="66" TopLine="2636"/>
       </Position5>
       <Position6>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2604" Column="20" TopLine="2582"/>
+        <Caret Line="2434" Column="1" TopLine="2413"/>
       </Position6>
       <Position7>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2759" Column="14" TopLine="2737"/>
+        <Caret Line="2802" Column="1" TopLine="2802"/>
       </Position7>
       <Position8>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2798" Column="29" TopLine="2783"/>
+        <Caret Line="2455" Column="19" TopLine="2365"/>
       </Position8>
       <Position9>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="578" Column="16" TopLine="565"/>
+        <Caret Line="2420" Column="1" TopLine="2388"/>
       </Position9>
       <Position10>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="2419" Column="1" TopLine="2400"/>
       </Position10>
       <Position11>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="578" Column="16" TopLine="555"/>
+        <Caret Line="2418" Column="1" TopLine="2411"/>
       </Position11>
       <Position12>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="624" Column="1" TopLine="601"/>
+        <Caret Line="2599" Column="17" TopLine="2595"/>
       </Position12>
       <Position13>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="641" Column="1" TopLine="618"/>
+        <Caret Line="2587" Column="11" TopLine="2564"/>
       </Position13>
       <Position14>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2267" Column="1" TopLine="2246"/>
+        <Caret Line="2599" Column="17" TopLine="2564"/>
       </Position14>
       <Position15>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2278" Column="1" TopLine="2255"/>
+        <Caret Line="592" Column="1" TopLine="585"/>
       </Position15>
       <Position16>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2284" Column="1" TopLine="2265"/>
+        <Caret Line="1785" Column="28" TopLine="1784"/>
       </Position16>
       <Position17>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2357" Column="17" TopLine="2333"/>
+        <Caret Line="335" Column="24" TopLine="313"/>
       </Position17>
       <Position18>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2361" Column="1" TopLine="2339"/>
+        <Caret Line="338" Column="27" TopLine="313"/>
       </Position18>
       <Position19>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2472" Column="1" TopLine="2456"/>
+        <Caret Line="1785" Column="28" TopLine="1748"/>
       </Position19>
       <Position20>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2532" Column="1" TopLine="2513"/>
+        <Caret Line="1787" Column="34" TopLine="1765"/>
       </Position20>
       <Position21>
         <Filename Value="core/sampler.pas"/>
-        <Caret Line="2401" Column="1" TopLine="2376"/>
+        <Caret Line="1791" Column="46" TopLine="1765"/>
       </Position21>
       <Position22>
-        <Filename Value="core/plugin.pas"/>
-        <Caret Line="20" Column="20" TopLine="1"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1804" Column="32" TopLine="1767"/>
       </Position22>
       <Position23>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="663" Column="44" TopLine="649"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1807" Column="31" TopLine="1770"/>
       </Position23>
       <Position24>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="252" Column="19" TopLine="238"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1811" Column="23" TopLine="1774"/>
       </Position24>
       <Position25>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="663" Column="44" TopLine="641"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2039" Column="20" TopLine="2002"/>
       </Position25>
       <Position26>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="1172" Column="31" TopLine="1150"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1803" Column="22" TopLine="1787"/>
       </Position26>
       <Position27>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="1173" Column="29" TopLine="1151"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2594" Column="1" TopLine="2574"/>
       </Position27>
       <Position28>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="1296" Column="26" TopLine="1274"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1807" Column="23" TopLine="1781"/>
       </Position28>
       <Position29>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="1313" Column="45" TopLine="1297"/>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position29>
       <Position30>
-        <Filename Value="core/sampler.pas"/>
-        <Caret Line="2384" Column="1" TopLine="2400"/>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="20" Column="15" TopLine="1"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">

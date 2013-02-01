@@ -320,6 +320,8 @@ type
 
     { Internal variables}
     FWave: TWaveFile;
+    FHasSample: Boolean;
+
 
     FSampleName: string;
 
@@ -338,6 +340,7 @@ type
     procedure UnloadSample;
     property WaveData: pjack_default_audio_sample_t read FWaveData write FWaveData;
     property Wave: TWaveFile read FWave write FWave;
+    property HasSample: Boolean read FHasSample write FHasSample;
     property GlobalLevelInternal: Single read FGlobalLevelInternal;
   published
     property SampleStart: Integer read FSampleStart write FSampleStart;
@@ -601,7 +604,7 @@ type
     constructor Create(AFrames: Integer); override;
     destructor Destroy; override;
     procedure Initialize; override;
-    procedure Process(AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer);
+    procedure Process(AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrameIndex: Integer);
     procedure NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single; AVelocity: Single);
     procedure NoteOff;
 
@@ -616,6 +619,7 @@ type
     property LFO1Engine: TOscillatorEngine read FLFO1Engine write FLFO1Engine;
     property LFO2Engine: TOscillatorEngine read FLFO2Engine write FLFO2Engine;
     property LFO3Engine: TOscillatorEngine read FLFO3Engine write FLFO3Engine;
+    property NoteOnOffset: Integer read FNoteOnOffset write FNoteOnOffset;
   published
     property Sample: TSample read FSample write SetSample;
   end;
@@ -1796,6 +1800,23 @@ begin
     raise;
   end;
 
+  FHasSample := True;
+
+  if Assigned(FWave) then
+  begin
+    if Assigned(FWave.ChannelList) then
+    begin
+      if FWave.ChannelCount > 0 then
+      begin
+        // Hmm still in MONO (TODO)
+        if Assigned(TChannel(FWave.ChannelList[0])) then
+        begin
+          FHasSample := True;
+        end;
+      end;
+    end;
+  end;
+
   FPitchScaleFactor := 1 / FWave.ChannelCount;
 
   DBLog(Format('FWave.ChannelList.Count %d', [FWave.ChannelList.Count]));
@@ -2407,33 +2428,51 @@ begin
     end;
   end;
 
-  // LFO1 and LFO2 should in sync across all voices so just synchronize
-  // with the main lfo's
-  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-  begin
-    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-    lVoice.LFO1Engine.Phase := FLFO1Engine.Phase;
-    lVoice.LFO2Engine.Phase := FLFO2Engine.Phase;
-  end;
-
-
-  // Process global lfo's
-  for lIndex := 0 to Pred(AFrames) do
-  begin
-    FLFO1Engine.Process;
-    FLFO2Engine.Process;
-  end;
-
-  // Play all assigned voices
-  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-  begin
-    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-    if not lVoice.Idle then
+  try
+    // Play all assigned voices
+    for lIndex := 0 to Pred(AFrames) do
     begin
-      lVoice.Process(AInputBuffer, AOutputBuffer, AFrames);
+      FLFO1Engine.Process;
+      FLFO2Engine.Process;
+
+      for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+      begin
+        lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+
+        if not lVoice.Idle then
+        begin
+          if lIndex >= lVoice.NoteOnOffset then
+          begin
+            lVoice.Process(AInputBuffer, AOutputBuffer, lIndex);
+          end
+          else
+          begin
+            AOutputBuffer[lIndex] := 0;
+          end;
+        end;
+      end;
     end;
+  except
+    on e: exception do
+    begin
+      // Most likely the filters excepted so just reset them
+      for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+      begin
+        lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+        lVoice.FilterEngine.Initialize;
+        lVoice.FilterEngine.Calc;
+      end;
+
+      // Do nothing and let the engine run on
+      GLogger.PushMessage('Sampler exception: ' + e.Message);
+    end;
+  end;
+
+  // Reset NoteOffsets to 0
+  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+  begin
+    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+    lVoice.NoteOnOffset := 0;
   end;
 
   // Mix all voices into buffer
@@ -2553,176 +2592,127 @@ begin
   FStopVoice := False;
 end;
 
-procedure TSampleVoiceEngine.Process(AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer);
+procedure TSampleVoiceEngine.Process(AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrameIndex: Integer);
 var
-  i: Integer;
   lSample, lSampleA, lSampleB, lSampleC: single;
-  lChannel: TChannel;
-  lHasSample: Boolean;
 begin
-  try
-    lHasSample := False;
+  if FLength <= 0 then
+  begin
+    NoteOff;
+  end;
 
-    if Assigned(FSample.Wave) then
+  // ADSR Amplifier
+  FAmpEnvelopeEngine.Process;
+
+  if FAmpEnvelopeEngine.State = esEnd then
+  begin
+    FRunning := False;
+  end
+  else
+  begin
+    // ADSR
+    FPitchEnvelopeEngine.Process;
+    FFilterEnvelopeEngine.Process;
+
+    // independant running voice LFO
+    FLFO3Engine.Process;
+
+    // Calculate synth voice here
+    if FSample.HasSample then
     begin
-      if Assigned(FSample.Wave.ChannelList) then
+      if (Round(FSamplePosition) >= 0) and (Round(FSamplePosition) < FSample.Wave.Frames) then
       begin
-        if FSample.Wave.ChannelCount > 0 then
-        begin
-          // Hmm still in MONO (TODO)
-          lChannel := TChannel(FSample.Wave.ChannelList[0]);
-          if Assigned(lChannel) then
-          begin
-            lHasSample := True;
-          end;
-        end;
-      end;
-    end;
-
-    // Silence frames if needed
-    for i := 0 to Pred(FNoteOnOffset) do
-    begin
-      FInternalBuffer[i] := 0;
-    end;
-
-    // Render voice
-    for i := FNoteOnOffset to Pred(AFrames) do
-    begin
-      if FLength <= 0 then
-      begin
-        NoteOff;
-      end;
-
-      // ADSR Amplifier
-      FAmpEnvelopeEngine.Process;
-
-      if FAmpEnvelopeEngine.State = esEnd then
-      begin
-        FRunning := False;
+        FInternalBuffer[AFrameIndex] := TChannel(FSample.Wave.ChannelList[0]).Buffer[Round(FSamplePosition)];
       end
       else
       begin
-        // ADSR
-        FPitchEnvelopeEngine.Process;
-        FFilterEnvelopeEngine.Process;
-
-        // LFO's
-        FLFO1Engine.Process;
-        FLFO2Engine.Process;
-        FLFO3Engine.Process;
-
-        // Calculate synth voice here
-        if lHasSample then
-        begin
-          if (Round(FSamplePosition) >= 0) and (Round(FSamplePosition) < FSample.Wave.Frames) then
-          begin
-            FInternalBuffer[i] := TChannel(FSample.Wave.ChannelList[0]).Buffer[Round(FSamplePosition)];
-          end
-          else
-          begin
-            FInternalBuffer[i] := 0;
-          end;
-
-          // Waveform input in Envelope follower
-          FEnvelopeFollowerEngine.Process(FInternalBuffer[i]);
-        end;
-
-        // Oscillatorbank
-        if lHasSample and (FOsc1Engine.Oscillator.WaveForm <> off) then
-        begin
-          lSampleA := FInternalBuffer[i] * FOsc1Engine.Oscillator.Level;
-        end
-        else
-        begin
-          lSampleA := FOsc1Engine.Process;
-        end;
-        lSampleB := FOsc2Engine.Process;
-        lSampleC := FOsc3Engine.Process;
-
-        // Mix and overdrive oscillators
-        lSample := tanh2((lSampleA + lSampleB + lSampleC) * FSample.SaturateDrivePreFilter);
-
-        // Filter
-        if FFilterEngine.Filter.Active then
-        begin
-          if (FFilterEnvelopeEngine.Level > DENORMAL_KILLER) and
-            (FFilterEngine.Filter.EnvelopeAmount > DENORMAL_KILLER) then
-          begin
-            FFilterEngine.Frequency :=
-              FCutoffKeytracking + // Key tracking
-              FFilterEngine.Filter.FrequencyInternal + // knob position
-              FFilterEnvelopeEngine.Level * FFilterEngine.Filter.EnvelopeAmount; // filter envelope
-          end
-          else
-          begin
-            FFilterEngine.Frequency :=
-              FCutoffKeytracking + // Key tracking
-              FFilterEngine.Filter.FrequencyInternal; // knob position
-          end;
-
-          FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
-
-          lSample := FFilterEngine.Process(lSample);
-        end;
-
-        // Amplifier
-        if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
-        begin
-          // Amp
-          lSample := lSample * FAmpEnvelopeEngine.Level;
-
-          // Overdrive
-          lSample := tanh2(lSample * FSample.SaturateDrivePostFilter);
-        end
-        else
-        begin
-          lSample := 0;
-        end;
-
-        // FX
+        FInternalBuffer[AFrameIndex] := 0;
       end;
 
-      FInternalBuffer[i] := lSample;
-
-      if lHasSample then
-      begin
-        if (FSamplePosition + FNoteToPitch) < FSample.Wave.Frames then
-        begin
-          FSamplePosition := FSamplePosition + FNoteToPitch;
-        end;
-      end;
-
-      // Virtual note of when FLength <= 0
-      FLength := FLength - GAudioStruct.BPMScale;
+      // Waveform input in Envelope follower
+      FEnvelopeFollowerEngine.Process(FInternalBuffer[AFrameIndex]);
     end;
 
-    // Debug statistics
-    //GLogger.PushMessage(Format('IntLevel: %g', [FAmpEnvelopeEngine.FInternalLevel]));
-    {GLogger.PushMessage(
-      Format('IntLevel: %g, Attack: %g Adr: %g,Decay: %g Adr: %g, Sustain: %g, Release: %g Adr: %g  ',
-      [FAmpEnvelopeEngine.FInternalLevel,
-      FAmpEnvelopeEngine.Envelope.Attack,
-      FAmpEnvelopeEngine.FAttackAdder,
-      FAmpEnvelopeEngine.Envelope.Decay,
-      FAmpEnvelopeEngine.FDecayAdder,
-      FAmpEnvelopeEngine.Envelope.Sustain,
-      FAmpEnvelopeEngine.Envelope.Release,
-      FAmpEnvelopeEngine.FReleaseAdder])); }
-
-
-    // Next iteration, start from the beginning
-    FNoteOnOffset := 0;
-  except
-    on e: exception do
+    // Oscillatorbank
+    if FSample.HasSample and (FOsc1Engine.Oscillator.WaveForm <> off) then
     begin
-      // Most likely the filters excepted so just reset them
-      FFilterEngine.Initialize;
-      FFilterEngine.Calc;
+      lSampleA := FInternalBuffer[AFrameIndex] * FOsc1Engine.Oscillator.Level;
+    end
+    else
+    begin
+      lSampleA := FOsc1Engine.Process;
+    end;
+    lSampleB := FOsc2Engine.Process;
+    lSampleC := FOsc3Engine.Process;
 
-      // Do nothing and let the engine run on
-      GLogger.PushMessage('Sampler exception: ' + e.Message);
+    // Mix and overdrive oscillators
+    lSample := tanh2((lSampleA + lSampleB + lSampleC) * FSample.SaturateDrivePreFilter);
+
+    // Filter
+    if FFilterEngine.Filter.Active then
+    begin
+      if (FFilterEnvelopeEngine.Level > DENORMAL_KILLER) and
+        (FFilterEngine.Filter.EnvelopeAmount > DENORMAL_KILLER) then
+      begin
+        FFilterEngine.Frequency :=
+          FCutoffKeytracking + // Key tracking
+          FFilterEngine.Filter.FrequencyInternal + // knob position
+          FFilterEnvelopeEngine.Level * FFilterEngine.Filter.EnvelopeAmount; // filter envelope
+      end
+      else
+      begin
+        FFilterEngine.Frequency :=
+          FCutoffKeytracking + // Key tracking
+          FFilterEngine.Filter.FrequencyInternal; // knob position
+      end;
+
+      FFilterEngine.Resonance := FFilterEngine.Filter.Resonance;
+
+      lSample := FFilterEngine.Process(lSample);
+    end;
+
+    // Amplifier
+    if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
+    begin
+      // Amp
+      lSample := lSample * FAmpEnvelopeEngine.Level;
+
+      // Overdrive
+      lSample := tanh2(lSample * FSample.SaturateDrivePostFilter);
+    end
+    else
+    begin
+      lSample := 0;
+    end;
+
+    // FX
+  end;
+
+  FInternalBuffer[AFrameIndex] := lSample;
+
+  if FSample.HasSample then
+  begin
+    if (FSamplePosition + FNoteToPitch) < FSample.Wave.Frames then
+    begin
+      FSamplePosition := FSamplePosition + FNoteToPitch;
     end;
   end;
+
+  // Virtual note of when FLength <= 0
+  FLength := FLength - GAudioStruct.BPMScale;
+
+  // Debug statistics
+  //GLogger.PushMessage(Format('IntLevel: %g', [FAmpEnvelopeEngine.FInternalLevel]));
+  {GLogger.PushMessage(
+    Format('IntLevel: %g, Attack: %g Adr: %g,Decay: %g Adr: %g, Sustain: %g, Release: %g Adr: %g  ',
+    [FAmpEnvelopeEngine.FInternalLevel,
+    FAmpEnvelopeEngine.Envelope.Attack,
+    FAmpEnvelopeEngine.FAttackAdder,
+    FAmpEnvelopeEngine.Envelope.Decay,
+    FAmpEnvelopeEngine.FDecayAdder,
+    FAmpEnvelopeEngine.Envelope.Sustain,
+    FAmpEnvelopeEngine.Envelope.Release,
+    FAmpEnvelopeEngine.FReleaseAdder])); }
 end;
 
 {
@@ -2803,11 +2793,11 @@ begin
   case AModSource of
     msLFO1:
     begin
-      Result := @FLFO1Engine.Level;
+      Result := @SampleEngine.LFO1Engine.Level;
     end;
     msLFO2:
     begin
-      Result := @LFO2Engine.Level;
+      Result := @SampleEngine.LFO2Engine.Level;
     end;
     msLFO3:
     begin
