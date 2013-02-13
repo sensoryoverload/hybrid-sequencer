@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, StdCtrls, globalconst, global,
   plugin, utils, Controls, LCLType, Graphics, ExtCtrls, contnrs, pluginhost,
-  pluginnodegui, bankgui, sampler;
+  pluginnodegui, bankgui, sampler, ladspaloader;
 
 type
   { TPluginProcessorGUI }
@@ -100,8 +100,16 @@ begin
     lCreateNodesCommand := TCreateNodesCommand.Create(ObjectID);
     try
       lCreateNodesCommand.SequenceNr := 0;
-      lCreateNodesCommand.PluginName := lTreeView.Selected.Text;
-      if SameText(lTreeView.Selected.Text, 'sampler') then
+
+      if Assigned(lTreeView.Selected.Data)  then
+      begin
+        lCreateNodesCommand.PluginType := ptLADSPA;
+        lCreateNodesCommand.PluginName :=
+          TTreeViewPluginInfo(lTreeView.Selected.Data).Caption;
+        lCreateNodesCommand.UniqueId :=
+          TTreeViewPluginInfo(lTreeView.Selected.Data).UniqueId;
+      end
+      else if SameText(lTreeView.Selected.Text, 'sampler') then
       begin
         lCreateNodesCommand.PluginType := ptSampler;
       end
@@ -223,17 +231,8 @@ begin
       lPluginNodeGUI.Model := lPluginNode;
       lPluginNodeGUI.PluginName := lPluginNode.PluginName;
       lPluginNodeGUI.Parent := pnlPlugin;
-      lPluginNodeGUI.Width := 50;
+      lPluginNodeGUI.Width := 100;
       lPluginNodeGUI.Align := alLeft;
-
-      if Odd(FNodeListGUI.Count) then
-      begin
-        lPluginNodeGUI.Color := clRed;
-      end
-      else
-      begin
-        lPluginNodeGUI.Color := clBlue;
-      end;
 
       FNodeListGUI.Add(lPluginNodeGUI);
       lPluginNode.Attach(lPluginNodeGUI);
@@ -307,6 +306,20 @@ begin
 
       FNodeListGUI.Add(lPluginDecimateGUI);
       TPluginDecimate(lPluginNode).Attach(lPluginDecimateGUI);
+    end;
+    ptLADSPA:
+    begin
+      lPluginNodeGUI := TGenericPluginGUI.Create(nil);
+      lPluginNodeGUI.ObjectID := AObjectID;
+      lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
+      lPluginNodeGUI.Model := lPluginNode;
+      lPluginNodeGUI.PluginName := lPluginNode.PluginName;
+      lPluginNodeGUI.Parent := pnlPlugin;
+      lPluginNodeGUI.Width := 150;
+      lPluginNodeGUI.Align := alLeft;
+
+      FNodeListGUI.Add(lPluginNodeGUI);
+      lPluginNode.Attach(lPluginNodeGUI);
     end;
     end;
   end;

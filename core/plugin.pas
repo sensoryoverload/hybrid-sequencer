@@ -26,10 +26,31 @@ interface
 
 uses
   Classes, SysUtils, ContNrs, globalconst, utils, global_command, global,
-  ladspaloader;
+  ladspaloader, ladspa, math;
 
 type
-  TPluginType = (ptIO, ptSampler, ptDistortion, ptFlanger, ptFilter, ptDecimate, ptReverb, ptBassline);
+  TPortParameter = class
+  public
+    PortRangeHint: LongWord;
+    Caption: string;
+    UpperBound: Single;
+    LowerBound: Single;
+    IsBoundedAbove: Boolean;
+    IsBoundenBelow: Boolean;
+    IsLogarithmic: Boolean;
+    IsSampleRate: Boolean;
+    IsInteger: Boolean;
+    IsToggled: Boolean;
+    DefaultValue: Single;
+    Value: Single;
+  end;
+
+  TArrayOfSingle = Array of Single;
+  TArrayOfPortParameter = Array of TPortParameter;
+
+  TPluginType = (
+    ptIO, ptSampler, ptDistortion, ptFlanger, ptFilter, ptDecimate, ptReverb,
+    ptBassline, ptLADSPA);
 
   TPluginNodeType = (pntSource, pntSink, pntPlugin);
 
@@ -67,6 +88,10 @@ type
     FMidiBuffer: TMidiBuffer;
     FInputBuffer: PSingle;
     FOutputBuffer: PSingle;
+    FInputControlCount: Integer;
+    FOutputControlCount: Integer;
+    FInputControls: TArrayOfPortParameter;
+    FOutputControls: TArrayOfSingle;
     FFrames: Integer;
     FNodeType: TPluginNodeType;
     FPluginName: string;
@@ -90,6 +115,10 @@ type
     property NodeType: TPluginNodeType read FNodeType write FNodeType;
     property InputBuffer: psingle read FInputBuffer write FInputBuffer;
     property OutputBuffer: psingle read FOutputBuffer write FOutputBuffer;
+    property InputControlCount: Integer read FInputControlCount write FInputControlCount;
+    property OutputControlCount: Integer read FOutputControlCount write FOutputControlCount;
+    property InputControls: TArrayOfPortParameter read FInputControls write FInputControls;
+    property OutputControls: TArrayOfSingle read FOutputControls write FOutputControls;
   published
     property PluginName: string read FPluginName write FPluginName;
     property PluginType: TPluginType read FPluginType write FPluginType;
@@ -107,18 +136,44 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
 
-  { TLADSPANode }
+  { TPluginLADSPA }
 
-  TLADSPANode = class(TPluginNode)
+  TPluginLADSPA = class(TPluginNode)
+  private
+    FLadspaLoadedPluginItem: TLadspaLoadedPluginItem;
+    FPluginInstance: LADSPA_Handle;
+    FPluginDescriptor: PLADSPA_Descriptor;
+    FFirstRun: Boolean;
+    FInputChannelCount: Integer;
+    FOutputChannelCount: Integer;
+    FInputChannels: Array of PSingle;
+    FOutputChannels: Array of PSingle;
+    FUniqueID: Integer;
   public
     procedure Instantiate; override;
     procedure Activate; override;
     procedure Deactivate; override;
     procedure Clean; override;
-    procedure LoadByID(AId: Integer);
-    procedure LoadByName(AName: string);
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    property UniqueID: Integer read FUniqueID write FUniqueID;
+  end;
+
+  { TLADSPACommand }
+
+  TLADSPACommand = class(TCommand)
+  private
+    FOldValue: Variant;
+    FValue: Variant;
+    FModel: TPluginLADSPA;
+    FParameter: Integer;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    procedure Initialize; override;
+    property Value: Variant read FValue write FValue;
+    property Parameter: Integer read FParameter write FParameter;
   end;
 
   { TMementoNode }
@@ -149,6 +204,34 @@ implementation
 uses
   pluginhost;
 
+{ TLADSPACommand }
+
+procedure TLADSPACommand.DoExecute;
+begin
+  if Assigned(FModel) then
+  begin
+    FOldValue := FModel.InputControls[FParameter].Value;
+    FModel.InputControls[FParameter].Value := FValue;
+
+    FModel.Notify;
+  end;
+end;
+
+procedure TLADSPACommand.DoRollback;
+begin
+  if Assigned(FModel) then
+  begin
+    FModel.InputControls[FParameter].Value := FOldValue;
+
+    FModel.Notify;
+  end;
+end;
+
+procedure TLADSPACommand.Initialize;
+begin
+  FModel := TPluginLADSPA(GObjectMapper.GetModelObject(ObjectID));
+end;
+
 { TPluginCatalog }
 
 procedure TPluginParameterList.SetPluginParameters(I: Integer; APluginParameter: TPluginParameter);
@@ -163,42 +246,262 @@ end;
 
 { TPlugin }
 
-procedure TLADSPANode.Instantiate;
+procedure TPluginLADSPA.Instantiate;
+var
+  lPortIndex: Integer;
+  lPortDescriptor: LADSPA_PortDescriptor;
+  lPortRangeHint: LADSPA_PortRangeHint;
+  lPortName: PChar;
+  lControl: PSingle;
+  lPortParameter: TPortParameter;
+  lDefaultValue: Single;
+  lMinValue: Single;
+  lMaxValue: Single;
 begin
-  //  FLADSPA.Instantiate
+  if FUniqueID = 0 then
+  begin
+    raise Exception.Create('Plugin ID 0 does not exist, did you forget to initialize it?');
+  end;
+
+  FLadspaLoadedPluginItem := GLadspaPluginFactory.LoadPlugin(FUniqueID);
+  FPluginDescriptor := FLadspaLoadedPluginItem.LadspaDescriptor;
+
+  if Assigned(FPluginDescriptor) then
+  begin
+    FPluginInstance := FPluginDescriptor^.instantiate(FPluginDescriptor, 44100);
+  end;
+
+  FInputChannelCount := 0;
+  FOutputChannelCount := 0;
+
+  // if there is just 1 audio input, the AInputBuffer should be mixed to mono
+  // or 1 channel should be droppen from AInputBuffer (faster but less quality)
+  for lPortIndex := 0 to Pred(FPluginDescriptor^.PortCount) do
+  begin
+    lPortDescriptor := FPluginDescriptor^.PortDescriptors[lPortIndex];
+    lPortRangeHint := FPluginDescriptor^.PortRangeHints[lPortIndex];
+    lPortName := FPluginDescriptor^.PortNames[lPortIndex];
+
+    if LADSPA_IS_PORT_INPUT(lPortDescriptor) and LADSPA_IS_PORT_AUDIO(lPortDescriptor) then
+    begin
+      Inc(FInputChannelCount);
+      SetLength(FInputChannels, FInputChannelCount);
+      FInputChannels[Pred(FInputChannelCount)] :=
+        GetMem(FFrames * STEREO * SizeOf(Single));
+
+      FPluginDescriptor^.connect_port(
+        FPluginInstance,
+        lPortIndex,
+        FInputChannels[Pred(FInputChannelCount)]);
+    end
+    else if LADSPA_IS_PORT_OUTPUT(lPortDescriptor) and LADSPA_IS_PORT_AUDIO(lPortDescriptor) then
+    begin
+      Inc(FOutputChannelCount);
+      SetLength(FOutputChannels, FOutputChannelCount);
+      FOutputChannels[Pred(FOutputChannelCount)] :=
+        GetMem(FFrames * STEREO * SizeOf(Single));
+
+      FPluginDescriptor^.connect_port(
+        FPluginInstance,
+        lPortIndex,
+        FOutputChannels[Pred(FOutputChannelCount)]);
+    end
+    else if LADSPA_IS_PORT_INPUT(lPortDescriptor) and LADSPA_IS_PORT_CONTROL(lPortDescriptor) then
+    begin
+      Inc(FInputControlCount);
+      SetLength(FInputControls, FInputControlCount);
+
+      FInputControls[Pred(FInputControlCount)] := TPortParameter.Create;
+      lPortParameter := FInputControls[Pred(FInputControlCount)];
+
+      lMinValue := 0;
+      if LADSPA_IS_HINT_BOUNDED_BELOW(lPortRangeHint.HintDescriptor) then
+      begin
+        if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
+        begin
+          lMinValue := lPortParameter.LowerBound * GSettings.SampleRate;
+        end
+        else
+        begin
+          lMinValue := lPortRangeHint.LowerBound;
+        end;
+      end;
+
+      lMaxValue := 1;
+      if LADSPA_IS_HINT_BOUNDED_ABOVE(lPortRangeHint.HintDescriptor) then
+      begin
+        if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
+        begin
+          lMaxValue := lPortParameter.UpperBound * GSettings.SampleRate;
+        end
+        else
+        begin
+          lMaxValue := lPortRangeHint.UpperBound;
+        end;
+      end;
+
+      lDefaultValue := 0;
+      if LADSPA_IS_HINT_HAS_DEFAULT(lPortRangeHint.HintDescriptor) then
+      begin
+        case (lPortRangeHint.HintDescriptor AND LADSPA_HINT_DEFAULT_MASK) of
+      		LADSPA_HINT_DEFAULT_MINIMUM:
+          begin
+      			lDefaultValue := lPortParameter.LowerBound;
+    			end;
+    		  LADSPA_HINT_DEFAULT_LOW:
+          begin
+    			  if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
+            begin
+              lDefaultValue := 0.25;
+{    				  lDefaultValue := exp(
+    					  log(lMinValue) * 0.75 + log(lMaxValue) * 0.25);     }
+            end
+            else
+            begin
+    				  lDefaultValue := (lMinValue * 0.75 + lMaxValue * 0.25);
+    			  end;
+    			end;
+    		  LADSPA_HINT_DEFAULT_MIDDLE:
+          begin
+            if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
+            begin
+    				  lDefaultValue := sqrt(lMinValue * lMaxValue);
+    			  end
+            else
+            begin
+    				  lDefaultValue := (lMinValue + lMaxValue) * 0.5;
+    			  end;
+          end;
+    		  LADSPA_HINT_DEFAULT_HIGH:
+          begin
+            if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
+            begin
+              lDefaultValue := 0.75;
+{      				fDefaultValue = ::expf(
+    					::logf(fMinValue) * 0.25f + ::logf(fMaxValue) * 0.75);}
+            end
+            else
+            begin
+    				  lDefaultValue := (lMinValue * 0.25 + lMaxValue * 0.75);
+            end;
+          end;
+    		  LADSPA_HINT_DEFAULT_MAXIMUM:
+    			begin
+            lDefaultValue := lMaxValue;
+    			end;
+    		  LADSPA_HINT_DEFAULT_0:
+    			begin
+            lDefaultValue := 0;
+    			end;
+    		  LADSPA_HINT_DEFAULT_1:
+    			begin
+            lDefaultValue := 1;
+    			end;
+    		  LADSPA_HINT_DEFAULT_100:
+          begin
+            lDefaultValue := 100;
+    			end;
+    		  LADSPA_HINT_DEFAULT_440:
+          begin
+            lDefaultValue := 440;
+    			end;
+        end;
+      end;
+
+      lPortParameter.Caption := lPortName;
+      lPortParameter.LowerBound := lMinValue;
+      lPortParameter.UpperBound := lMaxValue;
+      lPortParameter.IsBoundedAbove := LADSPA_IS_HINT_BOUNDED_ABOVE(lPortRangeHint.HintDescriptor);
+      lPortParameter.IsBoundenBelow := LADSPA_IS_HINT_BOUNDED_BELOW(lPortRangeHint.HintDescriptor);
+      lPortParameter.IsInteger := LADSPA_IS_HINT_INTEGER(lPortRangeHint.HintDescriptor);
+      lPortParameter.IsLogarithmic := LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor);
+      lPortParameter.IsSampleRate := LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor);
+      lPortParameter.IsToggled := LADSPA_IS_HINT_TOGGLED(lPortRangeHint.HintDescriptor);
+      lPortParameter.DefaultValue := lDefaultValue;
+      lPortParameter.Value := lDefaultValue;
+
+      FPluginDescriptor^.connect_port(
+        FPluginInstance,
+        lPortIndex,
+        @lPortParameter.Value);
+    end
+    else if LADSPA_IS_PORT_OUTPUT(lPortDescriptor) and LADSPA_IS_PORT_CONTROL(lPortDescriptor) then
+    begin
+      Inc(FOutputControlCount);
+      SetLength(FOutputControls, FOutputControlCount);
+      lControl := @FOutputControls[Pred(FOutputControlCount)];
+      lControl^ := 0; //initialize with default
+
+      FPluginDescriptor^.connect_port(
+        FPluginInstance,
+        lPortIndex,
+        @FOutputControls[Pred(FOutputControlCount)]);
+    end;
+  end;
 end;
 
-procedure TLADSPANode.Activate;
+procedure TPluginLADSPA.Activate;
 begin
   inherited Activate;
 
-//  FLADSPA.Activate
+  if Assigned(FPluginDescriptor^.activate) then
+  begin
+    FPluginDescriptor^.activate(FPluginInstance);
+  end;
 end;
 
-procedure TLADSPANode.Deactivate;
+procedure TPluginLADSPA.Deactivate;
 begin
+  if Assigned(FPluginDescriptor^.deactivate) then
+  begin
+    FPluginDescriptor^.deactivate(FPluginInstance);
+  end;
+
   inherited Deactivate;
 end;
 
-procedure TLADSPANode.Clean;
+procedure TPluginLADSPA.Clean;
+var
+  lIndex: Integer;
 begin
-  //  FLADSPA.Clean
+  for lIndex := 0 to Pred(FInputChannelCount) do
+  begin
+    FreeMem(FInputChannels[lIndex]);
+  end;
+  SetLength(FInputChannels, 0);
+  FInputChannelCount := 0;
+
+  for lIndex := 0 to Pred(FOutputChannelCount) do
+  begin
+    FreeMem(FOutputChannels[lIndex]);
+  end;
+  SetLength(FOutputChannels, 0);
+  FOutputChannelCount := 0;
+
+  if Assigned(FPluginInstance) then
+  begin
+    FPluginDescriptor^.cleanup(FPluginInstance);
+  end;
 end;
 
-procedure TLADSPANode.LoadByID(AId: Integer);
-begin
-  // Load by LADSPA ID, these should be unique
-end;
-
-procedure TLADSPANode.LoadByName(AName: string);
-begin
-  // GLadspaPluginFactory.Discover;
-end;
-
-procedure TLADSPANode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+procedure TPluginLADSPA.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
   AOutputBuffer: PSingle; AFrames: Integer);
 begin
-  //  FLADSPA.Run
+  case FInputChannelCount of
+  1: ConvertBufferStereoToMono(AInputBuffer, FInputChannels[0], AFrames);
+  2: SplitStereoToDualMono(AInputBuffer, FInputChannels[0], FInputChannels[1], AFrames);
+  end;
+
+  // Just trap any problems :)
+  try
+    FPluginDescriptor^.run(FPluginInstance, AFrames);
+  except
+  end;
+
+  case FOutputChannelCount of
+  1: ConvertBufferMonoToStereo(FOutputChannels[0], AOutputBuffer, AFrames);
+  2: CombineDualMonoToStereo(FOutputChannels[0], FOutputChannels[1], AOutputBuffer, AFrames);
+  end;
 end;
 
 { TPluginNode }

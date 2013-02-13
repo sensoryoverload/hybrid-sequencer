@@ -33,7 +33,7 @@ uses
   audiostructure, midigui, mapmonitor, syncobjs, eventlog,
   midi, db, aboutgui, global_scriptactions, plugin, pluginhostgui,
   ringbuffer, optionsgui, wavepatterngui, midipatterngui, patterngui, sampler,
-  sessiongrid, patternview;
+  sessiongrid, patternview, ladspaloader;
 
 const
   DIVIDE_BY_120_MULTIPLIER = 1 / 120;
@@ -134,7 +134,6 @@ type
     miTools: TMenuItem;
     miOptions: TMenuItem;
     miEdit: TMenuItem;
-    gbTrackDetail: Tgroupbox;
     pnlTop: Tpanel;
     ScreenUpdater: TTimer;
     Splitter1: TSplitter;
@@ -987,10 +986,10 @@ end;
 
 procedure TMainApp.LeftSplitterDblClick(Sender: TObject);
 begin
-  if gbTrackDetail.Width < 30 then
-    gbTrackDetail.Width := 250
+  if TreeView1.Width < 30 then
+    TreeView1.Width := 250
   else
-    gbTrackDetail.Width := 0;
+    TreeView1.Width := 0;
 end;
 
 procedure TMainApp.DialControl1Change(Sender: TObject);
@@ -1469,7 +1468,9 @@ var
   RootNode: TTreeNode;
   lFilterRootNode: TTreeNode;
   lFilterNode: TTreeNode;
+  lIndex: Integer;
   TreeFolderData: TTreeFolderData;
+  lTreeViewPluginInfo: TTreeViewPluginInfo;
 begin
   TreeView1.Items.BeginUpdate;
   try
@@ -1492,7 +1493,7 @@ begin
     end;
 
     // Add plugins
-    lFilterRootNode := TreeView1.Items.Add(RootNode, 'Plugins');
+    lFilterRootNode := TreeView1.Items.Add(RootNode, 'Native Plugins');
     lFilterRootNode.ImageIndex := 17;
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Reverb');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Bassline');
@@ -1501,7 +1502,18 @@ begin
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'BitReducer');
     lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Moog filter');
 
-    // Add presets (TODO should be added to above per plugin)
+    lFilterRootNode := TreeView1.Items.Add(RootNode, 'LADSPA Plugins');
+    lFilterRootNode.ImageIndex := 17;
+    for lIndex := 0 to Pred(GLadspaPluginFactory.PluginList.Count) do
+    begin
+      lTreeViewPluginInfo := TTreeViewPluginInfo.Create;
+      lTreeViewPluginInfo.UniqueId :=
+        TLadspaPluginCatalogItem(GLadspaPluginFactory.PluginList.Objects[lIndex]).UniqueId;
+
+      lFilterNode := TreeView1.Items.AddChildObject(lFilterRootNode,
+        TLadspaPluginCatalogItem(GLadspaPluginFactory.PluginList.Objects[lIndex]).Name,
+        lTreeViewPluginInfo);
+    end;
 
     RootNode.Expand(False);
   finally

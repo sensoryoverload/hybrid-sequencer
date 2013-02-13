@@ -124,6 +124,13 @@ type
 
   TSerializeAction = (saRetrieveProperties, saInitilizeObjects);
 
+  TTreeViewPluginInfo = class
+  public
+    FullFilePath: string;
+    Caption: string;
+    UniqueId: Integer;
+  end;
+
   PPSingle = ^PSingle;
 
   TCurveType = (ctLinear, ctLogarithmic);
@@ -252,7 +259,7 @@ type
     destructor Destroy; override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
-    procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -277,7 +284,7 @@ type
     destructor Destroy; override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
-    procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -300,7 +307,7 @@ type
     FObjectOwner: TObject;
   public
     destructor Destroy; override;
-    procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -325,7 +332,7 @@ type
     FObjectOwner: TObject;
   public
     destructor Destroy; override;
-    procedure Update(Subject: THybridPersistentModel); reintroduce; virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -1319,11 +1326,6 @@ end;
 
 destructor THybridPersistentView.Destroy;
 begin
-  if Assigned(FModel) then
-  begin
-    FModel.Detach(Self);
-  end;
-
   inherited Destroy;
 end;
 

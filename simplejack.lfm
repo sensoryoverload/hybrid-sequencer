@@ -1,7 +1,7 @@
 object MainApp: TMainApp
   Left = 183
   Height = 726
-  Top = 24
+  Top = 9
   Width = 1095
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
@@ -29,42 +29,8 @@ object MainApp: TMainApp
     ClientHeight = 340
     ClientWidth = 1095
     TabOrder = 0
-    object gbTrackDetail: TGroupBox
-      Left = 0
-      Height = 297
-      Top = 43
-      Width = 220
-      Align = alLeft
-      Caption = 'Files'
-      ClientHeight = 286
-      ClientWidth = 216
-      TabOrder = 0
-      object TreeView1: TTreeView
-        Left = 0
-        Height = 286
-        Top = 0
-        Width = 216
-        Align = alClient
-        Anchors = []
-        BorderStyle = bsNone
-        DefaultItemHeight = 16
-        Images = ilGlobalImages
-        ParentColor = True
-        ReadOnly = True
-        TabOrder = 0
-        OnChange = TreeView1Change
-        OnCollapsed = TreeView1Collapsed
-        OnDeletion = TreeView1Deletion
-        OnDragDrop = TreeView1DragDrop
-        OnDragOver = TreeView1DragOver
-        OnExpanding = TreeView1Expanding
-        OnMouseDown = TreeView1MouseDown
-        Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips]
-        TreeLinePenStyle = psSolid
-      end
-    end
     object LeftSplitter: TCollapseSplitter
-      Left = 220
+      Left = 216
       Height = 297
       Top = 43
       Width = 3
@@ -78,7 +44,7 @@ object MainApp: TMainApp
       Align = alTop
       ClientHeight = 43
       ClientWidth = 1095
-      TabOrder = 2
+      TabOrder = 1
       object ToolBar1: TToolBar
         Left = 1
         Height = 40
@@ -152,6 +118,33 @@ object MainApp: TMainApp
         Constraints.MinHeight = 40
         Constraints.MinWidth = 36
       end
+    end
+    object TreeView1: TTreeView
+      Left = 0
+      Height = 297
+      Top = 43
+      Width = 216
+      Align = alLeft
+      Anchors = []
+      BorderStyle = bsNone
+      DefaultItemHeight = 16
+      ExpandSignType = tvestPlusMinus
+      Images = ilGlobalImages
+      ParentColor = True
+      ReadOnly = True
+      RowSelect = True
+      ShowLines = False
+      SortType = stText
+      TabOrder = 2
+      OnChange = TreeView1Change
+      OnCollapsed = TreeView1Collapsed
+      OnDeletion = TreeView1Deletion
+      OnDragDrop = TreeView1DragDrop
+      OnDragOver = TreeView1DragOver
+      OnExpanding = TreeView1Expanding
+      OnMouseDown = TreeView1MouseDown
+      Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoRowSelect, tvoShowButtons, tvoShowRoot, tvoToolTips]
+      TreeLinePenStyle = psSolid
     end
   end
   object BottomSplitter: TCollapseSplitter

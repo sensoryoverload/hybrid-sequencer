@@ -106,6 +106,7 @@ type
 
   TCreateNodesCommand = class(TPluginProcessorCommand)
   private
+    FUniqueId: Integer;
     FSequenceNr: Integer;
     FPluginName: string;
     FPluginType: TPluginType;
@@ -115,6 +116,7 @@ type
   published
     property SequenceNr: Integer read FSequenceNr write FSequenceNr;
     property PluginName: string read FPluginName write FPluginName;
+    property UniqueId: Integer read FUniqueId write FUniqueId;
     property PluginType: TPluginType read FPluginType write FPluginType;
   end;
 
@@ -174,7 +176,7 @@ begin
   end
   else if AClassName = 'TLADSPANode' then
   begin
-    lPluginNode := TLADSPANode.Create(ObjectID, MAPPED);
+    lPluginNode := TPluginLADSPA.Create(ObjectID, MAPPED);
     lPluginNode.ObjectOwnerID := ObjectID;
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
@@ -387,6 +389,7 @@ var
   lPluginFreeverb: TPluginFreeverb;
   lPluginBassline: TPluginBassline;
   lPluginDecimate: TPluginDecimate;
+  lPluginLadspa: TPluginLADSPA;
   lSampleBank: TSampleBank;
 begin
   DBLog('start TCreateNodesCommand.DoExecute');
@@ -449,6 +452,21 @@ begin
 
       ObjectIdList.Add(lPluginDecimate.ObjectID);
     end;
+    ptLADSPA:
+    begin
+      lPluginLadspa := TPluginLADSPA.Create(FPluginProcessor.ObjectID, MAPPED);
+      lPluginLadspa.PluginName := FPluginName;
+      lPluginLadspa.PluginType := ptLADSPA;
+      lPluginLadspa.SequenceNr := FPluginProcessor.NodeList.Count;
+
+      FPluginProcessor.NodeList.Add(lPluginLadspa);
+
+      ObjectIdList.Add(lPluginLadspa.ObjectID);
+
+      lPluginLadspa.UniqueID := FUniqueId;
+      lPluginLadspa.Instantiate;
+      lPluginLadspa.Activate;
+    end;
   end;
 
   FPluginProcessor.SortPlugins;
@@ -474,6 +492,9 @@ begin
       lPluginNode := TPluginNode(FPluginProcessor.NodeList[lNodeIndex]);
       if ObjectIdList[lMementoIndex] = lPluginNode.ObjectID then
       begin
+        lPluginNode.Deactivate;
+        lPluginNode.Clean;
+
         FPluginProcessor.NodeList.Remove(lPluginNode);
       end;
     end;

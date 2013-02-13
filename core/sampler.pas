@@ -1253,6 +1253,7 @@ begin
   begin
     i := Round(Fphase);
     lFrac :=  Frac(FPhase);
+
     if AllowModifier then
     begin
       lAddSub := Finc + (Modifier^ * FOscillator.ModAmount * 64);
@@ -1291,11 +1292,7 @@ begin
       begin
         Result := -1;
       end;
-    end
-    else
-    begin
     end;
-    { table needs overflowextension }
 
     lMod := i - 1;
     lMod := lMod shl 7;
@@ -1311,12 +1308,6 @@ begin
     lMod := lMod shr 7;
     x2 := GWaveformTable.Table[FOscillator.WaveForm, i + 2];
     Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;
-
-    // linear interpolation (low vs high quality setting)
-    {Result :=
-      (GWaveformTable.Table[FOscillator.WaveForm, i] * (1 - lFrac) +
-      GWaveformTable.Table[FOscillator.WaveForm, i + 1] * lFrac) *
-      FOscillator.Level; }
 
     FLevel := Result;
   end
@@ -1430,12 +1421,6 @@ end;
 
 procedure TOscillator.Initialize;
 begin
-  {FPitch := 1000;
-  FModAmount := 0;
-  FInternalLevel := 1;
-  FActive := True;
-  FMode := omOsc;}
-
   Notify;
 end;
 
@@ -1560,7 +1545,7 @@ begin
   case FState of
   esStart:
     begin
-      FInternalLevel := 0;
+      //prevent clicks FInternalLevel := 0;
     end;
   esAttack:
     begin
@@ -1599,6 +1584,7 @@ begin
       if FInternalLevel < 0.01 then
       begin
         FInternalLevel := 0;
+        FState := esEnd;
       end;
     end;
   esEnd:
@@ -2596,17 +2582,14 @@ procedure TSampleVoiceEngine.Process(AInputBuffer: PSingle; AOutputBuffer: PSing
 var
   lSample, lSampleA, lSampleB, lSampleC: single;
 begin
-  if FLength <= 0 then
-  begin
-    NoteOff;
-  end;
-
   // ADSR Amplifier
   FAmpEnvelopeEngine.Process;
 
   if FAmpEnvelopeEngine.State = esEnd then
   begin
     FRunning := False;
+
+    lSample := 0;
   end
   else
   begin
@@ -2698,8 +2681,12 @@ begin
     end;
   end;
 
-  // Virtual note of when FLength <= 0
+  // Virtual note off when FLength < 0
   FLength := FLength - GAudioStruct.BPMScale;
+  if FLength < 0 then
+  begin
+    NoteOff;
+  end;
 
   // Debug statistics
   //GLogger.PushMessage(Format('IntLevel: %g', [FAmpEnvelopeEngine.FInternalLevel]));
@@ -2734,6 +2721,7 @@ begin
   FIdle := False;
   FRunning := True;
   FSamplePosition := 0;
+  FStopVoice := False;
 
   FPitchEnvelopeEngine.NoteOn;
   FFilterEnvelopeEngine.NoteOn;
@@ -2776,11 +2764,13 @@ end;
 
 procedure TSampleVoiceEngine.NoteOff;
 begin
-  FStopVoice := True;
-
-  FPitchEnvelopeEngine.NoteOff;
-  FFilterEnvelopeEngine.NoteOff;
-  FAmpEnvelopeEngine.NoteOff;
+  if not FStopVoice then
+  begin
+    FPitchEnvelopeEngine.NoteOff;
+    FFilterEnvelopeEngine.NoteOff;
+    FAmpEnvelopeEngine.NoteOff;
+    FStopVoice := True;
+  end;
 end;
 
 function TSampleVoiceEngine.RunningNote: Integer;

@@ -138,6 +138,8 @@ function DumpCallStack: string;
 
 function fmod(AValue, AModulo: Double): Double; inline;
 procedure ConvertBufferMonoToStereo(ASource, ATarget: PSingle; AFrames: Integer); inline;
+procedure SplitStereoToDualMono(ASource, ATargetLeft, ATargetRight: PSingle; AFrames: Integer);
+procedure CombineDualMonoToStereo(ASourceLeft, ASourceRight, ATarget: PSingle; AFrames: Integer);
 procedure ConvertBufferStereoToMono(ASource, ATarget: PSingle; AFrames: Integer); inline;
 procedure CopyBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer); inline;
 
@@ -628,21 +630,58 @@ end;
 procedure ConvertBufferMonoToStereo(ASource, ATarget: PSingle; AFrames: Integer);
 var
   i: Integer;
+  lAdder: Integer;
 begin
+  lAdder := 0;
   for i := 0 to Pred(AFrames) do
   begin
-    ATarget[i * 2] := ASource[i];
-    ATarget[i * 2 + 1] := ASource[i];
+    ATarget[lAdder] := ASource[i];
+    ATarget[lAdder + 1] := ASource[i];
+
+    Inc(lAdder, 2);
+  end;
+end;
+
+procedure SplitStereoToDualMono(ASource, ATargetLeft, ATargetRight: PSingle; AFrames: Integer);
+var
+  i: Integer;
+  lAdder: Integer;
+begin
+  lAdder := 0;
+  for i := 0 to Pred(AFrames) do
+  begin
+    ATargetLeft[i] := ASource[lAdder];
+    ATargetRight[i] := ASource[lAdder + 1];
+
+    Inc(lAdder, 2);
+  end;
+end;
+
+procedure CombineDualMonoToStereo(ASourceLeft, ASourceRight, ATarget: PSingle; AFrames: Integer);
+var
+  i: Integer;
+  lAdder: Integer;
+begin
+  lAdder := 0;
+  for i := 0 to Pred(AFrames) do
+  begin
+    ATarget[lAdder] := ASourceLeft[i];
+    ATarget[lAdder + 1] := ASourceRight[i];
+
+    Inc(lAdder, 2);
   end;
 end;
 
 procedure ConvertBufferStereoToMono(ASource, ATarget: PSingle; AFrames: Integer);
 var
   i: Integer;
+  lAdder: Integer;
 begin
+  lAdder := 0;
   for i := 0 to Pred(AFrames) do
   begin
-    ATarget[i] := (ASource[i * 2] + ASource[i * 2 + 1]) * 0.5;
+    ATarget[i] := (ASource[lAdder] + ASource[lAdder + 1]) * 0.5;
+    Inc(lAdder, 2);
   end;
 end;
 

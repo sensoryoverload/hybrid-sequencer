@@ -377,28 +377,6 @@ type
 type
   PLADSPA_Descriptor = ^LADSPA_Descriptor;
 
-  {LADSPA_Descriptor = record
-      UniqueID : LongWord;
-	    Label_ : PChar;
-	    Properties : LADSPA_Properties;
-	    Name : PChar;
-	    Maker : PChar;
-	    Copyright : PChar;
-	    PortCount : LongWord;
-	    PortDescriptors : PLADSPA_PortDescriptor;
-	    PortNames : PPChar;
-	    PortRangeHints : PLADSPA_PortRangeHint;
-	    ImplementationData : Pointer;
-	    instantiate : TInstantiate;
-	    connect_port : TConnect_port;
-	    activate : TActivate;
-	    run : TRun;
-	    run_adding : TRun_adding;
-	    set_run_adding_gain : TSet_run_adding_gain;
-	    deactivate : TDeactivate;
-	    cleanup : TCleanup;
-  end;  }
-
   LADSPA_Descriptor = packed record
    { This numeric identifier indicates the plugin type
      uniquely. Plugin programmers may reserve ranges of IDs from a

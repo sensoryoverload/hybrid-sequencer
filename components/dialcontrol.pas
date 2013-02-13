@@ -168,6 +168,8 @@ Type
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
+    function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
 //    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
@@ -588,6 +590,38 @@ begin
   inherited MouseUp(Button, Shift, X, Y);
 end;
 
+function TListSelect.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
+  ): Boolean;
+begin
+  if FItemIndex < Pred(FItems.Count) then
+  begin
+    Inc(FItemIndex);
+
+    if Assigned(FOnChange) then
+    begin
+      FOnChange(Self);
+    end;
+  end;
+
+  Invalidate;
+end;
+
+function TListSelect.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
+  ): Boolean;
+begin
+  if FItemIndex > 0 then
+  begin
+    Dec(FItemIndex);
+
+    if Assigned(FOnChange) then
+    begin
+      FOnChange(Self);
+    end;
+  end;
+
+  Invalidate;
+end;
+
 {procedure TListSelect.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   if Key = VK_UP then
@@ -638,7 +672,7 @@ begin
         ColorToBGRA(clLtGray),
         dmSet);
 
-      lBGRABitmap.FontHeight := Pred(LISTITEM_HEIGHT);
+      lBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
       if FItemIndex <> -1 then
       begin
         lBGRABitmap.TextOut(
@@ -707,7 +741,7 @@ begin
 
   FItems := TStringList.Create;
   FListOpen := False;
-  Width := 60;
+  Width := 50;
   Height := LISTITEM_HEIGHT;
 
   FItemIndex := -1;

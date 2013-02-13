@@ -64,7 +64,7 @@ type
     destructor Destroy; override;
     procedure Connect; override;
     procedure Disconnect; override;
-    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    procedure Update(Subject: THybridPersistentModel); override;
     property Note: Integer read FNote write FNote;
     property NoteLocation: Integer read FNoteLocation write FNoteLocation;
     property OriginalNoteLocation: Integer read FOriginalNoteLocation write FOriginalNoteLocation;
@@ -249,7 +249,7 @@ type
     FNoteLength: Integer;
     FSelected: Boolean;
   public
-    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    procedure Update(Subject: THybridPersistentModel); override;
     property Note: Integer read FNote write FNote;
     property NoteLocation: Integer read FNoteLocation write FNoteLocation;
     property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
@@ -288,7 +288,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    procedure Update(Subject: THybridPersistentModel); override;
     procedure EraseBackground(DC: HDC); override;
     function GetModel: THybridPersistentModel; override;
     procedure SetModel(AModel: THybridPersistentModel); override;
@@ -321,7 +321,6 @@ end;
 
 destructor TMidiNoteGUI.Destroy;
 begin
-
   inherited Destroy;
 end;
 
@@ -1517,7 +1516,6 @@ begin
   end;
 
   inherited DblClick;
-
 end;
 
 function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
