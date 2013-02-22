@@ -120,6 +120,19 @@ type
     property PluginType: TPluginType read FPluginType write FPluginType;
   end;
 
+  { TOrderNodesCommand }
+
+  TOrderNodesCommand = class(TPluginProcessorCommand)
+  private
+    FPluginOrderList: string;
+    FOldPluginOrderList: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property PluginOrderList: string read FPluginOrderList write FPluginOrderList;
+  end;
+
 implementation
 
 uses
@@ -146,6 +159,84 @@ begin
     Result := -1;
 end;
 
+{ TOrderNodesCommand }
+
+procedure TOrderNodesCommand.DoExecute;
+var
+  lOrderList: TStringList;
+  lOldOrderList: TStringList;
+  lIndex: Integer;
+  lIndexInt: Integer;
+  lPlugin: TPluginNode;
+begin
+  lOldOrderList := TStringList.Create;
+  try
+    for lIndex := 0 to Pred(FPluginProcessor.NodeList.Count) do
+    begin
+      lPlugin := TPluginNode(FPluginProcessor.NodeList[lIndex]);
+
+      lOldOrderList.Values[lPlugin.ObjectID] := IntToStr(lPlugin.SequenceNr);
+    end;
+
+    FOldPluginOrderList := lOldOrderList.Text;
+  finally
+    lOldOrderList.Free;
+  end;
+
+  lOrderList := TStringList.Create;
+  try
+    lOrderList.Text := FPluginOrderList;
+    for lIndex := 0 to Pred(lOrderList.Count) do
+    begin
+      for lIndexInt := 0 to Pred(FPluginProcessor.NodeList.Count) do
+      begin
+        lPlugin := TPluginNode(FPluginProcessor.NodeList[lIndexInt]);
+        if lOrderList.Names[lIndex] = lPlugin.ObjectID then
+        begin
+          lPlugin.SequenceNr := StrToInt(lOrderList.Values[lOrderList.Names[lIndex]]);
+          break;
+        end;
+      end;
+    end;
+  finally
+    lOrderList.Free;
+  end;
+
+  FPluginProcessor.SortPlugins;
+
+  FPluginProcessor.Notify;
+end;
+
+procedure TOrderNodesCommand.DoRollback;
+var
+  lOldOrderList: TStringList;
+  lIndex: Integer;
+  lIndexInt: Integer;
+  lPlugin: TPluginNode;
+begin
+  lOldOrderList := TStringList.Create;
+  try
+    lOldOrderList.Text := FOldPluginOrderList;
+    for lIndex := 0 to Pred(lOldOrderList.Count) do
+    begin
+      for lIndexInt := 0 to Pred(FPluginProcessor.NodeList.Count) do
+      begin
+        lPlugin := TPluginNode(FPluginProcessor.NodeList[lIndexInt]);
+        if lOldOrderList.Names[lIndex] = lPlugin.ObjectID then
+        begin
+          lPlugin.SequenceNr :=
+            StrToInt(lOldOrderList.Values[lOldOrderList.Names[lIndex]]);
+        end;
+      end;
+    end;
+  finally
+    lOldOrderList.Free;
+  end;
+
+  FPluginProcessor.SortPlugins;
+
+  FPluginProcessor.Notify;
+end;
 
 { TInsertNodeCommand }
 
@@ -165,8 +256,6 @@ var
 begin
   DBLog('start TPluginProcessor.DoCreateInstance');
 
-  writeln('Construction: ' + AClassName);
-
   if AClassName = 'TScriptNode' then
   begin
     lPluginNode := TScriptNode.Create(ObjectID, MAPPED);
@@ -178,6 +267,8 @@ begin
   begin
     lPluginNode := TPluginLADSPA.Create(ObjectID, MAPPED);
     lPluginNode.ObjectOwnerID := ObjectID;
+    lPluginNode.Instantiate;
+    lPluginNode.Activate;
     NodeList.Add(lPluginNode);
     AObject := lPluginNode;
   end
@@ -206,10 +297,10 @@ var
 begin
   FNodeList.Sort(@SortOnSequenceNr);
 
-  for lIndex := 0 to Pred(FNodeList.Count) do
+  {for lIndex := 0 to Pred(FNodeList.Count) do
   begin
     TPluginNode(FNodeList[lIndex]).SequenceNr := lIndex;
-  end;
+  end; }
 end;
 
 { TPluginProcessor }
@@ -262,30 +353,30 @@ var
 begin
   if FNodeList.Count > 0 then
   begin
-    // Push audio into pluginchain
-    //Move(AInputBuffer^, TPluginNode(FNodeList.First).InputBuffer^, AFrames * sizeof(single) * FChannels);
-
     // Process the complete chain
     for lIndex := 0 to Pred(FNodeList.Count) do
     begin
-      if lIndex = 0 then
+      if TPluginNode(FNodeList[lIndex]).Active then
       begin
-        TPluginNode(FNodeList[lIndex]).Process(
-          AMidiBuffer,
-          AInputBuffer,
-          TPluginNode(FNodeList[lIndex]).OutputBuffer,
-          AFrames);
-      end
-      else
-      begin
-        TPluginNode(FNodeList[lIndex]).Process(
-          AMidiBuffer,
-          lPreviousOutputBuffer,
-          TPluginNode(FNodeList[lIndex]).OutputBuffer,
-          AFrames);
-      end;
+        if lIndex = 0 then
+        begin
+          TPluginNode(FNodeList[lIndex]).Process(
+            AMidiBuffer,
+            AInputBuffer,
+            TPluginNode(FNodeList[lIndex]).OutputBuffer,
+            AFrames);
+        end
+        else
+        begin
+          TPluginNode(FNodeList[lIndex]).Process(
+            AMidiBuffer,
+            lPreviousOutputBuffer,
+            TPluginNode(FNodeList[lIndex]).OutputBuffer,
+            AFrames);
+        end;
 
-      lPreviousOutputBuffer := TPluginNode(FNodeList[lIndex]).OutputBuffer;
+        lPreviousOutputBuffer := TPluginNode(FNodeList[lIndex]).OutputBuffer;
+      end;
     end;
 
     // Pull audio from pluginchain

@@ -18,14 +18,11 @@ type
     btnHalf: TButton;
     cbPitchAlgo: TComboBox;
     cbQuantize: TComboBox;
-    edtFilename: TLabeledEdit;
     Panel1: TPanel;
     pcBPM: TParameterControl;
     pcPitch: TParameterControl;
     sbBottom: TScrollBox;
-    tbThreshold: TTrackBar;
     ToggleControl1: TToggleControl;
-    TrackBar1: TTrackBar;
 
     procedure btnDoubleClick(Sender: TObject);
     procedure btnHalfClick(Sender: TObject);
@@ -35,9 +32,6 @@ type
     procedure pcBPMStartChange(Sender: TObject);
     procedure pcPitchChange(Sender: TObject);
     procedure pcPitchStartChange(Sender: TObject);
-    procedure tbThresholdMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure TrackBar1Change(Sender: TObject);
     procedure DoChancheRealBPMCommand(APersist: Boolean);
     procedure DoChangePitchCommand(APersist: Boolean);
     procedure cbPitchedChange(Sender: TObject);
@@ -45,6 +39,7 @@ type
     { private declarations }
     FModel: TWavePattern;
     FWaveGUI: TWaveGUI;
+    FWaveOverview: TWaveOverview;
 
     FConnected: Boolean;
     FObjectOwnerID: string;
@@ -55,6 +50,8 @@ type
     FPitch: Single;
     FRealBPM: Single;
     procedure Setpitch(const Avalue: Single);
+  protected
+    procedure DoWaveZoom(ALeftPercentage, ARightPercentage: single);
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -96,6 +93,7 @@ begin
   if Assigned(FModel) then
   begin
     FModel.Attach(FWaveGUI);
+    FModel.Attach(FWaveOverview);
 
     FConnected := True;
   end;
@@ -109,6 +107,7 @@ begin
   begin
     FWaveGUI.Disconnect;
     FModel.Detach(FWaveGUI);
+    FModel.Detach(FWaveOverview);
 
     FConnected := False;
   end;
@@ -182,32 +181,6 @@ begin
     GCommandQueue.PushCommand(lTogglePitchCommand);
   except
     lTogglePitchCommand.Free;
-  end;
-end;
-
-procedure TWavePatternControlGUI.TrackBar1Change(Sender: TObject);
-begin
-  if Assigned(GSettings.SelectedPattern) then
-  begin
-    FWaveGUI.ZoomFactorX := TrackBar1.Position;
-    FWaveGUI.CacheIsDirty := True;
-    FWaveGUI.Invalidate;
-  end;
-end;
-
-procedure TWavePatternControlGUI.tbThresholdMouseUp(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-var
-  lChangeThresholdCommand: TChangeThresHoldCommand;
-begin
-  lChangeThresholdCommand := TChangeThresHoldCommand.Create(FObjectID);
-  try
-    lChangeThresholdCommand.Threshold :=
-      Round((100 * tbThreshold.Position) / tbThreshold.Max);
-
-    GCommandQueue.PushCommand(lChangeThresholdCommand);
-  except
-    lChangeThresholdCommand.Free;
   end;
 end;
 
@@ -324,6 +297,24 @@ begin
     FPitch := Avalue;
 end;
 
+procedure TWavePatternControlGUI.DoWaveZoom(ALeftPercentage,
+  ARightPercentage: single);
+var
+  lFactor: Single;
+  lStart: Single;
+  lEnd: Single;
+  lSampleWidth: Integer;
+begin
+  lSampleWidth := FWaveGUI.SampleEnd.Location - FWaveGUI.SampleStart.Location;
+  lStart := (lSampleWidth / 100) * ALeftPercentage;
+  lEnd := (lSampleWidth / 100) * ARightPercentage;
+
+  FWaveGUI.ZoomFactorX := ((FWaveGUI.SampleEnd.Location - FWaveGUI.SampleStart.Location) * 2) {200000} / (lEnd - lStart);
+  FWaveGUI.Offset := Round((FWaveGUI.Width / 100) * ALeftPercentage);
+  FWaveGUI.CacheIsDirty := True;
+  FWaveGUI.Invalidate;
+end;
+
 constructor TWavePatternControlGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -348,11 +339,20 @@ begin
   FWaveGUI := TWaveGUI.Create(nil);
   FWaveGUI.Align := alClient;
   FWaveGUI.Parent := sbBottom;
+
+  FWaveOverview := TWaveOverview.Create(nil);
+  FWaveOverview.ZoomCallback := @DoWaveZoom;
+  FWaveOverview.Width := 100;
+  FWaveOverview.Height := 20;
+  FWaveOverview.Left := 5;
+  FWaveOverview.Top := 1;
+  FWaveOverview.Parent := Panel1;
 end;
 
 destructor TWavePatternControlGUI.Destroy;
 begin
   FWaveGUI.Free;
+  FWaveOverview.Free;
 
   inherited Destroy;
 end;

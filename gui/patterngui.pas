@@ -131,7 +131,6 @@ begin
 //  PatternLength := TPattern(Subject).LoopEnd.Location;  //todo Use global patternlength
 //  PatternControls.RealBPM := Model.WavePattern.RealBPM;
 //  Text := ExtractFileName(TPattern(Subject).WavePattern.SampleFileName);
-  writeln(inttostr(PatternLength));
   DBLog('end TPatternGUI.Update');
 end;
 

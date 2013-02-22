@@ -18,25 +18,6 @@ object WavePatternControlGUI: TWavePatternControlGUI
     ClientHeight = 29
     ClientWidth = 1083
     TabOrder = 0
-    object edtFilename: TLabeledEdit
-      Left = 23
-      Height = 23
-      Top = 1
-      Width = 75
-      EditLabel.AnchorSideTop.Control = edtFilename
-      EditLabel.AnchorSideTop.Side = asrCenter
-      EditLabel.AnchorSideRight.Control = edtFilename
-      EditLabel.AnchorSideBottom.Control = edtFilename
-      EditLabel.AnchorSideBottom.Side = asrBottom
-      EditLabel.Left = 3
-      EditLabel.Height = 14
-      EditLabel.Top = 5
-      EditLabel.Width = 17
-      EditLabel.Caption = 'file'
-      EditLabel.ParentColor = False
-      LabelPosition = lpLeft
-      TabOrder = 0
-    end
     object ToggleControl1: TToggleControl
       Left = 743
       Height = 14
@@ -48,31 +29,6 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Constraints.MaxHeight = 14
       Constraints.MinHeight = 14
     end
-    object tbThreshold: TTrackBar
-      Left = 110
-      Height = 42
-      Top = 0
-      Width = 100
-      Max = 100
-      Min = 1
-      Position = 1
-      ScalePos = trRight
-      OnMouseUp = tbThresholdMouseUp
-      TabOrder = 2
-      Visible = False
-    end
-    object TrackBar1: TTrackBar
-      Left = 493
-      Height = 42
-      Top = 0
-      Width = 135
-      Max = 1000
-      Min = 2
-      OnChange = TrackBar1Change
-      Position = 10
-      ScalePos = trLeft
-      TabOrder = 3
-    end
     object btnDouble: TButton
       Left = 799
       Height = 25
@@ -80,7 +36,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Width = 25
       Caption = '* 2'
       OnClick = btnDoubleClick
-      TabOrder = 4
+      TabOrder = 1
     end
     object btnHalf: TButton
       Left = 826
@@ -89,7 +45,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Width = 25
       Caption = '/ 2'
       OnClick = btnHalfClick
-      TabOrder = 5
+      TabOrder = 2
     end
     object cbPitchAlgo: TComboBox
       Left = 635
@@ -99,7 +55,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       ItemHeight = 0
       OnChange = cbPitchAlgoChange
       Style = csDropDownList
-      TabOrder = 6
+      TabOrder = 3
     end
     object cbQuantize: TComboBox
       Left = 853
@@ -109,7 +65,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       ItemHeight = 0
       OnChange = cbQuantizeChange
       Style = csDropDownList
-      TabOrder = 7
+      TabOrder = 4
     end
     object pcBPM: TParameterControl
       Left = 230

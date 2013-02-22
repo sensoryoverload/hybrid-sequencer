@@ -1600,8 +1600,6 @@ var
   lCurrentSlice: TMarker;
   lFirstSlice: Boolean;
 begin
-  GLogger.PushMessage('StartAutoMarkerProcess');
-
   lFirstSlice := True;
   lCurrentSlice := TMarker(FSliceList[0]);
 
@@ -1657,8 +1655,6 @@ begin
   end; }
 
   Notify;
-
-  GLogger.PushMessage('EndAutoMarkerProcess');
 end;
 
 { TAddMarkerCommand }

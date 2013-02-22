@@ -703,7 +703,6 @@ begin
           Succ(lItemIndex) * LISTITEM_HEIGHT + 1,
           FItems[lItemIndex],
           ColorToBGRA(ColorToRGB(clBtnText)));
-
       end;
     end
     else
@@ -762,11 +761,11 @@ begin
   FValue := AValue;
   if (FOrientation = oHorizontal) or (FOrientation = oBalance) then
   begin
-    FScreenValue := Round((Width / (FMax - FMin)) * FValue);
+    FScreenValue := Round((Pred(Width) / (FMax - FMin)) * FValue);
   end
   else
   begin
-    FScreenValue := Round((Height / (FMax - FMin)) * FValue);
+    FScreenValue := Round((Pred(Height) / (FMax - FMin)) * FValue);
   end;
 
   Invalidate;
@@ -928,19 +927,19 @@ begin
   begin
     if (Orientation = oHorizontal) or (Orientation = oBalance) then
     begin
-      if X > Width then
+      if X > Pred(Width) then
       begin
-        FScreenValue := Width;
+        FScreenValue := Pred(Width);
       end
-      else if X < 0 then
+      else if X < 1 then
       begin
-        FScreenValue := 0;
+        FScreenValue := 1;
       end
       else
       begin
         FScreenValue := X;
       end;
-      FValue := ((FMax - FMin) / Width) * FScreenValue + FMin;
+      FValue := ((FMax - FMin) / Width) * FScreenValue;
     end
     else if Orientation = oVertical then
     begin
@@ -956,7 +955,7 @@ begin
       begin
         FScreenValue := Y;
       end;
-      FValue := FMax - ((FMax - FMin) / Height) * FScreenValue;
+      FValue := ((FMax - FMin) / Height) * FScreenValue;
     end;
   end;
 end;

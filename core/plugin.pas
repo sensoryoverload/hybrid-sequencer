@@ -82,6 +82,7 @@ type
 
   TPluginNode = class(THybridPersistentModel)
   private
+    FActive: Boolean;
     FPortList: TObjectList;
     FParameterList: TObjectList;
     FReturnBuffer: PSingle;
@@ -97,7 +98,7 @@ type
     FPluginName: string;
     FPluginType: TPluginType;
     FChannels: Integer;
-    FSequenceNr: Single;
+    FSequenceNr: Integer;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -119,11 +120,12 @@ type
     property OutputControlCount: Integer read FOutputControlCount write FOutputControlCount;
     property InputControls: TArrayOfPortParameter read FInputControls write FInputControls;
     property OutputControls: TArrayOfSingle read FOutputControls write FOutputControls;
+    property Active: Boolean read FActive write FActive;
   published
     property PluginName: string read FPluginName write FPluginName;
     property PluginType: TPluginType read FPluginType write FPluginType;
     property Frames: Integer read FFrames write FFrames;
-    property SequenceNr: Single read FSequenceNr write FSequenceNr;
+    property SequenceNr: Integer read FSequenceNr write FSequenceNr;
     property Channels: Integer read FChannels write FChannels;
   end;
 
@@ -156,6 +158,7 @@ type
     procedure Clean; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+  published
     property UniqueID: Integer read FUniqueID write FUniqueID;
   end;
 
@@ -268,7 +271,8 @@ begin
 
   if Assigned(FPluginDescriptor) then
   begin
-    FPluginInstance := FPluginDescriptor^.instantiate(FPluginDescriptor, 44100);
+    FPluginInstance := FPluginDescriptor^.instantiate(FPluginDescriptor,
+      Round(GSettings.SampleRate));
   end;
 
   FInputChannelCount := 0;
@@ -341,71 +345,64 @@ begin
       end;
 
       lDefaultValue := 0;
-      if LADSPA_IS_HINT_HAS_DEFAULT(lPortRangeHint.HintDescriptor) then
-      begin
-        case (lPortRangeHint.HintDescriptor AND LADSPA_HINT_DEFAULT_MASK) of
-      		LADSPA_HINT_DEFAULT_MINIMUM:
+      case (lPortRangeHint.HintDescriptor AND LADSPA_HINT_DEFAULT_MASK) of
+      	LADSPA_HINT_DEFAULT_MINIMUM:
+        begin
+      		lDefaultValue := lPortParameter.LowerBound;
+    		end;
+    		LADSPA_HINT_DEFAULT_LOW:
+        begin
+    			if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
           begin
-      			lDefaultValue := lPortParameter.LowerBound;
-    			end;
-    		  LADSPA_HINT_DEFAULT_LOW:
+    				lDefaultValue := exp(ln(lMinValue) * 0.75 + ln(lMaxValue) * 0.25);
+          end
+          else
           begin
-    			  if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
-            begin
-              lDefaultValue := 0.25;
-{    				  lDefaultValue := exp(
-    					  log(lMinValue) * 0.75 + log(lMaxValue) * 0.25);     }
-            end
-            else
-            begin
-    				  lDefaultValue := (lMinValue * 0.75 + lMaxValue * 0.25);
-    			  end;
+    				lDefaultValue := (lMinValue * 0.75 + lMaxValue * 0.25);
     			end;
-    		  LADSPA_HINT_DEFAULT_MIDDLE:
+    		end;
+    		LADSPA_HINT_DEFAULT_MIDDLE:
+        begin
+          if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
           begin
-            if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
-            begin
-    				  lDefaultValue := sqrt(lMinValue * lMaxValue);
-    			  end
-            else
-            begin
-    				  lDefaultValue := (lMinValue + lMaxValue) * 0.5;
-    			  end;
-          end;
-    		  LADSPA_HINT_DEFAULT_HIGH:
+    				lDefaultValue := sqrt(lMinValue * lMaxValue);
+    			end
+          else
           begin
-            if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
-            begin
-              lDefaultValue := 0.75;
-{      				fDefaultValue = ::expf(
-    					::logf(fMinValue) * 0.25f + ::logf(fMaxValue) * 0.75);}
-            end
-            else
-            begin
-    				  lDefaultValue := (lMinValue * 0.25 + lMaxValue * 0.75);
-            end;
-          end;
-    		  LADSPA_HINT_DEFAULT_MAXIMUM:
-    			begin
-            lDefaultValue := lMaxValue;
-    			end;
-    		  LADSPA_HINT_DEFAULT_0:
-    			begin
-            lDefaultValue := 0;
-    			end;
-    		  LADSPA_HINT_DEFAULT_1:
-    			begin
-            lDefaultValue := 1;
-    			end;
-    		  LADSPA_HINT_DEFAULT_100:
-          begin
-            lDefaultValue := 100;
-    			end;
-    		  LADSPA_HINT_DEFAULT_440:
-          begin
-            lDefaultValue := 440;
+    				lDefaultValue := (lMinValue + lMaxValue) * 0.5;
     			end;
         end;
+    		LADSPA_HINT_DEFAULT_HIGH:
+        begin
+          if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
+          begin
+      			lDefaultValue := exp(ln(lMinValue) * 0.25 + ln(lMaxValue) * 0.75);
+          end
+          else
+          begin
+    				lDefaultValue := (lMinValue * 0.25 + lMaxValue * 0.75);
+          end;
+        end;
+    		LADSPA_HINT_DEFAULT_MAXIMUM:
+    		begin
+          lDefaultValue := lMaxValue;
+    		end;
+    		LADSPA_HINT_DEFAULT_0:
+    		begin
+          lDefaultValue := 0;
+    		end;
+    		LADSPA_HINT_DEFAULT_1:
+    		begin
+          lDefaultValue := 1;
+    		end;
+    		LADSPA_HINT_DEFAULT_100:
+        begin
+          lDefaultValue := 100;
+    		end;
+    		LADSPA_HINT_DEFAULT_440:
+        begin
+          lDefaultValue := 440;
+    		end;
       end;
 
       lPortParameter.Caption := lPortName;
@@ -568,12 +565,12 @@ end;
 
 procedure TPluginNode.Activate;
 begin
-  //
+  Active := True;
 end;
 
 procedure TPluginNode.Deactivate;
 begin
-  //
+  Active := False;
 end;
 
 procedure TPluginNode.Clean;

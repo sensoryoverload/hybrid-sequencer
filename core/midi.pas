@@ -727,10 +727,8 @@ begin
     lMidiNote := TMidiNote(FMidiPattern.NoteList[lNoteIndex]);
     if FOldObjectID = lMidiNote.ObjectID then
     begin
-      writeln(Format('MidiDataList before count %d', [FMidiPattern.MidiDataList.Count]));
       FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteStart);
       FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteEnd);
-      writeln(Format('MidiDataList after count %d', [FMidiPattern.MidiDataList.Count]));
 
       FMidiPattern.NoteList.Remove(lMidiNote);
     end;
@@ -1136,7 +1134,7 @@ begin
   // Store MidiChannel
   FOldMidiChannel := FMidiChannel;
   FMidiPattern.MidiChannel := FMidiChannel;
-  writeln(Format('Change midiChannel to %d',[FMidiPattern.MidiChannel]));
+  DBLog(Format('Change midiChannel to %d',[FMidiPattern.MidiChannel]));
 
   FMidiPattern.EndUpdate;
 
@@ -1150,7 +1148,6 @@ begin
   FMidiPattern.BeginUpdate;
 
   FMidiPattern.MidiChannel := FOldMidiChannel;
-  writeln(Format('Change midiChannel to %d',[FMidiPattern.MidiChannel]));
 
   FMidiPattern.EndUpdate;
 

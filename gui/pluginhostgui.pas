@@ -49,6 +49,8 @@ type
     FModel: THybridPersistentModel;
 
     FNodeListGUI: TObjectList;
+    procedure SortPlugins(Sender: TObject);
+    procedure UpdatePluginOrder;
   protected
   public
     { public declarations }
@@ -84,6 +86,40 @@ uses
   plugin_bassline, plugin_bassline_gui,
   plugin_decimate, plugin_decimate_gui;
 
+function SortOnSequenceNr(Item1 : Pointer; Item2 : Pointer) : Integer;
+var
+  lSequenceNr1, lSequenceNr2 : TGenericPluginGUI;
+begin
+  // We start by viewing the object pointers as TGenericPluginGUI objects
+  lSequenceNr1 := TGenericPluginGUI(Item1);
+  lSequenceNr2 := TGenericPluginGUI(Item2);
+
+  // Now compare by sequencenr
+  if lSequenceNr1.SequenceNr > lSequenceNr2.SequenceNr then
+    Result := 1
+  else if lSequenceNr1.SequenceNr = lSequenceNr2.SequenceNr then
+    Result := 0
+  else
+    Result := -1;
+end;
+
+function SortOnScreenOrder(Item1 : Pointer; Item2 : Pointer) : Integer;
+var
+  lLeft1, lLeft2 : TGenericPluginGUI;
+begin
+  // We start by viewing the object pointers as TGenericPluginGUI objects
+  lLeft1 := TGenericPluginGUI(Item1);
+  lLeft2 := TGenericPluginGUI(Item2);
+
+  // Now compare by sequencenr
+  if lLeft1.Left > lLeft2.Left then
+    Result := 1
+  else if lLeft1.Left = lLeft2.Left then
+    Result := 0
+  else
+    Result := -1;
+end;
+
 procedure TPluginProcessorGUI.pnlPluginDragDrop(Sender, Source: TObject; X,
   Y: Integer);
 var
@@ -99,7 +135,7 @@ begin
 
     lCreateNodesCommand := TCreateNodesCommand.Create(ObjectID);
     try
-      lCreateNodesCommand.SequenceNr := 0;
+      lCreateNodesCommand.SequenceNr := FNodeListGUI.Count;
 
       if Assigned(lTreeView.Selected.Data)  then
       begin
@@ -180,7 +216,71 @@ begin
     @CreatePluginNodeGUI,
     @DeletePluginNodeGUI);
 
+  UpdatePluginOrder;
+
   DBLog('end TPluginProcessorGUI.Update');
+end;
+
+procedure TPluginProcessorGUI.UpdatePluginOrder;
+var
+  lIndex: Integer;
+  lOffsetAdder: Integer;
+  lPluginGUI: TGenericPluginGUI;
+begin
+  // Retrieve pluginorder from model
+  for lIndex := 0 to Pred(FNodeListGUI.Count) do
+  begin
+    lPluginGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
+    lPluginGUI.SequenceNr := TPluginNode(lPluginGUI.Model).SequenceNr;
+  end;
+
+  // Sort view order on sequencenr
+  FNodeListGUI.Sort(@SortOnSequenceNr);
+
+  // Now set the plugin gui in order from left to right
+  lOffsetAdder := 0;
+  for lIndex := 0 to Pred(FNodeListGUI.Count) do
+  begin
+    lPluginGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
+
+    lPluginGUI.Left := lOffsetAdder;
+    lOffsetAdder := lOffsetAdder + lPluginGUI.Width;
+  end;
+end;
+
+procedure TPluginProcessorGUI.SortPlugins(Sender: TObject);
+var
+  lIndex: Integer;
+  lOffsetAdder: Integer;
+  lPluginGUI: TGenericPluginGUI;
+  lOrderNodesCommand: TOrderNodesCommand;
+  lOrderList: TStringList;
+begin
+  // Sort the nodelist on the components' left property
+  FNodeListGUI.Sort(@SortOnScreenOrder);
+
+  lOrderList := TStringList.Create;
+  try
+    for lIndex := 0 to Pred(FNodeListGUI.Count) do
+    begin
+      lPluginGUI := TGenericPluginGUI(FNodeListGUI[lIndex]);
+
+      lPluginGUI.SequenceNr := lIndex;
+
+      lOrderList.Values[lPluginGUI.ObjectID] := IntToStr(lPluginGUI.SequenceNr);
+    end;
+
+    // Send command to pluginhost
+    lOrderNodesCommand := TOrderNodesCommand.Create(ObjectID);
+    try
+      lOrderNodesCommand.PluginOrderList := lOrderList.Text;
+      GCommandQueue.PushCommand(lOrderNodesCommand);
+    except
+      lOrderNodesCommand.Free;
+    end;
+  finally
+    lOrderList.Free;
+  end;
 end;
 
 procedure TPluginProcessorGUI.EraseBackground(DC: HDC);
@@ -230,9 +330,10 @@ begin
       lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
       lPluginNodeGUI.Model := lPluginNode;
       lPluginNodeGUI.PluginName := lPluginNode.PluginName;
+      lPluginNodeGUI.Align := alNone;
       lPluginNodeGUI.Parent := pnlPlugin;
       lPluginNodeGUI.Width := 100;
-      lPluginNodeGUI.Align := alLeft;
+      lPluginNodeGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lPluginNodeGUI);
       lPluginNode.Attach(lPluginNodeGUI);
@@ -245,8 +346,9 @@ begin
       lSampleBankGUI.Model := TSampleBank(lPluginNode);
       lSampleBankGUI.PluginName := lPluginNode.PluginName;
       lSampleBankGUI.Width := 955;
-      lSampleBankGUI.Align := alLeft;
+      lSampleBankGUI.Align := alNone;
       lSampleBankGUI.Parent := pnlPlugin;
+      lSampleBankGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lSampleBankGUI);
       TSampleBank(lPluginNode).Attach(lSampleBankGUI);
@@ -259,8 +361,9 @@ begin
       lPluginDistortionGUI.Model := TPluginDistortion(lPluginNode);
       lPluginDistortionGUI.PluginName := lPluginNode.PluginName;
       lPluginDistortionGUI.Width := 100;
-      lPluginDistortionGUI.Align := alLeft;
+      lPluginDistortionGUI.Align := alNone;
       lPluginDistortionGUI.Parent := pnlPlugin;
+      lPluginDistortionGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lPluginDistortionGUI);
       TPluginDistortion(lPluginNode).Attach(lPluginDistortionGUI);
@@ -272,9 +375,10 @@ begin
       lPluginFreeverbGUI.ObjectOwnerID := Self.ObjectID;
       lPluginFreeverbGUI.Model := TPluginFreeverb(lPluginNode);
       lPluginFreeverbGUI.PluginName := lPluginNode.PluginName;
+      lPluginFreeverbGUI.Align := alNone;
       lPluginFreeverbGUI.Parent := pnlPlugin;
       lPluginFreeverbGUI.Width := 100;
-      lPluginFreeverbGUI.Align := alLeft;
+      lPluginFreeverbGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lPluginFreeverbGUI);
       TPluginFreeverb(lPluginNode).Attach(lPluginFreeverbGUI);
@@ -286,9 +390,10 @@ begin
       lPluginBasslineGUI.ObjectOwnerID := Self.ObjectID;
       lPluginBasslineGUI.Model := TPluginBassline(lPluginNode);
       lPluginBasslineGUI.PluginName := lPluginNode.PluginName;
+      lPluginBasslineGUI.Align := alNone;
       lPluginBasslineGUI.Parent := pnlPlugin;
       lPluginBasslineGUI.Width := 100;
-      lPluginBasslineGUI.Align := alLeft;
+      lPluginBasslineGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lPluginBasslineGUI);
       TPluginBassline(lPluginNode).Attach(lPluginBasslineGUI);
@@ -300,9 +405,10 @@ begin
       lPluginDecimateGUI.ObjectOwnerID := Self.ObjectID;
       lPluginDecimateGUI.Model := TPluginDecimate(lPluginNode);
       lPluginDecimateGUI.PluginName := lPluginNode.PluginName;
+      lPluginDecimateGUI.Align := alNone;
       lPluginDecimateGUI.Parent := pnlPlugin;
       lPluginDecimateGUI.Width := 100;
-      lPluginDecimateGUI.Align := alLeft;
+      lPluginDecimateGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lPluginDecimateGUI);
       TPluginDecimate(lPluginNode).Attach(lPluginDecimateGUI);
@@ -314,9 +420,9 @@ begin
       lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
       lPluginNodeGUI.Model := lPluginNode;
       lPluginNodeGUI.PluginName := lPluginNode.PluginName;
+      lPluginNodeGUI.Align := alNone;
       lPluginNodeGUI.Parent := pnlPlugin;
-      lPluginNodeGUI.Width := 150;
-      lPluginNodeGUI.Align := alLeft;
+      lPluginNodeGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lPluginNodeGUI);
       lPluginNode.Attach(lPluginNodeGUI);

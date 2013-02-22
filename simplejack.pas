@@ -180,6 +180,9 @@ type
     procedure ScreenUpdaterTimer(Sender: TObject);
     procedure Formdestroy(Sender: Tobject);
     procedure Formcreate(Sender: Tobject);
+    procedure TreeView1AdvancedCustomDrawItem(Sender: TCustomTreeView;
+      Node: TTreeNode; State: TCustomDrawState; Stage: TCustomDrawStage;
+      var PaintImages, DefaultDraw: Boolean);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure TreeView1Collapsed(Sender: TObject; Node: TTreeNode);
     procedure TreeView1Deletion(Sender: TObject; Node: TTreeNode);
@@ -1324,6 +1327,20 @@ begin
   DBLog('end TMainApp.FormCreate');
 End;
 
+procedure TMainApp.TreeView1AdvancedCustomDrawItem(Sender: TCustomTreeView;
+  Node: TTreeNode; State: TCustomDrawState; Stage: TCustomDrawStage;
+  var PaintImages, DefaultDraw: Boolean);
+begin
+  if Odd(Node.Index) then
+  begin
+    State := [cdsDefault];
+  end
+  else
+  begin
+    State := [cdsGrayed];
+  end;
+end;
+
 procedure TMainApp.TreeView1Change(Sender: TObject; Node: TTreeNode);
 begin
   //
@@ -1476,7 +1493,7 @@ begin
   try
     TreeView1.Items.Clear;
     TreeView1.SortType := stText;
-    RootNode := TreeView1.Items.Add(nil, 'Root');
+    RootNode := TreeView1.Items.Add(nil, 'Files');
     RootNode.ImageIndex := 17;
     TreeFolderData := TTreeFolderData.Create(PathDelim);
     TreeFolderData.Opened := True;
@@ -1509,6 +1526,8 @@ begin
       lTreeViewPluginInfo := TTreeViewPluginInfo.Create;
       lTreeViewPluginInfo.UniqueId :=
         TLadspaPluginCatalogItem(GLadspaPluginFactory.PluginList.Objects[lIndex]).UniqueId;
+      lTreeViewPluginInfo.Caption :=
+        TLadspaPluginCatalogItem(GLadspaPluginFactory.PluginList.Objects[lIndex]).Name;
 
       lFilterNode := TreeView1.Items.AddChildObject(lFilterRootNode,
         TLadspaPluginCatalogItem(GLadspaPluginFactory.PluginList.Objects[lIndex]).Name,

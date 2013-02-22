@@ -127,15 +127,16 @@ object MainApp: TMainApp
       Align = alLeft
       Anchors = []
       BorderStyle = bsNone
-      DefaultItemHeight = 16
       ExpandSignType = tvestPlusMinus
+      Font.Height = 7
       Images = ilGlobalImages
       ParentColor = True
+      ParentFont = False
       ReadOnly = True
-      RowSelect = True
       ShowLines = False
       SortType = stText
       TabOrder = 2
+      OnAdvancedCustomDrawItem = TreeView1AdvancedCustomDrawItem
       OnChange = TreeView1Change
       OnCollapsed = TreeView1Collapsed
       OnDeletion = TreeView1Deletion
@@ -143,7 +144,7 @@ object MainApp: TMainApp
       OnDragOver = TreeView1DragOver
       OnExpanding = TreeView1Expanding
       OnMouseDown = TreeView1MouseDown
-      Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoRowSelect, tvoShowButtons, tvoShowRoot, tvoToolTips]
+      Options = [tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowRoot, tvoToolTips]
       TreeLinePenStyle = psSolid
     end
   end

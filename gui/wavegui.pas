@@ -62,6 +62,46 @@ type
   published
   end;
 
+
+  TWaveZoomCallback = procedure(ALeftPercentage, ARightPercentage: Single) of object;
+
+  { TWaveOverview }
+
+  TWaveOverview = class(TPersistentCustomControl)
+  private
+    FTotalWidth: Integer;
+    FZoomBoxWidth: Integer;
+    FZoomBoxLeft: Integer;
+    FZoomBoxOldLeft: Integer;
+    FZoomBoxRight: Integer;
+    FOldX: Integer;
+    FOldY: Integer;
+    FMouseX: Integer;
+
+    FZooming: Boolean;
+    FZoomingLeft: Boolean;
+    FZoomingRight: Boolean;
+
+    FZoomCallback: TWaveZoomCallback;
+    FModel: TWavePattern;
+  public
+    constructor Create(AOwner: TComponent); override;
+    procedure Update(Subject: THybridPersistentModel); override;
+    procedure EraseBackground(DC: HDC); override;
+    function GetModel: THybridPersistentModel; override;
+    procedure SetModel(AModel: THybridPersistentModel); override;
+    procedure Connect; override;
+    procedure Disconnect; override;
+    property ZoomCallback: TWaveZoomCallback write FZoomCallback;
+    property Model: THybridPersistentModel read GetModel write SetModel;
+  protected
+    procedure Paint; override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+  end;
+
+
   { TMarkerGUI }
 
   TMarkerGUI = class(THybridPersistentView)
@@ -143,9 +183,11 @@ type
     FBpmAdder: Single;
     FSampleStartLocation: Integer;
     FMouseX: Integer;
+    FMaximumVisibleRange: Integer;
 
     procedure RecalculateWarp;
     procedure ReleaseMarker(Data: PtrInt);
+    procedure SetOffset(AValue: Integer);
     procedure SetTransientThreshold(const AValue: Integer);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
@@ -204,6 +246,7 @@ type
   published
     property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
+    property Offset: Integer read FOffset write SetOffset;
   end;
 
 implementation
@@ -223,6 +266,170 @@ begin
     Result := 0
   else
     Result := -1;
+end;
+
+{ TWaveOverview }
+
+constructor TWaveOverview.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  FZoomBoxLeft := 0;
+  FZoomBoxRight := Width;
+  FZoomBoxWidth := Width;
+end;
+
+procedure TWaveOverview.Update(Subject: THybridPersistentModel);
+begin
+  Invalidate;
+end;
+
+procedure TWaveOverview.EraseBackground(DC: HDC);
+begin
+  inherited EraseBackground(DC);
+end;
+
+function TWaveOverview.GetModel: THybridPersistentModel;
+begin
+  Result := THybridPersistentModel(FModel);
+end;
+
+procedure TWaveOverview.SetModel(AModel: THybridPersistentModel);
+begin
+  FModel := TWavePattern(AModel);
+end;
+
+procedure TWaveOverview.Connect;
+begin
+  FModel := TWavePattern(GObjectMapper.GetModelObject(Self.ObjectID));
+end;
+
+procedure TWaveOverview.Disconnect;
+begin
+  inherited Disconnect;
+end;
+
+procedure TWaveOverview.Paint;
+begin
+  Canvas.Brush.Color := clLtGray;
+  Canvas.Pen.Width := 1;
+  Canvas.Rectangle(0, 0, Width, Height);
+
+  Canvas.pen.Width := clBlack;
+  Canvas.Pen.Width := 2;
+  Canvas.Brush.Style := bsClear;
+  Canvas.Rectangle(FZoomBoxLeft, 1, FZoomBoxRight, Height - 1);
+end;
+
+procedure TWaveOverview.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  FOldX := X;
+  FOldY := Y;
+
+  if Button = mbLeft then
+  begin
+    if (X > FZoomBoxLeft - 3) and (X < FZoomBoxLeft + 3) then
+    begin
+      FZoomingLeft := True;
+    end
+    else if (X > FZoomBoxRight - 3) and (X < FZoomBoxRight + 3) then
+    begin
+      FZoomingRight := True;
+    end
+    else
+    begin
+      FZooming := True;
+
+      FZoomBoxOldLeft := FZoomBoxLeft;
+    end;
+  end;
+
+  inherited MouseDown(Button, Shift, X, Y);
+end;
+
+procedure TWaveOverview.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  FZooming := False;
+  FZoomingLeft := False;
+  FZoomingRight := False;
+
+  inherited MouseUp(Button, Shift, X, Y);
+end;
+
+procedure TWaveOverview.MouseMove(Shift: TShiftState; X, Y: Integer);
+var
+  lTryLeftLocation: Integer;
+  lTryRightLocation: Integer;
+  lDelta: Integer;
+begin
+  if FZooming  then
+  begin
+    lDelta := X - FOldX;
+    lTryLeftLocation := FZoomBoxOldLeft + lDelta;
+    lTryRightLocation := FZoomBoxOldLeft + lDelta + FZoomBoxWidth;
+
+    // Clamp to left side
+    if lTryLeftLocation < 1 then
+    begin
+      FZoomBoxLeft := 1;
+      FZoomBoxRight := FZoomBoxWidth;
+    end
+    // Clamp to right side
+    else if lTryRightLocation >= Width then
+    begin
+      FZoomBoxLeft := Width - FZoomBoxWidth;
+      FZoomBoxRight := Width;
+    end
+    // Freely move
+    else
+    begin
+      FZoomBoxLeft := lTryLeftLocation;
+      FZoomBoxRight := lTryRightLocation;
+    end;
+  end
+  else if FZoomingLeft then
+  begin
+    FZoomBoxLeft := X;
+
+    if FZoomBoxLeft >= (FZoomBoxRight - 5) then
+      FZoomBoxLeft := FZoomBoxRight - 5;
+
+    // Clamp to left side
+    if FZoomBoxLeft < 1 then
+      FZoomBoxLeft := 1;
+
+    FZoomBoxWidth := FZoomBoxRight - FZoomBoxLeft;
+  end
+  else if FZoomingRight then
+  begin
+    FZoomBoxRight := X;
+
+    if FZoomBoxRight <= (FZoomBoxLeft + 5) then
+      FZoomBoxRight := FZoomBoxLeft + 5;
+
+    // Clamp to right side
+    if FZoomBoxRight > Width then
+      FZoomBoxRight := Width;
+
+    FZoomBoxWidth := FZoomBoxRight - FZoomBoxLeft;
+  end;
+
+  if FZooming or FZoomingLeft or FZoomingRight then
+  begin
+    if FZoomBoxRight > FZoomBoxLeft then
+    begin
+      if Assigned(FZoomCallback) then
+      begin
+        FZoomCallback((100 / Width) * FZoomBoxLeft, (100 / Width) * FZoomBoxRight);
+      end;
+    end;
+
+    Invalidate;
+  end;
+
+  inherited MouseMove(Shift, X, Y);
 end;
 
 { TSimpleWaveForm }
@@ -289,7 +496,7 @@ end;
 procedure TWaveGUI.SetZoomFactorX(const AValue: Single);
 begin
   FZoomFactorX := AValue;
-  if FZoomFactorX <= 2 then FZoomFactorX := 2;
+  if FZoomFactorX <= 1 then FZoomFactorX := 1;
   FZoomFactorToScreen:= (ZoomFactorX / 1000);
   FZoomFactorToData:= (1000 / ZoomFactorX);
 
@@ -379,6 +586,8 @@ begin
   FSampleStart.Update(TWavePattern(Subject).SampleStart);
   FSampleEnd.Update(TWavePattern(Subject).SampleEnd);
 
+  FMaximumVisibleRange := TWavePattern(Subject).SampleEnd.Value + 10000;
+
   Sortslices;
 
   UpdateSampleScale;
@@ -390,7 +599,7 @@ end;
 
 procedure TWaveGUI.Connect;
 begin
-  writeln('start TWaveFormGUI.Connect');
+  DBLog('start TWaveFormGUI.Connect');
 
   FModel.LoopStart.Attach(FLoopStart);
   FModel.LoopEnd.Attach(FLoopEnd);
@@ -399,7 +608,7 @@ begin
   FModel.SampleStart.Attach(FSampleStart);
   FModel.SampleEnd.Attach(FSampleEnd);
 
-  writeln('end TWaveFormGUI.Connect');
+  DBLog('end TWaveFormGUI.Connect');
 end;
 
 procedure TWaveGUI.Disconnect;
@@ -582,9 +791,6 @@ begin
     if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and
       (FModel.Wave.Frames > 0) then
     begin
-      // Bound parameters
-      FOffset := GSettings.CursorPosition;
-
       ChannelHeight := (FBitmap.Height - FTransportBarHeight) div FModel.Wave.ChannelCount;
       for ChannelLoop := 0 to Pred(FModel.Wave.ChannelCount) do
       begin
@@ -1110,7 +1316,8 @@ begin
   begin
     FZoomFactorX := FOriginalZoomFactorX + ((FOriginalOffsetY - Y) / 5);
     if FZoomFactorX < 0.3 then FZoomFactorX := 0.3;
-    FOffset := FOldOffset + (X - FOldX);
+    FOffset := FOldOffset - (X - FOldX);
+
   end;
 
   FCacheIsDirty := True;
@@ -1328,6 +1535,14 @@ begin
   begin
     FSliceListGUI.Remove(lMarkerGUI);
   end;
+
+  Invalidate;
+end;
+
+procedure TWaveGUI.SetOffset(AValue: Integer);
+begin
+  if FOffset = AValue then Exit;
+  FOffset := AValue;
 
   Invalidate;
 end;

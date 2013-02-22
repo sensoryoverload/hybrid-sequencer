@@ -97,7 +97,6 @@ begin
     // Iterate plugin paths
     for i := 0 to Pred(lLadspaPaths.Count) do
     begin
-      writeln(Format('LADSPA Path %s', [lLadspaPaths[i]]));
       if DirectoryExists(lLadspaPaths[i]) then
       begin
         // Iterate folder and store references
@@ -140,7 +139,12 @@ begin
                 lNewPluginDescriptor.AudioOutCount := lAudioOutPortCount;
               end;
 
-              FPluginList.AddObject(IntToStr(lLadspaDescriptor^.UniqueID), lNewPluginDescriptor);
+              // Only add the plugin when it at least meets a few requirements
+              if (lAudioInPortCount >= 1) and (lAudioInPortCount <= 2) and
+                (lAudioOutPortCount >= 1) and (lAudioOutPortCount <= 2) then
+              begin
+                FPluginList.AddObject(IntToStr(lLadspaDescriptor^.UniqueID), lNewPluginDescriptor);
+              end;
 
               Inc(lIterateDescriptor);
             end;
@@ -154,15 +158,6 @@ begin
   finally
     lLadspaPaths.Free;
     lEnvironmentVars.Free;
-  end;
-
-  // Fill plugin list
-  for i := 0 to Pred(FPluginList.Count) do
-  begin
-    writeln(Format('Node %s Inputs %d Outputs %d',
-      [TLadspaPluginCatalogItem(FPluginList.Objects[i]).Name,
-      TLadspaPluginCatalogItem(FPluginList.Objects[i]).AudioInCount,
-      TLadspaPluginCatalogItem(FPluginList.Objects[i]).AudioOutCount]));
   end;
 end;
 
@@ -239,6 +234,7 @@ end;
 initialization
   GLadspaPluginFactory := TLadspaPluginCatalog.Create;
   GLadspaPluginFactory.Discover;
+
 finalization
   GLadspaPluginFactory.Free;
 
