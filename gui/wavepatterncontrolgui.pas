@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, StdCtrls, Spin,
   ExtCtrls, ComCtrls, globalconst, dialcontrol, wavegui, pattern, wave,
-  pluginhost, pluginhostgui;
+  pluginhost, pluginhostgui, patternoverview;
 
 type
 
@@ -39,7 +39,7 @@ type
     { private declarations }
     FModel: TWavePattern;
     FWaveGUI: TWaveGUI;
-    FWaveOverview: TWaveOverview;
+    FWaveOverview: TPatternOverview;
 
     FConnected: Boolean;
     FObjectOwnerID: string;
@@ -299,18 +299,9 @@ end;
 
 procedure TWavePatternControlGUI.DoWaveZoom(ALeftPercentage,
   ARightPercentage: single);
-var
-  lFactor: Single;
-  lStart: Single;
-  lEnd: Single;
-  lSampleWidth: Integer;
 begin
-  lSampleWidth := FWaveGUI.SampleEnd.Location - FWaveGUI.SampleStart.Location;
-  lStart := (lSampleWidth / 100) * ALeftPercentage;
-  lEnd := (lSampleWidth / 100) * ARightPercentage;
-
-  FWaveGUI.ZoomFactorX := ((FWaveGUI.SampleEnd.Location - FWaveGUI.SampleStart.Location) * 2) {200000} / (lEnd - lStart);
-  FWaveGUI.Offset := Round((FWaveGUI.Width / 100) * ALeftPercentage);
+  FWaveGUI.ZoomFactorX := 100 / (ARightPercentage - ALeftPercentage);
+  FWaveGUI.Offset := Round(ALeftPercentage);
   FWaveGUI.CacheIsDirty := True;
   FWaveGUI.Invalidate;
 end;
@@ -340,13 +331,15 @@ begin
   FWaveGUI.Align := alClient;
   FWaveGUI.Parent := sbBottom;
 
-  FWaveOverview := TWaveOverview.Create(nil);
+  FWaveOverview := TPatternOverview.Create(nil);
   FWaveOverview.ZoomCallback := @DoWaveZoom;
   FWaveOverview.Width := 100;
   FWaveOverview.Height := 20;
   FWaveOverview.Left := 5;
   FWaveOverview.Top := 1;
   FWaveOverview.Parent := Panel1;
+
+  DoWaveZoom(0, 100);
 end;
 
 destructor TWavePatternControlGUI.Destroy;

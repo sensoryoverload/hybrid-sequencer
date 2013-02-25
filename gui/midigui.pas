@@ -101,7 +101,7 @@ type
     FModel: TMidiPattern;
 
     { GUI }
-    FLocationOffset: Integer;
+    FOffset: Integer;
     FOldLocationOffset: Integer;
 
     FNoteOffset: Integer;
@@ -185,6 +185,7 @@ type
     function ConvertNoteToScreen(ANote: Integer): Integer;
     function ConvertScreenToNote(AY: Integer): Integer;
     procedure ReleaseNote(Data: PtrInt);
+    procedure SetOffset(AValue: Integer);
     procedure SetQuantizeSetting(AValue: Integer);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
@@ -204,7 +205,7 @@ type
 
     property ObjectID: string read GetObjectID write SetObjectID;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
-    property LocationOffset: Integer read FLocationOffset write FLocationOffset;
+    property Offset: Integer read FOffset write SetOffset;
     property NoteOffset: Integer read FNoteOffset write FNoteOffset;
     property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
     property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
@@ -407,7 +408,7 @@ begin
 
       lNote := ConvertScreenToNote(Y - FNoteOffset);
       lCreateNoteCommand.Note := lNote;
-      lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(X - FLocationOffset));
+      lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(X - FOffset));
 
       GCommandQueue.PushCommand(lCreateNoteCommand);
 
@@ -459,7 +460,7 @@ begin
   try
     lUpdateLoopMarkerCommand.DataType := FDraggedLoopMarker.DataType;
     lUpdateLoopMarkerCommand.Persist := True;
-    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X - FLocationOffset));
+    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X - FOffset));
     dblog('lUpdateLoopMarkerCommand.Location = %d',lUpdateLoopMarkerCommand.Location);
     GCommandQueue.PushCommand(lUpdateLoopMarkerCommand);
   except
@@ -567,7 +568,7 @@ begin
   try
     lUpdateLoopMarkerCommand.DataType := FDraggedLoopMarker.DataType;
     lUpdateLoopMarkerCommand.Persist := False;
-    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X - FLocationOffset));
+    lUpdateLoopMarkerCommand.Location := Round(ConvertScreenToTime(X - FOffset));
 
     GCommandQueue.PushCommand(lUpdateLoopMarkerCommand);
   except
@@ -591,7 +592,7 @@ begin
 
   if (FMouseButton = mbLeft) and FDragging then
   begin
-    lNoteLocation := QuantizeLocation(ConvertScreenToTime(X - FLocationOffset));
+    lNoteLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
     lNoteLength := QuantizeLocation(ConvertScreenToTime(X - FOrgNoteX));
     lNote := ConvertScreenToNote(Y - FNoteOffset);
 
@@ -638,7 +639,7 @@ procedure TMidiPatternGUI.HandleLoopMarkerMouseMove(Shift: TShiftState; X,
 var
   lValue: Integer;
 begin
-  lValue := Round(ConvertScreenToTime(X - FLocationOffset));
+  lValue := Round(ConvertScreenToTime(X - FOffset));
 
   case FDraggedLoopMarker.DataType of
   ltStart:
@@ -674,11 +675,16 @@ begin
 end;
 
 procedure TMidiPatternGUI.SetZoomFactorX(const AValue: Single);
+var
+  lFramesPerScreenWidth: Single;
 begin
   FZoomFactorX := AValue;
-  if FZoomFactorX <= 0 then FZoomFactorX := 1;
-  FZoomFactorToScreenX := (ZoomFactorX / 100000);
-  FZoomFactorToDataX := (100000 / ZoomFactorX);
+
+  lFramesPerScreenWidth := LoopEnd.Location / Width;
+
+  if FZoomFactorX = 0 then FZoomFactorX := 0.01;
+  FZoomFactorToScreenX := ZoomFactorX / lFramesPerScreenWidth;
+  FZoomFactorToDataX := lFramesPerScreenWidth / ZoomFactorX;
 end;
 
 procedure TMidiPatternGUI.SetZoomFactorY(const AValue: Single);
@@ -694,7 +700,7 @@ end;
 procedure TMidiPatternGUI.HandleZoom(AZoomTimeLeft, AZoomTimeRight: Integer);
 begin
   ZoomFactorX := 1000000 / (AZoomTimeRight - AZoomTimeLeft);
-  FLocationOffset := 0 - ConvertTimeToScreen(AZoomTimeLeft);
+  FOffset := 0 - ConvertTimeToScreen(AZoomTimeLeft);
 
   FCacheIsDirty := True;
   Invalidate;
@@ -826,32 +832,32 @@ begin
   if lTimeSpacing < 1 then
     lTimeSpacing := 22050;
 
-  if FZoomFactorX < 500 then
+  {if FZoomFactorX < 50 then
     lTimeSpacing := lTimeSpacing * 2;
 
-  if FZoomFactorX < 250 then
+  if FZoomFactorX < 25 then
     lTimeSpacing := lTimeSpacing * 2;
 
-  if FZoomFactorX < 125 then
+  if FZoomFactorX < 12 then
     lTimeSpacing := lTimeSpacing * 2;
 
-  if FZoomFactorX < 62.5 then
+  if FZoomFactorX < 6.25 then
     lTimeSpacing := lTimeSpacing * 2;
 
-  if FZoomFactorX < 31.25 then
+  if FZoomFactorX < 3.125 then
     lTimeSpacing := lTimeSpacing * 2;
 
-  if FZoomFactorX < 15.625 then
+  if FZoomFactorX < 1.5625 then
+    lTimeSpacing := lTimeSpacing * 2;}
+
+  if FZoomFactorX < 0.78125 then
     lTimeSpacing := lTimeSpacing * 2;
 
-  if FZoomFactorX < 7.8125 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  if FZoomFactorX < 3.90625 then
+  if FZoomFactorX < 0.390625 then
     lTimeSpacing := lTimeSpacing * 2;
 
   repeat
-    x := ConvertTimeToScreen(Round(lTime)) + FLocationOffset;
+    x := ConvertTimeToScreen(Round(lTime)) + FOffset;
     lNewTime := Round(lTime) div 22050 + 1;
     if x < FBitmap.Width then
     begin
@@ -869,7 +875,7 @@ begin
   // Draw note cursor box
   FBitmap.Canvas.Pen.Color := clCream;
   FBitmap.Canvas.Brush.Color := clCream;
-  lHighlightLocation := ConvertTimeToScreen(FNoteHighlightLocation) + FLocationOffset;
+  lHighlightLocation := ConvertTimeToScreen(FNoteHighlightLocation) + FOffset;
   lHighlightNote := ConvertNoteToScreen(FNoteHighlightNote) + FNoteOffset;
   lHighlightWidth := Round(FQuantizeValue * FZoomFactorToScreenX);
   FBitmap.Canvas.Rectangle(lHighlightLocation, lHighlightNote,
@@ -904,9 +910,9 @@ begin
     end;
 
     FBitmap.Canvas.Rectangle(
-      ConvertTimeToScreen(lNote.NoteLocation) + FLocationOffset,
+      ConvertTimeToScreen(lNote.NoteLocation) + FOffset,
       ConvertNoteToScreen(lNote.Note) + FNoteOffset,
-      ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FLocationOffset,
+      ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FOffset,
       ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset
       );
 
@@ -914,7 +920,7 @@ begin
     if FZoomNoteHeight > 8 then
     begin
       FBitmap.Canvas.TextOut(
-        ConvertTimeToScreen(lNote.NoteLocation) + FLocationOffset,
+        ConvertTimeToScreen(lNote.NoteLocation) + FOffset,
         ConvertNoteToScreen(lNote.Note) + FNoteOffset,
         Format('%d, %d', [lNote.Note, lNote.NoteLocation]));
     end; }
@@ -978,7 +984,7 @@ begin
 
   // Draw loopstartmarker
   FBitmap.Canvas.Pen.Width := 2;
-  x := Round((LoopStart.Location * FZoomFactorToScreenX) + FLocationOffset + FNoteInfoWidth);
+  x := Round((LoopStart.Location * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
   if x >= FNoteInfoWidth then
   begin
     FBitmap.Canvas.Pen.Color := clRed;
@@ -987,7 +993,7 @@ begin
   end;
 
   // Draw loopendmarker
-  x := Round((LoopEnd.Location * FZoomFactorToScreenX) + FLocationOffset + FNoteInfoWidth);
+  x := Round((LoopEnd.Location * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
   if x >= FNoteInfoWidth then
   begin
     FBitmap.Canvas.Pen.Color := clRed;
@@ -999,7 +1005,7 @@ begin
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
-  x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) + FLocationOffset + FNoteInfoWidth);
+  x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
   if FOldCursorPosition <> x then
   begin
     if x >= FNoteInfoWidth then
@@ -1125,6 +1131,11 @@ begin
   Invalidate;
 end;
 
+procedure TMidiPatternGUI.SetOffset(AValue: Integer);
+begin
+  FOffset := Round(FZoomFactorToScreenX * LoopEnd.Location / 100 * AValue);
+end;
+
 procedure TMidiPatternGUI.SetQuantizeSetting(AValue: Integer);
 begin
   if FQuantizeSetting = AValue then Exit;
@@ -1219,8 +1230,8 @@ begin
 
     if Assigned(lMidiNoteGUI) then
     begin
-      if (lLeft < (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation) + FLocationOffset)) and
-         (lRight > (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation + lMidiNoteGUI.NoteLength) + FLocationOffset)) and
+      if (lLeft < (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation) + FOffset)) and
+         (lRight > (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation + lMidiNoteGUI.NoteLength) + FOffset)) and
          (lTop < ConvertNoteToScreen(lMidiNoteGUI.Note) + FNoteOffset) and
          (lBottom > ConvertNoteToScreen(lMidiNoteGUI.Note) + FZoomNoteHeight + FNoteOffset) then
       begin
@@ -1294,9 +1305,9 @@ begin
   begin
     lNote := TMidiNoteGUI(FNoteListGUI[lIndex]);
 
-    lLeft := ConvertTimeToScreen(lNote.NoteLocation) + FLocationOffset;
+    lLeft := ConvertTimeToScreen(lNote.NoteLocation) + FOffset;
     lTop :=  ConvertNoteToScreen(lNote.Note) + FNoteOffset;
-    lRight := ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FLocationOffset;
+    lRight := ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FOffset;
     lBottom := ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset;
 
     if (lLeft <= AX) and (lTop <= AY) and (lRight >= AX) and (lBottom >= AY) then
@@ -1347,7 +1358,7 @@ begin
           FZoomingMode := True;
           FOldZoomFactorX := FZoomFactorX;
           FOldZoomFactorY := FZoomFactorY;
-          FOldLocationOffset := FLocationOffset;
+          FOldLocationOffset := FOffset;
           FOldNoteOffset := FNoteOffset;
           FOldX := X;
           FOldY := Y;
@@ -1401,17 +1412,17 @@ begin
   LoopLength.Location := FModel.LoopLength.Value;
 
   Result := nil;
-  if Abs(X - ConvertTimeToScreen(LoopStart.Location) - FLocationOffset) < AMargin then
+  if Abs(X - ConvertTimeToScreen(LoopStart.Location) - FOffset) < AMargin then
   begin
     Result := LoopStart;
   end
   else
-  if Abs(X - ConvertTimeToScreen(LoopEnd.Location) - FLocationOffset) < AMargin then
+  if Abs(X - ConvertTimeToScreen(LoopEnd.Location) - FOffset) < AMargin then
   begin
     Result := LoopEnd;
   end
   else
-  if Abs(X - ConvertTimeToScreen(LoopLength.Location) - FLocationOffset) < AMargin then
+  if Abs(X - ConvertTimeToScreen(LoopLength.Location) - FOffset) < AMargin then
   begin
     Result := LoopLength;
   end;
@@ -1460,17 +1471,17 @@ begin
     }
     if FZoomingMode then
     begin
-      FLocationOffset:= FOldLocationOffset + (X - FOldX);
+      FOffset:= FOldLocationOffset + (X - FOldX);
 
-      if FLocationOffset > 0 then
+      if FOffset > 0 then
       begin
-        FLocationOffset := 0;
+        FOffset := 0;
       end;
 
       FNoteOffset := FOldNoteOffset + (Y - FOldY);
     end;
 
-    FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FLocationOffset));
+    FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
     FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
   end;
 
@@ -1507,7 +1518,7 @@ begin
         lCreateNoteCommand.NoteLength := Round(FQuantizeValue);
 
       lCreateNoteCommand.Note := ConvertScreenToNote(FMouseY - FNoteOffset);
-      lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(FMouseX - FLocationOffset));
+      lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(FMouseX - FOffset));
 
       GCommandQueue.PushCommand(lCreateNoteCommand);
     except

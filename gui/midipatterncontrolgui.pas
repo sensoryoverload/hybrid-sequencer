@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, ExtCtrls, StdCtrls,
   PairSplitter, globalconst, midipatterngui, midi, midigui, sampler, samplegui,
-  bankgui, global;
+  bankgui, global, patternoverview;
 
 type
 { TMidiPatternControlGUI }
@@ -31,6 +31,7 @@ type
     { private declarations }
     FMidiPatternGUI: TMidiPatternGUI;
     FMidigridOverview: TMidigridOverview;
+    FMidiOverview: TPatternOverview;
 
     FRootNote: Integer;
     FMidiChannel: Integer;
@@ -40,6 +41,8 @@ type
     FObjectID: string;
     FModel: TMidiPattern;
     FObjectOwner: TObject;
+  protected
+    procedure DoMidiZoom(ALeftPercentage, ARightPercentage: single);
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -121,12 +124,23 @@ begin
   FMidiPatternGUI.Align := alClient;
   FMidiPatternGUI.Parent := nil;
   FMidiPatternGUI.Parent := pnlMidiGrid;
+
+  FMidiOverview := TPatternOverview.Create(nil);
+  FMidiOverview.ZoomCallback := @DoMidiZoom;
+  FMidiOverview.Width := 100;
+  FMidiOverview.Height := 20;
+  FMidiOverview.Left := 5;
+  FMidiOverview.Top := 1;
+  FMidiOverview.Parent := pnlMidiSettings;
+
+  DoMidiZoom(0, 100);
 end;
 
 destructor TMidiPatternControlGUI.Destroy;
 begin
   FMidiPatternGUI.Free;
   FMidigridOverview.Free;
+  FMidiOverview.Free;
 
   inherited Destroy;
 end;
@@ -137,6 +151,7 @@ begin
   begin
     FModel.Attach(FMidiPatternGUI);
 
+    FModel.Attach(FMidiOverview);
     FModel.Attach(FMidigridOverview);
 
     FMidiPatternGUI.ZoomFactorX := 1000;
@@ -155,11 +170,30 @@ begin
     FMidigridOverview.Disconnect;
     FModel.Detach(FMidigridOverview);
 
+    FMidiOverview.Disconnect;
+    FModel.Detach(FMidiOverview);
+
     FMidiPatternGUI.Disconnect;
     FModel.Detach(FMidiPatternGUI);
 
     FConnected := False;
   end;
+end;
+
+procedure TMidiPatternControlGUI.DoMidiZoom(ALeftPercentage,
+  ARightPercentage: single);
+var
+  lFactor: Single;
+  lStart: Single;
+  lEnd: Single;
+  lPatternWidth: Integer;
+begin
+  lPatternWidth := FMidiPatternGUI.LoopEnd.Location - FMidiPatternGUI.LoopStart.Location;
+
+  FMidiPatternGUI.ZoomFactorX := 100 / (ARightPercentage - ALeftPercentage);
+  FMidiPatternGUI.Offset := - Round(ALeftPercentage);
+
+  FMidiPatternGUI.Invalidate;
 end;
 
 procedure TMidiPatternControlGUI.Update(Subject: THybridPersistentModel);
