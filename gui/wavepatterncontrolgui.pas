@@ -39,7 +39,7 @@ type
     { private declarations }
     FModel: TWavePattern;
     FWaveGUI: TWaveGUI;
-    FWaveOverview: TPatternOverview;
+    FWaveOverview: TWavePatternOverview;
 
     FConnected: Boolean;
     FObjectOwnerID: string;
@@ -331,7 +331,7 @@ begin
   FWaveGUI.Align := alClient;
   FWaveGUI.Parent := sbBottom;
 
-  FWaveOverview := TPatternOverview.Create(nil);
+  FWaveOverview := TWavePatternOverview.Create(nil);
   FWaveOverview.ZoomCallback := @DoWaveZoom;
   FWaveOverview.Width := 100;
   FWaveOverview.Height := 20;

@@ -32,6 +32,7 @@ uses
 const
   DIVBY1000 = 1 / 1000;
   KEYS_PER_OCTAVE = 12;
+  PIANO_WIDTH = 30;
 
 type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
@@ -680,7 +681,7 @@ var
 begin
   FZoomFactorX := AValue;
 
-  lFramesPerScreenWidth := LoopEnd.Location / Width;
+  lFramesPerScreenWidth := LoopEnd.Location / (Width - FNoteInfoWidth);
 
   if FZoomFactorX = 0 then FZoomFactorX := 0.01;
   FZoomFactorToScreenX := ZoomFactorX / lFramesPerScreenWidth;
@@ -717,16 +718,14 @@ begin
 
   FOptionsView := [PianoKeyboard];
 
-// TODO Toggle button -----------
   if PianoKeyboard in FOptionsView then
   begin
-    FNoteInfoWidth := 30;
+    FNoteInfoWidth := PIANO_WIDTH;
   end
   else
   begin
     FNoteInfoWidth := 0;
   end;
-// ------------------------------
 
   FBitmap := TBitmap.Create;
 

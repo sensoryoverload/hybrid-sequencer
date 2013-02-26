@@ -19,7 +19,5 @@ LazarusResources.Add('TMidiPatternControlGUI','FORMDATA',[
   +'annel'#11'ParentColor'#8#0#0#9'TComboBox'#13'cbMidiChannel'#4'Left'#3#130#1
   +#6'Height'#2#22#3'Top'#2#2#5'Width'#2'A'#8'AutoSize'#8#10'ItemHeight'#2#0#8
   +'OnChange'#7#19'cbMidiChannelChange'#5'Style'#7#14'csDropDownList'#8'TabOrde'
-  +'r'#2#1#0#0#0#6'TPanel'#19'pnlMidigridOverview'#4'Left'#2#0#6'Height'#2#25#3
-  +'Top'#3#169#0#5'Width'#3#11#3#5'Align'#7#8'alBottom'#10'BevelOuter'#7#6'bvNo'
-  +'ne'#10'BevelWidth'#2#2#8'TabOrder'#2#1#0#0#0#0
+  +'r'#2#1#0#0#0#0#0
 ]);

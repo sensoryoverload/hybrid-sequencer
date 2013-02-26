@@ -70,15 +70,5 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         TabOrder = 1
       end
     end
-    object pnlMidigridOverview: TPanel
-      Left = 0
-      Height = 25
-      Top = 169
-      Width = 779
-      Align = alBottom
-      BevelOuter = bvNone
-      BevelWidth = 2
-      TabOrder = 1
-    end
   end
 end

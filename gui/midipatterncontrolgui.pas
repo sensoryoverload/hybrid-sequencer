@@ -21,7 +21,6 @@ type
     PairSplitterSide1: TPairSplitterSide;
     PairSplitterSide2: TPairSplitterSide;
     pnlMidiGrid: TPanel;
-    pnlMidigridOverview: TPanel;
     pnlMidiSettings: TPanel;
 
     procedure cbQuantizeChange(Sender: TObject);
@@ -30,8 +29,7 @@ type
   private
     { private declarations }
     FMidiPatternGUI: TMidiPatternGUI;
-    FMidigridOverview: TMidigridOverview;
-    FMidiOverview: TPatternOverview;
+    FMidiOverview: TMidiPatternOverview;
 
     FRootNote: Integer;
     FMidiChannel: Integer;
@@ -80,8 +78,6 @@ begin
   FConnected := False;
 
   FMidiPatternGUI := TMidiPatternGUI.Create(nil);
-  FMidigridOverview := TMidigridOverview.Create(nil);
-  FMidigridOverview.ZoomCallback := @FMidiPatternGUI.HandleZoom;
 
   cbQuantize.Items.Add('None');
   cbQuantize.Items.Add('4 bars');
@@ -117,15 +113,11 @@ begin
   pnlMidiGrid.Align := alNone;
   pnlMidiGrid.Align := alClient;
 
-  FMidigridOverview.Parent := nil;
-  FMidigridOverview.Align := alClient;
-  FMidigridOverview.Parent := pnlMidigridOverview;
-
   FMidiPatternGUI.Align := alClient;
   FMidiPatternGUI.Parent := nil;
   FMidiPatternGUI.Parent := pnlMidiGrid;
 
-  FMidiOverview := TPatternOverview.Create(nil);
+  FMidiOverview := TMidiPatternOverview.Create(nil);
   FMidiOverview.ZoomCallback := @DoMidiZoom;
   FMidiOverview.Width := 100;
   FMidiOverview.Height := 20;
@@ -139,7 +131,6 @@ end;
 destructor TMidiPatternControlGUI.Destroy;
 begin
   FMidiPatternGUI.Free;
-  FMidigridOverview.Free;
   FMidiOverview.Free;
 
   inherited Destroy;
@@ -152,7 +143,6 @@ begin
     FModel.Attach(FMidiPatternGUI);
 
     FModel.Attach(FMidiOverview);
-    FModel.Attach(FMidigridOverview);
 
     FMidiPatternGUI.ZoomFactorX := 1000;
     FMidiPatternGUI.ZoomFactorY := 1000;
@@ -167,9 +157,6 @@ procedure TMidiPatternControlGUI.Disconnect;
 begin
   if Assigned(FModel) then
   begin
-    FMidigridOverview.Disconnect;
-    FModel.Detach(FMidigridOverview);
-
     FMidiOverview.Disconnect;
     FModel.Detach(FMidiOverview);
 
@@ -182,14 +169,7 @@ end;
 
 procedure TMidiPatternControlGUI.DoMidiZoom(ALeftPercentage,
   ARightPercentage: single);
-var
-  lFactor: Single;
-  lStart: Single;
-  lEnd: Single;
-  lPatternWidth: Integer;
 begin
-  lPatternWidth := FMidiPatternGUI.LoopEnd.Location - FMidiPatternGUI.LoopStart.Location;
-
   FMidiPatternGUI.ZoomFactorX := 100 / (ARightPercentage - ALeftPercentage);
   FMidiPatternGUI.Offset := - Round(ALeftPercentage);
 

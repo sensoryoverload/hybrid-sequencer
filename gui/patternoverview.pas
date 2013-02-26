@@ -5,7 +5,7 @@ unit patternoverview;
 interface
 
 uses
-  Classes, SysUtils, globalconst, global, LCLType, Controls, Graphics;
+  Classes, SysUtils, globalconst, global, LCLType, Controls, Graphics, contnrs;
 
 type
   TWaveZoomCallback = procedure(ALeftPercentage, ARightPercentage: Single) of object;
@@ -21,7 +21,6 @@ type
     FZoomBoxRight: Integer;
     FOldX: Integer;
     FOldY: Integer;
-    FMouseX: Integer;
 
     FZooming: Boolean;
     FZoomingLeft: Boolean;
@@ -33,12 +32,9 @@ type
     constructor Create(AOwner: TComponent); override;
     procedure Update(Subject: THybridPersistentModel); override;
     procedure EraseBackground(DC: HDC); override;
-    function GetModel: THybridPersistentModel; override;
-    procedure SetModel(AModel: THybridPersistentModel); override;
     procedure Connect; override;
     procedure Disconnect; override;
     property ZoomCallback: TWaveZoomCallback write FZoomCallback;
-    property Model: THybridPersistentModel read GetModel write SetModel;
   protected
     procedure Paint; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -46,7 +42,314 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
   end;
 
+  TMidiPatternOverview = class;
+
+  { TMidiNoteOverview }
+
+  TMidiNoteOverview = class(THybridPersistentView)
+  private
+    FMidiPatternOverview: TMidiPatternOverview;
+
+    { Audio }
+    FNoteLocation: Integer; // Which time format ? in samples ??
+    FNote: Integer; // 0..127
+    FNoteVelocity: Integer; // 0..127
+    FNoteLength: Integer;
+    FSelected: Boolean;
+  public
+    procedure Update(Subject: THybridPersistentModel); override;
+    property Note: Integer read FNote write FNote;
+    property NoteLocation: Integer read FNoteLocation write FNoteLocation;
+    property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
+    property NoteLength: Integer read FNoteLength write FNoteLength;
+    property MidiGridOverview: TMidiPatternOverview read FMidiPatternOverview write FMidiPatternOverview;
+  published
+    property Selected: Boolean read FSelected write FSelected;
+  end;
+
+  { TMidiPatternOverview }
+
+  TMidiPatternOverview = class(TPatternOverview)
+  private
+    FNoteListGUI: TObjectList;
+    function ConvertNoteToScreen(ANote: Integer): Integer;
+    function ConvertScreenToTime(AX: Integer): Integer;
+    function ConvertTimeToScreen(ATime: Integer): Integer;
+    procedure CreateOverviewNoteGUI(AObjectID: string);
+    procedure DeleteOverviewNoteGUI(AObjectID: string);
+  protected
+    procedure Paint; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Update(Subject: THybridPersistentModel); override;
+    procedure Disconnect; override;
+  end;
+
+  TWaveFrame = record
+    LowValue: Single;
+    HighValue: Single;
+  end;
+
+  TWaveData = Array of TWaveFrame;
+
+  { TWavePatternOverview }
+
+  TWavePatternOverview = class(TPatternOverview)
+  private
+    FWaveImage: TWaveData;
+  protected
+    procedure Paint; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Update(Subject: THybridPersistentModel); override;
+    procedure Disconnect; override;
+  end;
+
 implementation
+
+uses
+  midi, wave;
+
+{ TWavePatternOverview }
+
+procedure TWavePatternOverview.Paint;
+var
+  lIndex: Integer;
+  lChannelOffset: Integer;
+begin
+  lChannelOffset := Height div 2;
+
+  Canvas.Brush.Color := clLtGray;
+  Canvas.Pen.Width := 1;
+  Canvas.Rectangle(0, 0, Width, Height);
+
+  Canvas.Brush.Color := clGray;
+  Canvas.Pen.Color := clGray;
+  Canvas.Pen.Width := 1;
+
+  for lIndex := 0 to Pred(Width) do
+  begin
+    Canvas.Line(
+      lIndex,
+      lChannelOffset + Round(FWaveImage[lIndex].LowValue * 0.5 * Height),
+      lIndex,
+      lChannelOffset + Round(FWaveImage[lIndex].HighValue * 0.5 * Height));
+  end;
+
+  Canvas.Pen.Color := clBlack;
+  Canvas.Pen.Width := 2;
+  Canvas.Brush.Style := bsClear;
+  Canvas.Rectangle(FZoomBoxLeft + 1, 1, FZoomBoxRight, Height);
+end;
+
+constructor TWavePatternOverview.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  SetLength(FWaveImage, 0);
+end;
+
+destructor TWavePatternOverview.Destroy;
+begin
+  SetLength(FWaveImage, 0);
+
+  inherited Destroy;
+end;
+
+procedure TWavePatternOverview.Update(Subject: THybridPersistentModel);
+var
+  lFrac: Integer;
+  lLow: Single;
+  lHigh: Single;
+  lValue: Single;
+  lIndex: Integer;
+  lFracIndex: Integer;
+  FWavePattern: TWavePattern;
+begin
+  FWavePattern := TWavePattern(Subject);
+
+  SetLength(FWaveImage, Width);
+
+
+  lFrac := FWavePattern.Wave.Frames div Width;
+  for lIndex := 0 to Pred(FWavePattern.Wave.Frames div lFrac) do
+  begin
+    lLow := 1000;
+    lHigh := -1000;
+    for lFracIndex := 0 to Pred(lFrac) do
+    begin
+      lValue := TChannel(FWavePattern.Wave.ChannelList[0]).Buffer[lIndex * lFrac + lFracIndex];
+      if lValue < lLow then
+      begin
+        lLow := lValue;
+      end
+      else if lValue > lHigh then
+      begin
+        lHigh := lValue;
+      end;
+    end;
+
+    FWaveImage[lIndex].LowValue := lLow;
+    FWaveImage[lIndex].HighValue := lHigh;
+  end;
+
+  Invalidate;
+end;
+
+procedure TWavePatternOverview.Disconnect;
+begin
+  inherited Disconnect;
+end;
+
+{ TMidiPatternOverview }
+
+constructor TMidiPatternOverview.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  FNoteListGUI := TObjectList.Create(True);
+end;
+
+destructor TMidiPatternOverview.Destroy;
+begin
+  FNoteListGUI.Free;
+
+  inherited Destroy;
+end;
+
+procedure TMidiPatternOverview.Update(Subject: THybridPersistentModel);
+begin
+  DiffLists(
+    TMidiPattern(Subject).NoteList,
+    FNoteListGUI,
+    @Self.CreateOverviewNoteGUI,
+    @Self.DeleteOverviewNoteGUI);
+
+  FTotalWidth :=
+    TMidiPattern(Subject).LoopEnd.Value - TMidiPattern(Subject).LoopStart.Value;
+
+  Invalidate;
+end;
+
+procedure TMidiPatternOverview.Disconnect;
+var
+  lIndex: Integer;
+  lMidiNoteOverview: TMidiNoteOverview;
+  lMidiNote: TMidiNote;
+begin
+  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
+  begin
+    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
+
+    if Assigned(lMidiNoteOverview) then
+    begin
+      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(lMidiNoteOverview.ObjectID));
+      if Assigned(lMidiNote) then
+      begin
+        lMidiNote.Detach(lMidiNoteOverview);
+        FNoteListGUI.Remove(lMidiNoteOverview);
+      end;
+    end;
+  end;
+end;
+
+procedure TMidiPatternOverview.CreateOverviewNoteGUI(AObjectID: string);
+var
+  lMidiNote: TMidiNote;
+  lMidiNoteOverview: TMidiNoteOverview;
+begin
+  lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
+  if Assigned(lMidiNote) then
+  begin
+    lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
+    lMidiNoteOverview.Note := lMidiNote.Note;
+    lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
+    lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;
+
+    FNoteListGUI.Add(lMidiNoteOverview);
+    lMidiNote.Attach(lMidiNoteOverview);
+  end;
+end;
+
+procedure TMidiPatternOverview.DeleteOverviewNoteGUI(AObjectID: string);
+var
+  lMidiNoteOverview: TMidiNoteOverview;
+  lIndex: Integer;
+begin
+  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
+  begin
+    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
+
+    if Assigned(lMidiNoteOverview) then
+    begin
+      if lMidiNoteOverview.ObjectID = AObjectID then
+      begin
+        FNoteListGUI.Remove(lMidiNoteOverview);
+        break;
+      end;
+    end;
+  end;
+end;
+
+{
+  Convert location in time to a screen cursor position
+}
+function TMidiPatternOverview.ConvertTimeToScreen(ATime: Integer): Integer;
+begin
+  Result := Round(ATime * (Width / FTotalWidth));
+end;
+
+{
+  Convert location in time to a screen cursor position
+}
+function TMidiPatternOverview.ConvertScreenToTime(AX: Integer): Integer;
+begin
+  Result := Round(AX * (FTotalWidth / Width));
+end;
+
+{
+  Convert a note to a screen note position
+}
+function TMidiPatternOverview.ConvertNoteToScreen(ANote: Integer): Integer;
+var
+  lScale: single;
+begin
+  lScale := (128 / Height);
+
+  Result := Round(Height - Round(ANote / lScale));
+end;
+
+procedure TMidiPatternOverview.Paint;
+var
+  lIndex: Integer;
+  lNote: TMidiNoteOverview;
+begin
+  Canvas.Brush.Color := clLtGray;
+  Canvas.Pen.Width := 1;
+  Canvas.Rectangle(0, 0, Width, Height);
+
+  // Draw midi notes
+  Canvas.Pen.Color := clGray;
+  Canvas.Pen.Width := 1;
+  for lIndex := 0 to Pred(FNoteListGUI.Count) do
+  begin
+    lNote := TMidiNoteOverview(FNoteListGUI[lIndex]);
+
+    Canvas.Line(
+      ConvertTimeToScreen(lNote.NoteLocation),
+      ConvertNoteToScreen(lNote.Note),
+      ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength),
+      ConvertNoteToScreen(lNote.Note)
+      );
+  end;
+
+  Canvas.Pen.Color := clBlack;
+  Canvas.Pen.Width := 2;
+  Canvas.Brush.Style := bsClear;
+  Canvas.Rectangle(FZoomBoxLeft + 1, 1, FZoomBoxRight, Height);
+end;
 
 { TPatternOverview }
 
@@ -69,16 +372,6 @@ begin
   inherited EraseBackground(DC);
 end;
 
-function TPatternOverview.GetModel: THybridPersistentModel;
-begin
-  Result := THybridPersistentModel(FModel);
-end;
-
-procedure TPatternOverview.SetModel(AModel: THybridPersistentModel);
-begin
-  FModel := AModel;
-end;
-
 procedure TPatternOverview.Connect;
 begin
   FModel := GObjectMapper.GetModelObject(Self.ObjectID);
@@ -98,7 +391,7 @@ begin
   Canvas.pen.Width := clBlack;
   Canvas.Pen.Width := 2;
   Canvas.Brush.Style := bsClear;
-  Canvas.Rectangle(FZoomBoxLeft, 1, FZoomBoxRight, Height - 1);
+  Canvas.Rectangle(FZoomBoxLeft + 1, 1, FZoomBoxRight, Height);
 end;
 
 procedure TPatternOverview.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
@@ -109,11 +402,11 @@ begin
 
   if Button = mbLeft then
   begin
-    if X < FZoomBoxLeft + 3 then
+    if X < FZoomBoxLeft + 5 then
     begin
       FZoomingLeft := True;
     end
-    else if X > FZoomBoxRight - 3 then
+    else if X > FZoomBoxRight - 5 then
     begin
       FZoomingRight := True;
     end
@@ -151,9 +444,9 @@ begin
     lTryRightLocation := FZoomBoxOldLeft + lDelta + FZoomBoxWidth;
 
     // Clamp to left side
-    if lTryLeftLocation < 1 then
+    if lTryLeftLocation < 0 then
     begin
-      FZoomBoxLeft := 1;
+      FZoomBoxLeft := 0;
       FZoomBoxRight := FZoomBoxWidth;
     end
     // Clamp to right side
@@ -177,8 +470,8 @@ begin
       FZoomBoxLeft := FZoomBoxRight - 5;
 
     // Clamp to left side
-    if FZoomBoxLeft < 1 then
-      FZoomBoxLeft := 1;
+    if FZoomBoxLeft < 0 then
+      FZoomBoxLeft := 0;
 
     FZoomBoxWidth := FZoomBoxRight - FZoomBoxLeft;
   end
@@ -207,10 +500,27 @@ begin
         Invalidate;
       end;
     end;
-
   end;
 
   inherited MouseMove(Shift, X, Y);
+end;
+
+{ TMidiNoteOverview }
+
+procedure TMidiNoteOverview.Update(Subject: THybridPersistentModel);
+var
+  lNote: TMidiNote;
+begin
+  lNote := TMidiNote(Subject);
+
+  if Assigned(lNote) then
+  begin
+    Selected := lNote.Selected;
+    NoteLocation := lNote.NoteLocation;
+    Note := lNote.Note;
+    NoteVelocity := lNote.NoteVelocity;
+    NoteLength := lNote.NoteLength;
+  end;
 end;
 
 end.
