@@ -124,8 +124,6 @@ begin
   FMidiOverview.Left := 5;
   FMidiOverview.Top := 1;
   FMidiOverview.Parent := pnlMidiSettings;
-
-  DoMidiZoom(0, 100);
 end;
 
 destructor TMidiPatternControlGUI.Destroy;
@@ -148,6 +146,8 @@ begin
     FMidiPatternGUI.ZoomFactorY := 1000;
     FMidiPatternGUI.QuantizeSetting := FModel.QuantizeSetting;
     FMidiPatternGUI.MidiChannel := FModel.MidiChannel;
+
+    DoMidiZoom(0, 100);
 
     FConnected := True;
   end;

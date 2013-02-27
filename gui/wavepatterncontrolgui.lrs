@@ -6,29 +6,29 @@ LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   +'th'#3';'#4#8'TabOrder'#2#0#10'DesignLeft'#3#179#0#9'DesignTop'#3#193#0#0#6
   +'TPanel'#6'Panel1'#4'Left'#2#0#6'Height'#2#29#3'Top'#2#0#5'Width'#3';'#4#5'A'
   +'lign'#7#5'alTop'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#2#29#11'Client'
-  +'Width'#3';'#4#8'TabOrder'#2#0#0#14'TToggleControl'#14'ToggleControl1'#4'Lef'
-  +'t'#3#231#2#6'Height'#2#14#3'Top'#2#6#5'Width'#2'0'#10'SwitchedOn'#8#9'Capti'
-  +'onOn'#6#4'Loop'#10'CaptionOff'#6#4'Loop'#21'Constraints.MaxHeight'#2#14#21
-  +'Constraints.MinHeight'#2#14#0#0#7'TButton'#9'btnDouble'#4'Left'#3#31#3#6'He'
-  +'ight'#2#25#3'Top'#2#1#5'Width'#2#25#7'Caption'#6#3'* 2'#7'OnClick'#7#14'btn'
-  +'DoubleClick'#8'TabOrder'#2#1#0#0#7'TButton'#7'btnHalf'#4'Left'#3':'#3#6'Hei'
-  +'ght'#2#25#3'Top'#2#1#5'Width'#2#25#7'Caption'#6#3'/ 2'#7'OnClick'#7#12'btnH'
-  +'alfClick'#8'TabOrder'#2#2#0#0#9'TComboBox'#11'cbPitchAlgo'#4'Left'#3'{'#2#6
-  +'Height'#2#27#3'Top'#2#1#5'Width'#2'd'#10'ItemHeight'#2#0#8'OnChange'#7#17'c'
-  +'bPitchAlgoChange'#5'Style'#7#14'csDropDownList'#8'TabOrder'#2#3#0#0#9'TComb'
-  +'oBox'#10'cbQuantize'#4'Left'#3'U'#3#6'Height'#2#27#3'Top'#2#1#5'Width'#2'd'
-  +#10'ItemHeight'#2#0#8'OnChange'#7#16'cbQuantizeChange'#5'Style'#7#14'csDropD'
-  +'ownList'#8'TabOrder'#2#4#0#0#17'TParameterControl'#5'pcBPM'#4'Left'#3#230#0
-  +#6'Height'#2#13#3'Top'#2#7#5'Width'#2'd'#5'Value'#5#0#0#0#0#0#0#0#240#5'@'#3
-  +'Min'#5#0#0#0#0#0#0#0#160#3'@'#3'Max'#5#0#0#0#0#0#0#0#200#6'@'#7'Caption'#6#3
-  +'BPM'#9'ShowValue'#9#11'Orientation'#7#11'oHorizontal'#4'Size'#2'd'#8'OnChan'
-  +'ge'#7#11'pcBPMChange'#13'OnStartChange'#7#16'pcBPMStartChange'#0#0#17'TPara'
-  +'meterControl'#7'pcPitch'#4'Left'#3'W'#1#6'Height'#2#13#3'Top'#2#7#5'Width'#2
-  +'d'#5'Value'#5#0#0#0#0#0#0#0#128#255'?'#3'Min'#5#0#0#0#0#0#0#0#128#254'?'#3
-  +'Max'#5#0#0#0#0#0#0#0#128#0'@'#7'Caption'#6#5'Pitch'#9'ShowValue'#9#11'Orien'
-  +'tation'#7#11'oHorizontal'#4'Size'#2'd'#8'OnChange'#7#13'pcPitchChange'#13'O'
-  +'nStartChange'#7#18'pcPitchStartChange'#0#0#0#10'TScrollBox'#8'sbBottom'#4'L'
-  +'eft'#2#0#6'Height'#3#18#1#3'Top'#2#29#5'Width'#3';'#4#18'HorzScrollBar.Page'
-  +#3'9'#4#22'HorzScrollBar.Tracking'#9#18'VertScrollBar.Page'#3#16#1#5'Align'#7
-  +#8'alClient'#8'TabOrder'#2#1#0#0#0
+  +'Width'#3';'#4#8'TabOrder'#2#0#0#14'TToggleControl'#11'LoopEnabled'#4'Left'#3
+  +#227#1#6'Height'#2#14#3'Top'#2#6#5'Width'#2'0'#10'SwitchedOn'#8#9'CaptionOn'
+  +#6#4'Loop'#10'CaptionOff'#6#4'Loop'#8'OnChange'#7#17'LoopEnabledChange'#21'C'
+  +'onstraints.MaxHeight'#2#14#21'Constraints.MinHeight'#2#14#0#0#7'TButton'#9
+  +'btnDouble'#4'Left'#3#27#2#6'Height'#2#25#3'Top'#2#1#5'Width'#2#25#7'Caption'
+  +#6#3'* 2'#7'OnClick'#7#14'btnDoubleClick'#8'TabOrder'#2#1#0#0#7'TButton'#7'b'
+  +'tnHalf'#4'Left'#3'6'#2#6'Height'#2#25#3'Top'#2#1#5'Width'#2#25#7'Caption'#6
+  +#3'/ 2'#7'OnClick'#7#12'btnHalfClick'#8'TabOrder'#2#2#0#0#9'TComboBox'#11'cb'
+  +'PitchAlgo'#4'Left'#3'w'#1#6'Height'#2#27#3'Top'#2#1#5'Width'#2'd'#10'ItemHe'
+  +'ight'#2#0#8'OnChange'#7#17'cbPitchAlgoChange'#5'Style'#7#14'csDropDownList'
+  +#8'TabOrder'#2#3#0#0#9'TComboBox'#10'cbQuantize'#4'Left'#3'Q'#2#6'Height'#2
+  +#27#3'Top'#2#1#5'Width'#2'd'#10'ItemHeight'#2#0#8'OnChange'#7#16'cbQuantizeC'
+  +'hange'#5'Style'#7#14'csDropDownList'#8'TabOrder'#2#4#0#0#17'TParameterContr'
+  +'ol'#5'pcBPM'#4'Left'#3#153#0#6'Height'#2#13#3'Top'#2#7#5'Width'#2'd'#5'Valu'
+  +'e'#5#0#0#0#0#0#0#0#240#5'@'#3'Min'#5#0#0#0#0#0#0#0#160#3'@'#3'Max'#5#0#0#0#0
+  +#0#0#0#200#6'@'#7'Caption'#6#3'BPM'#9'ShowValue'#9#11'Orientation'#7#11'oHor'
+  +'izontal'#4'Size'#2'd'#8'OnChange'#7#11'pcBPMChange'#13'OnStartChange'#7#16
+  +'pcBPMStartChange'#0#0#17'TParameterControl'#7'pcPitch'#4'Left'#3#10#1#6'Hei'
+  +'ght'#2#13#3'Top'#2#7#5'Width'#2'd'#5'Value'#5#0#0#0#0#0#0#0#128#255'?'#3'Mi'
+  +'n'#5#0#0#0#0#0#0#0#128#254'?'#3'Max'#5#0#0#0#0#0#0#0#128#0'@'#7'Caption'#6#5
+  +'Pitch'#9'ShowValue'#9#11'Orientation'#7#11'oHorizontal'#4'Size'#2'd'#8'OnCh'
+  +'ange'#7#13'pcPitchChange'#13'OnStartChange'#7#18'pcPitchStartChange'#0#0#0
+  +#10'TScrollBox'#8'sbBottom'#4'Left'#2#0#6'Height'#3#18#1#3'Top'#2#29#5'Width'
+  +#3';'#4#18'HorzScrollBar.Page'#3'9'#4#22'HorzScrollBar.Tracking'#9#18'VertSc'
+  +'rollBar.Page'#3#16#1#5'Align'#7#8'alClient'#8'TabOrder'#2#1#0#0#0
 ]);

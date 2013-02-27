@@ -18,19 +18,20 @@ object WavePatternControlGUI: TWavePatternControlGUI
     ClientHeight = 29
     ClientWidth = 1083
     TabOrder = 0
-    object ToggleControl1: TToggleControl
-      Left = 743
+    object LoopEnabled: TToggleControl
+      Left = 483
       Height = 14
       Top = 6
       Width = 48
       SwitchedOn = False
       CaptionOn = 'Loop'
       CaptionOff = 'Loop'
+      OnChange = LoopEnabledChange
       Constraints.MaxHeight = 14
       Constraints.MinHeight = 14
     end
     object btnDouble: TButton
-      Left = 799
+      Left = 539
       Height = 25
       Top = 1
       Width = 25
@@ -39,7 +40,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 1
     end
     object btnHalf: TButton
-      Left = 826
+      Left = 566
       Height = 25
       Top = 1
       Width = 25
@@ -48,7 +49,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 2
     end
     object cbPitchAlgo: TComboBox
-      Left = 635
+      Left = 375
       Height = 27
       Top = 1
       Width = 100
@@ -58,7 +59,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 3
     end
     object cbQuantize: TComboBox
-      Left = 853
+      Left = 593
       Height = 27
       Top = 1
       Width = 100
@@ -68,7 +69,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 4
     end
     object pcBPM: TParameterControl
-      Left = 230
+      Left = 153
       Height = 13
       Top = 7
       Width = 100
@@ -83,7 +84,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       OnStartChange = pcBPMStartChange
     end
     object pcPitch: TParameterControl
-      Left = 343
+      Left = 266
       Height = 13
       Top = 7
       Width = 100

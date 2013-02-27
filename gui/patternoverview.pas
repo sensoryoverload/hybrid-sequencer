@@ -15,6 +15,7 @@ type
   TPatternOverview = class(TPersistentCustomControl)
   private
     FTotalWidth: Integer;
+    FWidth: Integer;
     FZoomBoxWidth: Integer;
     FZoomBoxLeft: Integer;
     FZoomBoxOldLeft: Integer;
@@ -28,13 +29,14 @@ type
 
     FZoomCallback: TWaveZoomCallback;
     FModel: THybridPersistentModel;
+    procedure SetWidth(AValue: Integer);
   public
-    constructor Create(AOwner: TComponent); override;
     procedure Update(Subject: THybridPersistentModel); override;
     procedure EraseBackground(DC: HDC); override;
     procedure Connect; override;
     procedure Disconnect; override;
     property ZoomCallback: TWaveZoomCallback write FZoomCallback;
+    property Width: Integer read FWidth write SetWidth;
   protected
     procedure Paint; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -117,11 +119,13 @@ uses
 procedure TWavePatternOverview.Paint;
 var
   lIndex: Integer;
-  lChannelOffset: Integer;
+  lChannelScale: Single;
 begin
-  lChannelOffset := Height div 2;
+  lChannelScale := Height / 2;
 
+  // Draw
   Canvas.Brush.Color := clLtGray;
+  Canvas.Pen.Color := clBlack;
   Canvas.Pen.Width := 1;
   Canvas.Rectangle(0, 0, Width, Height);
 
@@ -133,10 +137,14 @@ begin
   begin
     Canvas.Line(
       lIndex,
-      lChannelOffset + Round(FWaveImage[lIndex].LowValue * 0.5 * Height),
+      Round(lChannelScale + FWaveImage[lIndex].LowValue * lChannelScale),
       lIndex,
-      lChannelOffset + Round(FWaveImage[lIndex].HighValue * 0.5 * Height));
+      Round(lChannelScale + FWaveImage[lIndex].HighValue * lChannelScale));
   end;
+
+  Canvas.Brush.Style := bsClear;
+  Canvas.Pen.Color := clBlack;
+  Canvas.Rectangle(0, 0, Width, Height);
 
   Canvas.Pen.Color := clBlack;
   Canvas.Pen.Width := 2;
@@ -171,7 +179,6 @@ begin
   FWavePattern := TWavePattern(Subject);
 
   SetLength(FWaveImage, Width);
-
 
   lFrac := FWavePattern.Wave.Frames div Width;
   for lIndex := 0 to Pred(FWavePattern.Wave.Frames div lFrac) do
@@ -353,13 +360,16 @@ end;
 
 { TPatternOverview }
 
-constructor TPatternOverview.Create(AOwner: TComponent);
+procedure TPatternOverview.SetWidth(AValue: Integer);
 begin
-  inherited Create(AOwner);
+  if FWidth = AValue then Exit;
+  FWidth := AValue;
 
   FZoomBoxLeft := 0;
   FZoomBoxRight := Width;
-  FZoomBoxWidth := Width;
+  FZoomBoxWidth := FZoomBoxRight - FZoomBoxLeft;
+
+  inherited Width := AValue;
 end;
 
 procedure TPatternOverview.Update(Subject: THybridPersistentModel);

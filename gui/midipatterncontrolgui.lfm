@@ -32,7 +32,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
       Constraints.MinHeight = 27
       TabOrder = 0
       object lblQuantize: TLabel
-        Left = 195
+        Left = 161
         Height = 14
         Top = 6
         Width = 45
@@ -40,7 +40,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         ParentColor = False
       end
       object cbQuantize: TComboBox
-        Left = 246
+        Left = 212
         Height = 22
         Top = 2
         Width = 67
@@ -51,7 +51,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         TabOrder = 0
       end
       object lblMidiChannel: TLabel
-        Left = 317
+        Left = 283
         Height = 14
         Top = 6
         Width = 62
@@ -59,7 +59,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         ParentColor = False
       end
       object cbMidiChannel: TComboBox
-        Left = 386
+        Left = 352
         Height = 22
         Top = 2
         Width = 65

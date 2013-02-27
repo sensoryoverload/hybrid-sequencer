@@ -22,12 +22,13 @@ type
     pcBPM: TParameterControl;
     pcPitch: TParameterControl;
     sbBottom: TScrollBox;
-    ToggleControl1: TToggleControl;
+    LoopEnabled: TToggleControl;
 
     procedure btnDoubleClick(Sender: TObject);
     procedure btnHalfClick(Sender: TObject);
     procedure cbPitchAlgoChange(Sender: TObject);
     procedure cbQuantizeChange(Sender: TObject);
+    procedure LoopEnabledChange(Sender: TObject);
     procedure pcBPMChange(Sender: TObject);
     procedure pcBPMStartChange(Sender: TObject);
     procedure pcPitchChange(Sender: TObject);
@@ -94,6 +95,8 @@ begin
   begin
     FModel.Attach(FWaveGUI);
     FModel.Attach(FWaveOverview);
+
+    DoWaveZoom(0, 100);
 
     FConnected := True;
   end;
@@ -210,6 +213,11 @@ begin
   except
     lChangeQuantizeCommand.Free;
   end;
+end;
+
+procedure TWavePatternControlGUI.LoopEnabledChange(Sender: TObject);
+begin
+  // todo
 end;
 
 procedure TWavePatternControlGUI.DoChancheRealBPMCommand(APersist: Boolean);
@@ -338,8 +346,6 @@ begin
   FWaveOverview.Left := 5;
   FWaveOverview.Top := 1;
   FWaveOverview.Parent := Panel1;
-
-  DoWaveZoom(0, 100);
 end;
 
 destructor TWavePatternControlGUI.Destroy;
