@@ -50,6 +50,7 @@ type
     FPitched: Boolean;
     FPitch: Single;
     FRealBPM: Single;
+    function GetEnabled: Boolean;
     procedure Setpitch(const Avalue: Single);
   protected
     procedure DoWaveZoom(ALeftPercentage, ARightPercentage: single);
@@ -71,6 +72,7 @@ type
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     property WaveGUI: TWaveGUI read FWaveGUI write FWaveGUI;
+    property Enabled: Boolean read GetEnabled;
 
     property Pitch: Single read FPitch write SetPitch default 1;
     property Pitched: Boolean read FPitched write FPitched default False;
@@ -303,6 +305,11 @@ begin
     FPitch := 0.1
   else
     FPitch := Avalue;
+end;
+
+function TWavePatternControlGUI.GetEnabled: Boolean;
+begin
+  Result := FModel.Enabled;
 end;
 
 procedure TWavePatternControlGUI.DoWaveZoom(ALeftPercentage,

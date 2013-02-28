@@ -332,11 +332,25 @@ begin
   // Update patterneditor grid
   if FMidiPatternControlGUI.Parent = tsPattern then
   begin
-    FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
+    if not Assigned(GObjectMapper.GetModelObject(FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
+    begin
+      tsPattern.TabVisible := False;
+    end
+    else
+    begin
+      FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
+    end;
   end
   else if FWavePatternControlGUI.Parent = tsPattern then
   begin
-    FWavePatternControlGUI.WaveGUI.Invalidate;
+    if not Assigned(GObjectMapper.GetModelObject(FWavePatternControlGUI.WaveGUI.ObjectID)) then
+    begin
+      tsPattern.TabVisible := False;
+    end
+    else
+    begin
+      FWavePatternControlGUI.WaveGUI.Invalidate;
+    end;
   end;
 end;
 

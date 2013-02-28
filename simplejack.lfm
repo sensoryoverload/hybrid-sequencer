@@ -1,7 +1,7 @@
 object MainApp: TMainApp
   Left = 183
   Height = 726
-  Top = 9
+  Top = 24
   Width = 1095
   AllowDropFiles = True
   Caption = 'Hybrid 2009'

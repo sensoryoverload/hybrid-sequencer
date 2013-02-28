@@ -306,6 +306,7 @@ begin
 
     if lPattern.ObjectID = ObjectID then
     begin
+      lPattern.Enabled := False;
       lPattern.Playing := False;
       lPattern.OkToPlay := False;
 
@@ -337,6 +338,7 @@ begin
 
     GObjectMapper.AddMapping(lPattern);
     FTrack.PatternList.Add(lPattern);
+    lPattern.Enabled := True;
   end;
 
   FTrack.EndUpdate;
@@ -776,6 +778,9 @@ begin
     lPattern := TPattern(FTrack.PatternList[i]);
     if lPattern.ObjectID = FOldObjectID then
     begin
+      lPattern.Enabled := False;
+      GSettings.OldSelectedPattern := nil;
+
       if FTrack.Playing then
       begin
         FTrack.Playing := False;
@@ -783,7 +788,7 @@ begin
         lPattern.Finalize;
       end;
 
-      FTrack.PatternList.Remove(FTrack.PatternList[i]);
+      FTrack.PatternList.Remove(lPattern);
 
       break;
     end;

@@ -1090,7 +1090,6 @@ begin
     end;
 
     // Update session grid
-    //FSessionGrid.JustDrawCursors := True;
     FSessionGrid.Invalidate;
     for i := 0 to Pred(FSessionGrid.TrackViewList.Count) do
     begin
@@ -1101,26 +1100,6 @@ begin
         FSessionGrid.TrackViewList[i].VolumeFader.LevelLeft := lTrack.LeftLevel;
         FSessionGrid.TrackViewList[i].VolumeFader.LevelRight := lTrack.RightLevel;
         FSessionGrid.TrackViewList[i].VolumeFader.Invalidate;
-
-        {if lTrack.PlayingPattern is TWavePattern then
-        begin
-          DBLog(Format('Length: %f Counter: %f StartLocation: %f EndLocation: %f Cursor %f ',
-            [TWavePattern(lTrack.PlayingPattern).SliceLength,
-            TWavePattern(lTrack.PlayingPattern).SliceCounter,
-            TWavePattern(lTrack.PlayingPattern).SliceStartLocation,
-            TWavePattern(lTrack.PlayingPattern).SliceEndLocation,
-            TWavePattern(lTrack.PlayingPattern).SliceCursor]));
-          if TWavePattern(lTrack.PlayingPattern).SliceCursor <
-            TWavePattern(lTrack.PlayingPattern).SliceEndLocation then
-          begin
-            DBLog('In Slice');
-          end
-          else
-          begin
-            DBLog('Past Slice End');
-          end;
-
-        end;   }
       end;
     end;
 

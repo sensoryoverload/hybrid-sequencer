@@ -35,6 +35,7 @@ type
   TPattern = class(THybridPersistentModel)
   private
     FChannelCount: Integer;
+    FEnabled: Boolean;
     FPatternColor: TColor;
     FPatternCursor: Double;
     FRealCursorPosition: Integer;
@@ -106,6 +107,7 @@ type
     property LoopEnd: TLoopMarker read FLoopEnd write SetLoopEnd;
     property LoopLength: TLoopMarker read FLoopLength write SetLoopLength;
     property Looped: Boolean read FLooped write FLooped;
+    property Enabled: Boolean read FEnabled write FEnabled;
   end;
 
   { TPatternCommand }
@@ -335,6 +337,7 @@ begin
   FLoopEnd.Value := 0;
 
   FLooped := False;
+  FEnabled := True;
 
   FChannelCount := 1; // Default
 

@@ -167,6 +167,7 @@ type
     FMidiChannel: Integer;
 
 
+    function GetEnabled: Boolean;
     procedure HandleLoopMarkerMouseDown(Button: TMouseButton; Shift: TShiftState; X,
       Y: Integer);
     procedure HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState;
@@ -215,6 +216,7 @@ type
     property LoopStart: TLoopMarkerGUI read FLoopStart write FLoopStart;
     property LoopEnd: TLoopMarkerGUI read FLoopEnd write FLoopEnd;
     property LoopLength: TLoopMarkerGUI read FLoopLength write FLoopLength;
+    property Enabled: Boolean read GetEnabled;
     property QuantizeSetting: Integer read FQuantizeSetting write SetQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 22050;
     property RootNote: Integer read FRootNote write FRootNote default 0;
@@ -393,6 +395,11 @@ begin
   except
     lUpdateLoopMarkerCommand.Free;
   end;
+end;
+
+function TMidiPatternGUI.GetEnabled: Boolean;
+begin
+  Result := TMidiPattern(FModel).Enabled;
 end;
 
 procedure TMidiPatternGUI.HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
