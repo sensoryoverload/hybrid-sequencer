@@ -332,12 +332,10 @@ begin
   // Update patterneditor grid
   if FMidiPatternControlGUI.Parent = tsPattern then
   begin
-    FMidiPatternControlGUI.MidiPatternGUI.CacheIsDirty := True;
     FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
   end
   else if FWavePatternControlGUI.Parent = tsPattern then
   begin
-    FWavePatternControlGUI.WaveGUI.CacheIsDirty := True;
     FWavePatternControlGUI.WaveGUI.Invalidate;
   end;
 end;

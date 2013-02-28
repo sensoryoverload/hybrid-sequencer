@@ -310,7 +310,6 @@ procedure TWavePatternControlGUI.DoWaveZoom(ALeftPercentage,
 begin
   FWaveGUI.ZoomFactorX := 100 / (ARightPercentage - ALeftPercentage);
   FWaveGUI.Offset := Round(ALeftPercentage);
-  FWaveGUI.CacheIsDirty := True;
   FWaveGUI.Invalidate;
 end;
 

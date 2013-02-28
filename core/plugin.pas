@@ -521,6 +521,8 @@ begin
 
   FParameterList := TObjectList.Create(False);
 
+  FActive := True;
+
   for i := 0 to Pred(FFrames * FChannels) do
   begin
     FInputBuffer[i] := 0;

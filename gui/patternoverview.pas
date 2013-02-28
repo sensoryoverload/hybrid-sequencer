@@ -44,29 +44,18 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
   end;
 
-  TMidiPatternOverview = class;
-
   { TMidiNoteOverview }
 
   TMidiNoteOverview = class(THybridPersistentView)
   private
-    FMidiPatternOverview: TMidiPatternOverview;
-
-    { Audio }
-    FNoteLocation: Integer; // Which time format ? in samples ??
-    FNote: Integer; // 0..127
-    FNoteVelocity: Integer; // 0..127
+    FNoteLocation: Integer;
+    FNote: Integer;
     FNoteLength: Integer;
-    FSelected: Boolean;
   public
     procedure Update(Subject: THybridPersistentModel); override;
     property Note: Integer read FNote write FNote;
     property NoteLocation: Integer read FNoteLocation write FNoteLocation;
-    property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
     property NoteLength: Integer read FNoteLength write FNoteLength;
-    property MidiGridOverview: TMidiPatternOverview read FMidiPatternOverview write FMidiPatternOverview;
-  published
-    property Selected: Boolean read FSelected write FSelected;
   end;
 
   { TMidiPatternOverview }
@@ -525,10 +514,8 @@ begin
 
   if Assigned(lNote) then
   begin
-    Selected := lNote.Selected;
     NoteLocation := lNote.NoteLocation;
     Note := lNote.Note;
-    NoteVelocity := lNote.NoteVelocity;
     NoteLength := lNote.NoteLength;
   end;
 end;

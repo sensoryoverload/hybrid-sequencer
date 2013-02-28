@@ -73,7 +73,7 @@
         <UnitName Value="simplejack"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="665"/>
+        <TopLine Value="1504"/>
         <CursorPos X="1" Y="1530"/>
         <UsageCount Value="218"/>
         <Loaded Value="True"/>
@@ -127,10 +127,11 @@
         <Filename Value="common/utils.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="utils"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="134"/>
-        <CursorPos X="11" Y="142"/>
+        <TopLine Value="462"/>
+        <CursorPos X="19" Y="641"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit6>
@@ -254,8 +255,8 @@
         <UnitName Value="plugin"/>
         <EditorIndex Value="40"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="318"/>
-        <CursorPos X="29" Y="336"/>
+        <TopLine Value="457"/>
+        <CursorPos X="1" Y="524"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit18>
@@ -265,8 +266,8 @@
         <UnitName Value="pluginhost"/>
         <EditorIndex Value="35"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="236"/>
-        <CursorPos X="1" Y="259"/>
+        <TopLine Value="354"/>
+        <CursorPos X="7" Y="359"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit19>
@@ -276,8 +277,8 @@
         <UnitName Value="sampler"/>
         <EditorIndex Value="51"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1609"/>
-        <CursorPos X="1" Y="1636"/>
+        <TopLine Value="375"/>
+        <CursorPos X="1" Y="375"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit20>
@@ -335,11 +336,11 @@
         <UnitName Value="midigui"/>
         <EditorIndex Value="22"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="245"/>
-        <CursorPos X="3" Y="266"/>
+        <TopLine Value="1445"/>
+        <CursorPos X="1" Y="1468"/>
         <UsageCount Value="212"/>
         <Bookmarks Count="1">
-          <Item0 X="6" Y="1136" ID="4"/>
+          <Item0 X="6" Y="1059" ID="4"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -594,8 +595,8 @@
         <UnitName Value="wavepatterncontrolgui"/>
         <EditorIndex Value="17"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="203"/>
-        <CursorPos X="10" Y="220"/>
+        <TopLine Value="299"/>
+        <CursorPos X="1" Y="313"/>
         <UsageCount Value="207"/>
         <Bookmarks Count="1">
           <Item0 X="1" Y="311" ID="5"/>
@@ -620,12 +621,12 @@
         <UnitName Value="wavegui"/>
         <EditorIndex Value="19"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1323"/>
-        <CursorPos X="15" Y="1342"/>
+        <TopLine Value="1206"/>
+        <CursorPos X="1" Y="1228"/>
         <UsageCount Value="204"/>
         <Bookmarks Count="2">
-          <Item0 X="3" Y="296" ID="6"/>
-          <Item1 X="1" Y="1345" ID="7"/>
+          <Item0 X="3" Y="294" ID="6"/>
+          <Item1 X="1" Y="1331" ID="7"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit51>
@@ -907,8 +908,8 @@
         <UnitName Value="patternview"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="1" Y="1"/>
+        <TopLine Value="325"/>
+        <CursorPos X="1" Y="339"/>
         <UsageCount Value="242"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -943,7 +944,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="174"/>
         <CursorPos X="23" Y="192"/>
-        <UsageCount Value="32"/>
+        <UsageCount Value="33"/>
         <Loaded Value="True"/>
       </Unit84>
       <Unit85>
@@ -957,7 +958,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="95"/>
         <CursorPos X="14" Y="113"/>
-        <UsageCount Value="159"/>
+        <UsageCount Value="161"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit85>
@@ -967,7 +968,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="3954"/>
         <CursorPos X="3" Y="3973"/>
-        <UsageCount Value="89"/>
+        <UsageCount Value="90"/>
         <Loaded Value="True"/>
       </Unit86>
       <Unit87>
@@ -1228,15 +1229,14 @@
         <Filename Value="gui/patternoverview.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="patternoverview"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="12"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="10"/>
-        <CursorPos X="1" Y="34"/>
-        <UsageCount Value="61"/>
+        <TopLine Value="497"/>
+        <CursorPos X="1" Y="519"/>
+        <UsageCount Value="63"/>
         <Bookmarks Count="2">
-          <Item0 X="1" Y="184" ID="2"/>
-          <Item1 X="29" Y="372" ID="1"/>
+          <Item0 X="1" Y="173" ID="2"/>
+          <Item1 X="29" Y="361" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit113>
@@ -1247,130 +1247,130 @@
         <WindowIndex Value="0"/>
         <TopLine Value="86"/>
         <CursorPos X="3" Y="100"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <Loaded Value="True"/>
       </Unit114>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1089" Column="23" TopLine="1053"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1636" Column="1" TopLine="1609"/>
       </Position1>
       <Position2>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1091" Column="20" TopLine="1055"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position2>
       <Position3>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1099" Column="17" TopLine="1063"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="50" Column="28" TopLine="27"/>
       </Position3>
       <Position4>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1100" Column="11" TopLine="1064"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="52" Column="14" TopLine="29"/>
       </Position4>
       <Position5>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1124" Column="28" TopLine="1088"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="53" Column="12" TopLine="30"/>
       </Position5>
       <Position6>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1125" Column="28" TopLine="1089"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="54" Column="24" TopLine="31"/>
       </Position6>
       <Position7>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1130" Column="28" TopLine="1094"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="68" Column="58" TopLine="46"/>
       </Position7>
       <Position8>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1142" Column="64" TopLine="1106"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="214" Column="12" TopLine="191"/>
       </Position8>
       <Position9>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1155" Column="29" TopLine="1119"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="218" Column="24" TopLine="195"/>
       </Position9>
       <Position10>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1173" Column="23" TopLine="1137"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="238" Column="58" TopLine="216"/>
       </Position10>
       <Position11>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1203" Column="45" TopLine="1166"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="449" Column="20" TopLine="426"/>
       </Position11>
       <Position12>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1204" Column="41" TopLine="1167"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="858" Column="20" TopLine="836"/>
       </Position12>
       <Position13>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1206" Column="44" TopLine="1169"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="860" Column="41" TopLine="838"/>
       </Position13>
       <Position14>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1214" Column="47" TopLine="1177"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="861" Column="28" TopLine="839"/>
       </Position14>
       <Position15>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1215" Column="46" TopLine="1178"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1103" Column="20" TopLine="1081"/>
       </Position15>
       <Position16>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1218" Column="38" TopLine="1181"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1105" Column="28" TopLine="1083"/>
       </Position16>
       <Position17>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1230" Column="27" TopLine="1194"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1252" Column="24" TopLine="1229"/>
       </Position17>
       <Position18>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1231" Column="19" TopLine="1195"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1395" Column="32" TopLine="1372"/>
       </Position18>
       <Position19>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1451" Column="44" TopLine="1414"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1397" Column="13" TopLine="1374"/>
       </Position19>
       <Position20>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1452" Column="51" TopLine="1415"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1398" Column="10" TopLine="1375"/>
       </Position20>
       <Position21>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1453" Column="52" TopLine="1416"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="1413" Column="10" TopLine="1390"/>
       </Position21>
       <Position22>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1455" Column="50" TopLine="1418"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2116" Column="30" TopLine="2093"/>
       </Position22>
       <Position23>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1458" Column="29" TopLine="1421"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2118" Column="13" TopLine="2095"/>
       </Position23>
       <Position24>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1481" Column="59" TopLine="1445"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2119" Column="10" TopLine="2096"/>
       </Position24>
       <Position25>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1483" Column="35" TopLine="1447"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2155" Column="9" TopLine="2132"/>
       </Position25>
       <Position26>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1577" Column="96" TopLine="1540"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2635" Column="35" TopLine="2613"/>
       </Position26>
       <Position27>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1602" Column="73" TopLine="1565"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="2658" Column="42" TopLine="2636"/>
       </Position27>
       <Position28>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <Caret Line="1605" Column="82" TopLine="1568"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="375" Column="1" TopLine="375"/>
       </Position28>
       <Position29>
-        <Filename Value="gui/patternoverview.pas"/>
-        <Caret Line="40" Column="54" TopLine="6"/>
+        <Filename Value="core/pluginhost.pas"/>
+        <Caret Line="359" Column="7" TopLine="354"/>
       </Position29>
       <Position30>
-        <Filename Value="gui/patternoverview.pas"/>
-        <Caret Line="376" Column="1" TopLine="346"/>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="524" Column="1" TopLine="457"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">

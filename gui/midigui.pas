@@ -38,7 +38,7 @@ type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
   TKey = (keyBlack, keyWhite);
 
-  TZoomCallback = procedure(AZoomTimeLeft, AZoomTimeRight: Integer) of object;
+//  TZoomCallback = procedure(AZoomTimeLeft, AZoomTimeRight: Integer) of object;
 
   TMidiPatternGUI = class;
 
@@ -135,7 +135,6 @@ type
 
     FZoomingMode: Boolean;
     FBitmap: TBitmap;
-    FCacheIsDirty: Boolean;
 
     FRubberBandSelect: TRect;
     FRubberBandMode: Boolean;
@@ -209,7 +208,6 @@ type
     property Offset: Integer read FOffset write SetOffset;
     property NoteOffset: Integer read FNoteOffset write FNoteOffset;
     property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
-    property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
     property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -235,76 +233,6 @@ type
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
   end;
-
-  TMidigridOverview = class;
-
-  { TMidiNoteOverview }
-
-  TMidiNoteOverview = class(THybridPersistentView)
-  private
-    FMidiGridOverview: TMidigridOverview;
-
-    { Audio }
-    FNoteLocation: Integer; // Which time format ? in samples ??
-    FNote: Integer; // 0..127
-    FNoteVelocity: Integer; // 0..127
-    FNoteLength: Integer;
-    FSelected: Boolean;
-  public
-    procedure Update(Subject: THybridPersistentModel); override;
-    property Note: Integer read FNote write FNote;
-    property NoteLocation: Integer read FNoteLocation write FNoteLocation;
-    property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
-    property NoteLength: Integer read FNoteLength write FNoteLength;
-    property MidiGridOverview: TMidigridOverview read FMidiGridOverview write FMidiGridOverview;
-  published
-    property Selected: Boolean read FSelected write FSelected;
-  end;
-
-  { TMidigridOverview }
-
-  TMidigridOverview = class(TPersistentCustomControl)
-  private
-    FNoteListGUI: TObjectList;
-    FTotalWidth: Integer;
-    FZoomBoxWidth: Integer;
-    FZoomTimeLeft: Integer;
-    FZoomTimeRight: Integer;
-    FOldX: Integer;
-    FOldY: Integer;
-    FMouseX: Integer;
-
-    FZooming: Boolean;
-    FZoomingLeft: Boolean;
-    FZoomingRight: Boolean;
-
-    FZoomCallback: TZoomCallback;
-    FModel: TMidiPattern;
-
-    function CalculateTotalWidth: Integer;
-    function ConvertNoteToScreen(ANote: Integer): Integer;
-    function ConvertScreenToTime(AX: Integer): Integer;
-    function ConvertTimeToScreen(ATime: Integer): Integer;
-    procedure CreateOverviewNoteGUI(AObjectID: string);
-    procedure DeleteOverviewNoteGUI(AObjectID: string);
-  public
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
-    procedure Update(Subject: THybridPersistentModel); override;
-    procedure EraseBackground(DC: HDC); override;
-    function GetModel: THybridPersistentModel; override;
-    procedure SetModel(AModel: THybridPersistentModel); override;
-    procedure Connect; override;
-    procedure Disconnect; override;
-    property ZoomCallback: TZoomCallback write FZoomCallback;
-    property Model: THybridPersistentModel read GetModel write SetModel;
-  protected
-    procedure Paint; override;
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
-    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
-  end;
-
 
 implementation
 
@@ -448,8 +376,6 @@ procedure TMidiPatternGUI.FrameResize(Sender: TObject);
 begin
   // Hmmm..self initialize..
   ZoomFactorY := FZoomFactorY;
-
-  FCacheIsDirty := True;
 end;
 
 procedure TMidiPatternGUI.HandleLoopMarkerMouseDown(Button: TMouseButton;
@@ -703,7 +629,6 @@ begin
   ZoomFactorX := 1000000 / (AZoomTimeRight - AZoomTimeLeft);
   FOffset := 0 - ConvertTimeToScreen(AZoomTimeLeft);
 
-  FCacheIsDirty := True;
   Invalidate;
 end;
 
@@ -1055,8 +980,7 @@ begin
 
   QuantizeSetting := TMidiPattern(Subject).QuantizeSetting;
 
-  FCacheIsDirty := True;
-  Invalidate;
+ Invalidate;
 
   DBLog('end TMidiGridGUI.Update');
 end;
@@ -1126,7 +1050,6 @@ begin
   lMidiNoteGUI := TMidiNoteGUI(Data);
   NoteListGUI.Remove(lMidiNoteGUI);
 
-  FCacheIsDirty := True;
   Invalidate;
 end;
 
@@ -1487,7 +1410,6 @@ begin
   // Invalidate here as this one of the few situations that screen updates are
   // requested by the observer and not the subject ie mousemove changes are not always
   // persistent towards the subject.
-  FCacheIsDirty := True;
   //Invalidate;
 end;
 
@@ -1533,7 +1455,6 @@ function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
 begin
   ZoomFactorY := ZoomFactorY + 100;
 
-  FCacheIsDirty := True;
   Invalidate;
 
   Result := inherited DoMouseWheelDown(Shift, MousePos);
@@ -1544,379 +1465,12 @@ function TMidiPatternGUI.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
 begin
   ZoomFactorY := ZoomFactorY - 100;
 
-  FCacheIsDirty := True;
   Invalidate;
 
   Result := inherited DoMouseWheelUp(Shift, MousePos);
 end;
 
-
 {$R *.lfm}
-
-{ TMidigridOverview }
-
-constructor TMidigridOverview.Create(AOwner: TComponent);
-begin
-  inherited Create(AOwner);
-
-  DoubleBuffered := True;
-
-  FNoteListGUI := TObjectList.Create(True);
-end;
-
-destructor TMidigridOverview.Destroy;
-begin
-  if Assigned(FNoteListGUI) then
-    FNoteListGUI.Free;
-
-  inherited Destroy;
-end;
-
-procedure TMidigridOverview.Update(Subject: THybridPersistentModel);
-begin
-  DBLog('start TMidigridOverview.Update');
-
-  DiffLists(
-    TMidiPattern(Subject).NoteList,
-    FNoteListGUI,
-    @Self.CreateOverviewNoteGUI,
-    @Self.DeleteOverviewNoteGUI);
-
-  // Determine total width of a notes
-  FTotalWidth := CalculateTotalWidth;
-
-  Invalidate;
-
-  DBLog('end TMidigridOverview.Update');
-end;
-
-procedure TMidigridOverview.EraseBackground(DC: HDC);
-begin
-  inherited EraseBackground(DC);
-end;
-
-function TMidigridOverview.GetModel: THybridPersistentModel;
-begin
-  Result := THybridPersistentModel(FModel);
-end;
-
-procedure TMidigridOverview.SetModel(AModel: THybridPersistentModel);
-begin
-  FModel := TMidiPattern(AModel);
-end;
-
-procedure TMidigridOverview.Connect;
-begin
-  FModel := TMidiPattern(GObjectMapper.GetModelObject(Self.ObjectID));
-
-  {Create views here from modellist   }
-end;
-
-procedure TMidigridOverview.Disconnect;
-var
-  lIndex: Integer;
-  lMidiNoteOverview: TMidiNoteOverview;
-  lMidiNote: TMidiNote;
-begin
-  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
-  begin
-    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
-
-    if Assigned(lMidiNoteOverview) then
-    begin
-      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(lMidiNoteOverview.ObjectID));
-      if Assigned(lMidiNote) then
-      begin
-        lMidiNote.Detach(lMidiNoteOverview);
-        FNoteListGUI.Remove(lMidiNoteOverview);
-      end;
-    end;
-  end;
-end;
-
-procedure TMidigridOverview.Paint;
-var
-  lIndex: Integer;
-  lNote: TMidiNoteOverview;
-begin
-
-  // Draw midi notes
-  Canvas.Pen.Color := clBlack;
-  Canvas.Pen.Width := 1;
-  for lIndex := 0 to Pred(FNoteListGUI.Count) do
-  begin
-    lNote := TMidiNoteOverview(FNoteListGUI[lIndex]);
-
-    Canvas.Line(
-      ConvertTimeToScreen(lNote.NoteLocation),
-      ConvertNoteToScreen(lNote.Note),
-      ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength),
-      ConvertNoteToScreen(lNote.Note)
-      );
-  end;
-
-  Canvas.Pen.Width := 1;
-  Canvas.Rectangle(0, 0, Width, Height);
-
-  Canvas.Pen.Width := 2;
-  Canvas.Brush.Style := bsClear;
-  Canvas.Rectangle(
-    ConvertTimeToScreen(FZoomTimeLeft), 1,
-    ConvertTimeToScreen(FZoomTimeRight), Height - 1);
-
-  inherited Paint;
-end;
-
-procedure TMidigridOverview.MouseDown(Button: TMouseButton; Shift: TShiftState;
-  X, Y: Integer);
-begin
-  FOldX := X;
-  FOldY := Y;
-
-  if FNoteListGUI.Count > 0 then
-  begin
-    if (X >= ConvertTimeToScreen(FZoomTimeLeft) - 2) and (X <= ConvertTimeToScreen(FZoomTimeLeft) + 2) then
-    begin
-      FZoomingLeft := True;
-    end
-    else if (X >= ConvertTimeToScreen(FZoomTimeRight) - 2) and (X <= ConvertTimeToScreen(FZoomTimeRight) + 2) then
-    begin
-      FZoomingRight := True;
-    end
-    else
-    begin
-      FZooming := True;
-    end;
-  end;
-
-  inherited MouseDown(Button, Shift, X, Y);
-end;
-
-procedure TMidigridOverview.MouseUp(Button: TMouseButton; Shift: TShiftState;
-  X, Y: Integer);
-begin
-  FZooming := False;
-  FZoomingLeft := False;
-  FZoomingRight := False;
-
-  inherited MouseUp(Button, Shift, X, Y);
-end;
-
-procedure TMidigridOverview.MouseMove(Shift: TShiftState; X, Y: Integer);
-var
-  lConstraintZoom: Integer;
-begin
-  FMouseX := X;
-
-  if FZooming then
-  begin
-    if Y <= FOldY then
-    begin
-      lConstraintZoom := 100 - (FOldY - Y);
-      if lConstraintZoom > 100 then
-        lConstraintZoom := 100;
-      if lConstraintZoom < 5 then
-        lConstraintZoom := 5;
-    end
-    else
-      lConstraintZoom := 100;
-
-    FZoomBoxWidth := Round((Width / 100) * lConstraintZoom);
-    if FZoomBoxWidth < 20 then FZoomBoxWidth := 20;
-
-    FZoomTimeLeft := ConvertScreenToTime(FMouseX - (FZoomBoxWidth div 2));
-    if FZoomTimeLeft < 1 then FZoomTimeLeft := 1;
-
-    FZoomTimeRight := ConvertScreenToTime(FMouseX + (FZoomBoxWidth div 2));
-    if FZoomTimeRight < 20 then
-      FZoomTimeRight := 20;
-
-    if FZoomTimeRight > ConvertScreenToTime(Width) then
-      FZoomTimeRight := ConvertScreenToTime(Width);
-
-    if FZoomTimeRight > FZoomTimeLeft then
-    begin
-      if Assigned(FZoomCallback) then
-      begin
-        FZoomCallback(FZoomTimeLeft, FZoomTimeRight);
-      end;
-    end;
-
-    Invalidate;
-  end
-  else if FZoomingLeft then
-  begin
-    FZoomTimeLeft := ConvertScreenToTime(X);
-
-    if FZoomTimeLeft >= (FZoomTimeRight - 20) then
-      FZoomTimeLeft := FZoomTimeRight - 20;
-
-    if FZoomTimeLeft < 1 then
-      FZoomTimeLeft := 1;
-
-    if FZoomTimeRight > ConvertScreenToTime(Width) then
-      FZoomTimeRight := ConvertScreenToTime(Width);
-
-    if FZoomTimeRight > FZoomTimeLeft then
-    begin
-      if Assigned(FZoomCallback) then
-      begin
-        FZoomCallback(FZoomTimeLeft, FZoomTimeRight);
-      end;
-    end;
-
-    Invalidate;
-  end
-  else if FZoomingRight then
-  begin
-    FZoomTimeRight := ConvertScreenToTime(X);
-
-    if FZoomTimeRight <= (FZoomTimeLeft + 20) then
-      FZoomTimeRight := FZoomTimeLeft + 20;
-
-    if FZoomTimeRight > ConvertScreenToTime(Width) then
-      FZoomTimeRight := ConvertScreenToTime(Width);
-
-    if FZoomTimeRight > FZoomTimeLeft then
-    begin
-      if Assigned(FZoomCallback) then
-      begin
-        FZoomCallback(FZoomTimeLeft, FZoomTimeRight);
-      end;
-    end;
-
-    Invalidate;
-  end;
-
-  inherited MouseMove(Shift, X, Y);
-end;
-
-procedure TMidigridOverview.CreateOverviewNoteGUI(AObjectID: string);
-var
-  lMidiNote: TMidiNote;
-  lMidiNoteOverview: TMidiNoteOverview;
-begin
-  DBLog('start TMidigridOverview.CreateOverviewNoteGUI');
-
-  lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
-  if Assigned(lMidiNote) then
-  begin
-    lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
-    lMidiNoteOverview.Note := lMidiNote.Note;
-    lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
-    lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;
-
-    FNoteListGUI.Add(lMidiNoteOverview);
-    lMidiNote.Attach(lMidiNoteOverview);
-  end;
-
-  DBLog('end TMidigridOverview.CreateOverviewNoteGUI');
-end;
-
-procedure TMidigridOverview.DeleteOverviewNoteGUI(AObjectID: string);
-var
-  lMidiNoteOverview: TMidiNoteOverview;
-  lIndex: Integer;
-begin
-  DBLog('start TMidigridOverview.DeleteNoteGUI');
-
-  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
-  begin
-    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
-
-    if Assigned(lMidiNoteOverview) then
-    begin
-      if lMidiNoteOverview.ObjectID = AObjectID then
-      begin
-        FNoteListGUI.Remove(lMidiNoteOverview);
-        break;
-      end;
-    end;
-  end;
-
-  DBLog('end TMidigridOverview.DeleteNoteGUI');
-end;
-
-{
-  Convert location in time to a screen cursor position
-}
-function TMidigridOverview.ConvertTimeToScreen(ATime: Integer): Integer;
-begin
-  Result := Round(ATime * (Width / FTotalWidth));
-end;
-
-{
-  Convert location in time to a screen cursor position
-}
-function TMidigridOverview.ConvertScreenToTime(AX: Integer): Integer;
-begin
-  Result := Round(AX * (FTotalWidth / Width));
-end;
-
-function TMidigridOverview.CalculateTotalWidth: Integer;
-var
-  lNoteIndex: Integer;
-  lMinimalLocation: Integer;
-  lMaximalLocation: Integer;
-  lNote: TMidiNoteOverview;
-begin
-  Result := 0;
-  for lNoteIndex := 0 to Pred(FNoteListGUI.Count) do
-  begin
-    lNote := TMidiNoteOverview(FNoteListGUI[lNoteIndex]);
-    if lNoteIndex = 0 then
-    begin
-      lMinimalLocation := lNote.NoteLocation;
-      lMaximalLocation := lNote.NoteLocation + lNote.NoteLength;
-    end
-    else
-    begin
-      if lNote.NoteLocation < lMinimalLocation then
-      begin
-        lMinimalLocation := lNote.NoteLocation;
-      end;
-      if (lNote.NoteLocation + lNote.NoteLength) > lMaximalLocation then
-      begin
-        lMaximalLocation := lNote.NoteLocation + lNote.NoteLength;
-      end;
-    end;
-  end;
-  Result := lMaximalLocation - lMinimalLocation;
-end;
-
-{
-  Convert a note to a screen note position
-}
-function TMidigridOverview.ConvertNoteToScreen(ANote: Integer): Integer;
-var
-  lScale: single;
-begin
-  lScale := (128 / Height);
-
-  Result := Round(Height - Round(ANote / lScale));
-end;
-
-{ TMidiNoteOverview }
-
-procedure TMidiNoteOverview.Update(Subject: THybridPersistentModel);
-var
-  lNote: TMidiNote;
-begin
-  DBLog('start TMidiNoteOverview.Update');
-
-  lNote := TMidiNote(Subject);
-
-  if Assigned(lNote) then
-  begin
-    Selected := lNote.Selected;
-    NoteLocation := lNote.NoteLocation;
-    Note := lNote.Note;
-    NoteVelocity := lNote.NoteVelocity;
-    NoteLength := lNote.NoteLength;
-  end;
-
-  DBLog('end TMidiNoteOverview.Update');
-end;
 
 initialization
   RegisterClass(TMidiPatternGUI);

@@ -132,7 +132,6 @@ type
     FTransientThreshold: Integer;
     FModel: TWavePattern;
     FBitmap: TBitmap;
-    FCacheIsDirty: Boolean;
     FOldCursorPosition: Integer;
     FPitch: Single;
     FRealBPM: Single;
@@ -190,7 +189,6 @@ type
     property TransientThreshold: Integer read FTransientThreshold write SetTransientThreshold;
     property BarLength: Integer read FBarLength write FBarLength;
     property Model: THybridPersistentModel read GetModel write SetModel;
-    property CacheIsDirty: Boolean read FCacheIsDirty write FCacheIsDirty;
     property Pitch: Single read FPitch write SetPitch default 1;
     property Pitched: Boolean read FPitched write FPitched default False;
     property RealBPM: Single read FRealBPM write FRealBPM default 120;
@@ -300,13 +298,10 @@ begin
   if FZoomFactorX = 0 then FZoomFactorX := 0.00001;
   FZoomFactorToScreen:= (ZoomFactorX / lFramesPerScreenWidth);
   FZoomFactorToData:= (lFramesPerScreenWidth / ZoomFactorX);
-
-  FCacheIsDirty := True;
 end;
 
 procedure TWaveGUI.SetZoomFactorY(const AValue: Single);
 begin
-  FCacheIsDirty := True;
 end;
 
 procedure TWaveGUI.Setpitch(const Avalue: Single);
@@ -349,7 +344,6 @@ begin
   FRubberbandSelect:= False;
   FCursorAdder:= 0;
   FVolumeDecay:= 1;
-  FCacheIsDirty := True;
   FRealBPM := 120;
 
   FSliceListGUI := TObjectList.Create(True);
@@ -761,8 +755,6 @@ begin
         FBitmap.Canvas.Pen.Width := 1;
         FBitmap.Canvas.Rectangle(SliceLeft - 5, 1, SliceLeft + 5, 9);
         FBitmap.Canvas.TextOut(SliceLeft + 10, 50, Format('LoopEnd %d', [LoopEnd.Location]));
-
-        FCacheIsDirty := False;
       end;
     end;
 
@@ -859,7 +851,6 @@ begin
     end;
   end;
 
-  FCacheIsDirty := True;
   Invalidate;
 
   inherited DblClick;
@@ -996,7 +987,6 @@ begin
     end;
   end;
 
-  FCacheIsDirty := True;
   Invalidate;
 
   inherited Mousedown(Button, Shift, X, Y);
@@ -1069,7 +1059,6 @@ begin
 
   FMouseArea := maNone;
 
-  FCacheIsDirty := True;
   Invalidate;
 
   inherited MouseUp(Button, Shift, X, Y);
@@ -1121,7 +1110,6 @@ begin
 
   end;
 
-  FCacheIsDirty := True;
   Invalidate;
 
   inherited MouseMove(Shift, X, Y);
@@ -1237,8 +1225,6 @@ begin
 
   // Just initialize the last marker as it's not valid otherwise
   TMarkerGUI(FSliceListGUI[FSliceListGUI.Count - 1]).DecayRate := 1;
-
-  CacheIsDirty := True;
 end;
 
 function TWaveGUI.GetSliceAt(Location: Integer; AMargin: Single): TMarkerGUI;

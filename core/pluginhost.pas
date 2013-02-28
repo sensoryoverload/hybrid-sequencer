@@ -296,11 +296,6 @@ var
   lIndex: Integer;
 begin
   FNodeList.Sort(@SortOnSequenceNr);
-
-  {for lIndex := 0 to Pred(FNodeList.Count) do
-  begin
-    TPluginNode(FNodeList[lIndex]).SequenceNr := lIndex;
-  end; }
 end;
 
 { TPluginProcessor }
@@ -583,6 +578,7 @@ begin
       lPluginNode := TPluginNode(FPluginProcessor.NodeList[lNodeIndex]);
       if ObjectIdList[lMementoIndex] = lPluginNode.ObjectID then
       begin
+        lPluginNode.Active := False;
         lPluginNode.Deactivate;
         lPluginNode.Clean;
 
