@@ -102,7 +102,7 @@ begin
   FDecay := SetupParameterControls(10, 90, 'Decay', 0, 1, 0.5, tbDecay);
   FAccent := SetupParameterControls(10, 110, 'Accent', 0, 1, 0, tbAccent);
   FWave := SetupParameterControls(10, 130, 'Wave', 0, 1, 0, tbWave);
-  FOverDrive := SetupParameterControls(10, 150, 'OverDrive', 3, 20, 3, tbOverdrive);
+  FOverDrive := SetupParameterControls(10, 150, 'OverDrive', 1, 20, 1, tbOverdrive);
 end;
 
 procedure TPluginBasslineGUI.Update(Subject: THybridPersistentModel);

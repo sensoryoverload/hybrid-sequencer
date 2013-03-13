@@ -21,7 +21,6 @@ type
     Panel1: TPanel;
     pcBPM: TParameterControl;
     pcPitch: TParameterControl;
-    sbBottom: TScrollBox;
     LoopEnabled: TToggleControl;
 
     procedure btnDoubleClick(Sender: TObject);
@@ -343,14 +342,14 @@ begin
 
   FWaveGUI := TWaveGUI.Create(nil);
   FWaveGUI.Align := alClient;
-  FWaveGUI.Parent := sbBottom;
+  FWaveGUI.Parent := Self;
 
   FWaveOverview := TWavePatternOverview.Create(nil);
   FWaveOverview.ZoomCallback := @DoWaveZoom;
-  FWaveOverview.Width := 100;
+  FWaveOverview.Width := 120;
   FWaveOverview.Height := 20;
   FWaveOverview.Left := 5;
-  FWaveOverview.Top := 1;
+  FWaveOverview.Top := 4;
   FWaveOverview.Parent := Panel1;
 end;
 

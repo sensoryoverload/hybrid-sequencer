@@ -99,15 +99,4 @@ object WavePatternControlGUI: TWavePatternControlGUI
       OnStartChange = pcPitchStartChange
     end
   end
-  object sbBottom: TScrollBox
-    Left = 0
-    Height = 274
-    Top = 29
-    Width = 1083
-    HorzScrollBar.Page = 1081
-    HorzScrollBar.Tracking = True
-    VertScrollBar.Page = 272
-    Align = alClient
-    TabOrder = 1
-  end
 end

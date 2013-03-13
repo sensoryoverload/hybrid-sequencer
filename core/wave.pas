@@ -1666,7 +1666,7 @@ var
 begin
   // Check if there's a marker already
   lMarker := FWavePattern.AddSlice(Location, SLICE_NORMAL, True);
-  lMarker.Locked := True;
+  lMarker.Locked := False;
 
   if Assigned(lMarker) then
   begin

@@ -43,6 +43,7 @@ type
     pcEditor: TPageControl;
     tsEffects: TTabSheet;
     tsPattern: TTabSheet;
+    procedure pcEditorChange(Sender: TObject);
     procedure pcEditorDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
   private
@@ -81,7 +82,7 @@ type
 implementation
 
 uses
-  utils;
+  utils, sessiongrid, pattern;
 
 { TTrackSettings }
 
@@ -106,18 +107,20 @@ begin
     begin
       if not Assigned(GObjectMapper.GetModelObject(PatternView.FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
       begin
+        PatternView.pcEditor.Visible := False;
         PatternView.tsPattern.TabVisible := False;
-        GSettings.SelectedPattern := nil;
-        GSettings.OldSelectedPattern := nil;
+        GSettings.SelectedObject := nil;
+        GSettings.OldSelectedObject := nil;
       end;
     end
     else if PatternView.FWavePatternControlGUI.WaveGUI.Parent = PatternView.tsPattern then
     begin
       if not Assigned(GObjectMapper.GetModelObject(PatternView.FWavePatternControlGUI.WaveGUI.ObjectID)) then
       begin
+        PatternView.pcEditor.Visible := False;
         PatternView.tsPattern.TabVisible := False;
-        GSettings.SelectedPattern := nil;
-        GSettings.OldSelectedPattern := nil;
+        GSettings.SelectedObject := nil;
+        GSettings.OldSelectedObject := nil;
       end;
     end;
   end
@@ -127,16 +130,18 @@ procedure TPatternView.DoPatternRefreshEvent(TrackObject: TObject);
 var
   lWavePattern: TWavePattern;
   lMidiPattern: TMidiPattern;
+  lTrack: TTrack;
 begin
   if not Assigned(TrackObject) then
   begin
+    pcEditor.Visible := False;
     tsPattern.TabVisible := False;
     tsEffects.TabVisible := False;
-    if Assigned(GSettings.OldSelectedPattern) then
+    if Assigned(GSettings.OldSelectedObject) then
     begin
-      if GSettings.OldSelectedPattern is TWavePattern then
+      if GSettings.OldSelectedObject is TWavePattern then
       begin
-        lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
+        lWavePattern := TWavePattern(GSettings.OldSelectedObject);
         if Assigned(lWavePattern) then
         begin
           lWavePattern.Detach(FWavePatternControlGUI);
@@ -145,9 +150,9 @@ begin
           lWavePattern.PluginProcessor.Detach(FPluginProcessorGUI);
         end;
       end
-      else if GSettings.OldSelectedPattern is TMidiPattern then
+      else if GSettings.OldSelectedObject is TMidiPattern then
       begin
-        lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
+        lMidiPattern := TMidiPattern(GSettings.OldSelectedObject);
         if Assigned(lMidiPattern) then
         begin
           lMidiPattern.Detach(FMidiPatternControlGUI);
@@ -155,24 +160,109 @@ begin
 
           lMidiPattern.PluginProcessor.Detach(FPluginProcessorGUI);
         end;
+      end
+      else if GSettings.OldSelectedObject is TTrack then
+      begin
+        lTrack := TTrack(GSettings.OldSelectedObject);
+        if Assigned(lTrack) then
+        begin
+          lTrack.PluginProcessor.Detach(FPluginProcessorGUI);
+        end;
       end;
     end;
-    GSettings.OldSelectedPattern := nil;
-    GSettings.SelectedPattern := nil;
+    GSettings.OldSelectedObject := nil;
+    GSettings.SelectedObject := nil;
+  end
+  else if TrackObject is TTrack then
+  begin
+    if GSettings.OldSelectedObject <> GSettings.SelectedObject then
+    begin
+      pcEditor.Visible := True;
+      tsPattern.TabVisible := False;
+      tsEffects.TabVisible := True;
+
+      // Detach if old pattern is visible
+      if Assigned(GSettings.OldSelectedObject) then
+      begin
+        if GSettings.OldSelectedObject is TTrack then
+        begin
+          lTrack := TTrack(GSettings.OldSelectedObject);
+          if Assigned(lTrack) then
+          begin
+            lTrack.PluginProcessor.Detach(FPluginProcessorGUI);
+          end;
+        end
+        else if GSettings.OldSelectedObject is TMidiPattern then
+        begin
+          lMidiPattern := TMidiPattern(GSettings.OldSelectedObject);
+          if Assigned(lMidiPattern) then
+          begin
+            lMidiPattern.Detach(FMidiPatternControlGUI);
+            FMidiPatternControlGUI.Parent := nil;
+
+            lMidiPattern.PluginProcessor.Detach(FPluginProcessorGUI);
+          end;
+        end
+        else if GSettings.OldSelectedObject is TWavePattern then
+        begin
+          lWavePattern := TWavePattern(GSettings.OldSelectedObject);
+          if Assigned(lWavePattern) then
+          begin
+            lWavePattern.Detach(FWavePatternControlGUI);
+            FWavePatternControlGUI.Parent := nil;
+
+            lWavePattern.PluginProcessor.Detach(FPluginProcessorGUI);
+          end;
+        end;
+      end;
+
+      lTrack := TTrack(GSettings.SelectedObject);
+      if Assigned(lTrack) then
+      begin
+        lTrack.PluginProcessor.Attach(FPluginProcessorGUI);
+      end;
+
+      GSettings.OldSelectedObject := GSettings.SelectedObject;
+    end;
   end
   else if TrackObject is TWavePattern then
   begin
-    if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
+    if GSettings.OldSelectedObject <> GSettings.SelectedObject then
     begin
       // Detach if old pattern is visible
-      if Assigned(GSettings.OldSelectedPattern) then
+      if Assigned(GSettings.OldSelectedObject) then
       begin
-        if GSettings.OldSelectedPattern is TMidiPattern then
+        if GSettings.OldSelectedObject is TTrack then
         begin
           // Last selected pattern of different type;
           // - detach
           // - set parent to new pattern type
-          lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
+          lTrack := TTrack(GSettings.OldSelectedObject);
+          if Assigned(lTrack) then
+          begin
+            lTrack.PluginProcessor.Detach(FPluginProcessorGUI);
+          end;
+
+          // Attach new pattern
+          lWavePattern := TWavePattern(GSettings.SelectedObject);
+          if Assigned(lWavePattern) then
+          begin
+            lWavePattern.Attach(FWavePatternControlGUI);
+            FWavePatternControlGUI.Parent := tsPattern;
+
+            lWavePattern.PluginProcessor.Attach(FPluginProcessorGUI);
+          end;
+
+          pcEditor.Visible := True;
+          tsPattern.TabVisible := True;
+          tsEffects.TabVisible := True;
+        end
+        else if GSettings.OldSelectedObject is TMidiPattern then
+        begin
+          // Last selected pattern of different type;
+          // - detach
+          // - set parent to new pattern type
+          lMidiPattern := TMidiPattern(GSettings.OldSelectedObject);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Detach(FMidiPatternControlGUI);
@@ -182,7 +272,7 @@ begin
           end;
 
           // Attach new pattern
-          lWavePattern := TWavePattern(GSettings.SelectedPattern);
+          lWavePattern := TWavePattern(GSettings.SelectedObject);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
@@ -191,10 +281,10 @@ begin
             lWavePattern.PluginProcessor.Attach(FPluginProcessorGUI);
           end;
         end
-        else if GSettings.OldSelectedPattern is TWavePattern then
+        else if GSettings.OldSelectedObject is TWavePattern then
         begin
           // Last selected pattern of same type; just detach
-          lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
+          lWavePattern := TWavePattern(GSettings.OldSelectedObject);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Detach(FWavePatternControlGUI);
@@ -202,7 +292,7 @@ begin
           end;
 
           // Attach new pattern
-          lWavePattern := TWavePattern(GSettings.SelectedPattern);
+          lWavePattern := TWavePattern(GSettings.SelectedObject);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
@@ -212,19 +302,21 @@ begin
         else
         begin
           // unknown pattern
+          pcEditor.Visible := False;
           tsPattern.TabVisible := False;
           tsEffects.TabVisible := False;
         end;
       end
       else
       begin
-        if Assigned(GSettings.SelectedPattern) then
+        if Assigned(GSettings.SelectedObject) then
         begin
+          pcEditor.Visible := True;
           tsPattern.TabVisible := True;
           tsEffects.TabVisible := True;
 
           // Attach new pattern
-          lWavePattern := TWavePattern(GSettings.SelectedPattern);
+          lWavePattern := TWavePattern(GSettings.SelectedObject);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Attach(FWavePatternControlGUI);
@@ -234,27 +326,53 @@ begin
         end
         else
         begin
+          pcEditor.Visible := False;
           tsPattern.TabVisible := False;
           tsEffects.TabVisible := False;
         end;
       end;
 
-      GSettings.OldSelectedPattern := GSettings.SelectedPattern;
+      GSettings.OldSelectedObject := GSettings.SelectedObject;
     end;
   end
   else if TrackObject is TMidiPattern then
   begin
-    if GSettings.OldSelectedPattern <> GSettings.SelectedPattern then
+    if GSettings.OldSelectedObject <> GSettings.SelectedObject then
     begin
       // Detach if old pattern is visible
-      if Assigned(GSettings.OldSelectedPattern) then
+      if Assigned(GSettings.OldSelectedObject) then
       begin
-        if GSettings.OldSelectedPattern is TWavePattern then
+        if GSettings.OldSelectedObject is TTrack then
         begin
           // Last selected pattern of different type;
           // - detach
           // - set parent to new pattern type
-          lWavePattern := TWavePattern(GSettings.OldSelectedPattern);
+          lTrack := TTrack(GSettings.OldSelectedObject);
+          if Assigned(lTrack) then
+          begin
+            lTrack.PluginProcessor.Detach(FPluginProcessorGUI);
+          end;
+
+          // Attach new pattern
+          lMidiPattern := TMidiPattern(GSettings.SelectedObject);
+          if Assigned(lMidiPattern) then
+          begin
+            lMidiPattern.Attach(FMidiPatternControlGUI);
+            FMidiPatternControlGUI.Parent := tsPattern;
+
+            lMidiPattern.PluginProcessor.Attach(FPluginProcessorGUI);
+          end;
+
+          pcEditor.Visible := True;
+          tsPattern.TabVisible := True;
+          tsEffects.TabVisible := True;
+        end
+        else if GSettings.OldSelectedObject is TWavePattern then
+        begin
+          // Last selected pattern of different type;
+          // - detach
+          // - set parent to new pattern type
+          lWavePattern := TWavePattern(GSettings.OldSelectedObject);
           if Assigned(lWavePattern) then
           begin
             lWavePattern.Detach(FWavePatternControlGUI);
@@ -263,21 +381,18 @@ begin
             lWavePattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
-          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
+          lMidiPattern := TMidiPattern(GSettings.SelectedObject);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
             FMidiPatternControlGUI.Parent := tsPattern;
             lMidiPattern.PluginProcessor.Attach(FPluginProcessorGUI);
           end;
-
-          tsPattern.TabVisible := True;
-          tsEffects.TabVisible := True;
         end
-        else if GSettings.OldSelectedPattern is TMidiPattern then
+        else if GSettings.OldSelectedObject is TMidiPattern then
         begin
           // Last selected pattern of same type; just detach
-          lMidiPattern := TMidiPattern(GSettings.OldSelectedPattern);
+          lMidiPattern := TMidiPattern(GSettings.OldSelectedObject);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Detach(FMidiPatternControlGUI);
@@ -286,7 +401,7 @@ begin
             lMidiPattern.PluginProcessor.Detach(FPluginProcessorGUI);
           end;
 
-          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
+          lMidiPattern := TMidiPattern(GSettings.SelectedObject);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
@@ -297,15 +412,16 @@ begin
         else
         begin
           // unknown pattern
+          pcEditor.Visible := False;
           tsPattern.TabVisible := False;
           tsEffects.TabVisible := False;
         end;
       end
       else
       begin
-        if Assigned(GSettings.SelectedPattern) then
+        if Assigned(GSettings.SelectedObject) then
         begin
-          lMidiPattern := TMidiPattern(GSettings.SelectedPattern);
+          lMidiPattern := TMidiPattern(GSettings.SelectedObject);
           if Assigned(lMidiPattern) then
           begin
             lMidiPattern.Attach(FMidiPatternControlGUI);
@@ -313,6 +429,7 @@ begin
             lMidiPattern.PluginProcessor.Attach(FPluginProcessorGUI);
           end;
 
+          pcEditor.Visible := True;
           tsPattern.TabVisible := True;
           tsEffects.TabVisible := True;
         end
@@ -322,7 +439,19 @@ begin
         end;
       end;
 
-      GSettings.OldSelectedPattern := GSettings.SelectedPattern;
+      GSettings.OldSelectedObject := GSettings.SelectedObject;
+    end;
+  end;
+
+  if Assigned(GSettings.SelectedObject) then
+  begin
+    if GSettings.SelectedObject is TTrack then
+    begin
+      pcEditor.ActivePage := tsEffects;
+    end
+    else
+    begin
+      pcEditor.ActivePageIndex := TPattern(GSettings.SelectedObject).VisibleTabIndex;
     end;
   end;
 end;
@@ -334,7 +463,9 @@ begin
   begin
     if not Assigned(GObjectMapper.GetModelObject(FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
     begin
+      pcEditor.Visible := False;
       tsPattern.TabVisible := False;
+      tsEffects.TabVisible := False;
     end
     else
     begin
@@ -345,7 +476,9 @@ begin
   begin
     if not Assigned(GObjectMapper.GetModelObject(FWavePatternControlGUI.WaveGUI.ObjectID)) then
     begin
+      pcEditor.Visible := False;
       tsPattern.TabVisible := False;
+      tsEffects.TabVisible := False;
     end
     else
     begin
@@ -372,9 +505,10 @@ begin
   FMidiPatternControlGUI.Align := alClient;
 
   FPluginProcessorGUI := TPluginProcessorGUI.Create(Self);
-  FPluginProcessorGUI.Align := alClient;
   FPluginProcessorGUI.Parent := tsEffects;
+  FPluginProcessorGUI.Align := alClient;
 
+  pcEditor.Visible := False;
   tsPattern.TabVisible := False;
   tsEffects.TabVisible := False;
 
@@ -409,13 +543,17 @@ begin
     begin
       if not Assigned(GObjectMapper.GetModelObject(FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
       begin
+        pcEditor.Visible := False;
         tsPattern.TabVisible := False;
+        tsEffects.TabVisible := False;
       end;
     end
     else if FWavePatternControlGUI.WaveGUI.Parent = tsPattern then
     begin
       if not Assigned(GObjectMapper.GetModelObject(FWavePatternControlGUI.WaveGUI.ObjectID)) then
       begin
+        pcEditor.Visible := False;
+        tsEffects.TabVisible := False;
         tsPattern.TabVisible := False;
       end;
     end;
@@ -473,6 +611,16 @@ begin
     begin
       TPageControl(Sender).ActivePageIndex := lTabIndex;
     end;
+  end;
+end;
+
+procedure TPatternView.pcEditorChange(Sender: TObject);
+begin
+  // Save active page to midi/wav -pattern so it can be recalled when switching
+  // to a previously selected pattern
+  if Assigned(GSettings.SelectedObject) then
+  begin
+    TPattern(GSettings.SelectedObject).VisibleTabIndex := pcEditor.ActivePageIndex;
   end;
 end;
 

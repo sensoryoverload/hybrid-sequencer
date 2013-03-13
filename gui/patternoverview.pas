@@ -44,20 +44,6 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
   end;
 
-  { TMidiNoteOverview }
-
-  TMidiNoteOverview = class(THybridPersistentView)
-  private
-    FNoteLocation: Integer;
-    FNote: Integer;
-    FNoteLength: Integer;
-  public
-    procedure Update(Subject: THybridPersistentModel); override;
-    property Note: Integer read FNote write FNote;
-    property NoteLocation: Integer read FNoteLocation write FNoteLocation;
-    property NoteLength: Integer read FNoteLength write FNoteLength;
-  end;
-
   { TMidiPatternOverview }
 
   TMidiPatternOverview = class(TPatternOverview)
@@ -66,15 +52,10 @@ type
     function ConvertNoteToScreen(ANote: Integer): Integer;
     function ConvertScreenToTime(AX: Integer): Integer;
     function ConvertTimeToScreen(ATime: Integer): Integer;
-    procedure CreateOverviewNoteGUI(AObjectID: string);
-    procedure DeleteOverviewNoteGUI(AObjectID: string);
   protected
     procedure Paint; override;
   public
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); override;
-    procedure Disconnect; override;
   end;
 
   TWaveFrame = record
@@ -201,92 +182,12 @@ end;
 
 { TMidiPatternOverview }
 
-constructor TMidiPatternOverview.Create(AOwner: TComponent);
-begin
-  inherited Create(AOwner);
-
-  FNoteListGUI := TObjectList.Create(True);
-end;
-
-destructor TMidiPatternOverview.Destroy;
-begin
-  FNoteListGUI.Free;
-
-  inherited Destroy;
-end;
-
 procedure TMidiPatternOverview.Update(Subject: THybridPersistentModel);
 begin
-  DiffLists(
-    TMidiPattern(Subject).NoteList,
-    FNoteListGUI,
-    @Self.CreateOverviewNoteGUI,
-    @Self.DeleteOverviewNoteGUI);
-
   FTotalWidth :=
     TMidiPattern(Subject).LoopEnd.Value - TMidiPattern(Subject).LoopStart.Value;
 
   Invalidate;
-end;
-
-procedure TMidiPatternOverview.Disconnect;
-var
-  lIndex: Integer;
-  lMidiNoteOverview: TMidiNoteOverview;
-  lMidiNote: TMidiNote;
-begin
-  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
-  begin
-    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
-
-    if Assigned(lMidiNoteOverview) then
-    begin
-      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(lMidiNoteOverview.ObjectID));
-      if Assigned(lMidiNote) then
-      begin
-        lMidiNote.Detach(lMidiNoteOverview);
-        FNoteListGUI.Remove(lMidiNoteOverview);
-      end;
-    end;
-  end;
-end;
-
-procedure TMidiPatternOverview.CreateOverviewNoteGUI(AObjectID: string);
-var
-  lMidiNote: TMidiNote;
-  lMidiNoteOverview: TMidiNoteOverview;
-begin
-  lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
-  if Assigned(lMidiNote) then
-  begin
-    lMidiNoteOverview := TMidiNoteOverview.Create(Self.ObjectID);
-    lMidiNoteOverview.Note := lMidiNote.Note;
-    lMidiNoteOverview.NoteLocation := lMidiNote.NoteLocation;
-    lMidiNoteOverview.NoteLength := lMidiNote.NoteLength;
-
-    FNoteListGUI.Add(lMidiNoteOverview);
-    lMidiNote.Attach(lMidiNoteOverview);
-  end;
-end;
-
-procedure TMidiPatternOverview.DeleteOverviewNoteGUI(AObjectID: string);
-var
-  lMidiNoteOverview: TMidiNoteOverview;
-  lIndex: Integer;
-begin
-  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
-  begin
-    lMidiNoteOverview := TMidiNoteOverview(FNoteListGUI[lIndex]);
-
-    if Assigned(lMidiNoteOverview) then
-    begin
-      if lMidiNoteOverview.ObjectID = AObjectID then
-      begin
-        FNoteListGUI.Remove(lMidiNoteOverview);
-        break;
-      end;
-    end;
-  end;
 end;
 
 {
@@ -320,7 +221,7 @@ end;
 procedure TMidiPatternOverview.Paint;
 var
   lIndex: Integer;
-  lNote: TMidiNoteOverview;
+  lNote: TMidiNote;
 begin
   Canvas.Brush.Color := clLtGray;
   Canvas.Pen.Width := 1;
@@ -329,9 +230,9 @@ begin
   // Draw midi notes
   Canvas.Pen.Color := clGray;
   Canvas.Pen.Width := 1;
-  for lIndex := 0 to Pred(FNoteListGUI.Count) do
+  for lIndex := 0 to Pred(TMidiPattern(FModel).NoteList.Count) do
   begin
-    lNote := TMidiNoteOverview(FNoteListGUI[lIndex]);
+    lNote := TMidiNote(TMidiPattern(FModel).NoteList[lIndex]);
 
     Canvas.Line(
       ConvertTimeToScreen(lNote.NoteLocation),
@@ -504,21 +405,6 @@ begin
   inherited MouseMove(Shift, X, Y);
 end;
 
-{ TMidiNoteOverview }
-
-procedure TMidiNoteOverview.Update(Subject: THybridPersistentModel);
-var
-  lNote: TMidiNote;
-begin
-  lNote := TMidiNote(Subject);
-
-  if Assigned(lNote) then
-  begin
-    NoteLocation := lNote.NoteLocation;
-    Note := lNote.Note;
-    NoteLength := lNote.NoteLength;
-  end;
-end;
 
 end.
 

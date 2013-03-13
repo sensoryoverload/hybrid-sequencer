@@ -33,7 +33,6 @@ type
   { TPluginProcessorGUI }
 
   TPluginProcessorGUI = class(TFrame, IObserver)
-    gbPlugin: TGroupBox;
     pnlPlugin: TPanel;
     procedure pnlPluginDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure pnlPluginDragOver(Sender, Source: TObject; X, Y: Integer;
@@ -60,6 +59,7 @@ type
     procedure EraseBackground(DC: HDC); override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
+    procedure ReleasePlugin(Data: PtrInt);
     procedure CreatePluginNodeGUI(AObjectID: string);
     procedure DeletePluginNodeGUI(AObjectID: string);
     function GetModel: THybridPersistentModel;
@@ -326,6 +326,7 @@ begin
     ptIO:
     begin
       lPluginNodeGUI := TGenericPluginGUI.Create(nil);
+      lPluginNodeGUI.PluginProcessorGui := Self;
       lPluginNodeGUI.ObjectID := AObjectID;
       lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
       lPluginNodeGUI.Model := lPluginNode;
@@ -341,6 +342,7 @@ begin
     ptSampler:
     begin
       lSampleBankGUI := TBankView.Create(nil);
+      lSampleBankGUI.PluginProcessorGui := Self;
       lSampleBankGUI.ObjectID := AObjectID;
       lSampleBankGUI.ObjectOwnerID := Self.ObjectID;
       lSampleBankGUI.Model := TSampleBank(lPluginNode);
@@ -356,6 +358,7 @@ begin
     ptDistortion:
     begin
       lPluginDistortionGUI := TPluginDistortionGUI.Create(nil);
+      lPluginDistortionGUI.PluginProcessorGui := Self;
       lPluginDistortionGUI.ObjectID := AObjectID;
       lPluginDistortionGUI.ObjectOwnerID := Self.ObjectID;
       lPluginDistortionGUI.Model := TPluginDistortion(lPluginNode);
@@ -371,6 +374,7 @@ begin
     ptReverb:
     begin
       lPluginFreeverbGUI := TPluginFreeverbGUI.Create(nil);
+      lPluginFreeverbGUI.PluginProcessorGui := Self;
       lPluginFreeverbGUI.ObjectID := AObjectID;
       lPluginFreeverbGUI.ObjectOwnerID := Self.ObjectID;
       lPluginFreeverbGUI.Model := TPluginFreeverb(lPluginNode);
@@ -386,6 +390,7 @@ begin
     ptBassline:
     begin
       lPluginBasslineGUI := TPluginBasslineGUI.Create(nil);
+      lPluginBasslineGUI.PluginProcessorGui := Self;
       lPluginBasslineGUI.ObjectID := AObjectID;
       lPluginBasslineGUI.ObjectOwnerID := Self.ObjectID;
       lPluginBasslineGUI.Model := TPluginBassline(lPluginNode);
@@ -401,6 +406,7 @@ begin
     ptDecimate:
     begin
       lPluginDecimateGUI := TPluginDecimateGUI.Create(nil);
+      lPluginDecimateGUI.PluginProcessorGui := Self;
       lPluginDecimateGUI.ObjectID := AObjectID;
       lPluginDecimateGUI.ObjectOwnerID := Self.ObjectID;
       lPluginDecimateGUI.Model := TPluginDecimate(lPluginNode);
@@ -416,6 +422,7 @@ begin
     ptLADSPA:
     begin
       lPluginNodeGUI := TGenericPluginGUI.Create(nil);
+      lPluginNodeGUI.PluginProcessorGui := Self;
       lPluginNodeGUI.ObjectID := AObjectID;
       lPluginNodeGUI.ObjectOwnerID := Self.ObjectID;
       lPluginNodeGUI.Model := lPluginNode;
@@ -497,6 +504,20 @@ end;
 procedure TPluginProcessorGUI.SetObjectOwnerID(const AObjectOwnerID: string);
 begin
   FObjectOwnerID := AObjectOwnerID;
+end;
+
+procedure TPluginProcessorGUI.ReleasePlugin(Data: PtrInt);
+var
+  lDeleteNodesCommand: TDeleteNodesCommand;
+begin
+  lDeleteNodesCommand := TDeleteNodesCommand.Create(TGenericPluginGUI(Data).ObjectOwnerID);
+  try
+    lDeleteNodesCommand.ObjectID := TGenericPluginGUI(Data).ObjectID;
+
+    GCommandQueue.PushCommand(lDeleteNodesCommand);
+  except
+    lDeleteNodesCommand.Free;
+  end;
 end;
 
 

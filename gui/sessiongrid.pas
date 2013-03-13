@@ -114,6 +114,7 @@ type
     procedure BalanceChange(Sender: TObject);
     procedure BalanceStartChange(Sender: TObject);
     procedure SetSessionGrid(AValue: TSessionGrid);
+    procedure DoOnTrackClick(Sender: TObject);
   protected
     procedure SetHeight(AValue: Integer);
     procedure SetLeft(AValue: Integer);
@@ -229,6 +230,7 @@ type
     procedure EraseBackground(DC: HDC); override;
     procedure DragDrop(Source: TObject; X, Y: Integer); override;
     function PatternAtMouseXY(X, Y: Integer): TPattern;
+    procedure SelectTrack(ASelected: TTrackView);
 
     property OnPatternRefreshGUI: TPatternRefreshGUIEvent read FOnPatternRefreshGUI write FOnPatternRefreshGUI;
     property VisiblePatternCount: Integer read FVisiblePatternCount write FVisiblePatternCount;
@@ -374,7 +376,7 @@ var
   lColor: TColor;
 begin
   // Give selected pattern a white color
-  if Assigned(APattern) and (APattern = GSettings.SelectedPattern) then
+  if Assigned(APattern) and (APattern = GSettings.SelectedObject) then
   begin
     lColor := clWhite;
   end
@@ -587,6 +589,16 @@ begin
   FTrackControls.Parent := FSessionGrid;
 end;
 
+procedure TTrackView.DoOnTrackClick(Sender: TObject);
+begin
+  if Assigned(SessionGrid.OnPatternRefreshGUI) then
+  begin
+    GSettings.SelectedObject := Self.Model;
+    SessionGrid.SelectTrack(Self);
+    SessionGrid.OnPatternRefreshGUI(GSettings.SelectedObject);
+  end;
+end;
+
 constructor TTrackView.Create(AObjectOwner: string; TheOwner: TComponent);
 begin
   inherited Create(AObjectOwner);
@@ -600,6 +612,7 @@ begin
   FTrackControls.Top := FSessionGrid.Height - FTrackControls.Height;
   FTrackControls.BevelOuter := bvRaised;
   FTrackControls.Parent := FSessionGrid;
+  FTrackControls.OnClick := @DoOnTrackClick;
 
   FPanControl := TParameterControl.Create(FTrackControls);
   FPanControl.Orientation := oBalance;
@@ -1191,6 +1204,39 @@ begin
   end;
 end;
 
+procedure TSessionGrid.SelectTrack(ASelected: TTrackView);
+var
+  lTrackIndex: Integer;
+begin
+  if not Assigned(ASelected) then
+  begin
+    // Something other than a track is clicked, so unselect all tracks
+    for lTrackIndex := 0 to Pred(FTrackViewList.Count) do
+    begin
+      FTrackViewList[lTrackIndex].TrackControls.BevelInner := bvRaised;
+      FTrackViewList[lTrackIndex].TrackControls.Invalidate;
+    end;
+  end
+  else
+  begin
+    // A track has been clicked on, so unselect all but the clicked track
+    for lTrackIndex := 0 to Pred(FTrackViewList.Count) do
+    begin
+      if FTrackViewList[lTrackIndex].ObjectID = ASelected.ObjectID then
+      begin
+        FTrackViewList[lTrackIndex].TrackControls.BevelInner := bvLowered;
+        GSettings.SelectedObject := FTrackViewList[lTrackIndex].Model;
+      end
+      else
+      begin
+        FTrackViewList[lTrackIndex].TrackControls.BevelInner := bvRaised;
+      end;
+
+      FTrackViewList[lTrackIndex].TrackControls.Invalidate;
+    end;
+  end;
+end;
+
 procedure TSessionGrid.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
@@ -1337,16 +1383,23 @@ begin
           begin
             if Assigned(FSelectedPattern) then
             begin
-              GSettings.SelectedPattern := lPattern;
+              GSettings.SelectedObject := lPattern;
+
+              // Unselect all tracks
+              SelectTrack(nil);
+
               if Assigned(FOnPatternRefreshGUI) then
               begin
-                FOnPatternRefreshGUI(GSettings.SelectedPattern);
+                FOnPatternRefreshGUI(GSettings.SelectedObject);
               end;
             end;
           end;
         end
         else
         begin
+          // Unselect all tracks
+          SelectTrack(nil);
+
           // Empty slot clicked so hide pattern view
           if Assigned(FOnPatternRefreshGUI) then
           begin

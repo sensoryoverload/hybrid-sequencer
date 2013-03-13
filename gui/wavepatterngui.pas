@@ -260,7 +260,7 @@ begin
       Selected := True;
     end;
 
-    GSettings.SelectedPattern := Self;
+    GSettings.SelectedObject := Self;
 
     FCacheIsDirty := True;
 

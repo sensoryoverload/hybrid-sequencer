@@ -1298,7 +1298,7 @@ begin
 
   GAudioStruct.Attach(MainApp);
 
-  ScreenUpdater.Interval := 40;
+  ScreenUpdater.Interval := 80;
   ScreenUpdater.Enabled := True;
 
   pnlVarious.Width := 0;
@@ -1706,10 +1706,10 @@ begin
       lMidiMap := TMidiMap(GCommandQueue.MidiMappingTable.Objects[lMidiMapIndex]);
       lGenericCommand := TSampleParameterCommand.Create(lMidiMap.ObjectOwnerID);
       try
-        if GSettings.MapToVisible and (GSettings.SelectedPattern is TMidiPatternGUI) then
+        if GSettings.MapToVisible and (GSettings.SelectedObject is TMidiPatternGUI) then
         begin
           // Mapped to visible pattern
-          lGenericCommand.ObjectID := TMidiPatternGUI(GSettings.SelectedPattern).ObjectID;
+          lGenericCommand.ObjectID := TMidiPatternGUI(GSettings.SelectedObject).ObjectID;
         end
         else
         begin
@@ -1801,6 +1801,7 @@ end;
 
 initialization
   {$I simplejack.lrs}
+
   FCriticalSection := TCriticalSection.Create;
 
   FLogging := FindCmdLineSwitch('logging', ['/', '-'], True);
@@ -1808,5 +1809,6 @@ initialization
 
 finalization
   FCriticalSection.Free;
+
 end.
 

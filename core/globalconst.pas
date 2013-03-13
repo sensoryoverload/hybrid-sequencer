@@ -416,6 +416,7 @@ type
     FOrigLocation: Integer;      // Original Location property of slice (to calculate warp)
     FLocked: Boolean;            // Locks OrigLocation and makes marker warpable
   public
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); override;
     procedure Initialize; override;
     procedure Finalize; override;
     property NextSlice: TMarker read FNextSlice write FNextSlice;
@@ -1461,6 +1462,13 @@ end;
 
 
 { TMarker }
+
+constructor TMarker.Create(AObjectOwner: string; AMapped: Boolean);
+begin
+  inherited Create(AObjectOwner, AMapped);
+
+  FLocked := False;
+end;
 
 procedure TMarker.Initialize;
 begin

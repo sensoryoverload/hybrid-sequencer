@@ -55,6 +55,7 @@ type
     FPatternName: string;
     FFileName: string; // The name of the xml file
     FPluginProcessor: TPluginProcessor;
+    FVisibleTabIndex: Integer;
 
     FLoopStart: TLoopMarker;
     FLoopEnd: TLoopMarker;
@@ -88,6 +89,7 @@ type
 
     property ChannelCount: Integer read FChannelCount write FChannelCount;
     property PitchInv: Single read FPitchInv write FPitchInv;
+    property VisibleTabIndex: Integer read FVisibleTabIndex write FVisibleTabIndex;
   published
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
@@ -340,6 +342,8 @@ begin
   FEnabled := True;
 
   FChannelCount := 1; // Default
+
+  FVisibleTabIndex := 0;
 
   DBLog('end TPattern.Create');
 end;

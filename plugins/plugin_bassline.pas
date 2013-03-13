@@ -323,6 +323,8 @@ constructor TPluginBassline.Create(AObjectOwnerID: string; AMapped: Boolean = Tr
 begin
   inherited Create(AObjectOwnerID, AMapped);
 
+  FOverDrive := 1;
+
   FTB303 := TTB303.Create(GSettings.SampleRate);
 end;
 

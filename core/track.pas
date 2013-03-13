@@ -488,7 +488,7 @@ begin
     for i := 0 to Pred(AFrameCount) do
     begin
       lLeftOffset := i * 2;
-      lRightOffset := i * 2 + 1;
+      lRightOffset := lLeftOffset + 1;
 
       ABuffer[lLeftOffset] := ABuffer[lLeftOffset] * FVolumeMultiplier * FLeftPanGain;
       ABuffer[lRightOffset] := ABuffer[lRightOffset] * FVolumeMultiplier * FRightPanGain;
@@ -779,7 +779,7 @@ begin
     if lPattern.ObjectID = FOldObjectID then
     begin
       lPattern.Enabled := False;
-      GSettings.OldSelectedPattern := nil;
+      GSettings.OldSelectedObject := nil;
 
       if FTrack.Playing then
       begin

@@ -86,7 +86,7 @@ type
   TSettings = Class(THybridPersistent)
   private
     FCursorPosition: Integer;
-    FSelectedTrackGUI: TObject;
+    FSelectedTrack: TObject;
     FOldSelectedTrackGUI: TObject;
     FSelectedPatternGUI: TObject;
     FOldSelectedPatternGUI: TObject;
@@ -110,10 +110,10 @@ type
     function NextID: Integer;
     procedure Update(Subject: THybridPersistentModel);
     property CursorPosition: Integer read FCursorPosition write FCursorPosition;
-    property SelectedTrackGUI: TObject read FSelectedTrackGUI write FSelectedTrackGUI;
+    property SelectedTrack: TObject read FSelectedTrack write FSelectedTrack;
     property OldSelectedTrackGUI: TObject read FOldSelectedTrackGUI write FOldSelectedTrackGUI;
-    property SelectedPattern: TObject read FSelectedPatternGUI write SetSelectedPatternGUI;
-    property OldSelectedPattern: TObject read FOldSelectedPatternGUI write FOldSelectedPatternGUI;
+    property SelectedObject: TObject read FSelectedPatternGUI write SetSelectedPatternGUI;
+    property OldSelectedObject: TObject read FOldSelectedPatternGUI write FOldSelectedPatternGUI;
     property EditMode: Byte read FEditMode write FEditMode;
     property Modifier: TShiftState read FModifier write SetModifier;
     property Frames: Integer read FFrames write SetFrames;

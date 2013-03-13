@@ -426,6 +426,12 @@ begin
       lMementoNode := TMementoNode.Create(FPluginProcessor.ObjectID);
       lMementoNode.ObjectID := lPluginNode.ObjectID;
       lMementoNode.ObjectOwnerID := lPluginNode.ObjectOwnerID;
+
+      lPluginNode.Active := False;
+      lPluginNode.Deactivate;
+      lPluginNode.Clean;
+
+      FPluginProcessor.NodeList.Remove(lPluginNode);
     end;
   end;
 

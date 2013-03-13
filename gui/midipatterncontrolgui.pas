@@ -119,10 +119,10 @@ begin
 
   FMidiOverview := TMidiPatternOverview.Create(nil);
   FMidiOverview.ZoomCallback := @DoMidiZoom;
-  FMidiOverview.Width := 100;
+  FMidiOverview.Width := 120;
   FMidiOverview.Height := 20;
   FMidiOverview.Left := 5;
-  FMidiOverview.Top := 1;
+  FMidiOverview.Top := 4;
   FMidiOverview.Parent := pnlMidiSettings;
 end;
 

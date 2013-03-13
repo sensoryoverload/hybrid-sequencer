@@ -319,7 +319,7 @@ begin
   inherited Create(Aowner);
 
   Width := 1000;
-  DoubleBuffered := True;
+//  DoubleBuffered := True;
 
   // Loop markers
   FLoopStart := TLoopMarkerGUI.Create(ObjectID, ltStart);
@@ -873,7 +873,7 @@ begin
   lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
   // Where are we in this control?
-  lMousePosition := Y{ - Top};
+  lMousePosition := Y;
   if (lMousePosition >= 0) and (lMousePosition < 10) then
   begin
     FMouseArea := maLoopMarkers;

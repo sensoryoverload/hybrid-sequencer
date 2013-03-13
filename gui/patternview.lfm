@@ -17,6 +17,7 @@ object PatternView: TPatternView
     Align = alClient
     TabIndex = 0
     TabOrder = 0
+    OnChange = pcEditorChange
     OnDragOver = pcEditorDragOver
     object tsPattern: TTabSheet
       Caption = 'Pattern'
