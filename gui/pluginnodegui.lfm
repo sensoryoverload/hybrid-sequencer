@@ -1,0 +1,62 @@
+object GenericPluginGUI: TGenericPluginGUI
+  Left = 0
+  Height = 266
+  Top = 0
+  Width = 459
+  ClientHeight = 266
+  ClientWidth = 459
+  TabOrder = 0
+  DesignLeft = 459
+  DesignTop = 293
+  object pnlControls: TPanel
+    Left = 0
+    Height = 266
+    Top = 0
+    Width = 459
+    Align = alClient
+    BevelInner = bvRaised
+    BevelOuter = bvNone
+    ClientHeight = 266
+    ClientWidth = 459
+    TabOrder = 0
+    object pnlTop: TPanel
+      Left = 1
+      Height = 17
+      Top = 1
+      Width = 457
+      Align = alTop
+      Caption = 'Plugin'
+      Color = clHighlight
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      PopupMenu = PopupMenu1
+      TabOrder = 0
+    end
+  end
+  object PopupMenu1: TPopupMenu
+    left = 190
+    top = 82
+    object miDelete: TMenuItem
+      Action = acDeletePlugin
+    end
+    object miEnabled: TMenuItem
+      Action = acEnabledPlugin
+    end
+  end
+  object ActionList1: TActionList
+    left = 278
+    top = 85
+    object acDeletePlugin: TAction
+      Caption = 'Delete'
+      OnExecute = acDeletePluginExecute
+      OnUpdate = acDeletePluginUpdate
+    end
+    object acEnabledPlugin: TAction
+      Caption = 'Enabled'
+      Checked = True
+      OnExecute = acEnabledPluginExecute
+      OnUpdate = acEnabledPluginUpdate
+    end
+  end
+end
