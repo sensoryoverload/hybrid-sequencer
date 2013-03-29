@@ -27,5 +27,14 @@ LazarusResources.Add('TWavePatternControlGUI','FORMDATA',[
   +'ght'#2#13#3'Top'#2#7#5'Width'#2'd'#5'Value'#5#0#0#0#0#0#0#0#128#255'?'#3'Mi'
   +'n'#5#0#0#0#0#0#0#0#128#254'?'#3'Max'#5#0#0#0#0#0#0#0#128#0'@'#7'Caption'#6#5
   +'Pitch'#9'ShowValue'#9#11'Orientation'#7#11'oHorizontal'#4'Size'#2'd'#8'OnCh'
-  +'ange'#7#13'pcPitchChange'#13'OnStartChange'#7#18'pcPitchStartChange'#0#0#0#0
+  +'ange'#7#13'pcPitchChange'#13'OnStartChange'#7#18'pcPitchStartChange'#0#0#9
+  +'TComboBox'#8'cbDevice'#4'Left'#3#225#2#6'Height'#2#27#3'Top'#2#1#5'Width'#2
+  +'d'#10'ItemHeight'#2#0#8'OnChange'#7#16'cbQuantizeChange'#5'Style'#7#14'csDr'
+  +'opDownList'#8'TabOrder'#2#7#0#0#6'TLabel'#9'lblDevice'#4'Left'#3#186#2#6'He'
+  +'ight'#2#14#3'Top'#2#8#5'Width'#2'"'#7'Caption'#6#6'Device'#11'ParentColor'#8
+  +#0#0#6'TLabel'#18'lblDeviceParameter'#4'Left'#3'M'#3#6'Height'#2#14#3'Top'#2
+  +#8#5'Width'#2'W'#7'Caption'#6#16'Device parameter'#11'ParentColor'#8#0#0#9'T'
+  +'ComboBox'#17'cbDeviceParameter'#4'Left'#3#169#3#6'Height'#2#27#3'Top'#2#1#5
+  +'Width'#2'd'#10'ItemHeight'#2#0#8'OnChange'#7#16'cbQuantizeChange'#5'Style'#7
+  +#14'csDropDownList'#8'TabOrder'#2#8#0#0#0#0
 ]);

@@ -16,8 +16,12 @@ type
   TWavePatternControlGUI = class(TFrame, IObserver)
     btnDouble: TButton;
     btnHalf: TButton;
+    cbDeviceParameter: TComboBox;
     cbPitchAlgo: TComboBox;
     cbQuantize: TComboBox;
+    cbDevice: TComboBox;
+    lblDevice: TLabel;
+    lblDeviceParameter: TLabel;
     Panel1: TPanel;
     pcBPM: TParameterControl;
     pcPitch: TParameterControl;

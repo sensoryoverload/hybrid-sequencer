@@ -13,8 +13,12 @@ type
 { TMidiPatternControlGUI }
 
   TMidiPatternControlGUI = class(TFrame, IObserver)
+    cbDeviceParameter: TComboBox;
     cbMidiChannel: TComboBox;
+    cbDevice: TComboBox;
     cbQuantize: TComboBox;
+    lblDevice: TLabel;
+    lblDeviceParameter: TLabel;
     lblMidiChannel: TLabel;
     lblQuantize: TLabel;
     PairSplitter1: TPairSplitter;

@@ -77,6 +77,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1279"/>
         <CursorPos X="31" Y="1301"/>
+        <ComponentState Value="2"/>
         <UsageCount Value="218"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -227,10 +228,11 @@
         <Filename Value="core/midi.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="midi"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="49"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="211"/>
-        <CursorPos X="3" Y="233"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit15>
@@ -378,7 +380,6 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="pluginhostgui"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
         <TopLine Value="123"/>
@@ -386,6 +387,7 @@
         <ComponentState Value="1"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit28>
       <Unit29>
         <Filename Value="gui/samplegui.pas"/>
@@ -587,8 +589,8 @@
         <UnitName Value="midipatterncontrolgui"/>
         <EditorIndex Value="53"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="1" Y="102"/>
+        <TopLine Value="80"/>
+        <CursorPos X="1" Y="90"/>
         <UsageCount Value="207"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -602,14 +604,14 @@
         <UnitName Value="wavepatterncontrolgui"/>
         <EditorIndex Value="21"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="331"/>
-        <CursorPos X="46" Y="348"/>
-        <ComponentState Value="1"/>
+        <TopLine Value="335"/>
+        <CursorPos X="33" Y="347"/>
         <UsageCount Value="207"/>
         <Bookmarks Count="1">
-          <Item0 X="1" Y="317" ID="5"/>
+          <Item0 X="1" Y="321" ID="5"/>
         </Bookmarks>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit49>
       <Unit50>
         <Filename Value="gui/midipatterngui.pas"/>
@@ -930,7 +932,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="174"/>
         <CursorPos X="23" Y="192"/>
-        <UsageCount Value="86"/>
+        <UsageCount Value="87"/>
         <Loaded Value="True"/>
       </Unit81>
       <Unit82>
@@ -1211,7 +1213,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="99"/>
         <CursorPos X="23" Y="105"/>
-        <UsageCount Value="168"/>
+        <UsageCount Value="171"/>
         <Loaded Value="True"/>
       </Unit109>
       <Unit110>
@@ -1228,7 +1230,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="73"/>
         <CursorPos X="1" Y="104"/>
-        <UsageCount Value="62"/>
+        <UsageCount Value="63"/>
         <Loaded Value="True"/>
       </Unit111>
       <Unit112>
@@ -1238,130 +1240,130 @@
         <WindowIndex Value="0"/>
         <TopLine Value="508"/>
         <CursorPos X="14" Y="529"/>
-        <UsageCount Value="55"/>
+        <UsageCount Value="56"/>
         <Loaded Value="True"/>
       </Unit112>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="448" Column="1" TopLine="437"/>
+        <Filename Value="core/globalconst.pas"/>
+        <Caret Line="928" Column="1" TopLine="914"/>
       </Position1>
       <Position2>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="450" Column="1" TopLine="437"/>
+        <Filename Value="gui/pluginhostgui.pas"/>
+        <Caret Line="133" Column="10" TopLine="123"/>
       </Position2>
       <Position3>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="451" Column="1" TopLine="437"/>
+        <Filename Value="gui/pluginhostgui.pas"/>
+        <Caret Line="131" Column="1" TopLine="123"/>
       </Position3>
       <Position4>
-        <Filename Value="core/globalconst.pas"/>
-        <Caret Line="931" Column="27" TopLine="914"/>
+        <Filename Value="gui/patternview.pas"/>
+        <Caret Line="179" Column="5" TopLine="173"/>
       </Position4>
       <Position5>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="446" Column="1" TopLine="437"/>
+        <Caret Line="178" Column="1" TopLine="173"/>
       </Position5>
       <Position6>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="448" Column="1" TopLine="437"/>
+        <Caret Line="180" Column="1" TopLine="173"/>
       </Position6>
       <Position7>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="450" Column="1" TopLine="437"/>
+        <Caret Line="189" Column="17" TopLine="173"/>
       </Position7>
       <Position8>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="448" Column="1" TopLine="437"/>
+        <Caret Line="182" Column="1" TopLine="173"/>
       </Position8>
       <Position9>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="450" Column="1" TopLine="437"/>
+        <Caret Line="185" Column="1" TopLine="173"/>
       </Position9>
       <Position10>
-        <Filename Value="core/globalconst.pas"/>
-        <Caret Line="928" Column="1" TopLine="914"/>
+        <Filename Value="gui/patternview.pas"/>
+        <Caret Line="216" Column="31" TopLine="205"/>
       </Position10>
       <Position11>
-        <Filename Value="gui/pluginhostgui.pas"/>
-        <Caret Line="169" Column="16" TopLine="126"/>
+        <Filename Value="gui/patternview.pas"/>
+        <Caret Line="178" Column="1" TopLine="165"/>
       </Position11>
       <Position12>
-        <Filename Value="core/globalconst.pas"/>
-        <Caret Line="928" Column="1" TopLine="914"/>
+        <Filename Value="gui/patternview.pas"/>
+        <Caret Line="180" Column="1" TopLine="165"/>
       </Position12>
       <Position13>
-        <Filename Value="gui/pluginhostgui.pas"/>
-        <Caret Line="133" Column="10" TopLine="123"/>
+        <Filename Value="gui/patternview.pas"/>
+        <Caret Line="181" Column="1" TopLine="174"/>
       </Position13>
       <Position14>
-        <Filename Value="gui/pluginhostgui.pas"/>
-        <Caret Line="131" Column="1" TopLine="123"/>
+        <Filename Value="gui/patternview.pas"/>
+        <Caret Line="182" Column="1" TopLine="174"/>
       </Position14>
       <Position15>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="179" Column="5" TopLine="173"/>
+        <Caret Line="185" Column="1" TopLine="174"/>
       </Position15>
       <Position16>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="178" Column="1" TopLine="173"/>
+        <Caret Line="219" Column="1" TopLine="206"/>
       </Position16>
       <Position17>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="180" Column="1" TopLine="173"/>
+        <Caret Line="220" Column="1" TopLine="206"/>
       </Position17>
       <Position18>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="189" Column="17" TopLine="173"/>
+        <Caret Line="222" Column="1" TopLine="179"/>
       </Position18>
       <Position19>
         <Filename Value="gui/patternview.pas"/>
-        <Caret Line="182" Column="1" TopLine="173"/>
+        <Caret Line="225" Column="1" TopLine="173"/>
       </Position19>
       <Position20>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="185" Column="1" TopLine="173"/>
+        <Filename Value="gui/midipatterncontrolgui.pas"/>
+        <Caret Line="80" Column="11" TopLine="76"/>
       </Position20>
       <Position21>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="216" Column="31" TopLine="205"/>
+        <Filename Value="gui/midipatterncontrolgui.pas"/>
+        <Caret Line="81" Column="11" TopLine="77"/>
       </Position21>
       <Position22>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="178" Column="1" TopLine="165"/>
+        <Filename Value="gui/midipatterncontrolgui.pas"/>
+        <Caret Line="82" Column="11" TopLine="78"/>
       </Position22>
       <Position23>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="180" Column="1" TopLine="165"/>
+        <Filename Value="gui/midipatterncontrolgui.pas"/>
+        <Caret Line="81" Column="11" TopLine="77"/>
       </Position23>
       <Position24>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="181" Column="1" TopLine="174"/>
+        <Filename Value="gui/wavepatterncontrolgui.pas"/>
+        <Caret Line="343" Column="33" TopLine="331"/>
       </Position24>
       <Position25>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="182" Column="1" TopLine="174"/>
+        <Filename Value="gui/wavepatterncontrolgui.pas"/>
+        <Caret Line="344" Column="33" TopLine="332"/>
       </Position25>
       <Position26>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="185" Column="1" TopLine="174"/>
+        <Filename Value="gui/wavepatterncontrolgui.pas"/>
+        <Caret Line="345" Column="33" TopLine="333"/>
       </Position26>
       <Position27>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="219" Column="1" TopLine="206"/>
+        <Filename Value="gui/wavepatterncontrolgui.pas"/>
+        <Caret Line="346" Column="33" TopLine="334"/>
       </Position27>
       <Position28>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="220" Column="1" TopLine="206"/>
+        <Filename Value="gui/midipatterncontrolgui.pas"/>
+        <Caret Line="85" Column="23" TopLine="78"/>
       </Position28>
       <Position29>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="222" Column="1" TopLine="179"/>
+        <Filename Value="gui/midipatterncontrolgui.pas"/>
+        <Caret Line="87" Column="23" TopLine="80"/>
       </Position29>
       <Position30>
-        <Filename Value="gui/patternview.pas"/>
-        <Caret Line="225" Column="1" TopLine="173"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="233" Column="3" TopLine="211"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">

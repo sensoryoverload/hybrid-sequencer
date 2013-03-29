@@ -69,6 +69,44 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         Style = csDropDownList
         TabOrder = 1
       end
+      object lblDevice: TLabel
+        Left = 427
+        Height = 14
+        Top = 6
+        Width = 34
+        Caption = 'Device'
+        ParentColor = False
+      end
+      object cbDevice: TComboBox
+        Left = 468
+        Height = 22
+        Top = 2
+        Width = 65
+        AutoSize = False
+        ItemHeight = 0
+        OnChange = cbMidiChannelChange
+        Style = csDropDownList
+        TabOrder = 2
+      end
+      object cbDeviceParameter: TComboBox
+        Left = 625
+        Height = 22
+        Top = 2
+        Width = 65
+        AutoSize = False
+        ItemHeight = 0
+        OnChange = cbMidiChannelChange
+        Style = csDropDownList
+        TabOrder = 3
+      end
+      object lblDeviceParameter: TLabel
+        Left = 537
+        Height = 14
+        Top = 6
+        Width = 87
+        Caption = 'Device parameter'
+        ParentColor = False
+      end
     end
   end
 end
