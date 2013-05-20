@@ -1,12 +1,12 @@
 object MainApp: TMainApp
-  Left = 183
-  Height = 726
-  Top = 9
-  Width = 1095
+  Left = 0
+  Height = 973
+  Top = 24
+  Width = 1184
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 707
-  ClientWidth = 1095
+  ClientHeight = 954
+  ClientWidth = 1184
   Font.Height = 7
   KeyPreview = True
   Menu = MainMenu1
@@ -22,12 +22,12 @@ object MainApp: TMainApp
     Left = 0
     Height = 340
     Top = 0
-    Width = 1095
+    Width = 1184
     Align = alTop
     BevelOuter = bvNone
     Caption = 'pnlTop'
     ClientHeight = 340
-    ClientWidth = 1095
+    ClientWidth = 1184
     TabOrder = 0
     object LeftSplitter: TCollapseSplitter
       Left = 216
@@ -40,16 +40,16 @@ object MainApp: TMainApp
       Left = 0
       Height = 43
       Top = 0
-      Width = 1095
+      Width = 1184
       Align = alTop
       ClientHeight = 43
-      ClientWidth = 1095
+      ClientWidth = 1184
       TabOrder = 1
       object ToolBar1: TToolBar
         Left = 1
         Height = 40
         Top = 1
-        Width = 120
+        Width = 209
         Align = alNone
         Anchors = [akTop, akLeft, akRight, akBottom]
         EdgeBorders = []
@@ -153,23 +153,23 @@ object MainApp: TMainApp
     Left = 0
     Height = 4
     Top = 340
-    Width = 1095
+    Width = 1184
     Align = alTop
     ResizeAnchor = akTop
   end
   object pnlBottom: TPanel
     Left = 0
-    Height = 363
+    Height = 610
     Top = 344
-    Width = 1095
+    Width = 1184
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 363
-    ClientWidth = 1095
+    ClientHeight = 610
+    ClientWidth = 1184
     TabOrder = 2
     object pnlVarious: TPanel
       Left = 0
-      Height = 363
+      Height = 610
       Top = 0
       Width = 170
       Align = alLeft
@@ -178,7 +178,7 @@ object MainApp: TMainApp
     end
     object Splitter1: TSplitter
       Left = 170
-      Height = 363
+      Height = 610
       Top = 0
       Width = 5
     end

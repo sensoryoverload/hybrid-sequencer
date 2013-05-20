@@ -55,6 +55,17 @@ type
     Next: TMidiData; // Point to next in list
   end;
 
+  TAutomationData = class(THybridPersistentModel)
+  public
+    Location: Integer; // Location in samples
+    DeviceId: string;    // ObjectId of plugindevice (or pattern)
+    ParameterId: string; // ObjectId of parameter
+    DataValue: single;
+    RelativeOffset: Integer;
+
+    Next: TAutomationData; // Point to next in list
+  end;
+
   TMidiEvent = record
     Location: Integer; // Location in samples
     DataType: Integer;   // Note, CC, NRPN

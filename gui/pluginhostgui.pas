@@ -42,6 +42,8 @@ type
     FAudioOutGUI: TGenericPluginGUI;
     FAudioInGUI: TGenericPluginGUI;
 
+    FOnChangeNodeList: TNotifyEvent;
+
     FObjectOwnerID: string;
     FObjectID: string;
     FObjectOwner: TObject;
@@ -51,6 +53,7 @@ type
     procedure SortPlugins(Sender: TObject);
     procedure UpdatePluginOrder;
   protected
+    procedure DoChangeNodeList;
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -75,6 +78,7 @@ type
     property ObjectOwner: TObject read FObjectOwner write FObjectOwner;
     property AudioOutGUI: TGenericPluginGUI read FAudioOutGUI write FAudioOutGUI;
     property AudioInGUI: TGenericPluginGUI read FAudioInGUI write FAudioInGUI;
+    property OnChangeNodeList: TNotifyEvent read FOnChangeNodeList write FOnChangeNodeList;
   end;
 
 implementation
@@ -218,6 +222,8 @@ begin
 
   UpdatePluginOrder;
 
+  DoChangeNodeList;
+
   DBLog('end TPluginProcessorGUI.Update');
 end;
 
@@ -245,6 +251,14 @@ begin
 
     lPluginGUI.Left := lOffsetAdder;
     lOffsetAdder := lOffsetAdder + lPluginGUI.Width;
+  end;
+end;
+
+procedure TPluginProcessorGUI.DoChangeNodeList;
+begin
+  if Assigned(FOnChangeNodeList) then
+  begin
+    FOnChangeNodeList(Self);
   end;
 end;
 

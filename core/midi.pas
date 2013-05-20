@@ -180,6 +180,46 @@ type
     procedure DoRollback; override;
   end;
 
+  { TCreateAutomationDataCommand }
+
+  TCreateAutomationDataCommand = class(TMidiCommand)
+  private
+    FLocation: Integer;
+    FDeviceId: string;
+    FParameterId: string;
+    FDataValue: Single;
+    FStoredObjectId: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property Location: Integer read FLocation write FLocation;
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property ParameterId: string read FParameterId write FParameterId;
+    property DataValue: Single read FDataValue write FDataValue;
+  end;
+
+  { TEditAutomationDataCommand }
+
+  TEditAutomationDataCommand = class(TMidiCommand)
+  private
+    FLocation: Integer;
+    FDeviceId: string;
+    FOldLocation: Integer;
+    FOldDataValue: Single;
+    FParameterId: string;
+    FDataValue: Single;
+    FStoredObjectId: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property Location: Integer read FLocation write FLocation;
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property ParameterId: string read FParameterId write FParameterId;
+    property DataValue: Single read FDataValue write FDataValue;
+  end;
+
   { TMidiNote }
 
   TMidiNote = class(THybridPersistentModel)
@@ -233,7 +273,6 @@ type
   TMidiPattern = class(TPattern)
   private
     // Data
-
     FMidiDataList: TMidiDataList;
     FNoteList: TObjectList;
     FQuantizeSetting: Integer;
@@ -278,9 +317,7 @@ type
       Engine
     }
     property MidiBuffer: TMidiBuffer read FMidiBuffer write FMidiBuffer;
-//    property SampleBankEngine: TSampleBankEngine read FSampleBankEngine write FSampleBankEngine;
   published
-//    property SampleBank: TSampleBank read FSampleBank write FSampleBank;
     property NoteList: TObjectList read FNoteList write FNoteList;
     property QuantizeSetting: Integer read FQuantizeSetting write SetQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 1;
@@ -295,6 +332,83 @@ type
 implementation
 
 uses Fx, audiostructure;
+
+{ TEditAutomationDataCommand }
+
+procedure TEditAutomationDataCommand.DoExecute;
+begin
+  FMidiPattern.AutomationDataList.First;
+  while not FMidiPattern.AutomationDataList.Eof do
+  begin
+    if FMidiPattern.AutomationDataList.CurrentAutomationData.ObjectID = ObjectID then
+    begin
+      FOldLocation :=
+        FMidiPattern.AutomationDataList.CurrentAutomationData.Location;
+      FOldDataValue :=
+        FMidiPattern.AutomationDataList.CurrentAutomationData.DataValue;
+      FStoredObjectId := ObjectID;
+
+      FMidiPattern.AutomationDataList.CurrentAutomationData.Location := FLocation;
+      FMidiPattern.AutomationDataList.CurrentAutomationData.DataValue := FDataValue;
+      break;
+    end;
+
+    FMidiPattern.AutomationDataList.Next;
+  end;
+end;
+
+procedure TEditAutomationDataCommand.DoRollback;
+begin
+  FMidiPattern.AutomationDataList.First;
+  while not FMidiPattern.AutomationDataList.Eof do
+  begin
+    if FMidiPattern.AutomationDataList.CurrentAutomationData.ObjectID = FStoredObjectId then
+    begin
+      FMidiPattern.AutomationDataList.CurrentAutomationData.Location := FOldLocation;
+      FMidiPattern.AutomationDataList.CurrentAutomationData.DataValue := FOldDataValue;
+      break;
+    end;
+
+    FMidiPattern.AutomationDataList.Next;
+  end;
+end;
+
+{ TCreateAutomationDataCommand }
+
+procedure TCreateAutomationDataCommand.DoExecute;
+var
+  lAutomationData: TAutomationData;
+begin
+  lAutomationData := TAutomationData.Create(FMidiPattern.AutomationDataList.ObjectID);
+  lAutomationData.Location := FLocation;
+  lAutomationData.DeviceId := FDeviceId;
+  lAutomationData.ParameterId := FParameterId;
+  lAutomationData.DataValue := FDataValue;
+
+  FStoredObjectId := lAutomationData.ObjectID;
+
+  FMidiPattern.AutomationDataList.AddAutomation(lAutomationData);
+end;
+
+procedure TCreateAutomationDataCommand.DoRollback;
+var
+  lIndex: Integer;
+begin
+  FMidiPattern.AutomationDataList.First;
+  while not FMidiPattern.AutomationDataList.Eof do
+  begin
+    if FMidiPattern.AutomationDataList.CurrentAutomationData.ObjectID =
+      FStoredObjectId then
+    begin
+      FMidiPattern.AutomationDataList.DeleteAutomation(
+        FMidiPattern.AutomationDataList.CurrentAutomationData);
+
+      break;
+    end;
+
+    FMidiPattern.AutomationDataList.Next;
+  end;
+end;
 
 { TMuteNotesCommand }
 
@@ -343,13 +457,6 @@ end;
 
 destructor TMidiPattern.Destroy;
 begin
-{  FSampleBankEngine.Free;
-
-  if Assigned(FSampleBank) then
-  begin
-    FSampleBank.Free;
-  end;}
-
   if Assigned(FMidiBuffer) then
     FMidiBuffer.Free;
 
@@ -457,7 +564,6 @@ end;
 procedure TMidiPattern.ProcessAdvance;
 begin
   inherited;
-
 end;
 
 function TMidiPattern.Latency: Integer;

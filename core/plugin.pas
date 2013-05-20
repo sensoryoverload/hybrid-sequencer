@@ -29,7 +29,7 @@ uses
   ladspaloader, ladspa, math;
 
 type
-  TPortParameter = class
+  TPortParameter = class(THybridPersistentModel)
   public
     PortRangeHint: LongWord;
     Caption: string;
@@ -315,7 +315,7 @@ begin
       Inc(FInputControlCount);
       SetLength(FInputControls, FInputControlCount);
 
-      FInputControls[Pred(FInputControlCount)] := TPortParameter.Create;
+      FInputControls[Pred(FInputControlCount)] := TPortParameter.Create(Self.ObjectID);
       lPortParameter := FInputControls[Pred(FInputControlCount)];
 
       lMinValue := 0;

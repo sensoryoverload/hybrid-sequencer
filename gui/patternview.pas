@@ -508,6 +508,8 @@ begin
   FPluginProcessorGUI.Parent := tsEffects;
   FPluginProcessorGUI.Align := alClient;
 
+  FPluginProcessorGUI.OnChangeNodeList := @FMidiPatternControlGUI.PopulateAutomationControls;
+
   pcEditor.Visible := False;
   tsPattern.TabVisible := False;
   tsEffects.TabVisible := False;

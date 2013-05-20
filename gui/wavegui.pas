@@ -44,6 +44,7 @@ const
 
 type
   TMouseArea = (maNone, maSliceMarkers, maLoopMarkers, maSampleMarkers, maWave);
+  TEditMode = (emWaveEdit, emAutomationEdit);
 
   { TSimpleWaveForm }
 
@@ -103,6 +104,7 @@ type
     FOldX: Integer;
     FOriginalOffsetX: Integer;
     FOriginalOffsetY: Integer;
+    FEditMode: TEditMode;
     { Audio }
     FData: PJack_default_audio_sample_t;
     FDecimatedData: PJack_default_audio_sample_t;
@@ -329,6 +331,8 @@ begin
   // Sample start & end -markers
   FSampleStart := TSampleMarkerGUI.Create(ObjectID, stStart);
   FSampleEnd := TSampleMarkerGUI.Create(ObjectID, stEnd);
+
+  FEditMode := emWaveEdit;
 
   FMouseArea := maNone;
 
@@ -868,123 +872,130 @@ var
 begin
   FMouseX := X;
 
-  FMargin := 5 * FZoomFactorToData;
+  if FEditMode = emWaveEdit then
+  begin
+    FMargin := 5 * FZoomFactorToData;
 
-  lXRelative := Round((FOffset + X) * FZoomFactorToData);
+    lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
-  // Where are we in this control?
-  lMousePosition := Y;
-  if (lMousePosition >= 0) and (lMousePosition < 10) then
-  begin
-    FMouseArea := maLoopMarkers;
-  end
-  else if (lMousePosition >= 10) and (lMousePosition < 20) then
-  begin
-    FMouseArea := maSampleMarkers;
-  end
-  else if (lMousePosition >= 20) and (lMousePosition < 30) then
-  begin
-    FMouseArea := maSliceMarkers;
-  end
-  else
-  begin
-    FMouseArea := maWave;
-  end;
-
-  case FMouseArea of
-    maSliceMarkers:
+    // Where are we in this control?
+    lMousePosition := Y;
+    if (lMousePosition >= 0) and (lMousePosition < 10) then
     begin
-      FSelectedSlice :=
-        GetSliceAt(
-          Round(lXRelative * FBpmAdder) -
-          Round(SampleStart.Location * FBpmAdder),
-        FMargin);
+      FMouseArea := maLoopMarkers;
+    end
+    else if (lMousePosition >= 10) and (lMousePosition < 20) then
+    begin
+      FMouseArea := maSampleMarkers;
+    end
+    else if (lMousePosition >= 20) and (lMousePosition < 30) then
+    begin
+      FMouseArea := maSliceMarkers;
+    end
+    else
+    begin
+      FMouseArea := maWave;
+    end;
 
-      if Assigned(FSelectedSlice) then
+    case FMouseArea of
+      maSliceMarkers:
       begin
-        case Button of
-          mbLeft:
-          begin
-            if FSelectedSlice.Locked then
+        FSelectedSlice :=
+          GetSliceAt(
+            Round(lXRelative * FBpmAdder) -
+            Round(SampleStart.Location * FBpmAdder),
+          FMargin);
+
+        if Assigned(FSelectedSlice) then
+        begin
+          case Button of
+            mbLeft:
             begin
-              FDragSlice := True;
+              if FSelectedSlice.Locked then
+              begin
+                FDragSlice := True;
 
-              lMoveMarkerCommand := TUpdateMarkerCommand.Create(Self.ObjectID);
+                lMoveMarkerCommand := TUpdateMarkerCommand.Create(Self.ObjectID);
+                try
+                  lMoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
+                  lMoveMarkerCommand.Location := FSelectedSlice.Location;
+                  lMoveMarkerCommand.Persist := True;
+
+                  GCommandQueue.PushCommand(lMoveMarkerCommand);
+                except
+                  lMoveMarkerCommand.Free;
+                end;
+              end;
+            end;
+            mbRight:
+            begin
+              lToggleLockCommand := TToggleLockMarkerCommand.Create(Self.ObjectID);
               try
-                lMoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
-                lMoveMarkerCommand.Location := FSelectedSlice.Location;
-                lMoveMarkerCommand.Persist := True;
+                lToggleLockCommand.ObjectID := FSelectedSlice.ObjectID;
 
-                GCommandQueue.PushCommand(lMoveMarkerCommand);
+                GCommandQueue.PushCommand(lToggleLockCommand);
               except
-                lMoveMarkerCommand.Free;
+                lToggleLockCommand.Free;
               end;
             end;
           end;
-          mbRight:
-          begin
-            lToggleLockCommand := TToggleLockMarkerCommand.Create(Self.ObjectID);
-            try
-              lToggleLockCommand.ObjectID := FSelectedSlice.ObjectID;
+        end;
+      end;
+      maLoopMarkers:
+      begin
+        FSelectedLoopMarkerGUI := LoopMarkerAt(lXRelative, FMargin);
 
-              GCommandQueue.PushCommand(lToggleLockCommand);
-            except
-              lToggleLockCommand.Free;
-            end;
+        if Assigned(FSelectedLoopMarkerGUI) then
+        begin
+          lUpdateWaveLoopMarkerCommand := TUpdateWaveLoopMarkerCommand.Create(Self.ObjectID);
+          try
+            lUpdateWaveLoopMarkerCommand.ObjectID := FSelectedLoopMarkerGUI.ObjectID;
+            lUpdateWaveLoopMarkerCommand.DataType := FSelectedLoopMarkerGUI.DataType;
+            lUpdateWaveLoopMarkerCommand.Persist := True;
+            lUpdateWaveLoopMarkerCommand.Location := lXRelative;
+
+            GCommandQueue.PushCommand(lUpdateWaveLoopMarkerCommand);
+          except
+            lUpdateWaveLoopMarkerCommand.Free;
           end;
         end;
       end;
-    end;
-    maLoopMarkers:
-    begin
-      FSelectedLoopMarkerGUI := LoopMarkerAt(lXRelative, FMargin);
-
-      if Assigned(FSelectedLoopMarkerGUI) then
+      maSampleMarkers:
       begin
-        lUpdateWaveLoopMarkerCommand := TUpdateWaveLoopMarkerCommand.Create(Self.ObjectID);
-        try
-          lUpdateWaveLoopMarkerCommand.ObjectID := FSelectedLoopMarkerGUI.ObjectID;
-          lUpdateWaveLoopMarkerCommand.DataType := FSelectedLoopMarkerGUI.DataType;
-          lUpdateWaveLoopMarkerCommand.Persist := True;
-          lUpdateWaveLoopMarkerCommand.Location := lXRelative;
+        FSelectedSampleMarkerGUI := SampleMarkerAt(lXRelative, FMargin);
 
-          GCommandQueue.PushCommand(lUpdateWaveLoopMarkerCommand);
-        except
-          lUpdateWaveLoopMarkerCommand.Free;
+        if Assigned(FSelectedSampleMarkerGUI) then
+        begin
+          lUpdateWaveSampleMarkerCommand := TUpdateWaveSampleMarkerCommand.Create(Self.ObjectID);
+          try
+            lUpdateWaveSampleMarkerCommand.ObjectID := FSelectedSampleMarkerGUI.ObjectID;
+            lUpdateWaveSampleMarkerCommand.DataType := FSelectedSampleMarkerGUI.DataType;
+            lUpdateWaveSampleMarkerCommand.Persist := True;
+            lUpdateWaveSampleMarkerCommand.Location := lXRelative;
+
+            GCommandQueue.PushCommand(lUpdateWaveSampleMarkerCommand);
+          except
+            lUpdateWaveSampleMarkerCommand.Free;
+          end;
+        end;
+      end;
+      maWave:
+      begin
+        if Button = mbLeft then
+        begin
+          FOriginalZoomFactorX := FZoomFactorX;
+          FOriginalOffsetX := X;
+          FOriginalOffsetY := Y;
+          FOldOffset:= FOffset;
+          FOldX:= X;
+          FZooming := True;
         end;
       end;
     end;
-    maSampleMarkers:
-    begin
-      FSelectedSampleMarkerGUI := SampleMarkerAt(lXRelative, FMargin);
-
-      if Assigned(FSelectedSampleMarkerGUI) then
-      begin
-        lUpdateWaveSampleMarkerCommand := TUpdateWaveSampleMarkerCommand.Create(Self.ObjectID);
-        try
-          lUpdateWaveSampleMarkerCommand.ObjectID := FSelectedSampleMarkerGUI.ObjectID;
-          lUpdateWaveSampleMarkerCommand.DataType := FSelectedSampleMarkerGUI.DataType;
-          lUpdateWaveSampleMarkerCommand.Persist := True;
-          lUpdateWaveSampleMarkerCommand.Location := lXRelative;
-
-          GCommandQueue.PushCommand(lUpdateWaveSampleMarkerCommand);
-        except
-          lUpdateWaveSampleMarkerCommand.Free;
-        end;
-      end;
-    end;
-    maWave:
-    begin
-      if Button = mbLeft then
-      begin
-        FOriginalZoomFactorX := FZoomFactorX;
-        FOriginalOffsetX := X;
-        FOriginalOffsetY := Y;
-        FOldOffset:= FOffset;
-        FOldX:= X;
-        FZooming := True;
-      end;
-    end;
+  end
+  else if FEditMode = emAutomationEdit then
+  begin
+    // HandleAutomationEditMouseDown
   end;
 
   Invalidate;
@@ -1002,62 +1013,69 @@ var
 begin
   FMouseX := X;
 
-  lXRelative := Round((FOffset + X) * FZoomFactorToData);
-
-  if Assigned(FSelectedLoopMarkerGUI) then
+  if FEditMode = emWaveEdit then
   begin
-    lUpdateWaveLoopMarkerCommand := TUpdateWaveLoopMarkerCommand.Create(Self.ObjectID);
-    try
-      lUpdateWaveLoopMarkerCommand.DataType := FSelectedLoopMarkerGUI.DataType;
-      lUpdateWaveLoopMarkerCommand.Persist := False;
-      lUpdateWaveLoopMarkerCommand.Location := lXRelative;
+    lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
-      GCommandQueue.PushCommand(lUpdateWaveLoopMarkerCommand);
-    except
-      lUpdateWaveLoopMarkerCommand.Free;
+    if Assigned(FSelectedLoopMarkerGUI) then
+    begin
+      lUpdateWaveLoopMarkerCommand := TUpdateWaveLoopMarkerCommand.Create(Self.ObjectID);
+      try
+        lUpdateWaveLoopMarkerCommand.DataType := FSelectedLoopMarkerGUI.DataType;
+        lUpdateWaveLoopMarkerCommand.Persist := False;
+        lUpdateWaveLoopMarkerCommand.Location := lXRelative;
+
+        GCommandQueue.PushCommand(lUpdateWaveLoopMarkerCommand);
+      except
+        lUpdateWaveLoopMarkerCommand.Free;
+      end;
+
+      FSelectedLoopMarkerGUI := nil;
+    end
+    else if Assigned(FSelectedSampleMarkerGUI) then
+    begin
+      lUpdateWaveSampleMarkerCommand := TUpdateWaveSampleMarkerCommand.Create(Self.ObjectID);
+      try
+        lUpdateWaveSampleMarkerCommand.DataType := FSelectedSampleMarkerGUI.DataType;
+        lUpdateWaveSampleMarkerCommand.Persist := False;
+        lUpdateWaveSampleMarkerCommand.Location := lXRelative;
+
+        GCommandQueue.PushCommand(lUpdateWaveSampleMarkerCommand);
+      except
+        lUpdateWaveSampleMarkerCommand.Free;
+      end;
+
+      UpdateSampleScale;
+
+      FSelectedSampleMarkerGUI := nil;
+    end
+    else if FDragSlice then
+    begin
+      // Update model with last slice location before end drag slice
+      // do not persist as this is done BEFORE a change
+      lMoveMarkerCommand := TUpdateMarkerCommand.Create(Self.ObjectID);
+      try
+        lMoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
+        lMoveMarkerCommand.Location := Round(lXRelative * FBpmAdder) - Round(SampleStart.Location * FBpmAdder);
+        lMoveMarkerCommand.Persist := False;
+
+        GCommandQueue.PushCommand(lMoveMarkerCommand);
+      except
+        lMoveMarkerCommand.Free;
+      end;
+
+      FDragSlice:= False;
     end;
 
-    FSelectedLoopMarkerGUI := nil;
+    if FZooming then
+      FZooming:= False;
+
+    FMouseArea := maNone;
   end
-  else if Assigned(FSelectedSampleMarkerGUI) then
+  else if FEditMode = emAutomationEdit then
   begin
-    lUpdateWaveSampleMarkerCommand := TUpdateWaveSampleMarkerCommand.Create(Self.ObjectID);
-    try
-      lUpdateWaveSampleMarkerCommand.DataType := FSelectedSampleMarkerGUI.DataType;
-      lUpdateWaveSampleMarkerCommand.Persist := False;
-      lUpdateWaveSampleMarkerCommand.Location := lXRelative;
-
-      GCommandQueue.PushCommand(lUpdateWaveSampleMarkerCommand);
-    except
-      lUpdateWaveSampleMarkerCommand.Free;
-    end;
-
-    UpdateSampleScale;
-
-    FSelectedSampleMarkerGUI := nil;
-  end
-  else if FDragSlice then
-  begin
-    // Update model with last slice location before end drag slice
-    // do not persist as this is done BEFORE a change
-    lMoveMarkerCommand := TUpdateMarkerCommand.Create(Self.ObjectID);
-    try
-      lMoveMarkerCommand.ObjectID := FSelectedSlice.ObjectID;
-      lMoveMarkerCommand.Location := Round(lXRelative * FBpmAdder) - Round(SampleStart.Location * FBpmAdder);
-      lMoveMarkerCommand.Persist := False;
-
-      GCommandQueue.PushCommand(lMoveMarkerCommand);
-    except
-      lMoveMarkerCommand.Free;
-    end;
-
-    FDragSlice:= False;
+    // HandleAutomationEditMouseUp
   end;
-
-  if FZooming then
-    FZooming:= False;
-
-  FMouseArea := maNone;
 
   Invalidate;
 
@@ -1071,43 +1089,50 @@ var
 begin
   FMouseX := X;
 
-  lXRelative := Round((FOffset + X) * FZoomFactorToData);
+  if FEditMode = emWaveEdit then
+  begin
+    lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
-  if Assigned(FSelectedLoopMarkerGUI) then
-  begin
-    FSelectedLoopMarkerGUI.Location := lXRelative;
-  end
-  else if Assigned(FSelectedSampleMarkerGUI) then
-  begin
-    UpdateSampleScale;
-    FSelectedSampleMarkerGUI.Location := lXRelative;
-  end
-  else if FDragSlice then
-  begin
-    if Assigned(FSelectedSlice) then
+    if Assigned(FSelectedLoopMarkerGUI) then
     begin
-      if FSelectedSlice.Locked then
+      FSelectedLoopMarkerGUI.Location := lXRelative;
+    end
+    else if Assigned(FSelectedSampleMarkerGUI) then
+    begin
+      UpdateSampleScale;
+      FSelectedSampleMarkerGUI.Location := lXRelative;
+    end
+    else if FDragSlice then
+    begin
+      if Assigned(FSelectedSlice) then
       begin
-        lXLocationInSample :=
-          Round(lXRelative * FBpmAdder) -
-          Round(SampleStart.Location * FBpmAdder);
-
-        if (lXLocationInSample > FSelectedSlice.PrevSlice.Location) and
-           (lXLocationInSample < FSelectedSlice.NextSlice.Location) then
+        if FSelectedSlice.Locked then
         begin
-          FSelectedSlice.Location := lXLocationInSample;
+          lXLocationInSample :=
+            Round(lXRelative * FBpmAdder) -
+            Round(SampleStart.Location * FBpmAdder);
 
-          Sortslices;
+          if (lXLocationInSample > FSelectedSlice.PrevSlice.Location) and
+             (lXLocationInSample < FSelectedSlice.NextSlice.Location) then
+          begin
+            FSelectedSlice.Location := lXLocationInSample;
+
+            Sortslices;
+          end;
         end;
       end;
+    end
+    else if FZooming then
+    begin
+      FZoomFactorX := FOriginalZoomFactorX + ((FOriginalOffsetY - Y) / 5);
+      if FZoomFactorX < 0.3 then FZoomFactorX := 0.3;
+      FOffset := FOldOffset - (X - FOldX);
+
     end;
   end
-  else if FZooming then
+  else if FEditMode = emAutomationEdit then
   begin
-    FZoomFactorX := FOriginalZoomFactorX + ((FOriginalOffsetY - Y) / 5);
-    if FZoomFactorX < 0.3 then FZoomFactorX := 0.3;
-    FOffset := FOldOffset - (X - FOldX);
-
+    // HandleAutomationEditMouseMove
   end;
 
   Invalidate;

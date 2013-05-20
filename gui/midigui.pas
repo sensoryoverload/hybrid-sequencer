@@ -37,6 +37,7 @@ const
 type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
   TKey = (keyBlack, keyWhite);
+  TEditMode = (emNoteEdit, emAutomationEdit);
 
 //  TZoomCallback = procedure(AZoomTimeLeft, AZoomTimeRight: Integer) of object;
 
@@ -108,6 +109,9 @@ type
     FNoteOffset: Integer;
     FOldNoteOffset: Integer;
     FNoteInfoWidth: Integer;
+    FEditMode: TEditMode;
+    FSelectedAutomationParameter: string;
+    FSelectedAutomationEvent: TAutomationData;
 
     // Zoom vars
     FZoomFactorX: Single;
@@ -166,7 +170,6 @@ type
     FRootNote: Integer;
     FMidiChannel: Integer;
 
-
     function GetEnabled: Boolean;
     procedure HandleLoopMarkerMouseDown(Button: TMouseButton; Shift: TShiftState; X,
       Y: Integer);
@@ -178,6 +181,12 @@ type
     procedure HandleLoopMarkerMouseMove(Shift: TShiftState; X, Y: Integer);
     procedure HandleNoteMouseUp(Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure HandleAutomationEditMouseDown(Button: TMouseButton; Shift: TShiftState; X,
+      Y: Integer);
+    procedure HandleAutomationEditMouseMove(Shift: TShiftState; X, Y: Integer);
+    procedure HandleAutomationEditMouseUp(Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+
     function LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerGUI;
     function QuantizeLocation(ALocation: Integer): Integer;
     function NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
@@ -221,6 +230,8 @@ type
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 22050;
     property RootNote: Integer read FRootNote write FRootNote default 0;
     property MidiChannel: Integer read FMidiChannel write FMidiChannel;
+    property EditMode: TEditMode read FEditMode write FEditMode;
+    property SelectedAutomationParameter: string read FSelectedAutomationParameter write FSelectedAutomationParameter;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -493,6 +504,99 @@ begin
   FDraggedNote := nil;
 end;
 
+procedure TMidiPatternGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+
+  function FindAutomationEvent(X, Y: Integer): TAutomationData;
+  var
+    lEventX: Integer;
+    lEventY: Integer;
+    lAutomationData: TAutomationData;
+  begin
+    Result := nil;
+
+    FModel.AutomationDataList.First;
+    while not FModel.AutomationDataList.Eof do
+    begin
+      lAutomationData := FModel.AutomationDataList.CurrentAutomationData;
+
+      lEventX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+      lEventY := Round(Height - lAutomationData.DataValue * Height);
+      if (X >= lEventX - 4) and (X < lEventX + 4) and
+        (Y >= lEventY - 4) and (Y < lEventY + 4) then
+      begin
+        Result := FModel.AutomationDataList.CurrentAutomationData;
+        break;
+      end;
+
+      FModel.AutomationDataList.Next;
+    end;
+  end;
+
+begin
+  FSelectedAutomationEvent := FindAutomationEvent(X, Y);
+end;
+
+procedure TMidiPatternGUI.HandleAutomationEditMouseMove(Shift: TShiftState; X,
+  Y: Integer);
+var
+  lEditAutomationDataCommand: TEditAutomationDataCommand;
+begin
+  if Assigned(FSelectedAutomationEvent) then
+  begin
+    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
+      lEditAutomationDataCommand.Persist := False;
+
+      GCommandQueue.PushCommand(lEditAutomationDataCommand);
+    except
+      lEditAutomationDataCommand.Free;
+    end;
+  end;
+end;
+
+procedure TMidiPatternGUI.HandleAutomationEditMouseUp(Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  lCreateAutomationDataCommand: TCreateAutomationDataCommand;
+  lEditAutomationDataCommand: TEditAutomationDataCommand;
+begin
+  if Assigned(FSelectedAutomationEvent) then
+  begin
+    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
+      lEditAutomationDataCommand.Persist := True;
+
+      GCommandQueue.PushCommand(lEditAutomationDataCommand);
+    except
+      lEditAutomationDataCommand.Free;
+    end;
+
+    FSelectedAutomationEvent := nil;
+  end
+  else
+  begin
+    // TODO check if there already is an automation event on this location
+    lCreateAutomationDataCommand := TCreateAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lCreateAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lCreateAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lCreateAutomationDataCommand.DeviceId := '';
+      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+
+      GCommandQueue.PushCommand(lCreateAutomationDataCommand);
+    except
+      lCreateAutomationDataCommand.Free;
+    end;
+  end;
+end;
+
 procedure TMidiPatternGUI.HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 var
@@ -659,6 +763,8 @@ begin
     FNoteInfoWidth := 0;
   end;
 
+  FEditMode := emNoteEdit;
+
   FBitmap := TBitmap.Create;
 
   FRealCursorPosition:= FLoopStart.Location;
@@ -707,6 +813,9 @@ var
   lNoteIndex: Integer;
   lMidiNoteModula: Integer;
   lMidiNoteKey: TKey;
+  lAutomationData: TAutomationData;
+  lAutomationScreenY: Integer;
+  lAutomationScreenX: Integer;
 begin
   if not Assigned(FModel) then exit;
 
@@ -930,6 +1039,38 @@ begin
     FBitmap.Canvas.Pen.Color := clRed;
     FBitmap.Canvas.Line(x, 0, x, Height);
     //FBitmap.Canvas.TextOut(x + 10, 10, Format('End %d', [LoopEnd.Location]))
+  end;
+  FBitmap.Canvas.Pen.Width := 2;
+
+  // Draw automation data
+  if FEditMode = emAutomationEdit then
+  begin
+    lAutomationScreenY := Height div 2;
+    FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
+    FModel.AutomationDataList.First;
+    while not FModel.AutomationDataList.Eof do
+    begin
+      lAutomationData := FModel.AutomationDataList.CurrentAutomationData;
+
+      if lAutomationData.ParameterId = FSelectedAutomationParameter then
+      begin
+        lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
+        lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+        FBitmap.Canvas.LineTo(
+          lAutomationScreenX,
+          lAutomationScreenY);
+
+        FBitmap.Canvas.Brush.Color := clRed;
+        FBitmap.Canvas.Rectangle(
+          lAutomationScreenX - 4,
+          lAutomationScreenY - 4,
+          lAutomationScreenX + 4,
+          lAutomationScreenY + 4);
+      end;
+
+      FModel.AutomationDataList.Next;
+    end;
+    FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
   end;
   FBitmap.Canvas.Pen.Width := 1;
 
@@ -1255,45 +1396,52 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  // Moving loopmarker has precedence over notes
-  FDraggedLoopMarker := LoopMarkerAt(X, 5);
-
-  if Assigned(FDraggedLoopMarker) then
+  if FEditMode = emNoteEdit then
   begin
-    HandleLoopMarkerMouseDown(Button, Shift, X, Y);
-  end
-  else
-  begin
-    FDraggedNote := NoteUnderCursor(X, Y);
+    // Moving loopmarker has precedence over notes
+    FDraggedLoopMarker := LoopMarkerAt(X, 5);
 
-    if Assigned(FDraggedNote) then
+    if Assigned(FDraggedLoopMarker) then
     begin
-      HandleNoteMouseDown(Button, Shift, X, Y);
+      HandleLoopMarkerMouseDown(Button, Shift, X, Y);
     end
     else
     begin
-      case Button of
-        mbLeft:
-        begin
-          FRubberBandMode := True;
-          FRubberBandSelect.TopLeft.X := X;
-          FRubberBandSelect.TopLeft.Y := Y;
-          FRubberBandSelect.BottomRight.X := X;
-          FRubberBandSelect.BottomRight.Y := Y;
-        end;
+      FDraggedNote := NoteUnderCursor(X, Y);
 
-        mbRight:
-        begin
-          FZoomingMode := True;
-          FOldZoomFactorX := FZoomFactorX;
-          FOldZoomFactorY := FZoomFactorY;
-          FOldLocationOffset := FOffset;
-          FOldNoteOffset := FNoteOffset;
-          FOldX := X;
-          FOldY := Y;
+      if Assigned(FDraggedNote) then
+      begin
+        HandleNoteMouseDown(Button, Shift, X, Y);
+      end
+      else
+      begin
+        case Button of
+          mbLeft:
+          begin
+            FRubberBandMode := True;
+            FRubberBandSelect.TopLeft.X := X;
+            FRubberBandSelect.TopLeft.Y := Y;
+            FRubberBandSelect.BottomRight.X := X;
+            FRubberBandSelect.BottomRight.Y := Y;
+          end;
+
+          mbRight:
+          begin
+            FZoomingMode := True;
+            FOldZoomFactorX := FZoomFactorX;
+            FOldZoomFactorY := FZoomFactorY;
+            FOldLocationOffset := FOffset;
+            FOldNoteOffset := FNoteOffset;
+            FOldX := X;
+            FOldY := Y;
+          end;
         end;
       end;
     end;
+  end
+  else if FEditMode = emAutomationEdit then
+  begin
+    HandleAutomationEditMouseDown(Button, Shift, X, Y);
   end;
 end;
 
@@ -1302,23 +1450,30 @@ procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
-  if Assigned(FDraggedLoopMarker) then
+  if FEditMode = emNoteEdit then
   begin
-    HandleLoopMarkerMouseUp(Button, Shift, X, Y);
-  end
-  else if Assigned(FDraggedNote) then
-  begin
-    HandleNoteMouseUp(Button, Shift, X, Y);
-  end
-  else
-  begin
-    if FZoomingMode then
-      FZoomingMode:= False;
+    if Assigned(FDraggedLoopMarker) then
+    begin
+      HandleLoopMarkerMouseUp(Button, Shift, X, Y);
+    end
+    else if Assigned(FDraggedNote) then
+    begin
+      HandleNoteMouseUp(Button, Shift, X, Y);
+    end
+    else
+    begin
+      if FZoomingMode then
+        FZoomingMode:= False;
 
-    if FRubberBandMode then
-      FRubberBandMode := False;
+      if FRubberBandMode then
+        FRubberBandMode := False;
 
-    Invalidate;
+      Invalidate;
+    end;
+  end
+  else if FEditMode = emAutomationEdit then
+  begin
+    HandleAutomationEditMouseUp(Button, Shift, X, Y);
   end;
 end;
 
@@ -1364,54 +1519,61 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  if Assigned(FDraggedLoopMarker) then
+  if FEditMode = emNoteEdit then
   begin
-    HandleLoopMarkerMouseMove(Shift, X, Y);
-  end
-  else if Assigned(FDraggedNote) then
-  begin
-    HandleNoteMouseMove(Shift, X, Y);
-  end
-  else
-  begin
-{   hmmm....why is this code f**king up pattern switching/ lost notes, etc...??
-
-
-    if FRubberBandMode then
+    if Assigned(FDraggedLoopMarker) then
     begin
-      if (FRubberBandSelect.BottomRight.X <> X) or
-        (FRubberBandSelect.BottomRight.Y <> Y) then
+      HandleLoopMarkerMouseMove(Shift, X, Y);
+    end
+    else if Assigned(FDraggedNote) then
+    begin
+      HandleNoteMouseMove(Shift, X, Y);
+    end
+    else
+    begin
+  {   hmmm....why is this code f**king up pattern switching/ lost notes, etc...??
+
+
+      if FRubberBandMode then
       begin
-        FRubberBandSelect.BottomRight.X := X;
-        FRubberBandSelect.BottomRight.Y := Y;
+        if (FRubberBandSelect.BottomRight.X <> X) or
+          (FRubberBandSelect.BottomRight.Y <> Y) then
+        begin
+          FRubberBandSelect.BottomRight.X := X;
+          FRubberBandSelect.BottomRight.Y := Y;
 
-        lSelectObjectListCommand := TSelectObjectListCommand.Create(Self.ObjectID);
-        try
-          lSelectObjectListCommand.AddMode := (ssShift in GSettings.Modifier);
-          lSelectObjectListCommand.Persist := False;
-          NoteListByRect(lSelectObjectListCommand.ObjectIdList, FRubberBandSelect);
+          lSelectObjectListCommand := TSelectObjectListCommand.Create(Self.ObjectID);
+          try
+            lSelectObjectListCommand.AddMode := (ssShift in GSettings.Modifier);
+            lSelectObjectListCommand.Persist := False;
+            NoteListByRect(lSelectObjectListCommand.ObjectIdList, FRubberBandSelect);
 
-          GCommandQueue.PushCommand(lSelectObjectListCommand);
-        except
-          lSelectObjectListCommand.Free;
+            GCommandQueue.PushCommand(lSelectObjectListCommand);
+          except
+            lSelectObjectListCommand.Free;
+          end;
         end;
       end;
-    end;
-    }
-    if FZoomingMode then
-    begin
-      FOffset:= FOldLocationOffset + (X - FOldX);
-
-      if FOffset > 0 then
+      }
+      if FZoomingMode then
       begin
-        FOffset := 0;
+        FOffset:= FOldLocationOffset + (X - FOldX);
+
+        if FOffset > 0 then
+        begin
+          FOffset := 0;
+        end;
+
+        FNoteOffset := FOldNoteOffset + (Y - FOldY);
       end;
 
-      FNoteOffset := FOldNoteOffset + (Y - FOldY);
+      FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
+      FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
     end;
-
-    FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
-    FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
+  end
+  else if FEditMode = emAutomationEdit then
+  begin
+    HandleAutomationEditMouseMove(Shift, X, Y);
   end;
 
   // Invalidate here as this one of the few situations that screen updates are

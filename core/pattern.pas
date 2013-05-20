@@ -35,6 +35,7 @@ type
   TPattern = class(THybridPersistentModel)
   private
     FChannelCount: Integer;
+    FAutomationDataList: TAutomationDataList;
     FEnabled: Boolean;
     FPatternColor: TColor;
     FPatternCursor: Double;
@@ -72,6 +73,7 @@ type
     procedure Setpitch(const Avalue: Single);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
+    procedure CalculateAutomationCache;
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
@@ -92,6 +94,7 @@ type
     property VisibleTabIndex: Integer read FVisibleTabIndex write FVisibleTabIndex;
   published
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
+    property AutomationDataList: TAutomationDataList read FAutomationDataList write FAutomationDataList;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property Position: Integer read FPosition write SetPosition;
     property Text: string read FText write SetText;
@@ -293,6 +296,19 @@ begin
   DBLog('end TPattern.DoCreateInstance');
 end;
 
+procedure TPattern.CalculateAutomationCache;
+var
+  lIndex: Integer;
+begin
+  FAutomationDataList.First;
+  while not FAutomationDataList.Eof do
+  begin
+    //FAutomationDataList.CurrentAutomationData;
+
+    FAutomationDataList.Next;
+  end;
+end;
+
 
 procedure TPattern.Initialize;
 begin
@@ -319,6 +335,8 @@ begin
 end;
 
 constructor TPattern.Create(AObjectOwner: string; AMapped: Boolean = True);
+var
+  lIndex: Integer;
 begin
   DBLog('start TPattern.Create');
 
@@ -327,6 +345,8 @@ begin
   FOnCreateInstanceCallback := @DoCreateInstance;
 
   FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
+
+  FAutomationDataList := TAutomationDataList.Create(Self.ObjectID);
 
   FOkToPlay := False;
 
@@ -351,6 +371,8 @@ end;
 destructor TPattern.Destroy;
 begin
   FPluginProcessor.Free;
+
+  FAutomationDataList.Free;
 
   if Assigned(FLoopStart) then
     FLoopStart.Free;

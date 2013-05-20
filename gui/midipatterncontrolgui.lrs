@@ -19,14 +19,8 @@ LazarusResources.Add('TMidiPatternControlGUI','FORMDATA',[
   +'annel'#11'ParentColor'#8#0#0#9'TComboBox'#13'cbMidiChannel'#4'Left'#3'`'#1#6
   +'Height'#2#22#3'Top'#2#2#5'Width'#2'A'#8'AutoSize'#8#10'ItemHeight'#2#0#8'On'
   +'Change'#7#19'cbMidiChannelChange'#5'Style'#7#14'csDropDownList'#8'TabOrder'
-  +#2#1#0#0#6'TLabel'#9'lblDevice'#4'Left'#3#171#1#6'Height'#2#14#3'Top'#2#6#5
-  +'Width'#2'"'#7'Caption'#6#6'Device'#11'ParentColor'#8#0#0#9'TComboBox'#8'cbD'
-  +'evice'#4'Left'#3#212#1#6'Height'#2#22#3'Top'#2#2#5'Width'#2'A'#8'AutoSize'#8
-  +#10'ItemHeight'#2#0#8'OnChange'#7#19'cbMidiChannelChange'#5'Style'#7#14'csDr'
-  +'opDownList'#8'TabOrder'#2#2#0#0#9'TComboBox'#17'cbDeviceParameter'#4'Left'#3
-  +'q'#2#6'Height'#2#22#3'Top'#2#2#5'Width'#2'A'#8'AutoSize'#8#10'ItemHeight'#2
-  +#0#8'OnChange'#7#19'cbMidiChannelChange'#5'Style'#7#14'csDropDownList'#8'Tab'
-  +'Order'#2#3#0#0#6'TLabel'#18'lblDeviceParameter'#4'Left'#3#25#2#6'Height'#2
-  +#14#3'Top'#2#6#5'Width'#2'W'#7'Caption'#6#16'Device parameter'#11'ParentColo'
-  +'r'#8#0#0#0#0#0
+  +#2#1#0#0#7'TButton'#19'btnAutomationSelect'#4'Left'#3#172#1#6'Height'#2#25#3
+  +'Top'#2#0#5'Width'#2'K'#7'Caption'#6#10'Automation'#7'OnClick'#7#24'btnAutom'
+  +'ationSelectClick'#8'TabOrder'#2#2#0#0#0#0#10'TPopupMenu'#19'pupSelectAutoma'
+  +'tion'#4'left'#3#14#2#3'top'#2'e'#0#0#0
 ]);

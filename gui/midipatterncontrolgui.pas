@@ -6,19 +6,27 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, ExtCtrls, StdCtrls,
-  PairSplitter, globalconst, midipatterngui, midi, midigui, sampler, samplegui,
-  bankgui, global, patternoverview;
+  PairSplitter, Menus, globalconst, midipatterngui, midi, midigui, sampler,
+  samplegui, bankgui, global, patternoverview, LCLintf;
 
 type
+  TMenuItemObjectType = (miotNone, miotDevice, miotDeviceParameter);
+
+  TMenuItemObject = class(TMenuItem)
+  private
+    FObjectId: string;
+    FObjectType: TMenuItemObjectType;
+  public
+    property ObjectId: string read FObjectId write FObjectId;
+    property ObjectType: TMenuItemObjectType read FObjectType write FObjectType;
+  end;
+
 { TMidiPatternControlGUI }
 
   TMidiPatternControlGUI = class(TFrame, IObserver)
-    cbDeviceParameter: TComboBox;
+    btnAutomationSelect: TButton;
     cbMidiChannel: TComboBox;
-    cbDevice: TComboBox;
     cbQuantize: TComboBox;
-    lblDevice: TLabel;
-    lblDeviceParameter: TLabel;
     lblMidiChannel: TLabel;
     lblQuantize: TLabel;
     PairSplitter1: TPairSplitter;
@@ -26,7 +34,9 @@ type
     PairSplitterSide2: TPairSplitterSide;
     pnlMidiGrid: TPanel;
     pnlMidiSettings: TPanel;
+    pupSelectAutomation: TPopupMenu;
 
+    procedure btnAutomationSelectClick(Sender: TObject);
     procedure cbQuantizeChange(Sender: TObject);
     procedure cbSampleBankSelecterChange(Sender: TObject);
     procedure cbMidiChannelChange(Sender: TObject);
@@ -44,6 +54,8 @@ type
     FModel: TMidiPattern;
     FObjectOwner: TObject;
   protected
+    procedure DeviceClick(Sender: TObject);
+    procedure DeviceParameterClick(Sender: TObject);
     procedure DoMidiZoom(ALeftPercentage, ARightPercentage: single);
   public
     { public declarations }
@@ -52,6 +64,8 @@ type
     procedure Connect;
     procedure Disconnect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+
+    procedure PopulateAutomationControls(Sender: TObject);
 
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
@@ -71,7 +85,7 @@ type
 
 implementation
 
-uses utils, global_command, track;
+uses utils, global_command, track, pluginhostgui, plugin;
 
 { TMidiPatternControlGUI }
 
@@ -180,6 +194,67 @@ begin
   FMidiPatternGUI.Invalidate;
 end;
 
+procedure TMidiPatternControlGUI.PopulateAutomationControls(
+  Sender: TObject);
+var
+  lNodeIndex: Integer;
+  lPluginNode: TPluginNode;
+  lParamaterIndex: Integer;
+  lDeviceItem: TMenuItemObject;
+  lDeviceParameterItem: TMenuItemObject;
+begin
+  pupSelectAutomation.Items.Clear;
+  lDeviceItem := TMenuItemObject.Create(pupSelectAutomation);
+  lDeviceItem.Caption := 'None';
+  lDeviceItem.ObjectId := '';
+  lDeviceItem.ObjectType := miotNone;
+  lDeviceItem.OnClick := @DeviceClick;
+  pupSelectAutomation.Items.Add(lDeviceItem);
+
+  for lNodeIndex := 0 to Pred(FModel.PluginProcessor.NodeList.Count) do
+  begin
+    lPluginNode := TPluginNode(FModel.PluginProcessor.NodeList[lNodeIndex]);
+    lDeviceItem := TMenuItemObject.Create(pupSelectAutomation);
+    lDeviceItem.Caption := lPluginNode.PluginName;
+    lDeviceItem.ObjectId := lPluginNode.ObjectID;
+    lDeviceItem.ObjectType := miotDevice;
+    pupSelectAutomation.Items.Add(lDeviceItem);
+
+    for lParamaterIndex := Low(lPluginNode.InputControls) to High(lPluginNode.InputControls) do
+    begin
+      lDeviceParameterItem := TMenuItemObject.Create(pupSelectAutomation);
+      lDeviceParameterItem.Caption := lPluginNode.InputControls[lParamaterIndex].Caption;
+      lDeviceParameterItem.ObjectId := lPluginNode.InputControls[lParamaterIndex].ObjectID;
+      lDeviceParameterItem.ObjectType := miotDeviceParameter;
+      lDeviceParameterItem.OnClick := @DeviceParameterClick;
+      lDeviceItem.Add(lDeviceParameterItem);
+    end;
+  end;
+end;
+
+procedure TMidiPatternControlGUI.DeviceParameterClick(Sender: TObject);
+begin
+  if Sender is TMenuItemObject then
+  begin
+    if TMenuItemObject(Sender).ObjectType = miotDeviceParameter then
+    begin
+      FMidiPatternGUI.EditMode := emAutomationEdit;
+      FMidiPatternGUI.SelectedAutomationParameter := TMenuItemObject(Sender).ObjectId;
+    end;
+  end;
+end;
+
+procedure TMidiPatternControlGUI.DeviceClick(Sender: TObject);
+begin
+  if Sender is TMenuItemObject then
+  begin
+    if TMenuItemObject(Sender).ObjectType = miotNone then
+    begin
+      FMidiPatternGUI.EditMode := emNoteEdit;
+    end;
+  end;
+end;
+
 procedure TMidiPatternControlGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TPatternControls.Update');
@@ -265,6 +340,16 @@ begin
 
   except
     lQuantizeSettingCommand.Free;
+  end;
+end;
+
+procedure TMidiPatternControlGUI.btnAutomationSelectClick(Sender: TObject);
+var
+  pnt: TPoint;
+begin
+  if GetCursorPos(pnt) then
+  begin
+    pupSelectAutomation.PopUp(pnt.X, pnt.Y);
   end;
 end;
 
