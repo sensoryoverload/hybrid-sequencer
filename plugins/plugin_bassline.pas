@@ -41,6 +41,7 @@ type
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    procedure Instantiate; override;
   published
     property EnvMod: Single read GetEnvMod write SetEnvMod;
     property Pitch: Single read GetPitch write SetPitch;
@@ -195,7 +196,22 @@ var
   lOffsetR: Integer;
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
+
+  procedure UpdatePlugin;
+  var
+    lIndex: Integer;
+  begin
+    for lIndex := 0 to Pred(InputControlCount) do
+    begin
+//      FInputControls[lIndex].Value := ;
+      FTB303.Cutoff := InputControls[lIndex].Value^;
+    end;
+  end;
+
 begin
+  // Set automation values here
+  UpdatePlugin;
+
   lOffsetL := 0;
   lOffsetR := 1;
   for i := 0 to Pred(AFrames) do
@@ -237,6 +253,13 @@ begin
     Inc(lOffsetL, 2);
     Inc(lOffsetR, 2);
   end;
+end;
+
+procedure TPluginBassline.Instantiate;
+begin
+  CreatePortParameter('Cutoff', 0, 1, True, True, False, True, False, False, 1, @FTB303.Cutoff);
+
+  inherited;
 end;
 
 function TPluginBassline.GetPitch: Single;
@@ -286,6 +309,8 @@ end;
 
 procedure TPluginBassline.SetCutoff(AValue: Single);
 begin
+  DBLog('SetCutoff %f', AValue);
+
   FTB303.Cutoff := AValue;
 end;
 

@@ -51,6 +51,8 @@ type
     FObjectID: string;
     FModel: THybridPersistentModel;
     FTracks: TTrackSettingsList;
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
 
     FWavePatternControlGUI: TWavePatternControlGUI;
     FMidiPatternControlGUI: TMidiPatternControlGUI;
@@ -68,13 +70,13 @@ type
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     procedure Update(Subject: THybridPersistentModel); virtual; reintroduce;
+    procedure UpdateView;
     function GetModel: THybridPersistentModel; virtual;
     procedure SetModel(AModel: THybridPersistentModel); virtual;
     procedure Connect;
     procedure Disconnect;
 
     procedure DoPatternRefreshEvent(TrackObject: TObject);
-    procedure UpdateScreen;
 
     property Tracks: TTrackSettingsList read FTracks write FTracks;
   end;
@@ -456,40 +458,11 @@ begin
   end;
 end;
 
-procedure TPatternView.UpdateScreen;
-begin
-  // Update patterneditor grid
-  if FMidiPatternControlGUI.Parent = tsPattern then
-  begin
-    if not Assigned(GObjectMapper.GetModelObject(FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
-    begin
-      pcEditor.Visible := False;
-      tsPattern.TabVisible := False;
-      tsEffects.TabVisible := False;
-    end
-    else
-    begin
-      FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
-    end;
-  end
-  else if FWavePatternControlGUI.Parent = tsPattern then
-  begin
-    if not Assigned(GObjectMapper.GetModelObject(FWavePatternControlGUI.WaveGUI.ObjectID)) then
-    begin
-      pcEditor.Visible := False;
-      tsPattern.TabVisible := False;
-      tsEffects.TabVisible := False;
-    end
-    else
-    begin
-      FWavePatternControlGUI.WaveGUI.Invalidate;
-    end;
-  end;
-end;
-
 constructor TPatternView.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
+
+  FIsDirty := False;
 
   pcEditor.ActivePage := tsPattern;
   pcEditor.ShowTabs := True;
@@ -536,39 +509,89 @@ end;
 
 procedure TPatternView.Update(Subject: THybridPersistentModel);
 begin
-  FObjectID := Subject.ObjectID;
+  FUpdateSubject := Subject;
 
-  if Subject is TTrack then
+  FIsDirty := True;
+end;
+
+procedure TPatternView.UpdateView;
+begin
+  FObjectID := FUpdateSubject.ObjectID;
+
+  if FIsDirty and Assigned(FUpdateSubject) then
   begin
-    // Blank page if not a valid pattern in memory anymore
-    if FMidiPatternControlGUI.MidiPatternGUI.Parent = tsPattern then
+    FIsDirty := False;
+
+    if FUpdateSubject is TTrack then
     begin
-      if not Assigned(GObjectMapper.GetModelObject(FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
+      // Blank page if not a valid pattern in memory anymore
+      if FMidiPatternControlGUI.MidiPatternGUI.Parent = tsPattern then
       begin
-        pcEditor.Visible := False;
-        tsPattern.TabVisible := False;
-        tsEffects.TabVisible := False;
+        if not Assigned(GObjectMapper.GetModelObject(FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
+        begin
+          pcEditor.Visible := False;
+          tsPattern.TabVisible := False;
+          tsEffects.TabVisible := False;
+        end;
+      end
+      else if FWavePatternControlGUI.WaveGUI.Parent = tsPattern then
+      begin
+        if not Assigned(GObjectMapper.GetModelObject(FWavePatternControlGUI.WaveGUI.ObjectID)) then
+        begin
+          pcEditor.Visible := False;
+          tsEffects.TabVisible := False;
+          tsPattern.TabVisible := False;
+        end;
       end;
     end
-    else if FWavePatternControlGUI.WaveGUI.Parent = tsPattern then
+    else if FUpdateSubject is TAudioStructure then
     begin
-      if not Assigned(GObjectMapper.GetModelObject(FWavePatternControlGUI.WaveGUI.ObjectID)) then
-      begin
-        pcEditor.Visible := False;
-        tsEffects.TabVisible := False;
-        tsPattern.TabVisible := False;
-      end;
+      // Add/Remove tracks
+      DiffLists(
+        TAudioStructure(FUpdateSubject).Tracks,
+        FTracks,
+        @CreateTrackGUI,
+        @DeleteTrackGUI);
+    end;
+  end;
+
+  // Update patterneditor grid
+  if FMidiPatternControlGUI.Parent = tsPattern then
+  begin
+    if not Assigned(GObjectMapper.GetModelObject(FMidiPatternControlGUI.MidiPatternGUI.ObjectID)) then
+    begin
+      pcEditor.Visible := False;
+      tsPattern.TabVisible := False;
+      tsEffects.TabVisible := False;
+    end
+    else
+    begin
+      FPluginProcessorGUI.OnChangeNodeList := @FMidiPatternControlGUI.PopulateAutomationControls;
+      FMidiPatternControlGUI.MidiPatternGUI.UpdateView;
+
+      // Update cursor
+      FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
     end;
   end
-  else if Subject is TAudioStructure then
+  else if FWavePatternControlGUI.Parent = tsPattern then
   begin
-    // Add/Remove tracks
-    DiffLists(
-      TAudioStructure(Subject).Tracks,
-      FTracks,
-      @CreateTrackGUI,
-      @DeleteTrackGUI);
+    if not Assigned(GObjectMapper.GetModelObject(FWavePatternControlGUI.WaveGUI.ObjectID)) then
+    begin
+      pcEditor.Visible := False;
+      tsPattern.TabVisible := False;
+      tsEffects.TabVisible := False;
+    end
+    else
+    begin
+      FPluginProcessorGUI.OnChangeNodeList := @FWavePatternControlGUI.PopulateAutomationControls;
+      FWavePatternControlGUI.WaveGUI.UpdateView;
+
+      // Update cursor
+      FWavePatternControlGUI.WaveGUI.Invalidate;
+    end;
   end;
+
+  FPluginProcessorGUI.UpdateView;
 end;
 
 function TPatternView.GetModel: THybridPersistentModel;

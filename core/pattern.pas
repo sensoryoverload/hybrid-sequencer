@@ -26,16 +26,29 @@ interface
 
 uses
   Classes, SysUtils, Controls, graphics, global_command,
-  globalconst, global, pluginhost, fx;
+  globalconst, global, pluginhost, fx, plugin, contnrs;
 
 type
+  { TAutomationDevice }
+
+  TAutomationDevice = class(THybridPersistentModel)
+  private
+    FParameterList: TObjectList;
+    FDeviceId: string;
+  public
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    destructor Destroy; override;
+  published
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property ParameterList: TObjectList read FParameterList write FParameterList;
+  end;
 
   { TPattern }
 
   TPattern = class(THybridPersistentModel)
   private
     FChannelCount: Integer;
-    FAutomationDataList: TAutomationDataList;
+    FAutomationChannelList: TObjectList;
     FEnabled: Boolean;
     FPatternColor: TColor;
     FPatternCursor: Double;
@@ -80,6 +93,11 @@ type
     procedure Assign(Source: TPersistent); override;
     procedure Initialize; override;
     procedure Finalize; override;
+    function FindAutomationParameter(APlugin: TPluginNode;
+        APluginParameter: TPortParameter): TAutomationDataList;
+    procedure DoPopulateAutomationDevices(ADeviceId: string; AParameterId: string;
+      AAction: TPopulateAutomationAction);
+
     property PatternColor: TColor read FPatternColor write SetPatternColor;
     property PatternCursor: Double read FPatternCursor write FPatternCursor;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -87,6 +105,7 @@ type
     procedure ProcessInit; virtual; abstract;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); virtual;
     procedure ProcessAdvance; virtual;
+    procedure ProcessAutomation; virtual;
     function Latency: Integer; virtual;
 
     property ChannelCount: Integer read FChannelCount write FChannelCount;
@@ -94,7 +113,7 @@ type
     property VisibleTabIndex: Integer read FVisibleTabIndex write FVisibleTabIndex;
   published
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
-    property AutomationDataList: TAutomationDataList read FAutomationDataList write FAutomationDataList;
+    property AutomationChannelList: TObjectList read FAutomationChannelList write FAutomationChannelList;
     property SyncQuantize: Boolean read FSyncQuantize write FSyncQuantize;
     property Position: Integer read FPosition write SetPosition;
     property Text: string read FText write SetText;
@@ -122,6 +141,46 @@ type
     FPattern: TPattern;
   public
     procedure Initialize; override;
+  end;
+
+  { TCreateAutomationDataCommand }
+
+  TCreateAutomationDataCommand = class(TPatternCommand)
+  private
+    FLocation: Integer;
+    FDeviceId: string;
+    FParameterId: string;
+    FDataValue: Single;
+    FStoredObjectId: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property Location: Integer read FLocation write FLocation;
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property ParameterId: string read FParameterId write FParameterId;
+    property DataValue: Single read FDataValue write FDataValue;
+  end;
+
+  { TEditAutomationDataCommand }
+
+  TEditAutomationDataCommand = class(TPatternCommand)
+  private
+    FLocation: Integer;
+    FDeviceId: string;
+    FOldLocation: Integer;
+    FOldDataValue: Single;
+    FParameterId: string;
+    FDataValue: Single;
+    FStoredObjectId: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property Location: Integer read FLocation write FLocation;
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property ParameterId: string read FParameterId write FParameterId;
+    property DataValue: Single read FDataValue write FDataValue;
   end;
 
   { TUpdateLoopMarkerCommand }
@@ -162,6 +221,135 @@ implementation
 
 uses
   utils, DOM, XMLWrite, XMLRead, audiostructure;
+
+{ TAutomationDevice }
+
+constructor TAutomationDevice.Create(AObjectOwner: string; AMapped: Boolean);
+begin
+  FParameterList := TObjectList.Create(False);
+end;
+
+destructor TAutomationDevice.Destroy;
+var
+  lIndex: Integer;
+begin
+  for lIndex := 0 to Pred(FParameterList.Count) do
+  begin
+    FParameterList[lIndex].Free;
+  end;
+  FParameterList.Free;
+
+  inherited Destroy;
+end;
+
+{ TEditAutomationDataCommand }
+
+procedure TEditAutomationDataCommand.DoExecute;
+var
+  lAutomationDevice: TAutomationDevice;
+  lAutomationDataList: TAutomationDataList;
+begin
+  lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
+  lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
+  lAutomationDataList.First;
+  while not lAutomationDataList.Eof do
+  begin
+    if lAutomationDataList.CurrentAutomationData.ObjectID = ObjectID then
+    begin
+      FOldLocation :=
+        lAutomationDataList.CurrentAutomationData.Location;
+
+      FOldDataValue :=
+        lAutomationDataList.CurrentAutomationData.DataValue;
+      FStoredObjectId := ObjectID;
+
+      lAutomationDataList.CurrentAutomationData.Location := FLocation;
+      lAutomationDataList.CurrentAutomationData.DataValue := FDataValue;
+      break;
+    end;
+
+    lAutomationDataList.Next;
+  end;
+end;
+
+procedure TEditAutomationDataCommand.DoRollback;
+var
+  lAutomationDevice: TAutomationDevice;
+  lAutomationDataList: TAutomationDataList;
+begin
+  lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
+  lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
+  lAutomationDataList.First;
+  while not lAutomationDataList.Eof do
+  begin
+    if lAutomationDataList.CurrentAutomationData.ObjectID = FStoredObjectId then
+    begin
+      lAutomationDataList.CurrentAutomationData.Location := FOldLocation;
+      lAutomationDataList.CurrentAutomationData.DataValue := FOldDataValue;
+      break;
+    end;
+
+    lAutomationDataList.Next;
+  end;
+end;
+
+{ TCreateAutomationDataCommand }
+
+procedure TCreateAutomationDataCommand.DoExecute;
+var
+  lAutomationData: TAutomationData;
+  lAutomationParameter: TAutomationDataList;
+  lAutomationDevice: TAutomationDevice;
+  lIndex: Integer;
+  lParameterIndex: Integer;
+  lPlugin: TPluginNode;
+begin
+  // First find if there is already a automation track
+  lAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
+
+  // if not create one
+  if not Assigned(lAutomationParameter) then
+  begin
+    lAutomationParameter := TAutomationDataList.Create(FPattern.ObjectID);
+  end;
+
+  // create automationpoint on found/created automationtrack
+  lAutomationData := TAutomationData.Create(lAutomationParameter.ObjectID);
+  lAutomationData.Location := FLocation;
+  lAutomationData.DataValue := FDataValue;
+
+  FStoredObjectId := lAutomationData.ObjectID;
+
+  lAutomationParameter.AddAutomation(lAutomationData);
+end;
+
+procedure TCreateAutomationDataCommand.DoRollback;
+var
+  lAutomationDataList: TAutomationDataList;
+  lAutomationDevice: TAutomationDevice;
+  lIndex: Integer;
+begin
+  lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
+  lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));;
+
+  if Assigned(lAutomationDataList) then
+  begin
+    lAutomationDataList.First;
+    while not lAutomationDataList.Eof do
+    begin
+      if lAutomationDataList.CurrentAutomationData.ObjectID =
+        FStoredObjectId then
+      begin
+        lAutomationDataList.DeleteAutomation(
+          lAutomationDataList.CurrentAutomationData);
+
+        break;
+      end;
+
+      lAutomationDataList.Next;
+    end;
+  end;
+end;
 
 { TSavePatternCommand }
 
@@ -300,13 +488,13 @@ procedure TPattern.CalculateAutomationCache;
 var
   lIndex: Integer;
 begin
-  FAutomationDataList.First;
+  {FAutomationDataList.First;
   while not FAutomationDataList.Eof do
   begin
     //FAutomationDataList.CurrentAutomationData;
 
     FAutomationDataList.Next;
-  end;
+  end; }
 end;
 
 
@@ -323,6 +511,62 @@ begin
   OkToPlay := False;
 
   Notify;
+end;
+
+function TPattern.FindAutomationParameter(APlugin: TPluginNode;
+  APluginParameter: TPortParameter): TAutomationDataList;
+var
+  lParameterIndex: Integer;
+  lAutomationParameter: TAutomationDataList;
+begin
+  for lParameterIndex := 0 to Pred(FAutomationChannelList.Count) do
+  begin
+    lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
+
+    if (lAutomationParameter.Plugin = APlugin) and
+      (lAutomationParameter.PluginParameter = APluginParameter) then
+    begin
+      Result := lAutomationParameter;
+      break;
+    end;
+  end;
+end;
+
+{
+  This method will given to the PluginProcessor and it will fire
+  for each inserted or deleted parameter
+}
+procedure TPattern.DoPopulateAutomationDevices(ADeviceId: string;
+  AParameterId: string; AAction: TPopulateAutomationAction);
+var
+  lAutomationParameter: TAutomationDataList;
+  lAutomationDevice: TAutomationDevice;
+  lPlugin: TPluginNode;
+  lPluginParameter: TPortParameter;
+begin
+  lPlugin := TPluginNode(GObjectMapper.GetModelObject(ADeviceId));
+  lPluginParameter := TPortParameter(GObjectMapper.GetModelObject(AParameterId));
+
+  // Create/delete automationdatalist based on incoming parameters
+  case AAction of
+  paaInsert:
+    begin
+      lAutomationParameter := TAutomationDataList.Create(Self.ObjectID);
+
+      lAutomationParameter.Plugin := lPlugin;
+      lAutomationParameter.PluginParameter := lPluginParameter;
+      FAutomationChannelList.Add(lAutomationParameter);
+    end;
+  paaDelete:
+    begin
+      lAutomationParameter := FindAutomationParameter(lPlugin, lPluginParameter);
+      if Assigned(lAutomationParameter) then
+      begin
+        FAutomationChannelList.Extract(lAutomationParameter);
+        lAutomationParameter.Free;
+      end;
+    end;
+  end;
 end;
 
 procedure TPattern.Process(ABuffer: PSingle; AFrameIndex: Integer;
@@ -344,9 +588,10 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
+  FAutomationChannelList := TObjectList.create(False);
 
-  FAutomationDataList := TAutomationDataList.Create(Self.ObjectID);
+  FPluginProcessor := TPluginProcessor.Create(GSettings.Frames, AObjectOwner, AMapped);
+  FPluginProcessor.OnPopulateAutomationDevices := @DoPopulateAutomationDevices;
 
   FOkToPlay := False;
 
@@ -369,10 +614,16 @@ begin
 end;
 
 destructor TPattern.Destroy;
+var
+  lIndex: Integer;
 begin
   FPluginProcessor.Free;
 
-  FAutomationDataList.Free;
+  for lIndex := 0 to Pred(FAutomationChannelList.Count) do
+  begin
+    FAutomationChannelList[lIndex].Free;
+  end;
+  FAutomationChannelList.Free;
 
   if Assigned(FLoopStart) then
     FLoopStart.Free;
@@ -409,6 +660,145 @@ begin
   end;
 
   RealCursorPosition := Round(PatternCursor);
+end;
+
+procedure TPattern.ProcessAutomation;
+var
+  lIndex: Integer;
+  lAutomationData: TAutomationData;
+  lLeftIndex: Integer;
+  lLeftAutomationData: TAutomationData;
+  lLeftLocation: Integer;
+  lLeftValue: Single;
+  lRightIndex: Integer;
+  lRightAutomationData: TAutomationData;
+  lRightLocation: Integer;
+  lRightValue: Single;
+  lCalculatedValue: Single;
+  lPlugin: TPluginNode;
+  lPluginIndex: Integer;
+  lPortIndex: Integer;
+  lPort: TPortParameter;
+  lLeftLocationFound: Boolean;
+  lAutomationDevice: TAutomationDevice;
+  lAutomationParameter: TAutomationDataList;
+  lDeviceIndex: Integer;
+  lParameterIndex: Integer;
+begin
+  {
+    ipv door alle plugins te itereren is het efficient om door de
+    automationlists te itereren.
+  }
+  for lParameterIndex := 0 to Pred(FAutomationChannelList.Count) do
+  begin
+    lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
+
+    if Assigned(lAutomationData) then
+    begin
+      //  This reference could be much more efficient when stored in parameterlist
+      lPlugin := lAutomationParameter.Plugin;
+
+      if Assigned(lPlugin) then
+      begin
+        for lPortIndex := 0 to Pred(lPlugin.InputControlCount) do
+        begin
+          lPort := lPlugin.InputControls[lPortIndex];
+
+          if lAutomationParameter.PluginParameter = lPort then
+          begin
+            lLeftLocationFound := False;
+
+            // Find previous and next automation data points and do a linear interpolate.
+            lLeftIndex := 0;
+            for lIndex := 0 to Pred(lAutomationParameter.List.Count) do
+            begin
+              lAutomationData := TAutomationData(lAutomationParameter.List[lIndex]);
+
+              if TAutomationData(lAutomationParameter.List[lIndex]).Location > FPatternCursor then
+              begin
+                if lIndex = 0 then
+                begin
+                  lLeftIndex := 0
+                end
+                else
+                begin
+                  lLeftIndex := Pred(lIndex);
+                end;
+
+                break;
+              end;
+            end;
+
+            // Find right index
+            {lRightIndex := Pred(lAutomationParameter.List.Count);
+            for lIndex := Pred(lAutomationParameter.List.Count) downto 0 do
+            begin
+              lAutomationData := TAutomationData(lAutomationParameter.List[lIndex]);
+
+              if TAutomationData(lAutomationParameter.List[lIndex]).Location < FPatternCursor then
+              begin
+                if lIndex = Pred(lAutomationParameter.List.Count) then
+                begin
+                  lRightIndex := lIndex;
+                end
+                else
+                begin
+                  lRightIndex := Succ(lIndex);
+                end;
+
+                break;
+              end;
+            end;}
+            lRightIndex := Succ(lLeftIndex);
+
+            if lRightIndex > Pred(lAutomationParameter.List.Count) then
+            begin
+              lRightIndex := Pred(lAutomationParameter.List.Count);
+            end;
+
+            lLeftAutomationData := TAutomationData(lAutomationParameter.List[lLeftIndex]);
+            lLeftLocation := lLeftAutomationData.Location;
+
+            lRightAutomationData := TAutomationData(lAutomationParameter.List[lRightIndex]);
+            lRightLocation := lRightAutomationData.Location;
+
+            if (lLeftLocation < FPatternCursor) and (lRightLocation > FPatternCursor) then
+            begin
+              lLeftValue :=
+                lLeftAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+
+              lRightValue :=
+                lRightAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+
+              if lRightLocation - lLeftLocation <> 0 then
+              begin
+                if lRightLocation <> lLeftLocation then
+                begin
+                  lCalculatedValue :=
+                    ((lRightValue - lLeftValue) / (lRightLocation - lLeftLocation)) *
+                    (FPatternCursor - lLeftLocation);
+                end
+                else
+                begin
+                  lCalculatedValue := lPort.DefaultValue;
+                end;
+
+                lPort.Value^ := lCalculatedValue;
+
+
+{                dblog(format('%s.%s: Value %f', [
+                  lPlugin.PluginName,
+                  lPort.Caption,
+                  lPort.Value^]));}
+              end;
+
+              break;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
 end;
 
 function TPattern.Latency: Integer;

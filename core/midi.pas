@@ -180,46 +180,6 @@ type
     procedure DoRollback; override;
   end;
 
-  { TCreateAutomationDataCommand }
-
-  TCreateAutomationDataCommand = class(TMidiCommand)
-  private
-    FLocation: Integer;
-    FDeviceId: string;
-    FParameterId: string;
-    FDataValue: Single;
-    FStoredObjectId: string;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  public
-    property Location: Integer read FLocation write FLocation;
-    property DeviceId: string read FDeviceId write FDeviceId;
-    property ParameterId: string read FParameterId write FParameterId;
-    property DataValue: Single read FDataValue write FDataValue;
-  end;
-
-  { TEditAutomationDataCommand }
-
-  TEditAutomationDataCommand = class(TMidiCommand)
-  private
-    FLocation: Integer;
-    FDeviceId: string;
-    FOldLocation: Integer;
-    FOldDataValue: Single;
-    FParameterId: string;
-    FDataValue: Single;
-    FStoredObjectId: string;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  public
-    property Location: Integer read FLocation write FLocation;
-    property DeviceId: string read FDeviceId write FDeviceId;
-    property ParameterId: string read FParameterId write FParameterId;
-    property DataValue: Single read FDataValue write FDataValue;
-  end;
-
   { TMidiNote }
 
   TMidiNote = class(THybridPersistentModel)
@@ -309,9 +269,9 @@ type
 
     function Latency: Integer;
 
-    property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
     property Enabled: Boolean read GetEnabled write FEnabled default True;
     property MidiDataCursor: TMidiData read FMidiDataCursor write FMidiDataCursor;
+    property MidiDataList: TMidiDataList read FMidiDataList write FMidiDataList;
 
     {
       Engine
@@ -332,83 +292,6 @@ type
 implementation
 
 uses Fx, audiostructure;
-
-{ TEditAutomationDataCommand }
-
-procedure TEditAutomationDataCommand.DoExecute;
-begin
-  FMidiPattern.AutomationDataList.First;
-  while not FMidiPattern.AutomationDataList.Eof do
-  begin
-    if FMidiPattern.AutomationDataList.CurrentAutomationData.ObjectID = ObjectID then
-    begin
-      FOldLocation :=
-        FMidiPattern.AutomationDataList.CurrentAutomationData.Location;
-      FOldDataValue :=
-        FMidiPattern.AutomationDataList.CurrentAutomationData.DataValue;
-      FStoredObjectId := ObjectID;
-
-      FMidiPattern.AutomationDataList.CurrentAutomationData.Location := FLocation;
-      FMidiPattern.AutomationDataList.CurrentAutomationData.DataValue := FDataValue;
-      break;
-    end;
-
-    FMidiPattern.AutomationDataList.Next;
-  end;
-end;
-
-procedure TEditAutomationDataCommand.DoRollback;
-begin
-  FMidiPattern.AutomationDataList.First;
-  while not FMidiPattern.AutomationDataList.Eof do
-  begin
-    if FMidiPattern.AutomationDataList.CurrentAutomationData.ObjectID = FStoredObjectId then
-    begin
-      FMidiPattern.AutomationDataList.CurrentAutomationData.Location := FOldLocation;
-      FMidiPattern.AutomationDataList.CurrentAutomationData.DataValue := FOldDataValue;
-      break;
-    end;
-
-    FMidiPattern.AutomationDataList.Next;
-  end;
-end;
-
-{ TCreateAutomationDataCommand }
-
-procedure TCreateAutomationDataCommand.DoExecute;
-var
-  lAutomationData: TAutomationData;
-begin
-  lAutomationData := TAutomationData.Create(FMidiPattern.AutomationDataList.ObjectID);
-  lAutomationData.Location := FLocation;
-  lAutomationData.DeviceId := FDeviceId;
-  lAutomationData.ParameterId := FParameterId;
-  lAutomationData.DataValue := FDataValue;
-
-  FStoredObjectId := lAutomationData.ObjectID;
-
-  FMidiPattern.AutomationDataList.AddAutomation(lAutomationData);
-end;
-
-procedure TCreateAutomationDataCommand.DoRollback;
-var
-  lIndex: Integer;
-begin
-  FMidiPattern.AutomationDataList.First;
-  while not FMidiPattern.AutomationDataList.Eof do
-  begin
-    if FMidiPattern.AutomationDataList.CurrentAutomationData.ObjectID =
-      FStoredObjectId then
-    begin
-      FMidiPattern.AutomationDataList.DeleteAutomation(
-        FMidiPattern.AutomationDataList.CurrentAutomationData);
-
-      break;
-    end;
-
-    FMidiPattern.AutomationDataList.Next;
-  end;
-end;
 
 { TMuteNotesCommand }
 

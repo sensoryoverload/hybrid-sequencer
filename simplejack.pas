@@ -195,6 +195,8 @@ type
       Shift: TShiftState; X, Y: Integer);
   private
     { private Declarations }
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
     FSessionGrid: TSessionGrid;
     FPatternView: TPatternView;
     FSimpleWaveForm: TSimpleWaveForm;
@@ -223,6 +225,7 @@ type
   public
     { public Declarations }
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure UpdateView;
     procedure Connect;
     procedure Disconnect;
     function GetObjectID: string;
@@ -620,6 +623,8 @@ begin
               { TODO Not switched on
                 lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input[0], nframes);
               }
+              lPlayingPattern.ProcessAutomation;
+
               if lPlayingPattern is TMidiPattern then
               begin
                 FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
@@ -1089,21 +1094,12 @@ begin
       FSimpleWaveForm.Invalidate;
     end;
 
-    // Update session grid
+    // Update views
+    Self.UpdateView;
+    FSessionGrid.UpdateView;
+    FPatternView.UpdateView;
+
     FSessionGrid.Invalidate;
-    for i := 0 to Pred(FSessionGrid.TrackViewList.Count) do
-    begin
-      lTrack := TTrack(FSessionGrid.TrackViewList[i].Model);
-
-      if Assigned(lTrack) then
-      begin
-        FSessionGrid.TrackViewList[i].VolumeFader.LevelLeft := lTrack.LeftLevel;
-        FSessionGrid.TrackViewList[i].VolumeFader.LevelRight := lTrack.RightLevel;
-        FSessionGrid.TrackViewList[i].VolumeFader.Invalidate;
-      end;
-    end;
-
-    FPatternView.UpdateScreen;
 
     Inc(FLowPriorityInterval);
     if FLowPriorityInterval > 10 then
@@ -1171,6 +1167,8 @@ begin
   DBLog('start TMainApp.FormCreate');
 
   Application.OnException := @CustomExceptionHandler;
+
+  FIsDirty := False;
 
   FNoJackMode := FindCmdLineSwitch('nojack', ['/', '-'], True);
 
@@ -1635,7 +1633,18 @@ procedure TMainApp.Update(Subject: THybridPersistentModel);
 begin
   DBLog('MainApp.Update');
 
-  DialControl1.Value := GAudioStruct.BPM;
+  FUpdateSubject := Subject;
+  FIsDirty := True;
+end;
+
+procedure TMainApp.UpdateView;
+begin
+  if FIsDirty and Assigned(FUpdateSubject) then
+  begin
+    FIsDirty := False;
+
+    DialControl1.Value := GAudioStruct.BPM;
+  end;
 end;
 
 procedure TMainApp.Connect;

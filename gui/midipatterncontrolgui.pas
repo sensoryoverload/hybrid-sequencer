@@ -10,17 +10,6 @@ uses
   samplegui, bankgui, global, patternoverview, LCLintf;
 
 type
-  TMenuItemObjectType = (miotNone, miotDevice, miotDeviceParameter);
-
-  TMenuItemObject = class(TMenuItem)
-  private
-    FObjectId: string;
-    FObjectType: TMenuItemObjectType;
-  public
-    property ObjectId: string read FObjectId write FObjectId;
-    property ObjectType: TMenuItemObjectType read FObjectType write FObjectType;
-  end;
-
 { TMidiPatternControlGUI }
 
   TMidiPatternControlGUI = class(TFrame, IObserver)
@@ -64,6 +53,7 @@ type
     procedure Connect;
     procedure Disconnect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure UpdateView;
 
     procedure PopulateAutomationControls(Sender: TObject);
 
@@ -194,8 +184,7 @@ begin
   FMidiPatternGUI.Invalidate;
 end;
 
-procedure TMidiPatternControlGUI.PopulateAutomationControls(
-  Sender: TObject);
+procedure TMidiPatternControlGUI.PopulateAutomationControls(Sender: TObject);
 var
   lNodeIndex: Integer;
   lPluginNode: TPluginNode;
@@ -218,6 +207,7 @@ begin
     lDeviceItem.Caption := lPluginNode.PluginName;
     lDeviceItem.ObjectId := lPluginNode.ObjectID;
     lDeviceItem.ObjectType := miotDevice;
+    lDeviceItem.DeviceId := '';
     pupSelectAutomation.Items.Add(lDeviceItem);
 
     for lParamaterIndex := Low(lPluginNode.InputControls) to High(lPluginNode.InputControls) do
@@ -225,7 +215,10 @@ begin
       lDeviceParameterItem := TMenuItemObject.Create(pupSelectAutomation);
       lDeviceParameterItem.Caption := lPluginNode.InputControls[lParamaterIndex].Caption;
       lDeviceParameterItem.ObjectId := lPluginNode.InputControls[lParamaterIndex].ObjectID;
+      lDeviceParameterItem.Plugin := lPluginNode;
+      lDeviceParameterItem.PluginParameter := lPluginNode.InputControls[lParamaterIndex];
       lDeviceParameterItem.ObjectType := miotDeviceParameter;
+      lDeviceParameterItem.DeviceId := lPluginNode.ObjectID;
       lDeviceParameterItem.OnClick := @DeviceParameterClick;
       lDeviceItem.Add(lDeviceParameterItem);
     end;
@@ -239,7 +232,13 @@ begin
     if TMenuItemObject(Sender).ObjectType = miotDeviceParameter then
     begin
       FMidiPatternGUI.EditMode := emAutomationEdit;
-      FMidiPatternGUI.SelectedAutomationParameter := TMenuItemObject(Sender).ObjectId;
+
+      FMidiPatternGUI.SelectedAutomationParameterId :=
+        FModel.FindAutomationParameter(
+          TMenuItemObject(Sender).Plugin,
+          TMenuItemObject(Sender).PluginParameter).ObjectID;
+
+      FMidiPatternGUI.SelectedAutomationDeviceId := TMenuItemObject(Sender).DeviceId;
     end;
   end;
 end;
@@ -250,7 +249,7 @@ begin
   begin
     if TMenuItemObject(Sender).ObjectType = miotNone then
     begin
-      FMidiPatternGUI.EditMode := emNoteEdit;
+      FMidiPatternGUI.EditMode := emPatternEdit;
     end;
   end;
 end;
@@ -275,6 +274,11 @@ begin
   end;
 
   DBLog('end TPatternControls.Update');
+end;
+
+procedure TMidiPatternControlGUI.UpdateView;
+begin
+  //
 end;
 
 function TMidiPatternControlGUI.GetObjectID: string;

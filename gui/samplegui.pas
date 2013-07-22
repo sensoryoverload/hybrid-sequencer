@@ -154,6 +154,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure UpdateView;
     procedure Connect;
     procedure Disconnect;
     procedure DoKeyChange(Sender: TObject; AKey: Integer);
@@ -542,6 +543,11 @@ begin
   SetEnableControls(FEnabled);
 
   DBLog('end TSampleView.Update');
+end;
+
+procedure TSampleView.UpdateView;
+begin
+  //
 end;
 
 procedure TSampleView.Connect;

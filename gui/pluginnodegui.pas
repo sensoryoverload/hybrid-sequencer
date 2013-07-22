@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, StdCtrls, ValEdit,
-  ExtCtrls, Menus, ActnList, globalconst, plugin, dialcontrol, global_command, global;
+  ExtCtrls, Menus, ActnList, globalconst, plugin, dialcontrol, global_command,
+  global, utils;
 
 type
   TNotifyStopDragging = procedure(Sender: TObject; ADropLocation: Integer) of object;
@@ -28,6 +29,8 @@ type
     procedure acEnabledPluginUpdate(Sender: TObject);
   private
     { private declarations }
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
     FObjectOwnerID: string;
     FObjectID: string;
     FModel: THybridPersistentModel;
@@ -48,6 +51,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure UpdateView;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -93,21 +97,33 @@ begin
 end;
 
 procedure TGenericPluginGUI.Update(Subject: THybridPersistentModel);
+begin
+  FUpdateSubject := Subject;
+
+  FIsDirty := True;
+end;
+
+procedure TGenericPluginGUI.UpdateView;
 var
   lParameterIndex: Integer;
   lPlugin: TPluginNode;
 begin
-  lPlugin := TPluginNode(Subject);
-
-  for lParameterIndex := 0 to Pred(lPlugin.InputControlCount) do
+  if {FIsDirty and} Assigned(FModel) then
   begin
-    TParameterControl(FParameterList.Objects[lParameterIndex]).Value :=
-      lPlugin.InputControls[lParameterIndex].Value;
-  end;
+    FIsDirty := False;
 
-  Width := (lPlugin.InputControlCount div 8) * 100 + 100;
-  SequenceNr := lPlugin.SequenceNr;
-  pnlTop.Caption := lPlugin.PluginName;
+    lPlugin := TPluginNode(FModel);
+
+    for lParameterIndex := 0 to Pred(lPlugin.InputControlCount) do
+    begin
+      TParameterControl(FParameterList.Objects[lParameterIndex]).Value :=
+        lPlugin.InputControls[lParameterIndex].Value^;
+    end;
+
+    Width := (lPlugin.InputControlCount div 8) * 100 + 100;
+    SequenceNr := lPlugin.SequenceNr;
+    pnlTop.Caption := lPlugin.PluginName;
+  end;
 
   Invalidate;
 end;
@@ -130,7 +146,7 @@ begin
     lPluginParameter.Caption := lPlugin.InputControls[lParameterIndex].Caption;
     lPluginParameter.Min := lPlugin.InputControls[lParameterIndex].LowerBound;
     lPluginParameter.Max := lPlugin.InputControls[lParameterIndex].UpperBound;
-    lPluginParameter.Value := lPlugin.InputControls[lParameterIndex].Value;
+//    lPluginParameter.Value := lPlugin.InputControls[lParameterIndex].Value^;
     lPluginParameter.Left := 10 + (lParameterIndex div 10) * 90;
     lPluginParameter.Width := 80;
     lPluginParameter.Height := 10;

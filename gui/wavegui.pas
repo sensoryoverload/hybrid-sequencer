@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, LCLType, Graphics, globalconst, global, jacktypes,
-  ComCtrls, pattern, global_command, wave, utils, ContNrs, Forms;
+  ComCtrls, pattern, global_command, wave, utils, ContNrs, Forms, plugin;
 
 const
   DECIMATED_CACHE_DISTANCE = 64;
@@ -44,7 +44,6 @@ const
 
 type
   TMouseArea = (maNone, maSliceMarkers, maLoopMarkers, maSampleMarkers, maWave);
-  TEditMode = (emWaveEdit, emAutomationEdit);
 
   { TSimpleWaveForm }
 
@@ -92,6 +91,13 @@ type
   { TWaveGUI }
   TWaveGUI = class(TPersistentCustomControl)
   private
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
+    FEditMode: TEditMode;
+    FSelectedAutomationDevice: string;
+    FSelectedAutomationParameter: string;
+    FSelectedAutomationEvent: TAutomationData;
+
     { GUI }
     FTransportBarHeight: Integer;
     FZoomFactorX: Single;
@@ -104,7 +110,7 @@ type
     FOldX: Integer;
     FOriginalOffsetX: Integer;
     FOriginalOffsetY: Integer;
-    FEditMode: TEditMode;
+
     { Audio }
     FData: PJack_default_audio_sample_t;
     FDecimatedData: PJack_default_audio_sample_t;
@@ -146,6 +152,8 @@ type
     FMouseX: Integer;
     FMaximumVisibleRange: Integer;
 
+    function ConvertScreenToTime(AX: Integer): Integer;
+    function ConvertTimeToScreen(ATime: Integer): Integer;
     procedure RecalculateWarp;
     procedure ReleaseMarker(Data: PtrInt);
     procedure SetOffset(AValue: Integer);
@@ -155,10 +163,16 @@ type
     procedure Setpitch(const Avalue: Single);
     procedure Sortslices;
     procedure UpdateSampleScale;
+    procedure HandleAutomationEditMouseDown(Button: TMouseButton; Shift: TShiftState; X,
+      Y: Integer);
+    procedure HandleAutomationEditMouseMove(Shift: TShiftState; X, Y: Integer);
+    procedure HandleAutomationEditMouseUp(Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    procedure UpdateView; override;
     procedure Connect; override;
     procedure Disconnect; override;
     procedure EraseBackground(DC: HDC); override;
@@ -194,6 +208,9 @@ type
     property Pitch: Single read FPitch write SetPitch default 1;
     property Pitched: Boolean read FPitched write FPitched default False;
     property RealBPM: Single read FRealBPM write FRealBPM default 120;
+    property EditMode: TEditMode read FEditMode write FEditMode;
+    property SelectedAutomationDevice: string read FSelectedAutomationDevice write FSelectedAutomationDevice;
+    property SelectedAutomationParameter: string read FSelectedAutomationParameter write FSelectedAutomationParameter;
   protected
     procedure DblClick; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -320,6 +337,8 @@ constructor TWaveGUI.Create(Aowner: Tcomponent);
 begin
   inherited Create(Aowner);
 
+  FIsDirty := False;
+
   Width := 1000;
 //  DoubleBuffered := True;
 
@@ -332,7 +351,7 @@ begin
   FSampleStart := TSampleMarkerGUI.Create(ObjectID, stStart);
   FSampleEnd := TSampleMarkerGUI.Create(ObjectID, stEnd);
 
-  FEditMode := emWaveEdit;
+  FEditMode := emPatternEdit;
 
   FMouseArea := maNone;
 
@@ -372,28 +391,40 @@ procedure TWaveGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TWaveFormGUI.Update');
 
-  DiffLists(
-    TWavePattern(Subject).SliceList,
-    SliceListGUI,
-    @CreateMarkerGUI,
-    @DeleteMarkerGUI);
+  FUpdateSubject := Subject;
 
-  FLoopStart.Update(TWavePattern(Subject).LoopStart);
-  FLoopEnd.Update(TWavePattern(Subject).LoopEnd);
-  FLoopLength.Update(TWavePattern(Subject).LoopLength);
-
-  FSampleStart.Update(TWavePattern(Subject).SampleStart);
-  FSampleEnd.Update(TWavePattern(Subject).SampleEnd);
-
-  FMaximumVisibleRange := TWavePattern(Subject).SampleEnd.Value + 10000;
-
-  Sortslices;
-
-  UpdateSampleScale;
-
-  Invalidate;
+  FIsDirty := True;
 
   DBLog('end TWaveFormGUI.Update');
+end;
+
+procedure TWaveGUI.UpdateView;
+begin
+  if FIsDirty and Assigned(FUpdateSubject) then
+  begin
+    FIsDirty := False;
+
+    DiffLists(
+      TWavePattern(FUpdateSubject).SliceList,
+      SliceListGUI,
+      @CreateMarkerGUI,
+      @DeleteMarkerGUI);
+
+    FLoopStart.Update(TWavePattern(FUpdateSubject).LoopStart);
+    FLoopEnd.Update(TWavePattern(FUpdateSubject).LoopEnd);
+    FLoopLength.Update(TWavePattern(FUpdateSubject).LoopLength);
+
+    FSampleStart.Update(TWavePattern(FUpdateSubject).SampleStart);
+    FSampleEnd.Update(TWavePattern(FUpdateSubject).SampleEnd);
+
+    FMaximumVisibleRange := TWavePattern(FUpdateSubject).SampleEnd.Value + 10000;
+
+    Sortslices;
+
+    UpdateSampleScale;
+
+    Invalidate;
+  end;
 end;
 
 procedure TWaveGUI.Connect;
@@ -466,6 +497,12 @@ var
   TimeMarker: Integer;
   QuarterBeatMarkerSpacing: single;
   TimeMarkerLocation: Integer;
+  lAutomationData: TAutomationData;
+  lAutomationScreenY: Integer;
+  lAutomationScreenX: Integer;
+  lDeviceIndex: Integer;
+  lParameterIndex: Integer;
+  lAutomationDataList: TAutomationDataList;
 begin
   if not Assigned(FModel) then exit;
 
@@ -762,6 +799,40 @@ begin
       end;
     end;
 
+    // Draw automation data
+    if FEditMode = emAutomationEdit then
+    begin
+      lAutomationScreenY := Height div 2;
+      FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
+
+      for lDeviceIndex := 0 to Pred(FModel.AutomationChannelList.Count) do
+      begin
+        lAutomationDataList := TAutomationDataList(FModel.AutomationChannelList[lDeviceIndex]);
+
+        lAutomationDataList.First;
+        while not lAutomationDataList.Eof do
+        begin
+          lAutomationData := lAutomationDataList.CurrentAutomationData;
+
+          lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
+          lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+          FBitmap.Canvas.LineTo(
+            lAutomationScreenX,
+            lAutomationScreenY);
+
+          FBitmap.Canvas.Brush.Color := clRed;
+          FBitmap.Canvas.Rectangle(
+            lAutomationScreenX - 4,
+            lAutomationScreenY - 4,
+            lAutomationScreenX + 4,
+            lAutomationScreenY + 4);
+
+          lAutomationDataList.Next;
+        end;
+      end;
+      FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+    end;
+
     Canvas.Draw(0, 0, FBitmap);
   finally
     FBitmap.Free;
@@ -872,7 +943,7 @@ var
 begin
   FMouseX := X;
 
-  if FEditMode = emWaveEdit then
+  if FEditMode = emPatternEdit then
   begin
     FMargin := 5 * FZoomFactorToData;
 
@@ -995,7 +1066,7 @@ begin
   end
   else if FEditMode = emAutomationEdit then
   begin
-    // HandleAutomationEditMouseDown
+    HandleAutomationEditMouseDown(Button, Shift, X, Y);
   end;
 
   Invalidate;
@@ -1013,7 +1084,7 @@ var
 begin
   FMouseX := X;
 
-  if FEditMode = emWaveEdit then
+  if FEditMode = emPatternEdit then
   begin
     lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
@@ -1074,7 +1145,7 @@ begin
   end
   else if FEditMode = emAutomationEdit then
   begin
-    // HandleAutomationEditMouseUp
+    HandleAutomationEditMouseUp(Button, Shift, X, Y);
   end;
 
   Invalidate;
@@ -1089,7 +1160,7 @@ var
 begin
   FMouseX := X;
 
-  if FEditMode = emWaveEdit then
+  if FEditMode = emPatternEdit then
   begin
     lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
@@ -1132,12 +1203,127 @@ begin
   end
   else if FEditMode = emAutomationEdit then
   begin
-    // HandleAutomationEditMouseMove
+    HandleAutomationEditMouseMove(Shift, X, Y);
   end;
 
   Invalidate;
 
   inherited MouseMove(Shift, X, Y);
+end;
+
+procedure TWaveGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+
+  function FindAutomationEvent(X, Y: Integer): TAutomationData;
+  var
+    lEventX: Integer;
+    lEventY: Integer;
+    lAutomationData: TAutomationData;
+    lAutomationDataList: TAutomationDataList;
+  begin
+    Result := nil;
+
+    lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameter));
+    lAutomationDataList.First;
+    while not lAutomationDataList.Eof do
+    begin
+      lAutomationData := lAutomationDataList.CurrentAutomationData;
+
+      lEventX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+      lEventY := Round(Height - lAutomationData.DataValue * Height);
+      if (X >= lEventX - 4) and (X < lEventX + 4) and
+        (Y >= lEventY - 4) and (Y < lEventY + 4) then
+      begin
+        Result := lAutomationDataList.CurrentAutomationData;
+        break;
+      end;
+
+      lAutomationDataList.Next;
+    end;
+  end;
+
+begin
+  FSelectedAutomationEvent := FindAutomationEvent(X, Y);
+end;
+
+procedure TWaveGUI.HandleAutomationEditMouseMove(Shift: TShiftState; X,
+  Y: Integer);
+var
+  lEditAutomationDataCommand: TEditAutomationDataCommand;
+begin
+  if Assigned(FSelectedAutomationEvent) then
+  begin
+    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDevice;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
+      lEditAutomationDataCommand.Persist := False;
+
+      GCommandQueue.PushCommand(lEditAutomationDataCommand);
+    except
+      lEditAutomationDataCommand.Free;
+    end;
+  end;
+end;
+
+procedure TWaveGUI.HandleAutomationEditMouseUp(Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  lCreateAutomationDataCommand: TCreateAutomationDataCommand;
+  lEditAutomationDataCommand: TEditAutomationDataCommand;
+begin
+  if Assigned(FSelectedAutomationEvent) then
+  begin
+    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDevice;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
+      lEditAutomationDataCommand.Persist := True;
+
+      GCommandQueue.PushCommand(lEditAutomationDataCommand);
+    except
+      lEditAutomationDataCommand.Free;
+    end;
+
+    FSelectedAutomationEvent := nil;
+  end
+  else
+  begin
+    // TODO check if there already is an automation event on this location
+    lCreateAutomationDataCommand := TCreateAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lCreateAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lCreateAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lCreateAutomationDataCommand.DeviceId := FSelectedAutomationDevice;
+      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+
+      GCommandQueue.PushCommand(lCreateAutomationDataCommand);
+    except
+      lCreateAutomationDataCommand.Free;
+    end;
+  end;
+end;
+
+{
+  Convert a screen cursor position to a location in time
+}
+function TWaveGUI.ConvertScreenToTime(AX: Integer): Integer;
+begin
+  Result := Round(AX * FZoomFactorToData);
+end;
+
+{
+  Convert location in time to a screen cursor position
+}
+function TWaveGUI.ConvertTimeToScreen(ATime: Integer): Integer;
+begin
+  Result := Round(ATime * FZoomFactorToScreen);
 end;
 
 procedure TWaveGUI.DragDrop(Source: TObject; X, Y: Integer);

@@ -26,9 +26,11 @@ interface
 
 uses
   Classes, SysUtils, ContNrs, globalconst, utils, global_command, global,
-  ladspaloader, ladspa, math;
+  ladspaloader, ladspa, math, Menus;
 
 type
+  TAutomationDataList = class;
+
   TPortParameter = class(THybridPersistentModel)
   public
     PortRangeHint: LongWord;
@@ -42,11 +44,13 @@ type
     IsInteger: Boolean;
     IsToggled: Boolean;
     DefaultValue: Single;
-    Value: Single;
+    Value: PSingle;
+    AutomationDataList: TAutomationDataList;
   end;
 
   TArrayOfSingle = Array of Single;
   TArrayOfPortParameter = Array of TPortParameter;
+  TArrayOfPSingle = Array of PSingle;
 
   TPluginType = (
     ptIO, ptSampler, ptDistortion, ptFlanger, ptFilter, ptDecimate, ptReverb,
@@ -83,6 +87,7 @@ type
   TPluginNode = class(THybridPersistentModel)
   private
     FActive: Boolean;
+    FPopulateAutomationDevices: TPopulateAutomationDevices;
     FPortList: TObjectList;
     FParameterList: TObjectList;
     FReturnBuffer: PSingle;
@@ -93,6 +98,12 @@ type
     FOutputControlCount: Integer;
     FInputControls: TArrayOfPortParameter;
     FOutputControls: TArrayOfSingle;
+
+    FInputChannelCount: Integer;
+    FOutputChannelCount: Integer;
+    FInputChannels: TArrayOfPSingle;
+    FOutputChannels: TArrayOfPSingle;
+
     FFrames: Integer;
     FNodeType: TPluginNodeType;
     FPluginName: string;
@@ -112,14 +123,39 @@ type
     procedure Clean; virtual;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); virtual; abstract;
     procedure Clear;
+
+    function CreatePortParameter(
+      ACaption: string;
+      ALowerBound: Single;
+      AUpperBound: Single;
+      AIsBoundedAbove: Boolean;
+      AIsBoundedBelow: Boolean;
+      AIsInteger: Boolean;
+      AIsLogarithmic: Boolean;
+      AIsSampleRate: Boolean;
+      AIsToggled: Boolean;
+      ADefaultValue: Single;
+      AValue: PSingle
+      ): Integer;
+
+    property OnPopulateAutomationDevices: TPopulateAutomationDevices
+      read FPopulateAutomationDevices write FPopulateAutomationDevices;
+
     property PortList: TObjectList read FPortList write FPortList;
     property NodeType: TPluginNodeType read FNodeType write FNodeType;
     property InputBuffer: psingle read FInputBuffer write FInputBuffer;
     property OutputBuffer: psingle read FOutputBuffer write FOutputBuffer;
+
     property InputControlCount: Integer read FInputControlCount write FInputControlCount;
     property OutputControlCount: Integer read FOutputControlCount write FOutputControlCount;
     property InputControls: TArrayOfPortParameter read FInputControls write FInputControls;
     property OutputControls: TArrayOfSingle read FOutputControls write FOutputControls;
+
+    property InputChannelCount: Integer read FInputChannelCount write FInputChannelCount;
+    property OutputChannelCount: Integer read FOutputChannelCount write FOutputChannelCount;
+    property InputChannels: TArrayOfPSingle read FInputChannels write FInputChannels;
+    property OutputChannels: TArrayOfPSingle read FOutputChannels write FOutputChannels;
+
     property Active: Boolean read FActive write FActive;
   published
     property PluginName: string read FPluginName write FPluginName;
@@ -146,10 +182,6 @@ type
     FPluginInstance: LADSPA_Handle;
     FPluginDescriptor: PLADSPA_Descriptor;
     FFirstRun: Boolean;
-    FInputChannelCount: Integer;
-    FOutputChannelCount: Integer;
-    FInputChannels: Array of PSingle;
-    FOutputChannels: Array of PSingle;
     FUniqueID: Integer;
   public
     procedure Instantiate; override;
@@ -202,6 +234,63 @@ type
       AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
 
+  { TAutomationDataList }
+
+  TAutomationDataList = class(THybridPersistentModel)
+  private
+    FList: TList;
+    FLastIndex: Integer;
+    FIndex: Integer;
+    FDeviceId: string;
+    FPlugin: TPluginNode;
+    FPluginParameter: TPortParameter;
+    FPortId: string;
+  protected
+  public
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    destructor Destroy; override;
+    function FrameFirstIndex(ALocation: Integer): Integer;
+    function FrameLastIndex(ALocation: Integer): Integer;
+    function CurrentAutomationData: TAutomationData;
+    procedure Next;
+    procedure First;
+    function Eof: Boolean;
+
+    procedure IndexList;
+    procedure AddAutomation(AAutomationData :TAutomationData);
+    procedure DeleteAutomation(AAutomationData :TAutomationData);
+
+    property LastIndex: Integer read FLastIndex write FLastIndex;
+    property List: TList read FList write FList;
+    property Index: Integer read FIndex write FIndex;
+
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property PortId: string read FPortId write FPortId;
+    property Plugin: TPluginNode read FPlugin write FPlugin;
+    property PluginParameter: TPortParameter read FPluginParameter write FPluginParameter;
+  end;
+
+  TMenuItemObjectType = (miotNone, miotDevice, miotDeviceParameter);
+
+  { TMenuItemObject }
+
+  TMenuItemObject = class(TMenuItem)
+  private
+    FDeviceId: string;
+    FObjectId: string;
+    FObjectType: TMenuItemObjectType;
+    FParameterId: string;
+    FPlugin: TPluginNode;
+    FPluginParameter: TPortParameter;
+  public
+    property ObjectId: string read FObjectId write FObjectId;
+    property ObjectType: TMenuItemObjectType read FObjectType write FObjectType;
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property ParameterId: string read FParameterId write FParameterId;
+    property Plugin: TPluginNode read FPlugin write FPlugin;
+    property PluginParameter: TPortParameter read FPluginParameter write FPluginParameter;
+  end;
+
 implementation
 
 uses
@@ -213,8 +302,8 @@ procedure TLADSPACommand.DoExecute;
 begin
   if Assigned(FModel) then
   begin
-    FOldValue := FModel.InputControls[FParameter].Value;
-    FModel.InputControls[FParameter].Value := FValue;
+    FOldValue := FModel.InputControls[FParameter].Value^;
+    FModel.InputControls[FParameter].Value^ := FValue;
 
     FModel.Notify;
   end;
@@ -224,7 +313,7 @@ procedure TLADSPACommand.DoRollback;
 begin
   if Assigned(FModel) then
   begin
-    FModel.InputControls[FParameter].Value := FOldValue;
+    FModel.InputControls[FParameter].Value^ := FOldValue;
 
     FModel.Notify;
   end;
@@ -317,6 +406,11 @@ begin
 
       FInputControls[Pred(FInputControlCount)] := TPortParameter.Create(Self.ObjectID);
       lPortParameter := FInputControls[Pred(FInputControlCount)];
+
+      if Assigned(OnPopulateAutomationDevices) then
+      begin
+        OnPopulateAutomationDevices(Self.ObjectID, lPortParameter.ObjectID, paaInsert);
+      end;
 
       lMinValue := 0;
       if LADSPA_IS_HINT_BOUNDED_BELOW(lPortRangeHint.HintDescriptor) then
@@ -415,12 +509,13 @@ begin
       lPortParameter.IsSampleRate := LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor);
       lPortParameter.IsToggled := LADSPA_IS_HINT_TOGGLED(lPortRangeHint.HintDescriptor);
       lPortParameter.DefaultValue := lDefaultValue;
-      lPortParameter.Value := lDefaultValue;
 
       FPluginDescriptor^.connect_port(
         FPluginInstance,
         lPortIndex,
-        @lPortParameter.Value);
+        lPortParameter.Value);
+
+      //lPortParameter.Value^ := lDefaultValue;
     end
     else if LADSPA_IS_PORT_OUTPUT(lPortDescriptor) and LADSPA_IS_PORT_CONTROL(lPortDescriptor) then
     begin
@@ -561,8 +656,16 @@ begin
 end;
 
 procedure TPluginNode.Instantiate;
+var
+  lIndex: Integer;
 begin
-  //
+  if Assigned(OnPopulateAutomationDevices) then
+  begin
+    for lIndex := 0 to Pred(FInputControlCount) do
+    begin
+      OnPopulateAutomationDevices(Self.ObjectID, FInputControls[lIndex].ObjectID, paaInsert);
+    end;
+  end;
 end;
 
 procedure TPluginNode.Activate;
@@ -588,6 +691,40 @@ begin
   begin
     FInputBuffer[i] := 0;
   end;
+end;
+
+function TPluginNode.CreatePortParameter(
+  ACaption: string;
+  ALowerBound: Single;
+  AUpperBound: Single;
+  AIsBoundedAbove: Boolean;
+  AIsBoundedBelow: Boolean;
+  AIsInteger: Boolean;
+  AIsLogarithmic: Boolean;
+  AIsSampleRate: Boolean;
+  AIsToggled: Boolean;
+  ADefaultValue: Single;
+  AValue: PSingle
+  ): Integer;
+var
+  lPortParameter: TPortParameter;
+begin
+  Inc(FInputControlCount);
+  SetLength(FInputControls, FInputControlCount);
+
+  FInputControls[Pred(FInputControlCount)] := TPortParameter.Create(Self.ObjectID);
+  lPortParameter := FInputControls[Pred(FInputControlCount)];
+  lPortParameter.Caption := ACaption;
+  lPortParameter.LowerBound := ALowerBound;
+  lPortParameter.UpperBound := AUpperBound;
+  lPortParameter.IsBoundedAbove := AIsBoundedAbove;
+  lPortParameter.IsBoundenBelow := AIsBoundedBelow;
+  lPortParameter.IsInteger := AIsInteger;
+  lPortParameter.IsLogarithmic := AIsLogarithmic;
+  lPortParameter.IsSampleRate := AIsSampleRate;
+  lPortParameter.IsToggled := AIsToggled;
+  lPortParameter.DefaultValue := ADefaultValue;
+  lPortParameter.Value := AValue;
 end;
 
 { TExternalNode }
@@ -629,6 +766,144 @@ procedure TScriptNode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
   AOutputBuffer: PSingle; AFrames: Integer);
 begin
   //
+end;
+
+{ TAutomationDataList }
+
+function SortOnAutomationLocation(Item1, Item2: Pointer): Integer;
+begin
+  if (TAutomationData(Item1).Location < TAutomationData(Item2).Location) then
+  begin
+    result := -1
+  end
+  else
+  begin
+    if (TAutomationData(Item1).Location > TAutomationData(Item2).Location) then
+      result := 1
+    else
+      result := 0;
+  end;
+end;
+
+constructor TAutomationDataList.Create(AObjectOwner: string; AMapped: Boolean = True);
+begin
+  inherited Create(AObjectOwner, AMapped);
+
+  FList := TList.Create;
+end;
+
+destructor TAutomationDataList.Destroy;
+begin
+  FList.Free;
+
+  inherited Destroy;
+end;
+
+{
+  Return index of first element within window
+}
+function TAutomationDataList.FrameFirstIndex(ALocation: Integer): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+
+  for i := 0 to Pred(FList.Count) do
+  begin
+    if TAutomationData(FList.Items[i]).Location >= ALocation then
+    begin
+      Result := i;
+      break;
+    end;
+  end;
+end;
+
+{
+  Return index of last element within window
+}
+function TAutomationDataList.FrameLastIndex(ALocation: Integer): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+
+  for i := Pred(FList.Count) downto 0 do
+  begin
+    if TAutomationData(FList.Items[i]).Location < ALocation then
+    begin
+      Result := i;
+      break;
+    end;
+  end;
+end;
+
+function TAutomationDataList.CurrentAutomationData: TAutomationData;
+begin
+  if FIndex < FList.Count then
+  begin
+    Result := TAutomationData(FList.Items[FIndex]);
+  end
+  else
+    Result := TAutomationData(FList.Last)
+end;
+
+procedure TAutomationDataList.Next;
+begin
+  FIndex := FIndex + 1;
+end;
+
+function TAutomationDataList.Eof: Boolean;
+begin
+  Result := FIndex >= FList.Count;
+end;
+
+{
+  This method sorts the list on location starting low ending high
+  After that it will also be linked into a linked list
+}
+procedure TAutomationDataList.IndexList;
+var
+  i: Integer;
+begin
+  FList.Sort(@SortOnAutomationLocation);
+
+  for i := 0 to FList.Count - 2 do
+  begin
+    TAutomationData(FList.Items[i]).Next := TAutomationData(FList.Items[i + 1]);
+  end;
+
+  // Initialize last one with nil
+  if FList.Count > 0 then
+  begin
+    TAutomationData(FList.Items[FList.Count - 1]).Next := nil;
+  end;
+end;
+
+procedure TAutomationDataList.AddAutomation(AAutomationData: TAutomationData);
+begin
+  FList.Add(AAutomationData);
+
+  IndexList;
+end;
+
+procedure TAutomationDataList.DeleteAutomation(AAutomationData: TAutomationData
+  );
+var
+  lIndex: Integer;
+begin
+  lIndex := FList.IndexOf(AAutomationData);
+  if lIndex <> -1 then
+  begin
+    TAutomationData(FList[lIndex]).Free;
+    FList.Delete(lIndex);
+  end;
+
+  IndexList;
+end;
+
+procedure TAutomationDataList.First;
+begin
+  FIndex := 0;
 end;
 
 end.

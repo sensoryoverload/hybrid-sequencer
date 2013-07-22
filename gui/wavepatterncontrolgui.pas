@@ -6,27 +6,28 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, StdCtrls, Spin,
-  ExtCtrls, ComCtrls, globalconst, dialcontrol, wavegui, pattern, wave,
-  pluginhost, pluginhostgui, patternoverview;
+  ExtCtrls, ComCtrls, Menus, globalconst, dialcontrol, wavegui, pattern, wave,
+  pluginhost, pluginhostgui, plugin, patternoverview, LCLintf;
 
 type
-
   { TWavePatternControlGUI }
 
   TWavePatternControlGUI = class(TFrame, IObserver)
+    btnAutomationSelect: TButton;
     btnDouble: TButton;
     btnHalf: TButton;
-    cbDeviceParameter: TComboBox;
     cbPitchAlgo: TComboBox;
     cbQuantize: TComboBox;
-    cbDevice: TComboBox;
-    lblDevice: TLabel;
-    lblDeviceParameter: TLabel;
+    MenuItem1: TMenuItem;
     Panel1: TPanel;
+    Panel2: TPanel;
     pcBPM: TParameterControl;
     pcPitch: TParameterControl;
     LoopEnabled: TToggleControl;
+    pupSelectAutomation: TPopupMenu;
+    TreeView1: TTreeView;
 
+    procedure btnAutomationSelectClick(Sender: TObject);
     procedure btnDoubleClick(Sender: TObject);
     procedure btnHalfClick(Sender: TObject);
     procedure cbPitchAlgoChange(Sender: TObject);
@@ -41,6 +42,9 @@ type
     procedure cbPitchedChange(Sender: TObject);
   private
     { private declarations }
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
+
     FModel: TWavePattern;
     FWaveGUI: TWaveGUI;
     FWaveOverview: TWavePatternOverview;
@@ -53,6 +57,8 @@ type
     FPitched: Boolean;
     FPitch: Single;
     FRealBPM: Single;
+    procedure DeviceClick(Sender: TObject);
+    procedure DeviceParameterClick(Sender: TObject);
     function GetEnabled: Boolean;
     procedure Setpitch(const Avalue: Single);
   protected
@@ -65,11 +71,13 @@ type
     procedure Connect;
     procedure Disconnect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure UpdateView;
 
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
+    procedure PopulateAutomationControls(Sender: TObject);
 
     property Connected: Boolean read FConnected;
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
@@ -126,6 +134,10 @@ procedure TWavePatternControlGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TWavePatternControl.Update');
 
+  FUpdateSubject := Subject;
+
+  FIsDirty := True;
+
   if pcBPM.Value <> TWavePattern(Subject).RealBPM then
   begin
     pcBPM.Value := TWavePattern(Subject).RealBPM;
@@ -147,6 +159,16 @@ begin
   end;
 
   DBLog('end TWavePatternControl.Update');
+end;
+
+procedure TWavePatternControlGUI.UpdateView;
+begin
+  if FIsDirty and Assigned(FUpdateSubject) then
+  begin
+    FIsDirty := False;
+  end;
+
+  FWaveGUI.UpdateView;
 end;
 
 function TWavePatternControlGUI.GetObjectID: string;
@@ -178,6 +200,68 @@ end;
 procedure TWavePatternControlGUI.SetModel(AModel: THybridPersistentModel);
 begin
   FModel := TWavePattern(AModel);
+end;
+
+procedure TWavePatternControlGUI.PopulateAutomationControls(
+  Sender: TObject);
+var
+  lNodeIndex: Integer;
+  lPluginNode: TPluginNode;
+  lParamaterIndex: Integer;
+  lDeviceItem: TMenuItemObject;
+  lDeviceParameterItem: TMenuItemObject;
+begin
+  pupSelectAutomation.Items.Clear;
+  lDeviceItem := TMenuItemObject.Create(pupSelectAutomation);
+  lDeviceItem.Caption := 'None';
+  lDeviceItem.ObjectId := '';
+  lDeviceItem.ObjectType := miotNone;
+  lDeviceItem.OnClick := @DeviceClick;
+  pupSelectAutomation.Items.Add(lDeviceItem);
+
+  for lNodeIndex := 0 to Pred(FModel.PluginProcessor.NodeList.Count) do
+  begin
+    lPluginNode := TPluginNode(FModel.PluginProcessor.NodeList[lNodeIndex]);
+    lDeviceItem := TMenuItemObject.Create(pupSelectAutomation);
+    lDeviceItem.Caption := lPluginNode.PluginName;
+    lDeviceItem.ObjectId := lPluginNode.ObjectID;
+    lDeviceItem.ObjectType := miotDevice;
+    pupSelectAutomation.Items.Add(lDeviceItem);
+
+    for lParamaterIndex := Low(lPluginNode.InputControls) to High(lPluginNode.InputControls) do
+    begin
+      lDeviceParameterItem := TMenuItemObject.Create(pupSelectAutomation);
+      lDeviceParameterItem.Caption := lPluginNode.InputControls[lParamaterIndex].Caption;
+      lDeviceParameterItem.ObjectId := lPluginNode.InputControls[lParamaterIndex].ObjectID;
+      lDeviceParameterItem.ObjectType := miotDeviceParameter;
+      lDeviceParameterItem.OnClick := @DeviceParameterClick;
+      lDeviceItem.Add(lDeviceParameterItem);
+    end;
+  end;
+end;
+
+procedure TWavePatternControlGUI.DeviceParameterClick(Sender: TObject);
+begin
+  if Sender is TMenuItemObject then
+  begin
+    if TMenuItemObject(Sender).ObjectType = miotDeviceParameter then
+    begin
+      FWaveGUI.EditMode := emAutomationEdit;
+      FWaveGUI.SelectedAutomationParameter := TMenuItemObject(Sender).ObjectId;
+      FWaveGUI.SelectedAutomationDevice := TMenuItemObject(Sender).DeviceId;
+    end;
+  end;
+end;
+
+procedure TWavePatternControlGUI.DeviceClick(Sender: TObject);
+begin
+  if Sender is TMenuItemObject then
+  begin
+    if TMenuItemObject(Sender).ObjectType = miotNone then
+    begin
+      FWaveGUI.EditMode := emPatternEdit;
+    end;
+  end;
 end;
 
 procedure TWavePatternControlGUI.cbPitchedChange(Sender: TObject);
@@ -287,6 +371,16 @@ begin
   end;
 end;
 
+procedure TWavePatternControlGUI.btnAutomationSelectClick(Sender: TObject);
+var
+  pnt: TPoint;
+begin
+  if GetCursorPos(pnt) then
+  begin
+    pupSelectAutomation.PopUp(pnt.X, pnt.Y);
+  end;
+end;
+
 procedure TWavePatternControlGUI.btnHalfClick(Sender: TObject);
 var
   FHalveLoopLengthCommand: THalveLoopLengthCommand;
@@ -326,6 +420,8 @@ end;
 constructor TWavePatternControlGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+
+  FIsDirty := False;
 
   FConnected := False;
 

@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, Controls, Forms, LCLType, Graphics, Menus, globalconst,
   jacktypes, ContNrs, wave, global_command, midi, global, unix, BaseUNIX,
-  lclintf, ActnList;
+  lclintf, ActnList, pattern, plugin;
 
 const
   DIVBY1000 = 1 / 1000;
@@ -37,7 +37,6 @@ const
 type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
   TKey = (keyBlack, keyWhite);
-  TEditMode = (emNoteEdit, emAutomationEdit);
 
 //  TZoomCallback = procedure(AZoomTimeLeft, AZoomTimeRight: Integer) of object;
 
@@ -98,6 +97,9 @@ type
       State: TDragState; var Accept: Boolean);
     procedure FrameResize(Sender: TObject);
   private
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
+
     FObjectID: string;
     FObjectOwnerID: string;
     FModel: TMidiPattern;
@@ -110,7 +112,10 @@ type
     FOldNoteOffset: Integer;
     FNoteInfoWidth: Integer;
     FEditMode: TEditMode;
-    FSelectedAutomationParameter: string;
+    FSelectedAutomationDeviceId: string;
+    FSelectedAutomationDevice: TAutomationDevice;
+    FSelectedAutomationParameterId: string;
+    FSelectedAutomationParameter: TAutomationDataList;
     FSelectedAutomationEvent: TAutomationData;
 
     // Zoom vars
@@ -197,12 +202,15 @@ type
     procedure ReleaseNote(Data: PtrInt);
     procedure SetOffset(AValue: Integer);
     procedure SetQuantizeSetting(AValue: Integer);
+    procedure SetSelectedAutomationDeviceId(AValue: string);
+    procedure SetSelectedAutomationParameterId(AValue: string);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure UpdateView;
     procedure Connect;
     procedure Disconnect;
     procedure EraseBackground(DC: HDC); override;
@@ -231,7 +239,8 @@ type
     property RootNote: Integer read FRootNote write FRootNote default 0;
     property MidiChannel: Integer read FMidiChannel write FMidiChannel;
     property EditMode: TEditMode read FEditMode write FEditMode;
-    property SelectedAutomationParameter: string read FSelectedAutomationParameter write FSelectedAutomationParameter;
+    property SelectedAutomationDeviceId: string read FSelectedAutomationDeviceId write SetSelectedAutomationDeviceId;
+    property SelectedAutomationParameterId: string read FSelectedAutomationParameterId write SetSelectedAutomationParameterId;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -250,7 +259,7 @@ type
 implementation
 
 uses
-  utils, appcolors, pattern, sampler, ComCtrls;
+  utils, appcolors, sampler, ComCtrls;
 
 { TMidiNoteGUI }
 
@@ -515,21 +524,24 @@ procedure TMidiPatternGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
   begin
     Result := nil;
 
-    FModel.AutomationDataList.First;
-    while not FModel.AutomationDataList.Eof do
+    if Assigned(FSelectedAutomationParameter) then
     begin
-      lAutomationData := FModel.AutomationDataList.CurrentAutomationData;
-
-      lEventX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
-      lEventY := Round(Height - lAutomationData.DataValue * Height);
-      if (X >= lEventX - 4) and (X < lEventX + 4) and
-        (Y >= lEventY - 4) and (Y < lEventY + 4) then
+      FSelectedAutomationParameter.First;
+      while not FSelectedAutomationParameter.Eof do
       begin
-        Result := FModel.AutomationDataList.CurrentAutomationData;
-        break;
-      end;
+        lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
 
-      FModel.AutomationDataList.Next;
+        lEventX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+        lEventY := Round(Height - lAutomationData.DataValue * Height);
+        if (X >= lEventX - 4) and (X < lEventX + 4) and
+          (Y >= lEventY - 4) and (Y < lEventY + 4) then
+        begin
+          Result := FSelectedAutomationParameter.CurrentAutomationData;
+          break;
+        end;
+
+        FSelectedAutomationParameter.Next;
+      end;
     end;
   end;
 
@@ -546,6 +558,8 @@ begin
   begin
     lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
     try
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
       lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
       lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
       lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
@@ -570,6 +584,8 @@ begin
     try
       lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
       lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
       lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
       lEditAutomationDataCommand.Persist := True;
 
@@ -587,8 +603,8 @@ begin
     try
       lCreateAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
       lCreateAutomationDataCommand.DataValue := (Height - Y) / Height;
-      lCreateAutomationDataCommand.DeviceId := '';
-      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+      lCreateAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
 
       GCommandQueue.PushCommand(lCreateAutomationDataCommand);
     except
@@ -748,6 +764,8 @@ constructor TMidiPatternGUI.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
+  FIsDirty := False;
+
   FLoopStart := TLoopMarkerGUI.Create(ObjectID, ltStart);
   FLoopEnd := TLoopMarkerGUI.Create(ObjectID, ltEnd);
   FLoopLength := TLoopMarkerGUI.Create(ObjectID, ltLength);
@@ -763,7 +781,7 @@ begin
     FNoteInfoWidth := 0;
   end;
 
-  FEditMode := emNoteEdit;
+  FEditMode := emPatternEdit;
 
   FBitmap := TBitmap.Create;
 
@@ -1045,15 +1063,16 @@ begin
   // Draw automation data
   if FEditMode = emAutomationEdit then
   begin
-    lAutomationScreenY := Height div 2;
-    FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
-    FModel.AutomationDataList.First;
-    while not FModel.AutomationDataList.Eof do
+    if Assigned(FSelectedAutomationParameter) then
     begin
-      lAutomationData := FModel.AutomationDataList.CurrentAutomationData;
+      lAutomationScreenY := Height div 2;
+      FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
 
-      if lAutomationData.ParameterId = FSelectedAutomationParameter then
+      FSelectedAutomationParameter.First;
+      while not FSelectedAutomationParameter.Eof do
       begin
+        lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
+
         lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
         lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
         FBitmap.Canvas.LineTo(
@@ -1066,11 +1085,11 @@ begin
           lAutomationScreenY - 4,
           lAutomationScreenX + 4,
           lAutomationScreenY + 4);
-      end;
 
-      FModel.AutomationDataList.Next;
+        FSelectedAutomationParameter.Next;
+      end;
+      FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
     end;
-    FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
   end;
   FBitmap.Canvas.Pen.Width := 1;
 
@@ -1116,21 +1135,32 @@ procedure TMidiPatternGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TMidiGridGUI.Update');
 
-  DiffLists(
-    TMidiPattern(Subject).NoteList,
-    FNoteListGUI,
-    @Self.CreateNoteGUI,
-    @Self.DeleteNoteGUI);
-
-  FLoopStart.Update(TMidiPattern(Subject).LoopStart);
-  FLoopEnd.Update(TMidiPattern(Subject).LoopEnd);
-  FLoopLength.Update(TMidiPattern(Subject).LoopLength);
-
-  QuantizeSetting := TMidiPattern(Subject).QuantizeSetting;
-
- Invalidate;
+  FUpdateSubject := Subject;
+  FIsDirty := True;
 
   DBLog('end TMidiGridGUI.Update');
+end;
+
+procedure TMidiPatternGUI.UpdateView;
+begin
+  if FIsDirty and Assigned(FUpdateSubject) then
+  begin
+    FIsDirty := False;
+
+    DiffLists(
+      TMidiPattern(FUpdateSubject).NoteList,
+      FNoteListGUI,
+      @Self.CreateNoteGUI,
+      @Self.DeleteNoteGUI);
+
+    FLoopStart.Update(TMidiPattern(FUpdateSubject).LoopStart);
+    FLoopEnd.Update(TMidiPattern(FUpdateSubject).LoopEnd);
+    FLoopLength.Update(TMidiPattern(FUpdateSubject).LoopLength);
+
+    QuantizeSetting := TMidiPattern(FUpdateSubject).QuantizeSetting;
+
+    Invalidate;
+  end;
 end;
 
 procedure TMidiPatternGUI.Connect;
@@ -1223,6 +1253,22 @@ begin
   9: FQuantizeValue := 22050 / 16;
   10: FQuantizeValue := 22050 / 32;
   end;
+end;
+
+procedure TMidiPatternGUI.SetSelectedAutomationDeviceId(AValue: string);
+begin
+  if FSelectedAutomationDeviceId = AValue then Exit;
+  FSelectedAutomationDeviceId := AValue;
+
+  FSelectedAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FSelectedAutomationDeviceId));
+end;
+
+procedure TMidiPatternGUI.SetSelectedAutomationParameterId(AValue: string);
+begin
+  if FSelectedAutomationParameterId = AValue then Exit;
+  FSelectedAutomationParameterId := AValue;
+
+  FSelectedAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameterId));
 end;
 
 procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
@@ -1396,7 +1442,7 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  if FEditMode = emNoteEdit then
+  if FEditMode = emPatternEdit then
   begin
     // Moving loopmarker has precedence over notes
     FDraggedLoopMarker := LoopMarkerAt(X, 5);
@@ -1450,7 +1496,7 @@ procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
-  if FEditMode = emNoteEdit then
+  if FEditMode = emPatternEdit then
   begin
     if Assigned(FDraggedLoopMarker) then
     begin
@@ -1519,7 +1565,7 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  if FEditMode = emNoteEdit then
+  if FEditMode = emPatternEdit then
   begin
     if Assigned(FDraggedLoopMarker) then
     begin

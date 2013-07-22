@@ -84,10 +84,11 @@ type
 implementation
 
 uses
-  math;
+  math, utils;
 
 procedure TTB303.setcut(cut: single);
 begin
+  DBLog('setcut %f', cut);
   vcf_cutoff := cut;
   recalc;
 end;

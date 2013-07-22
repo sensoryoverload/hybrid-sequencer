@@ -94,6 +94,12 @@ const
 type
   TInterConnectCallback = procedure(AObjectID: string; AParameter: string) of object;
 
+  TPopulateAutomationAction = (paaInsert, paaDelete);
+
+  TPopulateAutomationDevices = procedure(ADeviceId: string; AParameterId: string;
+    AAction: TPopulateAutomationAction) of object;
+
+
   TOperation = (
     opUpdate,
     opCreate,
@@ -149,6 +155,7 @@ type
 
   IObserver = interface['{38AEACE2-2EFB-4EA3-A540-23BD70D4FEF8}']
     procedure Update(Subject: THybridPersistentModel);
+    procedure UpdateView;
     procedure Connect;
     procedure Disconnect;
     function GetModel: THybridPersistentModel;
@@ -238,6 +245,7 @@ type
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure UpdateView; virtual;
     function GetModel: THybridPersistentModel; virtual;
     procedure SetModel(AModel: THybridPersistentModel); virtual;
     procedure Connect; override;
@@ -260,6 +268,7 @@ type
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure UpdateView; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -285,6 +294,7 @@ type
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure UpdateView; virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -308,6 +318,7 @@ type
   public
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure UpdateView; virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -333,6 +344,7 @@ type
   public
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure UpdateView; virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -745,6 +757,11 @@ begin
    // Virtual base method
 end;
 
+procedure TPersistentCustomControl.UpdateView;
+begin
+  //
+end;
+
 function TPersistentCustomControl.GetObjectID: string;
 begin
   Result := FObjectID;
@@ -791,6 +808,11 @@ end;
 procedure TPersistentScrollBox.Update(Subject: THybridPersistentModel);
 begin
   // Virtual base method
+end;
+
+procedure TPersistentScrollBox.UpdateView;
+begin
+  //
 end;
 
 procedure TPersistentScrollBox.Connect;
@@ -1345,6 +1367,11 @@ begin
   FObjectID := Subject.ObjectID;
 end;
 
+procedure THybridPersistentView.UpdateView;
+begin
+  //
+end;
+
 function THybridPersistentView.GetModel: THybridPersistentModel;
 begin
   Result := FModel;
@@ -1418,6 +1445,11 @@ end;
 procedure TPersistentPanel.Update(Subject: THybridPersistentModel);
 begin
   // Virtual base method
+end;
+
+procedure TPersistentPanel.UpdateView;
+begin
+  //
 end;
 
 procedure TPersistentPanel.Connect;
@@ -1505,6 +1537,11 @@ end;
 procedure TPersistentGraphicControl.Update(Subject: THybridPersistentModel);
 begin
   // Virtual base class
+end;
+
+procedure TPersistentGraphicControl.UpdateView;
+begin
+  //
 end;
 
 function TPersistentGraphicControl.GetObjectID: string;

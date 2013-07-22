@@ -39,6 +39,9 @@ type
       State: TDragState; var Accept: Boolean);
   private
     { private declarations }
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
+
     FAudioOutGUI: TGenericPluginGUI;
     FAudioInGUI: TGenericPluginGUI;
 
@@ -59,6 +62,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
+    procedure UpdateView;
     procedure EraseBackground(DC: HDC); override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
@@ -189,6 +193,8 @@ begin
 
   inherited Create(AOwner);
 
+  FIsDirty := False;
+
   Height := 143;
 
   FNodeListGUI := TObjectList.create(True);
@@ -211,20 +217,40 @@ procedure TPluginProcessorGUI.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TPluginProcessorGUI.Update');
 
-  // Create or Delete pluginnodes
-  DBLog('DiffLists NodeListGUI');
-
-  DiffLists(
-    TPluginProcessor(Subject).NodeList,
-    NodeListGUI,
-    @CreatePluginNodeGUI,
-    @DeletePluginNodeGUI);
-
-  UpdatePluginOrder;
-
-  DoChangeNodeList;
+  FUpdateSubject := Subject;
+  FIsDirty := True;
 
   DBLog('end TPluginProcessorGUI.Update');
+end;
+
+procedure TPluginProcessorGUI.UpdateView;
+var
+  lIndex: Integer;
+begin
+  if FIsDirty and Assigned(FUpdateSubject) then
+  begin
+    FIsDirty := False;
+
+    // Create or Delete pluginnodes
+    DBLog('DiffLists NodeListGUI');
+
+    DiffLists(
+      TPluginProcessor(FUpdateSubject).NodeList,
+      NodeListGUI,
+      @CreatePluginNodeGUI,
+      @DeletePluginNodeGUI);
+
+    UpdatePluginOrder;
+
+    DoChangeNodeList;
+  end;
+
+  for lIndex := 0 to Pred(FNodeListGUI.Count) do
+  begin
+    TGenericPluginGUI(FNodeListGUI[lIndex]).UpdateView;
+  end;
+
+  Invalidate;
 end;
 
 procedure TPluginProcessorGUI.UpdatePluginOrder;

@@ -29,7 +29,6 @@ uses
   sampler;
 
 type
-
   { TPluginManager }
 
   TPluginManager = class(TObject)
@@ -54,6 +53,7 @@ type
     FNodeList: TObjectList;
     FFrames: Integer;
     FChannels: Integer;
+    FPopulateAutomationDevices: TPopulateAutomationDevices;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
     procedure SortPlugins;
@@ -67,6 +67,8 @@ type
     procedure InsertNode(ANode: TPluginNode);
     procedure RemoveNode(ANode: TPluginNode);
     property Buffer: PSingle read FBuffer write FBuffer;
+    property OnPopulateAutomationDevices: TPopulateAutomationDevices
+      read FPopulateAutomationDevices write FPopulateAutomationDevices;
   published
     property Enabled: Boolean read FEnabled write FEnabled;
     property NodeList: TObjectList read FNodeList write FNodeList;
@@ -483,6 +485,16 @@ var
   lPluginDecimate: TPluginDecimate;
   lPluginLadspa: TPluginLADSPA;
   lSampleBank: TSampleBank;
+
+  procedure AddPluginToNodeList(APluginNode: TPluginNode);
+  begin
+    APluginNode.OnPopulateAutomationDevices := FPluginProcessor.OnPopulateAutomationDevices;
+
+    FPluginProcessor.NodeList.Add(APluginNode);
+    APluginNode.Instantiate;
+    APluginNode.Activate;
+  end;
+
 begin
   DBLog('start TCreateNodesCommand.DoExecute');
 
@@ -496,7 +508,7 @@ begin
       lPluginDistortion.PluginType := ptDistortion;
       lPluginDistortion.SequenceNr := FPluginProcessor.NodeList.Count;
 
-      FPluginProcessor.NodeList.Add(lPluginDistortion);
+      AddPluginToNodeList(lPluginDistortion);
 
       ObjectIdList.Add(lPluginDistortion.ObjectID);
     end;
@@ -507,7 +519,7 @@ begin
       lSampleBank.PluginType := ptSampler;
       lSampleBank.SequenceNr := FPluginProcessor.NodeList.Count;
 
-      FPluginProcessor.NodeList.Add(lSampleBank);
+      AddPluginToNodeList(lSampleBank);
 
       ObjectIdList.Add(lSampleBank.ObjectID);
     end;
@@ -518,7 +530,7 @@ begin
       lPluginFreeverb.PluginType := ptReverb;
       lPluginFreeverb.SequenceNr := FPluginProcessor.NodeList.Count;
 
-      FPluginProcessor.NodeList.Add(lPluginFreeverb);
+      AddPluginToNodeList(lPluginFreeverb);
 
       ObjectIdList.Add(lPluginFreeverb.ObjectID);
     end;
@@ -529,7 +541,7 @@ begin
       lPluginBassline.PluginType := ptBassline;
       lPluginBassline.SequenceNr := FPluginProcessor.NodeList.Count;
 
-      FPluginProcessor.NodeList.Add(lPluginBassline);
+      AddPluginToNodeList(lPluginBassline);
 
       ObjectIdList.Add(lPluginBassline.ObjectID);
     end;
@@ -540,7 +552,7 @@ begin
       lPluginDecimate.PluginType := ptDecimate;
       lPluginDecimate.SequenceNr := FPluginProcessor.NodeList.Count;
 
-      FPluginProcessor.NodeList.Add(lPluginDecimate);
+      AddPluginToNodeList(lPluginDecimate);
 
       ObjectIdList.Add(lPluginDecimate.ObjectID);
     end;
@@ -550,14 +562,11 @@ begin
       lPluginLadspa.PluginName := FPluginName;
       lPluginLadspa.PluginType := ptLADSPA;
       lPluginLadspa.SequenceNr := FPluginProcessor.NodeList.Count;
-
-      FPluginProcessor.NodeList.Add(lPluginLadspa);
+      lPluginLadspa.UniqueID := FUniqueId;
 
       ObjectIdList.Add(lPluginLadspa.ObjectID);
 
-      lPluginLadspa.UniqueID := FUniqueId;
-      lPluginLadspa.Instantiate;
-      lPluginLadspa.Activate;
+      AddPluginToNodeList(lPluginLadspa);
     end;
   end;
 

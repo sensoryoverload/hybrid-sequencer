@@ -25,7 +25,7 @@ interface
 
 uses
   Classes, SysUtils, ContNrs, globalconst, jacktypes, sndfile,
-  XMLConf;
+  XMLConf, Menus;
 
 type
   TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
@@ -58,8 +58,6 @@ type
   TAutomationData = class(THybridPersistentModel)
   public
     Location: Integer; // Location in samples
-    DeviceId: string;    // ObjectId of plugindevice (or pattern)
-    ParameterId: string; // ObjectId of parameter
     DataValue: single;
     RelativeOffset: Integer;
 
@@ -188,6 +186,9 @@ type
     property DataSize: Integer read FDataSize write FDataSize;
     property ChannelCount: Integer read FChannelCount write FChannelCount;
   end;
+
+  TEditMode = (emPatternEdit, emAutomationEdit);
+
 
 var
   GObjectMapper: TObjectMapper;

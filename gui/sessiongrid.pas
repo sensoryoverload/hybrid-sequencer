@@ -93,6 +93,9 @@ type
 
   TTrackView = class(THybridPersistentView)
   private
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
+
     FTrackControls: TPanel;
     FVolumeFader: TVolumeControl;
     FPanControl: TParameterControl;
@@ -125,6 +128,7 @@ type
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); override;
+    procedure UpdateView; override;
     procedure Render(AX, AY: Integer; ABGRABitmap: TBGRABitmap);
     procedure RenderCursor(ACanvas: TCanvas);
     function PatternAtMouseXY(AX, AY: Integer): TPattern;
@@ -168,6 +172,8 @@ type
 
   TSessionGrid = class(TPersistentPanel)
   private
+    FUpdateSubject: THybridPersistentModel;
+    FIsDirty: Boolean;
     FBGRABitmap: TBGRABitmap;
     FDragStart: TDragPosition;
     FDragDrop: TDragPosition;
@@ -227,6 +233,7 @@ type
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
+    procedure UpdateView; override;
     procedure EraseBackground(DC: HDC); override;
     procedure DragDrop(Source: TObject; X, Y: Integer); override;
     function PatternAtMouseXY(X, Y: Integer): TPattern;
@@ -439,22 +446,35 @@ procedure TTrackView.Update(Subject: THybridPersistentModel);
 begin
   DBLog('start TTrackView.Update');
 
-  // SetLevel
-  FVolumeFader.Position := TTrack(Subject).Volume;
+  FUpdateSubject := Subject;
+  FIsDirty := True;
 
-  // SetActive
-  FActiveSwitch.SwitchedOn := TTrack(Subject).Active;
-
-  // SetBalance
-  FPanControl.Value := TTrack(Subject).Pan;
-
-  // SetInput
-
-  // SetOutput
-
-  FSessionGrid.Invalidate;
 
   DBLog('end TTrackView.Update');
+end;
+
+procedure TTrackView.UpdateView;
+begin
+  if FIsDirty and Assigned(FUpdateSubject) then
+  begin
+    FVolumeFader.LevelLeft := TTrack(FUpdateSubject).LeftLevel;
+    FVolumeFader.LevelRight := TTrack(FUpdateSubject).RightLevel;
+
+    // SetLevel
+    FVolumeFader.Position := TTrack(FUpdateSubject).Volume;
+
+    // SetActive
+    FActiveSwitch.SwitchedOn := TTrack(FUpdateSubject).Active;
+
+    // SetBalance
+    FPanControl.Value := TTrack(FUpdateSubject).Pan;
+
+    // SetInput
+
+    // SetOutput
+
+    FSessionGrid.Invalidate;
+  end;
 end;
 
 procedure TTrackView.Render(AX, AY: Integer; ABGRABitmap: TBGRABitmap);
@@ -603,6 +623,8 @@ constructor TTrackView.Create(AObjectOwner: string; TheOwner: TComponent);
 begin
   inherited Create(AObjectOwner);
 
+  FIsDirty := False;
+
   FSessionGrid := TSessionGrid(TheOwner);
 
   FTrackControls := TPanel.Create(FSessionGrid);
@@ -747,6 +769,8 @@ constructor TSessionGrid.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
+  FIsDirty := False;
+
   ControlStyle := ControlStyle + [csAcceptsControls];
 
   DoubleBuffered := True;
@@ -831,32 +855,51 @@ end;
 }
 procedure TSessionGrid.Update(Subject: THybridPersistentModel);
 begin
-  if Subject is TAudioStructure then
+  FUpdateSubject := Subject;
+
+  FIsDirty := True;
+end;
+
+procedure TSessionGrid.UpdateView;
+var
+  lIndex: Integer;
+begin
+  if FIsDirty and Assigned(FUpdateSubject) then
   begin
-    // Add/Remove tracks
-    DiffLists(
-      TAudioStructure(Subject).Tracks,
-      FTrackViewList,
-      @CreateTrackGUI,
-      @DeleteTrackGUI);
-  end
-  else if Subject is TTrack then
-  begin
-    // Add/Remove patterns
-  end
-  else if Subject is TPattern then
-  begin
-    if Subject is TMidiPattern then
+    FIsDirty := False;
+
+    if FUpdateSubject is TAudioStructure then
     begin
-      // Changed MIDI notes
+      // Add/Remove tracks
+      DiffLists(
+        TAudioStructure(FUpdateSubject).Tracks,
+        FTrackViewList,
+        @CreateTrackGUI,
+        @DeleteTrackGUI);
     end
-    else if Subject is TWavePattern then
+    else if FUpdateSubject is TTrack then
     begin
-      // Changed waveforms
+      // Add/Remove patterns
+    end
+    else if FUpdateSubject is TPattern then
+    begin
+      if FUpdateSubject is TMidiPattern then
+      begin
+        // Changed MIDI notes
+      end
+      else if FUpdateSubject is TWavePattern then
+      begin
+        // Changed waveforms
+      end;
     end;
+
+    Invalidate;
   end;
 
-  Invalidate;
+  for lIndex := 0 to Pred(FTrackViewList.Count) do
+  begin
+    TTrackView(FTrackViewList[lIndex]).UpdateView;
+  end;
 end;
 
 procedure TSessionGrid.EraseBackground(DC: HDC);
