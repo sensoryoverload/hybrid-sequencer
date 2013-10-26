@@ -31,6 +31,8 @@ uses
 type
   TAutomationDataList = class;
 
+  TSingleParameter = procedure (ASingle: Single) of object;
+
   TPortParameter = class(THybridPersistentModel)
   public
     PortRangeHint: LongWord;
@@ -44,6 +46,7 @@ type
     IsInteger: Boolean;
     IsToggled: Boolean;
     DefaultValue: Single;
+    SetValue: TSingleParameter;
     Value: PSingle;
     AutomationDataList: TAutomationDataList;
   end;
@@ -135,7 +138,8 @@ type
       AIsSampleRate: Boolean;
       AIsToggled: Boolean;
       ADefaultValue: Single;
-      AValue: PSingle
+      AValue: PSingle;
+      ASetValue: TSingleParameter
       ): Integer;
 
     property OnPopulateAutomationDevices: TPopulateAutomationDevices
@@ -303,7 +307,7 @@ begin
   if Assigned(FModel) then
   begin
     FOldValue := FModel.InputControls[FParameter].Value^;
-    FModel.InputControls[FParameter].Value^ := FValue;
+    FModel.InputControls[FParameter].SetValue(FValue);
 
     FModel.Notify;
   end;
@@ -313,7 +317,7 @@ procedure TLADSPACommand.DoRollback;
 begin
   if Assigned(FModel) then
   begin
-    FModel.InputControls[FParameter].Value^ := FOldValue;
+    FModel.InputControls[FParameter].SetValue(FOldValue);
 
     FModel.Notify;
   end;
@@ -704,7 +708,8 @@ function TPluginNode.CreatePortParameter(
   AIsSampleRate: Boolean;
   AIsToggled: Boolean;
   ADefaultValue: Single;
-  AValue: PSingle
+  AValue: PSingle;
+  ASetValue: TSingleParameter
   ): Integer;
 var
   lPortParameter: TPortParameter;
@@ -725,6 +730,7 @@ begin
   lPortParameter.IsToggled := AIsToggled;
   lPortParameter.DefaultValue := ADefaultValue;
   lPortParameter.Value := AValue;
+  lPortParameter.SetValue := ASetValue;
 end;
 
 { TExternalNode }

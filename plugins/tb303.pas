@@ -27,6 +27,9 @@ const
   ENVINC=64;
 
 type
+
+  { Ttb303 }
+
   Ttb303 = class
   private
     srate: double;
@@ -59,15 +62,19 @@ type
     vca_a0,
     vca_a: single;
 
-    procedure setcut(cut: single);
-    procedure setres(res: single);
-    procedure setenvmod(envmod: single);
-    procedure setenvdec(envdec: single);
     procedure recalc;
   public
     constructor Create(sr: double);
     destructor Destroy; override;
     function Process: single;
+
+    procedure setcut(cut: single);
+    procedure setres(res: single);
+    procedure setenvmod(envmod: single);
+    procedure setenvdec(envdec: single);
+    procedure setwaveform(waveform: single);
+    procedure setaccamt(amount: single);
+
     procedure NoteOn(note: integer; acc, glide: boolean);
     procedure NoteOff;
 
@@ -88,7 +95,6 @@ uses
 
 procedure TTB303.setcut(cut: single);
 begin
-  DBLog('setcut %f', cut);
   vcf_cutoff := cut;
   recalc;
 end;
@@ -112,6 +118,16 @@ begin
   vcf_envdecay := (0.2 + (2.3 * vcf_envdecayi)) * srate;
   if vcf_envdecay < 1 then vcf_envdecay := 1;
   vcf_envdecay := power(0.1, 1 / vcf_envdecay * ENVINC);
+end;
+
+procedure Ttb303.setwaveform(waveform: single);
+begin
+  vco_wav := Round(waveform);
+end;
+
+procedure Ttb303.setaccamt(amount: single);
+begin
+  AccAmt := amount;
 end;
 
 procedure TTB303.recalc;

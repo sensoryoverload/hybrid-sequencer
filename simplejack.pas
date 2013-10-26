@@ -1100,6 +1100,7 @@ begin
     FPatternView.UpdateView;
 
     FSessionGrid.Invalidate;
+    FPatternView.Invalidate;
 
     Inc(FLowPriorityInterval);
     if FLowPriorityInterval > 10 then

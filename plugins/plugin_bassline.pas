@@ -197,20 +197,19 @@ var
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
 
-  procedure UpdatePlugin;
+  {procedure UpdatePlugin;
   var
     lIndex: Integer;
   begin
-    for lIndex := 0 to Pred(InputControlCount) do
-    begin
-//      FInputControls[lIndex].Value := ;
-      FTB303.Cutoff := InputControls[lIndex].Value^;
-    end;
-  end;
+    {FTB303.Cutoff := InputControls[0].Value^;
+    FTB303.Resonance := InputControls[1].Value^;
+    FTB303.EnvMod := InputControls[2].Value^;}
+    InputControls[0].Value;
+  end;}
 
 begin
   // Set automation values here
-  UpdatePlugin;
+  //UpdatePlugin;
 
   lOffsetL := 0;
   lOffsetR := 1;
@@ -257,7 +256,13 @@ end;
 
 procedure TPluginBassline.Instantiate;
 begin
-  CreatePortParameter('Cutoff', 0, 1, True, True, False, True, False, False, 1, @FTB303.Cutoff);
+  CreatePortParameter('Cutoff', 0, 1, True, True, False, True, False, False, 1, @FTB303.Cutoff, @FTB303.setcut);
+  CreatePortParameter('Resonance', 0, 1, True, True, False, True, False, False, 1, @FTB303.Resonance, @FTB303.setres);
+  CreatePortParameter('Envelope', 0, 1, True, True, False, True, False, False, 1, @FTB303.EnvMod, @FTB303.setenvmod);
+  CreatePortParameter('Decay', 0, 1, True, True, False, True, False, False, 1, @FTB303.EnvDecay, @FTB303.setenvdec);
+  CreatePortParameter('Accent', 0, 1, True, True, False, True, False, False, 1, @FTB303.AccAmt, @FTB303.setaccamt);
+  CreatePortParameter('Wave', 0, 1, True, True, True, True, False, False, 1, @FTB303.Waveform, @FTB303.setwaveform);
+  CreatePortParameter('Overdrive', 1, 20, True, True, False, True, False, False, 1, @FOverDrive, @SetOverDrive);
 
   inherited;
 end;

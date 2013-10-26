@@ -5,7 +5,7 @@ object MainApp: TMainApp
   Width = 1213
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 732
+  ClientHeight = 751
   ClientWidth = 1213
   Font.Height = 7
   KeyPreview = True
@@ -159,17 +159,17 @@ object MainApp: TMainApp
   end
   object pnlBottom: TPanel
     Left = 0
-    Height = 388
+    Height = 407
     Top = 344
     Width = 1213
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 388
+    ClientHeight = 407
     ClientWidth = 1213
     TabOrder = 2
     object pnlVarious: TPanel
       Left = 0
-      Height = 388
+      Height = 407
       Top = 0
       Width = 170
       Align = alLeft
@@ -178,7 +178,7 @@ object MainApp: TMainApp
     end
     object Splitter1: TSplitter
       Left = 170
-      Height = 388
+      Height = 407
       Top = 0
       Width = 5
     end
