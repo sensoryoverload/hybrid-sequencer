@@ -8,6 +8,9 @@ uses
   Classes, SysUtils, plugin, global_command, tb303, global, globalconst, utils,
   audiostructure;
 
+const
+  PLUGIN_NAME_BASSLINE = 'Bassline';
+
 type
   TTbParameter = (tbPitch, tbCutoff, tbReso, tbEnvMod, tbDecay, tbAccent, tbWave,
     tbOverdrive);
@@ -354,6 +357,8 @@ begin
   inherited Create(AObjectOwnerID, AMapped);
 
   FOverDrive := 1;
+
+  PluginName := PLUGIN_NAME_BASSLINE;
 
   FTB303 := TTB303.Create(GSettings.SampleRate);
 end;

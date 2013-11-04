@@ -537,7 +537,6 @@ begin
     ptBassline:
     begin
       lPluginBassline := TPluginBassline.Create(FPluginProcessor.ObjectID, MAPPED);
-      lPluginBassline.PluginName := FPluginName;
       lPluginBassline.PluginType := ptBassline;
       lPluginBassline.SequenceNr := FPluginProcessor.NodeList.Count;
 

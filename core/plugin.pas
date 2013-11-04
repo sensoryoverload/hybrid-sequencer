@@ -256,9 +256,12 @@ type
     function FrameFirstIndex(ALocation: Integer): Integer;
     function FrameLastIndex(ALocation: Integer): Integer;
     function CurrentAutomationData: TAutomationData;
+    function NextAutomationData: TAutomationData;
+    function PreviousAutomationData: TAutomationData;
     procedure Next;
     procedure First;
     function Eof: Boolean;
+    function Bof: Boolean;
 
     procedure IndexList;
     procedure AddAutomation(AAutomationData :TAutomationData);
@@ -853,6 +856,26 @@ begin
     Result := TAutomationData(FList.Last)
 end;
 
+function TAutomationDataList.NextAutomationData: TAutomationData;
+begin
+  if Succ(FIndex) < FList.Count then
+  begin
+    Result := TAutomationData(FList.Items[Succ(FIndex)]);
+  end
+  else
+    Result := TAutomationData(FList.Last)
+end;
+
+function TAutomationDataList.PreviousAutomationData: TAutomationData;
+begin
+  if FIndex > 0 then
+  begin
+    Result := TAutomationData(FList.Items[Pred(FIndex)]);
+  end
+  else
+    Result := TAutomationData(FList.First)
+end;
+
 procedure TAutomationDataList.Next;
 begin
   FIndex := FIndex + 1;
@@ -861,6 +884,11 @@ end;
 function TAutomationDataList.Eof: Boolean;
 begin
   Result := FIndex >= FList.Count;
+end;
+
+function TAutomationDataList.Bof: Boolean;
+begin
+  Result := FIndex <= 0;
 end;
 
 {

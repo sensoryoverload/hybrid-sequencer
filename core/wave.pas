@@ -706,8 +706,8 @@ begin
 
   PitchAlgorithm := paSliceStretch;
 
-  Getmem(FWorkBuffer, 88200);
-  Getmem(FConvertBuffer, 44100 * SizeOf(Single));
+  Getmem(FWorkBuffer, Round(GSettings.SampleRate * 2));
+  Getmem(FConvertBuffer, Round(GSettings.SampleRate) * SizeOf(Single));
 //  FDiskWriterThread := TDiskWriterThread.Create(False);
 //  FDiskWriterThread.FreeOnTerminate := True;
 //  FDiskReaderThread := TDiskReaderThread.Create(False);

@@ -18,6 +18,7 @@ type
     btnHalf: TButton;
     cbPitchAlgo: TComboBox;
     cbQuantize: TComboBox;
+    lblAutomation: TLabel;
     MenuItem1: TMenuItem;
     Panel1: TPanel;
     Panel2: TPanel;
@@ -249,6 +250,9 @@ begin
       FWaveGUI.EditMode := emAutomationEdit;
       FWaveGUI.SelectedAutomationParameter := TMenuItemObject(Sender).ObjectId;
       FWaveGUI.SelectedAutomationDevice := TMenuItemObject(Sender).DeviceId;
+      btnAutomationSelect.Caption :=
+        TMenuItemObject(Sender).Parent.Caption + ' > ' +
+        TMenuItemObject(Sender).Caption;
     end;
   end;
 end;
@@ -260,6 +264,7 @@ begin
     if TMenuItemObject(Sender).ObjectType = miotNone then
     begin
       FWaveGUI.EditMode := emPatternEdit;
+      btnAutomationSelect.Caption := 'None';
     end;
   end;
 end;

@@ -22,6 +22,7 @@ type
     FRateSkip,
     FSampleRate: single;
     procedure SetBits(AValue: Integer);
+    procedure SetBitsFloat(AValue: single);
     procedure SetSampleRate(AValue: Single);
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
@@ -29,6 +30,7 @@ type
     procedure Init(ABits: integer; ASampleRate: single);
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    procedure Instantiate; override;
   published
     property Bits: Integer read FBits write SetBits;
     property SampleRate: Single read FSampleRate write SetSampleRate;
@@ -141,12 +143,23 @@ begin
   end;
 end;
 
+procedure TPluginDecimate.Instantiate;
+begin
+  CreatePortParameter('Bits', 1, 32, True, True, False, True, False, False, 32, @FBits, @SetBitsFloat);
+  CreatePortParameter('Samplerate', 0, 1, True, True, False, True, False, False, 1, @FSampleRate, @SetSampleRate);
+end;
+
 procedure TPluginDecimate.SetBits(AValue: Integer);
 begin
   if FBits = AValue then Exit;
   FBits := AValue;
 
   Init(FBits, FSampleRate);
+end;
+
+procedure TPluginDecimate.SetBitsFloat(AValue: single);
+begin
+  Bits := Round(AValue);
 end;
 
 procedure TPluginDecimate.SetSampleRate(AValue: Single);

@@ -31,8 +31,12 @@ const
   clGlobalOutline = TColor($67748C);
   clMidigridBackgroundBlack = TColor($C4C8CC);
   clMidigridBackgroundWhite = TColor($D9DDE2);
+  clMidigridBackgroundDark = TColor($C9CDD2);
   clMidigridBlack = clBlack;
   clMidigridWhite = clWhite;
+  clDarkGreen = TColor($C080C0);
+  clDarkLime = TColor($C0FFC0);
+  clDarkOutline = TColor($CCCCCC);
 
 implementation
 

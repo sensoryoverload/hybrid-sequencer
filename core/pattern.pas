@@ -263,9 +263,25 @@ begin
         lAutomationDataList.CurrentAutomationData.DataValue;
       FStoredObjectId := ObjectID;
 
-      lAutomationDataList.CurrentAutomationData.Location := FLocation;
-      lAutomationDataList.CurrentAutomationData.DataValue := FDataValue;
-      break;
+      if (
+           (FLocation > lAutomationDataList.PreviousAutomationData.Location) and
+           (FLocation < lAutomationDataList.NextAutomationData.Location)
+         )
+         or
+         (
+           (lAutomationDataList.Index = 0) and
+           (FLocation < lAutomationDataList.NextAutomationData.Location)
+         )
+         or
+         (
+           (lAutomationDataList.Index = Pred(lAutomationDataList.List.Count)) and
+           (FLocation > lAutomationDataList.PreviousAutomationData.Location)
+         ) then
+      begin
+        lAutomationDataList.CurrentAutomationData.Location := FLocation;
+        lAutomationDataList.CurrentAutomationData.DataValue := FDataValue;
+        break;
+      end;
     end;
 
     lAutomationDataList.Next;
@@ -666,6 +682,7 @@ procedure TPattern.ProcessAutomation;
 var
   lIndex: Integer;
   lAutomationData: TAutomationData;
+  lFirstAutomationData: TAutomationData;
   lLeftIndex: Integer;
   lLeftAutomationData: TAutomationData;
   lLeftLocation: Integer;
@@ -709,102 +726,98 @@ begin
 
             if lAutomationParameter.PluginParameter = lPort then
             begin
-              lLeftLocationFound := False;
-
-              // Find previous and next automation data points and do a linear interpolate.
-              lLeftIndex := 0;
-              for lIndex := 0 to Pred(lAutomationParameter.List.Count) do
+              // Cursor before first automation event so just use that value
+              lFirstAutomationData := TAutomationData(lAutomationParameter.List[0]);
+              if FPatternCursor < lFirstAutomationData.Location then
               begin
-                lAutomationData := TAutomationData(lAutomationParameter.List[lIndex]);
+                lCalculatedValue :=
+                  lFirstAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
 
-                if TAutomationData(lAutomationParameter.List[lIndex]).Location > FPatternCursor then
-                begin
-                  if lIndex = 0 then
-                  begin
-                    lLeftIndex := 0
-                  end
-                  else
-                  begin
-                    lLeftIndex := Pred(lIndex);
-                  end;
-
-                  break;
-                end;
-              end;
-
-              // Find right index
-              {lRightIndex := Pred(lAutomationParameter.List.Count);
-              for lIndex := Pred(lAutomationParameter.List.Count) downto 0 do
-              begin
-                lAutomationData := TAutomationData(lAutomationParameter.List[lIndex]);
-
-                if TAutomationData(lAutomationParameter.List[lIndex]).Location < FPatternCursor then
-                begin
-                  if lIndex = Pred(lAutomationParameter.List.Count) then
-                  begin
-                    lRightIndex := lIndex;
-                  end
-                  else
-                  begin
-                    lRightIndex := Succ(lIndex);
-                  end;
-
-                  break;
-                end;
-              end;}
-              lRightIndex := Succ(lLeftIndex);
-
-              if lRightIndex > Pred(lAutomationParameter.List.Count) then
-              begin
-                lRightIndex := Pred(lAutomationParameter.List.Count);
-              end;
-
-              lLeftAutomationData := TAutomationData(lAutomationParameter.List[lLeftIndex]);
-              lLeftLocation := lLeftAutomationData.Location;
-
-              lRightAutomationData := TAutomationData(lAutomationParameter.List[lRightIndex]);
-              lRightLocation := lRightAutomationData.Location;
-
-              if (lLeftLocation < FPatternCursor) and (lRightLocation > FPatternCursor) then
-              begin
-                lLeftValue :=
-                  lLeftAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
-
-                lRightValue :=
-                  lRightAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
-
-                if lRightLocation - lLeftLocation <> 0 then
-                begin
-                  if lRightLocation <> lLeftLocation then
-                  begin
-                    // Linear interpolate to find the actual automation value at the cursor
-                    lCalculatedValue :=
-                      lRightValue + (lLeftValue - lRightValue) *
-                      (
-                        (FPatternCursor - lLeftLocation)
-                        /
-                        (lRightLocation - lLeftLocation)
-                      );
-                  end
-                  else
-                  begin
-                    lCalculatedValue := lPort.DefaultValue;
-                  end;
-
-                  lPort.Value^ := lCalculatedValue;
-                  lPort.SetValue(lCalculatedValue);
-
-
-                  {dblog(format('Cursor %f Leftvalue %f rightvalue %f leftlocation %d rightlocation %d value %f', [
-                    FPatternCursor,
-                    lLeftValue,
-                    lRightValue,
-                    lLeftLocation,
-                    lRightLocation,
-                    lPort.Value^]));}
-                end;
+                lPort.Value^ := lCalculatedValue;
+                lPort.SetValue(lCalculatedValue);
 
                 break;
+              end
+              else
+              begin
+                lLeftLocationFound := False;
+
+                // Find previous and next automation data points and do a linear interpolate.
+                lLeftIndex := 0;
+                for lIndex := 0 to Pred(lAutomationParameter.List.Count) do
+                begin
+                  lAutomationData := TAutomationData(lAutomationParameter.List[lIndex]);
+
+                  if TAutomationData(lAutomationParameter.List[lIndex]).Location > FPatternCursor then
+                  begin
+                    if lIndex = 0 then
+                    begin
+                      lLeftIndex := 0
+                    end
+                    else
+                    begin
+                      lLeftIndex := Pred(lIndex);
+                    end;
+
+                    break;
+                  end;
+                end;
+
+                lRightIndex := Succ(lLeftIndex);
+
+                if lRightIndex > Pred(lAutomationParameter.List.Count) then
+                begin
+                  lRightIndex := Pred(lAutomationParameter.List.Count);
+                end;
+
+                lLeftAutomationData := TAutomationData(lAutomationParameter.List[lLeftIndex]);
+                lLeftLocation := lLeftAutomationData.Location;
+
+                lRightAutomationData := TAutomationData(lAutomationParameter.List[lRightIndex]);
+                lRightLocation := lRightAutomationData.Location;
+
+                if (lLeftLocation < FPatternCursor) and (lRightLocation > FPatternCursor) then
+                begin
+                  lLeftValue :=
+                    lLeftAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+
+                  lRightValue :=
+                    lRightAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+
+                  if lRightLocation - lLeftLocation <> 0 then
+                  begin
+                    if lRightLocation <> lLeftLocation then
+                    begin
+                      // Linear interpolate to find the actual automation value at the cursor
+                      lCalculatedValue :=
+                        lLeftValue + (lRightValue - lLeftValue) *
+                        (
+                          (FPatternCursor - lLeftLocation)
+                          /
+                          (lRightLocation - lLeftLocation)
+                        );
+                    end
+                    else
+                    begin
+                      lCalculatedValue := lPort.DefaultValue;
+                    end;
+
+                    lPort.Value^ := lCalculatedValue;
+                    lPort.SetValue(lCalculatedValue);
+
+                    //dblog(format('value %f', [lPort.Value^]));
+
+                    dblog(format('Cursor %f Leftvalue %f rightvalue %f leftlocation %d rightlocation %d value %f', [
+                      FPatternCursor,
+                      lLeftValue,
+                      lRightValue,
+                      lLeftLocation,
+                      lRightLocation,
+                      lPort.Value^]));
+                  end;
+
+                  break;
+                end;
               end;
             end;
           end;

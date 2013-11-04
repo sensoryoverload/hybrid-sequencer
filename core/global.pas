@@ -106,10 +106,12 @@ type
     FIDCounter: Integer;
     FEscapeAction: Boolean;
     FSampleRate: single;
+    FHalfSampleRate: single;
     FSampleMap: string;
     FMapToVisible: Boolean;
     procedure SetFrames(const AValue: Integer);
     procedure SetModifier(const AValue: TShiftState);
+    procedure SetSampleRate(AValue: single);
     procedure SetSelectedPatternGUI(const AValue: TObject);
   public
     constructor Create;
@@ -128,7 +130,8 @@ type
     property Frames: Integer read FFrames write SetFrames;
     property OnShuffleRefresh: TShuffleRefreshEvent read FOnShuffleRefresh write FOnShuffleRefresh;
     property EscapeAction: Boolean read FEscapeAction write FEscapeAction default false;
-    property SampleRate: single read FSampleRate write FSampleRate;
+    property SampleRate: single read FSampleRate write SetSampleRate;
+    property HalfSampleRate: single read FHalfSampleRate write FHalfSampleRate;
     property SampleMap: string read FSampleMap write FSampleMap;
     property MapToVisible: Boolean read FMapToVisible write FMapToVisible;
   end;
@@ -267,6 +270,13 @@ begin
     // Extra additions
     ssMeta, ssSuper, ssHyper, ssAltGr, ssCaps, ssNum,
     ssScroll,ssTriple,ssQuad,ssExtra1,ssExtra2);}
+end;
+
+procedure TSettings.SetSampleRate(AValue: single);
+begin
+  if FSampleRate = AValue then Exit;
+  FSampleRate := AValue;
+  FHalfSampleRate := AValue / 2;
 end;
 
 procedure TSettings.SetSelectedPatternGUI(const AValue: TObject);

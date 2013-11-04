@@ -70,13 +70,21 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         TabOrder = 1
       end
       object btnAutomationSelect: TButton
-        Left = 428
+        Left = 497
         Height = 25
         Top = 0
-        Width = 75
-        Caption = 'Automation'
+        Width = 124
+        Caption = 'None'
         OnClick = btnAutomationSelectClick
         TabOrder = 2
+      end
+      object lblAutomation: TLabel
+        Left = 429
+        Height = 14
+        Top = 7
+        Width = 58
+        Caption = 'Automation'
+        ParentColor = False
       end
     end
   end

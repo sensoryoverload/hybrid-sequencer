@@ -99,13 +99,21 @@ object WavePatternControlGUI: TWavePatternControlGUI
       OnStartChange = pcPitchStartChange
     end
     object btnAutomationSelect: TButton
-      Left = 700
+      Left = 766
       Height = 25
       Top = 0
-      Width = 75
-      Caption = 'Automation'
+      Width = 117
+      Caption = 'None'
       OnClick = btnAutomationSelectClick
       TabOrder = 7
+    end
+    object lblAutomation: TLabel
+      Left = 703
+      Height = 14
+      Top = 5
+      Width = 58
+      Caption = 'Automation'
+      ParentColor = False
     end
   end
   object Panel2: TPanel

@@ -533,8 +533,7 @@ procedure TMidiPatternGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
 
         lEventX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
         lEventY := Round(Height - lAutomationData.DataValue * Height);
-        if (X >= lEventX - 4) and (X < lEventX + 4) and
-          (Y >= lEventY - 4) and (Y < lEventY + 4) then
+        if (Abs(X - lEventX) < 6) and (Abs(Y - lEventY) < 6) then
         begin
           Result := FSelectedAutomationParameter.CurrentAutomationData;
           break;
@@ -834,6 +833,9 @@ var
   lAutomationData: TAutomationData;
   lAutomationScreenY: Integer;
   lAutomationScreenX: Integer;
+  lNoteColor: TColor;
+  lSelectedNoteColer: TColor;
+  lNoteOutline: TColor;
 begin
   if not Assigned(FModel) then exit;
 
@@ -842,8 +844,22 @@ begin
   FBitmap.Width := Width;
 
   // Draw default background
-  FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
-  FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
+  if FEditMode = emPatternEdit then
+  begin
+    FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
+    FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
+    lSelectedNoteColer := clGreen;
+    lNoteColor := clLime;
+    lNoteOutline := clBlack;
+  end
+  else
+  begin
+    FBitmap.Canvas.Brush.Color := clMidigridBackgroundDark;
+    FBitmap.Canvas.Pen.Color := clMidigridBackgroundDark;
+    lSelectedNoteColer := clDarkGreen;
+    lNoteColor := clDarkLime;
+    lNoteOutline := clDarkOutline;
+  end;
   FBitmap.Canvas.Rectangle(0, 0, FBitmap.Width, FBitmap.Height);
 
   // Draw note indictor lines
@@ -870,7 +886,7 @@ begin
     if lMidiNoteKey = keyBlack then
     begin
       FBitmap.Canvas.Rectangle(
-        30,
+        PIANO_WIDTH,
         ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
         FBitmap.Width,
         ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
@@ -916,7 +932,7 @@ begin
 
   repeat
     x := ConvertTimeToScreen(Round(lTime)) + FOffset;
-    lNewTime := Round(lTime) div 22050 + 1;
+    lNewTime := Round(lTime) div Round(GSettings.HalfSampleRate) + 1;
     if x < FBitmap.Width then
     begin
       FBitmap.Canvas.Pen.Color := clGray;
@@ -936,8 +952,12 @@ begin
   lHighlightLocation := ConvertTimeToScreen(FNoteHighlightLocation) + FOffset;
   lHighlightNote := ConvertNoteToScreen(FNoteHighlightNote) + FNoteOffset;
   lHighlightWidth := Round(FQuantizeValue * FZoomFactorToScreenX);
-  FBitmap.Canvas.Rectangle(lHighlightLocation, lHighlightNote,
-    lHighlightLocation + lHighlightWidth, lHighlightNote + FZoomNoteHeight);
+
+  FBitmap.Canvas.Rectangle(
+    lHighlightLocation,
+    lHighlightNote,
+    lHighlightLocation + lHighlightWidth,
+    lHighlightNote + FZoomNoteHeight);
 
   // Draw rubberband selector with dashed outline
   if FRubberBandMode then
@@ -951,8 +971,8 @@ begin
   end;
 
   // Draw midi notes
-  FBitmap.Canvas.Pen.Color := clBlack;
-  FBitmap.Canvas.Brush.Color := clGreen;
+  FBitmap.Canvas.Pen.Color := lNoteOutline;
+  FBitmap.Canvas.Brush.Color := lNoteOutline;
 
   for lIndex := 0 to Pred(NoteListGUI.Count) do
   begin
@@ -960,11 +980,11 @@ begin
 
     if lNote.Selected then
     begin
-      FBitmap.Canvas.Brush.Color := clGreen;
+      FBitmap.Canvas.Brush.Color := lSelectedNoteColer;
     end
     else
     begin
-      FBitmap.Canvas.Brush.Color := clLime;
+      FBitmap.Canvas.Brush.Color := lNoteColor;
     end;
 
     FBitmap.Canvas.Rectangle(
@@ -990,7 +1010,7 @@ begin
     FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
     FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
     FBitmap.Canvas.Clipping := True;
-    FBitmap.Canvas.Rectangle(0, 0, 30, FBitmap.Height);
+    FBitmap.Canvas.Rectangle(0, 0, PIANO_WIDTH, FBitmap.Height);
     lMidiNoteModula := 0;
     for lNoteIndex := 0 to 127 do
     begin
@@ -1016,7 +1036,7 @@ begin
         FBitmap.Canvas.Rectangle(
           0,
           ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
-          30,
+          PIANO_WIDTH,
           ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
       end;
 
@@ -1027,7 +1047,7 @@ begin
       FBitmap.Canvas.Line(
         0,
         ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
-        30,
+        PIANO_WIDTH,
         ConvertNoteToScreen(lNoteIndex) + FNoteOffset);
       end;
       Inc(lMidiNoteModula);
@@ -1036,8 +1056,7 @@ begin
         lMidiNoteModula := 0;
       end;
     end;
-    FBitmap.Canvas.Line(30, 0, 30, FBitmap.Height);
-
+    FBitmap.Canvas.Line(PIANO_WIDTH, 0, 30, FBitmap.Height);
   end;
 
   // Draw loopstartmarker
@@ -1058,40 +1077,66 @@ begin
     FBitmap.Canvas.Line(x, 0, x, Height);
     //FBitmap.Canvas.TextOut(x + 10, 10, Format('End %d', [LoopEnd.Location]))
   end;
-  FBitmap.Canvas.Pen.Width := 2;
 
   // Draw automation data
   if FEditMode = emAutomationEdit then
   begin
+    FBitmap.Canvas.Pen.Width := 1;
+
     if Assigned(FSelectedAutomationParameter) then
     begin
-      lAutomationScreenY := Height div 2;
-      FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
-
-      FSelectedAutomationParameter.First;
-      while not FSelectedAutomationParameter.Eof do
+      if FSelectedAutomationParameter.List.Count > 0 then
       begin
+        FSelectedAutomationParameter.First;
         lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
 
         lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
-        lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
-        FBitmap.Canvas.LineTo(
-          lAutomationScreenX,
-          lAutomationScreenY);
+        FBitmap.Canvas.MoveTo(Succ(PIANO_WIDTH), lAutomationScreenY);
 
-        FBitmap.Canvas.Brush.Color := clRed;
-        FBitmap.Canvas.Rectangle(
-          lAutomationScreenX - 4,
-          lAutomationScreenY - 4,
-          lAutomationScreenX + 4,
-          lAutomationScreenY + 4);
+        while not FSelectedAutomationParameter.Eof do
+        begin
+          lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
 
-        FSelectedAutomationParameter.Next;
+          lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
+          lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+          FBitmap.Canvas.Brush.Color := clRed;
+          FBitmap.Canvas.LineTo(
+            lAutomationScreenX,
+            lAutomationScreenY);
+
+          if (Abs(FMouseX - lAutomationScreenX) < 5) and
+            (Abs(FMouseY - lAutomationScreenY) < 5) then
+          begin // Mouse over dataselectionpoint
+            FBitmap.Canvas.Brush.Color := clLime;
+            FBitmap.Canvas.Rectangle(
+              lAutomationScreenX - 5,
+              lAutomationScreenY - 5,
+              lAutomationScreenX + 5,
+              lAutomationScreenY + 5);
+          end
+          else
+          begin
+            FBitmap.Canvas.Brush.Color := clRed;
+            FBitmap.Canvas.Rectangle(
+              lAutomationScreenX - 4,
+              lAutomationScreenY - 4,
+              lAutomationScreenX + 4,
+              lAutomationScreenY + 4);
+          end;
+
+          FSelectedAutomationParameter.Next;
+        end;
+        FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+      end
+      else
+      begin
+        // No automation so just draw a straight line
+        lAutomationScreenY := Height div 2;
+        FBitmap.Canvas.MoveTo(Succ(PIANO_WIDTH), lAutomationScreenY);
+        FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
       end;
-      FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
     end;
   end;
-  FBitmap.Canvas.Pen.Width := 1;
 
   Canvas.Draw(0, 0, FBitmap);
 
@@ -1242,16 +1287,16 @@ begin
   FQuantizeSetting := AValue;
   case FQuantizeSetting of
   0: FQuantizeValue := -1;
-  1: FQuantizeValue := 22050 * 4;
-  2: FQuantizeValue := 22050 * 2;
-  3: FQuantizeValue := 22050;
-  4: FQuantizeValue := 22050 / 2;
-  5: FQuantizeValue := 22050 / 3;
-  6: FQuantizeValue := 22050 / 4;
-  7: FQuantizeValue := 22050 / 6;
-  8: FQuantizeValue := 22050 / 8;
-  9: FQuantizeValue := 22050 / 16;
-  10: FQuantizeValue := 22050 / 32;
+  1: FQuantizeValue := GSettings.HalfSampleRate * 4;
+  2: FQuantizeValue := GSettings.HalfSampleRate * 2;
+  3: FQuantizeValue := GSettings.HalfSampleRate;
+  4: FQuantizeValue := GSettings.HalfSampleRate / 2;
+  5: FQuantizeValue := GSettings.HalfSampleRate / 3;
+  6: FQuantizeValue := GSettings.HalfSampleRate / 4;
+  7: FQuantizeValue := GSettings.HalfSampleRate / 6;
+  8: FQuantizeValue := GSettings.HalfSampleRate / 8;
+  9: FQuantizeValue := GSettings.HalfSampleRate / 16;
+  10: FQuantizeValue := GSettings.HalfSampleRate / 32;
   end;
 end;
 
@@ -1527,7 +1572,7 @@ function TMidiPatternGUI.QuantizeLocation(ALocation: Integer): Integer;
 begin
   if FModel.QuantizeSetting = 0 then
   begin
-    Result := Round(Trunc(ALocation / 22050) * 22050);
+    Result := Round(Trunc(ALocation / GSettings.HalfSampleRate) * GSettings.HalfSampleRate);
   end
   else
   begin
@@ -1649,7 +1694,7 @@ begin
     lCreateNoteCommand := TCreateNotesCommand.Create(Self.ObjectID);
     try
       if FQuantizeValue = 0 then
-        lCreateNoteCommand.NoteLength := 22050
+        lCreateNoteCommand.NoteLength := Round(GSettings.HalfSampleRate)
       else
         lCreateNoteCommand.NoteLength := Round(FQuantizeValue);
 

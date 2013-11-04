@@ -16,6 +16,7 @@ type
     btnAutomationSelect: TButton;
     cbMidiChannel: TComboBox;
     cbQuantize: TComboBox;
+    lblAutomation: TLabel;
     lblMidiChannel: TLabel;
     lblQuantize: TLabel;
     PairSplitter1: TPairSplitter;
@@ -239,6 +240,9 @@ begin
           TMenuItemObject(Sender).PluginParameter).ObjectID;
 
       FMidiPatternGUI.SelectedAutomationDeviceId := TMenuItemObject(Sender).DeviceId;
+      btnAutomationSelect.Caption :=
+        TMenuItemObject(Sender).Parent.Caption + ' > ' +
+        TMenuItemObject(Sender).Caption;
     end;
   end;
 end;
@@ -250,6 +254,7 @@ begin
     if TMenuItemObject(Sender).ObjectType = miotNone then
     begin
       FMidiPatternGUI.EditMode := emPatternEdit;
+      btnAutomationSelect.Caption := 'None';
     end;
   end;
 end;

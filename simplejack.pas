@@ -125,6 +125,7 @@ type
     miOpenLiveSet: TMenuItem;
     miSaveLiveSet: TMenuItem;
     miCreateTrack: TMenuItem;
+    pcCPU_Load: TParameterControl;
     pnlToolbar: TPanel;
     pnlVarious: TPanel;
     pnlBottom: TPanel;
@@ -1093,6 +1094,9 @@ begin
     begin
       FSimpleWaveForm.Invalidate;
     end;
+
+    // Display cpu usage in percentages
+    pcCPU_Load.Value := jack_cpu_load(client);
 
     // Update views
     Self.UpdateView;
