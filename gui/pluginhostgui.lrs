@@ -3,8 +3,8 @@
 LazarusResources.Add('TPluginProcessorGUI','FORMDATA',[
   'TPF0'#19'TPluginProcessorGUI'#18'PluginProcessorGUI'#4'Left'#2#0#6'Height'#3
   +#193#0#3'Top'#2#0#5'Width'#3#16#3#12'ClientHeight'#3#193#0#11'ClientWidth'#3
-  +#16#3#8'TabOrder'#2#0#10'DesignLeft'#3#2#1#9'DesignTop'#3#162#0#0#6'TPanel'#9
-  +'pnlPlugin'#4'Left'#2#0#6'Height'#3#193#0#3'Top'#2#0#5'Width'#3#16#3#5'Align'
+  +#16#3#8'TabOrder'#2#0#10'DesignLeft'#3#0#1#9'DesignTop'#2't'#0#6'TPanel'#9'p'
+  +'nlPlugin'#4'Left'#2#0#6'Height'#3#193#0#3'Top'#2#0#5'Width'#3#16#3#5'Align'
   +#7#8'alClient'#10'BevelOuter'#7#6'bvNone'#11'ParentColor'#8#8'TabOrder'#2#0
   +#10'OnDragDrop'#7#17'pnlPluginDragDrop'#10'OnDragOver'#7#17'pnlPluginDragOve'
   +'r'#0#0#0

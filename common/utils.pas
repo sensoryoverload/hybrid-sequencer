@@ -132,6 +132,7 @@ procedure StartTimer;
 procedure StopTimer(ALogMessage: string);
 
 function hermite4(frac_pos, xm1, x0, x1, x2: single): single; inline;
+function LinearInterpolate(ALeftValue, ARightValue, ALeftLocation, ARightLocation, AValue: Single): Single; inline;
 
 function DumpExceptionCallStack(E: Exception): string;
 function DumpCallStack: string;
@@ -484,6 +485,22 @@ begin
   b_neg := w + a;
 
   Result := ((((a * frac_pos) - b_neg) * frac_pos + c) * frac_pos + x0);
+end;
+
+function LinearInterpolate(
+  ALeftValue,
+  ARightValue,
+  ALeftLocation,
+  ARightLocation,
+  AValue: Single): Single;
+begin
+  Result :=
+    ALeftValue + (ARightValue - ALeftValue) *
+    (
+      (AValue - ALeftLocation)
+      /
+      (ARightLocation - ALeftLocation)
+    );
 end;
 
 { TLogMessageThread }

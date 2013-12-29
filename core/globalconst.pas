@@ -381,6 +381,7 @@ type
     Pitch: Single;     // Pitch rate for slice
     Index: Integer;
     FadeInFactor: Single;
+    FadeOutFactor: Single;
   end;
 
   { TLoopMarker }

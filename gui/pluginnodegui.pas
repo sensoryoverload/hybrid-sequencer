@@ -30,7 +30,6 @@ type
   private
     { private declarations }
     FUpdateSubject: THybridPersistentModel;
-    FIsDirty: Boolean;
     FObjectOwnerID: string;
     FObjectID: string;
     FModel: THybridPersistentModel;
@@ -99,8 +98,6 @@ end;
 procedure TGenericPluginGUI.Update(Subject: THybridPersistentModel);
 begin
   FUpdateSubject := Subject;
-
-  FIsDirty := True;
 end;
 
 procedure TGenericPluginGUI.UpdateView;
@@ -108,10 +105,8 @@ var
   lParameterIndex: Integer;
   lPlugin: TPluginNode;
 begin
-  if {FIsDirty and} Assigned(FModel) then
+  if Assigned(FModel) then
   begin
-    FIsDirty := False;
-
     lPlugin := TPluginNode(FModel);
 
     for lParameterIndex := 0 to Pred(lPlugin.InputControlCount) do

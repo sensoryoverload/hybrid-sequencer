@@ -27,6 +27,20 @@ type
     function Process(AInput: single): single;
   end;
 
+  { TAudioSmooth }
+
+  TAudioSmooth = class
+  private
+    a, b, z: single;
+    lastvalue: single;
+    GlitchTriggered: Boolean;
+    GlitchLength: Integer;
+  public
+    constructor Create;
+    procedure TrackSpeed(AValue: Single);
+    function Process(AInput: single; ATransient: Boolean = False): single;
+  end;
+
 function lin2db(lin: single): single;
 function db2lin(db: single): single;
 function fast_log2(val:single):single;
@@ -155,6 +169,51 @@ function TParamSmooth.Process(AInput: single): single;
 begin
   z := (AInput * b) + (z * a);
   Result := z;
+end;
+
+{ TParamSmooth }
+
+constructor TAudioSmooth.Create;
+begin
+  inherited Create;
+
+  TrackSpeed(0.01);
+end;
+
+function TAudioSmooth.Process(AInput: single; ATransient: Boolean = False): single;
+var
+  lTransientDetected: Boolean;
+begin
+  if ATransient or (Abs(lastvalue - AInput) > 0.3) then
+  begin
+    lTransientDetected := True;
+    GlitchLength := 100;
+  end
+  else
+  begin
+    lTransientDetected := False;
+  end;
+
+  if lTransientDetected or (GlitchLength > 0) then
+  begin
+    z := (AInput * b) + (z * a);
+    Dec(GlitchLength);
+  end
+  else
+  begin
+    z := AInput;
+  end;
+
+  lastvalue := AInput;
+
+  Result := z;
+end;
+
+procedure TAudioSmooth.TrackSpeed(AValue: Single);
+begin
+  a := AValue;
+  b := 1.0 - a;
+  z := 0;
 end;
 
 initialization

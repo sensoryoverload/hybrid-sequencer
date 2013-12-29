@@ -6,8 +6,8 @@ object WavePatternControlGUI: TWavePatternControlGUI
   ClientHeight = 303
   ClientWidth = 1083
   TabOrder = 0
-  DesignLeft = 99
-  DesignTop = 193
+  DesignLeft = 98
+  DesignTop = 171
   object Panel1: TPanel
     Left = 0
     Height = 29
@@ -50,7 +50,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object cbPitchAlgo: TComboBox
       Left = 375
-      Height = 27
+      Height = 23
       Top = 1
       Width = 100
       ItemHeight = 0
@@ -60,7 +60,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object cbQuantize: TComboBox
       Left = 593
-      Height = 27
+      Height = 23
       Top = 1
       Width = 100
       ItemHeight = 0
@@ -111,7 +111,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Left = 703
       Height = 14
       Top = 5
-      Width = 58
+      Width = 66
       Caption = 'Automation'
       ParentColor = False
     end

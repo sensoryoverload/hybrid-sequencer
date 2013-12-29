@@ -1249,7 +1249,9 @@ var
   lAddSub: Single;
   xm1, x0, x1, x2: single;
 begin
-  if FOscillator.Active and (FOscillator.WaveForm <> off) then
+  if FOscillator.Active and
+    (FOscillator.Level > DENORMAL_KILLER) and
+    (FOscillator.WaveForm <> off) then
   begin
     i := Round(Fphase);
     lFrac :=  Frac(FPhase);
@@ -1294,20 +1296,19 @@ begin
       end;
     end;
 
-    lMod := i - 1;
-    lMod := lMod shl 7;
-    lMod := lMod shr 7;
+{   // Hermite interpolation
+
     xm1 := GWaveformTable.Table[FOscillator.WaveForm, i - 1];
     x0 := GWaveformTable.Table[FOscillator.WaveForm, i];
-    lMod := i + 1;
-    lMod := lMod shl 7;
-    lMod := lMod shr 7;
     x1 := GWaveformTable.Table[FOscillator.WaveForm, i + 1];
-    lMod := i + 2;
-    lMod := lMod shl 7;
-    lMod := lMod shr 7;
     x2 := GWaveformTable.Table[FOscillator.WaveForm, i + 2];
-    Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;
+    Result := hermite4(lFrac, xm1, x0, x1, x2) * FOscillator.Level;}
+
+    // Linear interpolation
+    x0 := GWaveformTable.Table[FOscillator.WaveForm, i];
+    x1 := GWaveformTable.Table[FOscillator.WaveForm, i + 1];
+    Result := x0 * (1 - lFrac) + x1 * lFrac;
+    Result := Result * FOscillator.Level;
 
     FLevel := Result;
   end
@@ -2340,26 +2341,7 @@ begin
       // Shortcut for current event in buffer
       lMidiEvent := AMidiBuffer.ReadEvent;
 
-      if lMidiEvent.DataType = mtNoteOff then
-      begin
-        {
-          Are there any running voices which are to receive a NOTE OFF?
-        }
-{        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-        begin
-          lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-          if lVoice.Running then
-          begin
-            if lMidiEvent.DataValue1 = lVoice.Note then
-            begin
-              lVoice.NoteOff;
-              break;
-            end;
-          end;
-        end;    }
-      end
-      else if lMidiEvent.DataType = mtNoteOn then
+      if lMidiEvent.DataType = mtNoteOn then
       begin
         {
           Are there any empty voice slots to receive NOTE ON's?
@@ -2629,7 +2611,15 @@ begin
     lSampleC := FOsc3Engine.Process;
 
     // Mix and overdrive oscillators
-    lSample := tanh2((lSampleA + lSampleB + lSampleC) * FSample.SaturateDrivePreFilter);
+    lSample := 0;
+    if FSample.SaturateDrivePreFilter > DENORMAL_KILLER then
+    begin
+      lSample := (lSampleA + lSampleB + lSampleC) * FSample.SaturateDrivePreFilter;
+      if lSample > DENORMAL_KILLER then
+      begin
+        lSample := tanh2(lSample);
+      end;
+    end;
 
     // Filter
     if FFilterEngine.Filter.Active then
@@ -2657,11 +2647,14 @@ begin
     // Amplifier
     if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
     begin
-      // Amp
-      lSample := lSample * FAmpEnvelopeEngine.Level;
+      // Amp & Overdrive
+      lSample := lSample * FAmpEnvelopeEngine.Level * FSample.SaturateDrivePostFilter;
 
       // Overdrive
-      lSample := tanh2(lSample * FSample.SaturateDrivePostFilter);
+      if lSample > DENORMAL_KILLER then
+      begin
+        lSample := Tanh2(lSample);
+      end;
     end
     else
     begin

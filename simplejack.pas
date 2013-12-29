@@ -1103,9 +1103,6 @@ begin
     FSessionGrid.UpdateView;
     FPatternView.UpdateView;
 
-    FSessionGrid.Invalidate;
-    FPatternView.Invalidate;
-
     Inc(FLowPriorityInterval);
     if FLowPriorityInterval > 10 then
       FLowPriorityInterval := 0;
@@ -1301,7 +1298,7 @@ begin
 
   GAudioStruct.Attach(MainApp);
 
-  ScreenUpdater.Interval := 80;
+  ScreenUpdater.Interval := 100;
   ScreenUpdater.Enabled := True;
 
   pnlVarious.Width := 0;

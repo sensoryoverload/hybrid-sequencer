@@ -10,6 +10,7 @@ uses
 
 const
   PLUGIN_NAME_BASSLINE = 'Bassline';
+  DENORMAL_KILLER = 1E-20;
 
 type
   TTbParameter = (tbPitch, tbCutoff, tbReso, tbEnvMod, tbDecay, tbAccent, tbWave,
@@ -199,21 +200,7 @@ var
   lOffsetR: Integer;
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
-
-  {procedure UpdatePlugin;
-  var
-    lIndex: Integer;
-  begin
-    {FTB303.Cutoff := InputControls[0].Value^;
-    FTB303.Resonance := InputControls[1].Value^;
-    FTB303.EnvMod := InputControls[2].Value^;}
-    InputControls[0].Value;
-  end;}
-
 begin
-  // Set automation values here
-  //UpdatePlugin;
-
   lOffsetL := 0;
   lOffsetR := 1;
   for i := 0 to Pred(AFrames) do
@@ -249,7 +236,11 @@ begin
     begin
       FLength := FLength - GAudioStruct.BPMScale;
     end;
-    lOutput :=  tanh2(FTB303.Process * FOverDrive);
+    lOutput :=  FTB303.Process * FOverDrive;
+    if lOutput > DENORMAL_KILLER then
+    begin
+      lOutput := tanh2(lOutput);
+    end;
     AOutputBuffer[lOffsetL] := lOutput;
     AOutputBuffer[lOffsetR] := lOutput;
     Inc(lOffsetL, 2);
@@ -317,8 +308,6 @@ end;
 
 procedure TPluginBassline.SetCutoff(AValue: Single);
 begin
-  DBLog('SetCutoff %f', AValue);
-
   FTB303.Cutoff := AValue;
 end;
 

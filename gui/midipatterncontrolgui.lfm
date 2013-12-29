@@ -7,8 +7,8 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
   ClientHeight = 523
   ClientWidth = 779
   TabOrder = 0
-  DesignLeft = 279
-  DesignTop = 154
+  DesignLeft = 278
+  DesignTop = 132
   object pnlMidiGrid: TPanel
     Left = 0
     Height = 194
@@ -35,7 +35,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         Left = 161
         Height = 14
         Top = 6
-        Width = 45
+        Width = 51
         Caption = 'Quantize'
         ParentColor = False
       end
@@ -54,7 +54,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         Left = 283
         Height = 14
         Top = 6
-        Width = 62
+        Width = 69
         Caption = 'MidiChannel'
         ParentColor = False
       end
@@ -82,7 +82,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         Left = 429
         Height = 14
         Top = 7
-        Width = 58
+        Width = 66
         Caption = 'Automation'
         ParentColor = False
       end

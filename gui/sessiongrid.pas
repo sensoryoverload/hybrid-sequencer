@@ -15,6 +15,8 @@ const
   TRACK_CONTROL_HEIGHT = 150;
 
 type
+  TMode = (mSelect, mRename);
+
   TDroppedFilefEvent = procedure(ADroppedFile: string) of object;
 
   TSessionGrid = class;
@@ -170,7 +172,7 @@ type
 
   { TSessionGrid }
 
-  TSessionGrid = class(TPersistentPanel)
+  TSessionGrid = class({TPersistentPanel}TPersistentCustomControl)
   private
     FUpdateSubject: THybridPersistentModel;
     FIsDirty: Boolean;
@@ -194,11 +196,16 @@ type
     FMouseY: Integer;
     FMouseDownL: Boolean;
     FMouseDownR: Boolean;
+    FMode: TMode;
+    FTempPatternName: string;
+    FRenameCursorPosition: Integer;
+    FMenuRenamePattern: TMenuItem;
     FMenuCreateMidiPattern: TMenuItem;
     FMenuDeletePattern: TMenuItem;
     FMenuCreateTrack: TMenuItem;
     FMenuDeleteTrack: TMenuItem;
     FActionList: TActionList;
+    FActionRenamePattern: TAction;
     FActionCreateMidiPattern: TAction;
     FActionDeletePattern: TAction;
     FActionCreateTrack: TAction;
@@ -207,6 +214,8 @@ type
     procedure DrawCursors(ACanvas: TCanvas);
     procedure DrawTrackList(ABGRABitmap: TBGRABitmap);
     procedure GetDragPosition(X, Y: Integer; var ADragPosition: TDragPosition);
+    procedure DoRenamePattern(Sender: TObject);
+    procedure OnUpdateRenamePattern(Sender: TObject);
     procedure DoCreateMidiPattern(Sender: TObject);
     procedure DoDeletePattern(Sender: TObject);
     procedure DoCreateTrack(Sender: TObject);
@@ -216,6 +225,8 @@ type
     procedure CreateTrackGUI(AObjectID: string);
     procedure DeleteTrackGUI(AObjectID: string);
     function GetTrackView(AX, AY: Integer): TTrackView;
+    procedure HandleKeyDownRenameMode(var Key: Word; Shift: TShiftState);
+    procedure HandleKeyDownSelectMode(var Key: Word; Shift: TShiftState);
     procedure SetScrollIndex(AValue: Integer);
   protected
     procedure Paint; override;
@@ -228,6 +239,8 @@ type
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean); override;
+//    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
+//    procedure KeyPress(var Key: Char); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -251,7 +264,7 @@ implementation
 
 uses
   ComCtrls, Utils, audiostructure, midi, wave, global_command,
-  global, FileUtil;
+  global, FileUtil, renamepatterngui;
 
 { TPatternDrawCursor }
 
@@ -771,6 +784,8 @@ begin
 
   FIsDirty := False;
 
+  FMode := mSelect;
+
   ControlStyle := ControlStyle + [csAcceptsControls];
 
   DoubleBuffered := True;
@@ -786,38 +801,50 @@ begin
 
   FVisiblePatternCount := 10;
 
-  FActionList := TActionList.Create(nil);
+  FActionList := TActionList.Create(Self);
 
-  FActionCreateMidiPattern := TAction.Create(nil);
+  FActionRenamePattern := TAction.Create(FActionList);
+  FActionRenamePattern.Enabled := True;
+  FActionRenamePattern.Caption := 'Rename Pattern';
+  FActionRenamePattern.ActionList := FActionList;
+  FActionRenamePattern.OnExecute := @DoRenamePattern;
+  FActionRenamePattern.OnUpdate := @OnUpdateRenamePattern;
+  FActionRenamePattern.ShortCut := ShortCut(VK_R, [ssCtrl]);
+
+  FActionCreateMidiPattern := TAction.Create(FActionList);
   FActionCreateMidiPattern.Enabled := True;
   FActionCreateMidiPattern.Caption := 'Create MIDI Pattern';
   FActionCreateMidiPattern.ActionList := FActionList;
   FActionCreateMidiPattern.OnExecute := @DoCreateMidiPattern;
 
-  FActionDeletePattern := TAction.Create(nil);
+  FActionDeletePattern := TAction.Create(FActionList);
   FActionDeletePattern.Enabled := True;
   FActionDeletePattern.Caption := 'Delete Pattern';
   FActionDeletePattern.ActionList := FActionList;
   FActionDeletePattern.OnExecute := @DoDeletePattern;
 
-  FActionCreateTrack := TAction.Create(nil);
+  FActionCreateTrack := TAction.Create(FActionList);
   FActionCreateTrack.Enabled := True;
   FActionCreateTrack.Caption := 'Create track';
   FActionCreateTrack.ActionList := FActionList;
   FActionCreateTrack.OnExecute := @DoCreateTrack;
 
-  FActionDeleteTrack := TAction.Create(nil);
+  FActionDeleteTrack := TAction.Create(FActionList);
   FActionDeleteTrack.Enabled := True;
   FActionDeleteTrack.Caption := 'Delete track';
   FActionDeleteTrack.ActionList := FActionList;
   FActionDeleteTrack.OnExecute := @DoDeleteTrack;
 
-  FPopupMenu := TPopupMenu.Create(nil);
+  FPopupMenu := TPopupMenu.Create(Self);
 
-  FMenuCreateMidiPattern := TMenuItem.Create(nil);
-  FMenuCreateTrack := TMenuItem.Create(nil);
-  FMenuDeletePattern := TMenuItem.Create(nil);
-  FMenuDeleteTrack := TMenuItem.Create(nil);
+  FMenuRenamePattern := TMenuItem.Create(FPopupMenu);
+  FMenuCreateMidiPattern := TMenuItem.Create(FPopupMenu);
+  FMenuCreateTrack := TMenuItem.Create(FPopupMenu);
+  FMenuDeletePattern := TMenuItem.Create(FPopupMenu);
+  FMenuDeleteTrack := TMenuItem.Create(FPopupMenu);
+
+  FPopupMenu.Items.Add(FMenuRenamePattern);
+  FMenuRenamePattern.Action := FActionRenamePattern;
 
   FPopupMenu.Items.Add(FMenuCreateMidiPattern);
   FMenuCreateMidiPattern.Action := FActionCreateMidiPattern;
@@ -834,12 +861,6 @@ end;
 
 destructor TSessionGrid.Destroy;
 begin
-  FMenuCreateMidiPattern.Free;
-  FPopupMenu.Free;
-
-  FActionCreateMidiPattern.Free;
-  FActionList.Free;
-
   FTrackViewList.Free;
 
   FDraggedPattern.Free;
@@ -992,6 +1013,29 @@ begin
       break;
     end;
   end;
+end;
+
+procedure TSessionGrid.DoRenamePattern(Sender: TObject);
+var
+  lRenamePattern: TFmRenamePattern;
+begin
+  FMode := mRename;
+
+  lRenamePattern := TFmRenamePattern.Create(nil);
+  try
+    lRenamePattern.PatternName := FSelectedPattern.PatternName;
+    if lRenamePattern.ShowModal = mrOK then
+    begin
+      FSelectedPattern.PatternName := lRenamePattern.PatternName;
+    end;
+  finally
+    lRenamePattern.Free;
+  end;
+end;
+
+procedure TSessionGrid.OnUpdateRenamePattern(Sender: TObject);
+begin
+  (Sender as TAction).Enabled := Assigned(FSelectedPattern);
 end;
 
 procedure TSessionGrid.DoCreateMidiPattern(Sender: TObject);
@@ -1283,6 +1327,8 @@ end;
 procedure TSessionGrid.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
+  SetFocus;
+
   FMouseDownL := (Button = mbLeft);
   FMouseDownR := (Button = mbRight);
 
@@ -1570,6 +1616,74 @@ begin
 
   Accept := True;
 end;
+
+procedure TSessionGrid.HandleKeyDownSelectMode(var Key: Word; Shift: TShiftState);
+begin
+  // Scroll through grid, changing te selected pattern at the bottom
+end;
+
+procedure TSessionGrid.HandleKeyDownRenameMode(var Key: Word; Shift: TShiftState);
+begin
+  case Key of
+    VK_LEFT:
+      begin
+        if FRenameCursorPosition > 0 then
+        begin
+          Dec(FRenameCursorPosition);
+        end;
+      end;
+    VK_RIGHT:
+      begin
+        if FRenameCursorPosition < 10 then
+        begin
+          Inc(FRenameCursorPosition);
+        end;
+      end;
+    VK_RETURN:
+      begin
+        FMode := mSelect;
+      end;
+    VK_ESCAPE:
+      begin
+        FMode := mSelect;
+        FSelectedPattern.PatternName := FTempPatternName;
+      end
+    else
+    begin
+    end;
+  end;
+end;
+       (*
+procedure TSessionGrid.KeyDown(var Key: Word; Shift: TShiftState);
+begin
+  {case FMode of
+    mSelect: HandleKeyDownSelectMode(Key, Shift);
+    mRename: HandleKeyDownRenameMode(Key, Shift);
+  end;}
+
+  inherited KeyDown(Key, Shift);
+end;
+
+procedure TSessionGrid.KeyPress(var Key: Char);
+var
+  lTemp: string;
+begin
+  if Assigned(FSelectedPattern) then
+  begin
+    {if ((Key >= 'A') and (Key <= 'Z')) or
+        ((Key >= 'a') and (Key <= 'z')) or
+        ((Key >= '0') and (Key <= '9')) then
+    begin
+      lTemp := FSelectedPattern.PatternName;
+      lTemp[FRenameCursorPosition] := Key;
+      FSelectedPattern.PatternName := lTemp;
+    end
+    else}
+    begin
+      inherited KeyPress(Key);
+    end;
+  end
+end; *)
 
 end.
 

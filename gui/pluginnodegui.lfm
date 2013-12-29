@@ -6,8 +6,8 @@ object GenericPluginGUI: TGenericPluginGUI
   ClientHeight = 266
   ClientWidth = 459
   TabOrder = 0
-  DesignLeft = 459
-  DesignTop = 293
+  DesignLeft = 457
+  DesignTop = 247
   object pnlControls: TPanel
     Left = 0
     Height = 266

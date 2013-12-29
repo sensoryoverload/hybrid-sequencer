@@ -6,8 +6,8 @@ object PatternView: TPatternView
   ClientHeight = 628
   ClientWidth = 976
   TabOrder = 0
-  DesignLeft = 302
-  DesignTop = 107
+  DesignLeft = 301
+  DesignTop = 85
   object pcEditor: TPageControl
     Left = 0
     Height = 628

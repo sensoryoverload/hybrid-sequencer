@@ -1,11 +1,11 @@
 object MainApp: TMainApp
-  Left = 95
+  Left = 94
   Height = 574
-  Top = 102
+  Top = 80
   Width = 1183
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 574
+  ClientHeight = 551
   ClientWidth = 1183
   Font.Height = 7
   KeyPreview = True
@@ -119,9 +119,9 @@ object MainApp: TMainApp
       end
       object pcCPU_Load: TParameterControl
         Left = 1064
-        Height = 12
+        Height = 13
         Top = 7
-        Width = 75
+        Width = 100
         Value = 0
         Min = 0
         Max = 100
@@ -172,17 +172,17 @@ object MainApp: TMainApp
   end
   object pnlBottom: TPanel
     Left = 0
-    Height = 230
+    Height = 207
     Top = 344
     Width = 1183
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 230
+    ClientHeight = 207
     ClientWidth = 1183
     TabOrder = 2
     object pnlVarious: TPanel
       Left = 0
-      Height = 230
+      Height = 207
       Top = 0
       Width = 170
       Align = alLeft
@@ -191,7 +191,7 @@ object MainApp: TMainApp
     end
     object Splitter1: TSplitter
       Left = 170
-      Height = 230
+      Height = 207
       Top = 0
       Width = 5
     end

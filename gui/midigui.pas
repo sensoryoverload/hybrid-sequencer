@@ -842,6 +842,7 @@ begin
   FBitmap.Canvas.Clear;
   FBitmap.Height := Height;
   FBitmap.Width := Width;
+  FBitmap.Canvas.Pen.Width := 1;
 
   // Draw default background
   if FEditMode = emPatternEdit then

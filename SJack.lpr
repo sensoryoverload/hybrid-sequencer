@@ -22,7 +22,6 @@ program SJack;
 {$mode objfpc}{$H+}
 
 uses
-  heaptrc,
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
   cmem,

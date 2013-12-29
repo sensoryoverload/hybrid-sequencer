@@ -247,7 +247,10 @@ begin
 
   for lIndex := 0 to Pred(FNodeListGUI.Count) do
   begin
-    TGenericPluginGUI(FNodeListGUI[lIndex]).UpdateView;
+    if not (FNodeListGUI[lIndex] is TBankView) then
+    begin
+      TGenericPluginGUI(FNodeListGUI[lIndex]).UpdateView;
+    end;
   end;
 
   Invalidate;
@@ -387,9 +390,11 @@ begin
       lSampleBankGUI.ObjectOwnerID := Self.ObjectID;
       lSampleBankGUI.Model := TSampleBank(lPluginNode);
       lSampleBankGUI.PluginName := lPluginNode.PluginName;
-      lSampleBankGUI.Width := 955;
       lSampleBankGUI.Align := alNone;
       lSampleBankGUI.Parent := pnlPlugin;
+      lSampleBankGUI.Top := 0;
+      lSampleBankGUI.Left := 0;;
+      lSampleBankGUI.Width := 955;
       lSampleBankGUI.OnStopDragging := @SortPlugins;
 
       FNodeListGUI.Add(lSampleBankGUI);

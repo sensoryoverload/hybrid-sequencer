@@ -6,8 +6,8 @@ object PluginProcessorGUI: TPluginProcessorGUI
   ClientHeight = 193
   ClientWidth = 784
   TabOrder = 0
-  DesignLeft = 258
-  DesignTop = 162
+  DesignLeft = 256
+  DesignTop = 116
   object pnlPlugin: TPanel
     Left = 0
     Height = 193
