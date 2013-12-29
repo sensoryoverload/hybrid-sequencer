@@ -1274,8 +1274,8 @@ begin
           // Start of slice
           FSliceStartLocation :=
             lSliceStart.OrigLocation +
-  //          (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-            (FSampleScale * lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
+            (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
+//test            (FSampleScale * lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
 
           FSliceEndLocation :=
             FSliceStartLocation +
@@ -1336,8 +1336,8 @@ begin
 
         // Detect slice synchronize
         FSliceCounter :=
-        //  fmod(ALocation, FSliceLength * FSampleScale * lSliceStart.DecayRate);
-          fmod(ALocation - FSliceStartLocation, FSliceLength * FSampleScale * lSliceStart.DecayRate);
+          fmod(ALocation, FSliceLength * FSampleScale * lSliceStart.DecayRate);
+//test          fmod(ALocation - FSliceStartLocation, FSliceLength * FSampleScale * lSliceStart.DecayRate);
 
         if FSliceCounter < FSliceLastCounter then
         begin
