@@ -428,6 +428,7 @@ type
     FSelected: Boolean;          // When true it'll be used in batch editting/processing
     FOrigLocation: Integer;      // Original Location property of slice (to calculate warp)
     FLocked: Boolean;            // Locks OrigLocation and makes marker warpable
+    FLength: Single;             // Distance to next marker if any
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True); override;
     procedure Initialize; override;
@@ -443,6 +444,7 @@ type
     property Active: Boolean read FActive write FActive;
     property DecayRate: Single read FDecayRate write FDecayRate;
     property PitchRate: Single read FPitchRate write FPitchRate;
+    property Length: Single read FLength write FLength;
   end;
 
   PSlice = ^TSlice;
@@ -456,6 +458,7 @@ type
     Selected: Boolean;          // When true it'll be used in batch editting/processing
     OrigLocation: Integer;      // Original Location property of slice (to calculate warp)
     Locked: Boolean;            // Locks OrigLocation and makes marker warpable
+    Length: Integer;            // Distance to next marker
 
     // Implement stack of standard audio plugins per slice
     // Automation track possible

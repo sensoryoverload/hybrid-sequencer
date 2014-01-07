@@ -177,7 +177,7 @@ constructor TAudioSmooth.Create;
 begin
   inherited Create;
 
-  TrackSpeed(0.01);
+  TrackSpeed(0.0001);
 end;
 
 function TAudioSmooth.Process(AInput: single; ATransient: Boolean = False): single;
@@ -196,13 +196,15 @@ begin
 
   if lTransientDetected or (GlitchLength > 0) then
   begin
-    z := (AInput * b) + (z * a);
+    TrackSpeed(0.5);
     Dec(GlitchLength);
   end
   else
   begin
-    z := AInput;
+    TrackSpeed(0.01);
   end;
+
+  z := (AInput * b) + (z * a);
 
   lastvalue := AInput;
 

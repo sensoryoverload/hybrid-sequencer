@@ -113,12 +113,16 @@ type
 
   TSliceLooper = class
   private
+    FPitch: Single;
     FSliceEnd: Single;
     FSliceStart: Single;
+    FCursor: Single;
   public
-    function Process(ACursor: Single): Single;
+    function Process(APitch: Single): Single;
     property SliceStart: Single read FSliceStart write FSliceStart;
     property SliceEnd: Single read FSliceEnd write FSliceEnd;
+    property Cursor: Single read FCursor write FCursor;
+    property Pitch: Single read FPitch write FPitch;
   end;
 
   { TWavePattern }
@@ -556,7 +560,7 @@ end;
 
 { TSliceLooper }
 
-function TSliceLooper.Process(ACursor: Single): Single;
+function TSliceLooper.Process(APitch: Single): Single;
 var
   lModulo: Integer;
   lSliceLoopModulo: Integer;
@@ -565,8 +569,8 @@ begin
   lModulo := Round(FSliceEnd - FSliceStart) div 2;
   if lModulo <> 0 then
   begin
-    lSliceLoopModulo := Round(ACursor - FSliceEnd) mod lModulo;
-    if Odd(Round(ACursor - FSliceEnd) div lModulo) then
+    lSliceLoopModulo := Round(FCursor - FSliceEnd) mod lModulo;
+    if Odd(Round(FCursor - FSliceEnd) div lModulo) then
     begin
       Result := Round(FSliceEnd - lModulo) + lSliceLoopModulo;
     end
@@ -575,6 +579,7 @@ begin
       Result := Round(FSliceEnd) - lSliceLoopModulo;
     end;
   end;
+  FCursor := FCursor + FPitch;
 end;
 
 { TChangeQuantizeCommand }
@@ -758,9 +763,9 @@ begin
   QuantizeSetting := qsBeat;
 
   FLeftGlitchSmooth := TAudioSmooth.Create;
-  FLeftGlitchSmooth.TrackSpeed(0.9);
+  FLeftGlitchSmooth.TrackSpeed(0.01);
   FRightGlitchSmooth := TAudioSmooth.Create;
-  FRightGlitchSmooth.TrackSpeed(0.9);
+  FRightGlitchSmooth.TrackSpeed(0.01);
   FSliceLooper := TSliceLooper.Create;
 
 
@@ -1202,6 +1207,23 @@ end;
 procedure TWavePattern.RecalculateWarp;
 var
   i: Integer;
+
+  function CalculateNominalSliceLength(ALength: Single): Single;
+  var
+    lBaseNominalLength: Single;
+    lCalculatedNominalLength: Single;
+  begin
+    lBaseNominalLength := GSettings.SampleRate / 8;
+    lCalculatedNominalLength := ALength;
+
+    while lCalculatedNominalLength > lBaseNominalLength do
+    begin
+      lCalculatedNominalLength := lCalculatedNominalLength / 2;
+    end;
+
+    Result := lCalculatedNominalLength;
+  end;
+
 begin
   for i := 0 to FSliceList.Count - 2 do
   begin
@@ -1211,6 +1233,33 @@ begin
 
     TMarker(FSliceList.Items[i]).PitchRate :=
       1 / TMarker(FSliceList.Items[i]).DecayRate;
+
+    TMarker(FSliceList.Items[i]).Length :=
+      CalculateNominalSliceLength(
+        TMarker(FSliceList.Items[i + 1]).Location -
+        TMarker(FSliceList.Items[i]).Location);
+
+
+    if i = FSliceList.Count - 2 then
+    begin
+      TMarker(FSliceList.Items[i]).DecayRate :=
+      (TMarker(FSliceList.Last).OrigLocation - TMarker(FSliceList.First).OrigLocation) /
+      (TMarker(FSliceList.Last).Location - TMarker(FSliceList.First).Location);
+
+      TMarker(FSliceList.Items[i]).PitchRate :=
+        1 / TMarker(FSliceList.Items[i]).DecayRate;
+
+      TMarker(FSliceList.Items[i]).Length :=
+        CalculateNominalSliceLength(
+          TMarker(FSliceList.Last).Location -
+          TMarker(FSliceList.First).Location);
+    end;
+
+    DBLog(Format('Decayrate %f modlength %f distance %d', [
+        TMarker(FSliceList.Items[i]).DecayRate,
+        TMarker(FSliceList.Items[i]).Length,
+        TMarker(FSliceList.Items[i + 1]).Location -
+        TMarker(FSliceList.Items[i]).Location]));
   end;
 end;
 
@@ -1264,42 +1313,76 @@ begin
     begin
       if PitchAlgorithm = paSliceStretch then
       begin
+        // Detect slice synchronize
+        FSliceCounter :=
+          fmod(ALocation - lSliceStart.Location, lSliceStart.Length);
+
+        if FSliceCounter < FSliceLastCounter then
+        begin
+          FSliceSynced := True;
+        end
+        else
+        begin
+          FSliceSynced := False;
+        end;
+
         // Only trigger sync if not in manually defined slice
         if FSliceSynced then
         begin
           // Keep last slice looping
           FSliceLooper.SliceStart := FSliceStartLocation;
           FSliceLooper.SliceEnd := FSliceEndLocation;
+          FSliceLooper.Cursor := FSliceCursor;
+          FSliceLooper.Pitch := Pitch;
 
           // Start of slice
           FSliceStartLocation :=
             lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
-//test            (FSampleScale * lSliceStart.DecayRate * (ALocation - lSliceStart.Location));
 
           FSliceEndLocation :=
             FSliceStartLocation +
-            FSliceLength * FSampleScale * lSliceStart.DecayRate;
+            lSliceStart.Length * FSampleScale * lSliceStart.DecayRate;
 
           FSliceCursor := FSliceStartLocation;
 
           AFrameData.FadeOutFactor := 1;
           AFrameData.FadeInFactor :=  0;
+
+{          if FSliceLastCounter <> 0 then
+          begin
+            DBLog(format('slicestart %d, slicelength %f, modlength %f end-start %f, startlocation %f endlocation %f decayrate %f',
+              [lSliceStart.Location,
+              lSliceStart.Length,
+              FSliceLastCounter,
+              FSliceEndLocation - FSliceStartLocation,
+              FSliceStartLocation,
+              FSliceEndLocation,
+              lSliceStart.DecayRate]));
+          end;}
         end;
 
         if AFrameData.FadeOutFactor > 0 then
         begin
-          AFrameData.FadeOutFactor := AFrameData.FadeOutFactor - 0.1;
+          AFrameData.FadeOutFactor := AFrameData.FadeOutFactor - 0.0005;
+        end
+        else
+        begin
+          AFrameData.FadeOutFactor := 0;
         end;
         if AFrameData.FadeInFactor < 1 then
         begin
-          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.1;
+          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.0005;
+        end
+        else
+        begin
+          AFrameData.FadeInFactor := 1;
         end;
 
         if FSliceCursor >= FSliceEndLocation then
         begin
           // Ran past end of slice so loop a part of the previous section
-          lModulo := Round(FSliceEndLocation - FSliceStartLocation) div 3;
+          lModulo := Round(FSliceEndLocation - FSliceStartLocation) div 2;
           if lModulo <> 0 then
           begin
             FSliceLoopModulo := Round(FSliceCursor - FSliceEndLocation) mod lModulo;
@@ -1319,7 +1402,7 @@ begin
           AFrameData.Location := FSliceCursor;
         end;
 
-        ALoopingFrameData.Location := FSliceLooper.Process(FSliceCursor);
+        ALoopingFrameData.Location := FSliceLooper.Process(Pitch);
 
         // Protect against accidental overflow
         if AFrameData.Location > TMarker(FSliceList.Last).Location then
@@ -1334,19 +1417,6 @@ begin
         // Increate nominal always playing at samplespeed * pitch
         FSliceCursor := FSliceCursor + Pitch;
 
-        // Detect slice synchronize
-        FSliceCounter :=
-          fmod(ALocation, FSliceLength * FSampleScale * lSliceStart.DecayRate);
-//test          fmod(ALocation - FSliceStartLocation, FSliceLength * FSampleScale * lSliceStart.DecayRate);
-
-        if FSliceCounter < FSliceLastCounter then
-        begin
-          FSliceSynced := True;
-        end
-        else
-        begin
-          FSliceSynced := False;
-        end;
         FSliceLastCounter := FSliceCounter;
       end
       else if PitchAlgorithm = paPitched then
@@ -1438,25 +1508,26 @@ var
   lFracPosition: Single;
   lBufferOffset: integer;
 begin
-  //lFracPosition := Frac(ASampleCursor);
+  lFracPosition := Frac(ASampleCursor);
   lBufferOffset := Round(ASampleCursor * AChannelCount);
 
   if AChannelCount = 1 then
   begin
-{    ATargetBuffer[AFrameIndex * 2] := hermite4(
+    {ATargetBuffer[AFrameIndex * 2] := hermite4(
       lFracPosition,
       ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 1]),
       ASourceBuffer[lBufferOffset],
       ASourceBuffer[lBufferOffset + 1],
-      ASourceBuffer[lBufferOffset + 2]);}
-    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
+      ASourceBuffer[lBufferOffset + 2]);
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];}
 
     // Make dual mono
-    ATargetBuffer[AFrameIndex * 2 + 1] := ATargetBuffer[AFrameIndex * 2];
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset];
   end
   else
   begin
-{    ATargetBuffer[AFrameIndex * 2] := hermite4(
+    {ATargetBuffer[AFrameIndex * 2] := hermite4(
       lFracPosition,
       ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 2]),
       ASourceBuffer[lBufferOffset],
@@ -1555,15 +1626,17 @@ begin
           end
           else if PitchAlgorithm in [paSliceStretch] then
           begin // paSliceStretch
+//            ABuffer[AFrameIndex * 2] := WorkBuffer[AFrameIndex * 2];
             ABuffer[AFrameIndex * 2] :=
-              (WorkBuffer[AFrameIndex * 2] * lFramePacket.FadeInFactor);
-//              +
-//              (FLoopingBuffer[AFrameIndex * 2] * lFramePacket.FadeOutFactor);
+              (WorkBuffer[AFrameIndex * 2] * lFramePacket.FadeInFactor)
+              +
+              (FLoopingBuffer[AFrameIndex * 2] * lFramePacket.FadeOutFactor);
 
+//            ABuffer[AFrameIndex * 2 + 1] := WorkBuffer[AFrameIndex * 2 + 1];
             ABuffer[AFrameIndex * 2 + 1] :=
-              (WorkBuffer[AFrameIndex * 2 + 1] * lFramePacket.FadeInFactor);
-//              +
-//              (FLoopingBuffer[AFrameIndex * 2 + 1] * lFramePacket.FadeOutFactor);
+              (WorkBuffer[AFrameIndex * 2 + 1] * lFramePacket.FadeInFactor)
+              +
+              (FLoopingBuffer[AFrameIndex * 2 + 1] * lFramePacket.FadeOutFactor);
           end
           else if PitchAlgorithm in [paPitched] then
           begin
