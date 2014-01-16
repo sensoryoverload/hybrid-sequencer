@@ -301,7 +301,6 @@ type
     FFilterEnvelope: TEnvelope;
 
     FSaturateDrivePreFilter: Single;
-    FSaturateDrivePostFilter: Single;
     FSaturateOn: Boolean;
 
     FGlobalLevel: Single;
@@ -359,7 +358,6 @@ type
     property FilterEnvelope: TEnvelope read FFilterEnvelope write FFilterEnvelope;
 
     property SaturateDrivePreFilter: Single read FSaturateDrivePreFilter write FSaturateDrivePreFilter;
-    property SaturateDrivePostFilter: Single read FSaturateDrivePostFilter write FSaturateDrivePostFilter;
     property SaturateOn: Boolean read FSaturateOn write FSaturateOn;
 
     property Filter: TFilter read FFilter write FFilter;
@@ -477,8 +475,7 @@ type
     spHigh_Note,
     spBase_Note,
 
-    spSaturateDrivePreFilter,
-    spPostFilterFeedback
+    spSaturateDrivePreFilter
   );
 
   { TSampleParameterCommand }
@@ -591,7 +588,6 @@ type
     FCutoffKeytracking: single;
     FVelocity: single;
     FNoteToPitch: single;
-    FIdle: Boolean;
 
     // Start the NOTE OFF phase of a note; handle note release ADSR etc
     FStopVoice: Boolean;
@@ -610,7 +606,6 @@ type
 
     function RunningNote: Integer;
     property Running: Boolean read FRunning write FRunning;
-    property Idle: Boolean read FIdle write FIdle;
     property AmpEnvelopeEngine: TEnvelopeEngine read FAmpEnvelopeEngine;
     property Note: Integer read FNote write FNote;
     property InternalBuffer: PSingle read FInternalBuffer;
@@ -990,11 +985,6 @@ begin
       FOldValue := FSample.SaturateDrivePreFilter;
       FSample.SaturateDrivePreFilter := FValue;
     end;
-    spPostFilterFeedback:
-    begin
-      FOldValue := FSample.SaturateDrivePostFilter;
-      FSample.SaturateDrivePostFilter := FValue;
-    end;
   end;
 
   FSample.EndUpdate;
@@ -1219,10 +1209,6 @@ begin
     spSaturateDrivePreFilter:
     begin
       FSample.SaturateDrivePreFilter := FOldValue;
-    end;
-    spPostFilterFeedback:
-    begin
-      FSample.SaturateDrivePostFilter := FOldValue;
     end;
   end;
 
@@ -1737,7 +1723,6 @@ begin
   HighNote := 127;
   Key := 48;
   SaturateDrivePreFilter := 1;
-  SaturateDrivePostFilter := 1;
   GlobalLevel := 1;
 
   FPitchScaleFactor := 1;
@@ -1893,6 +1878,8 @@ procedure TSampleBank.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
 var
   lSampleEngineIndex: Integer;
 begin
+  FillByte(AOutputBuffer[0], AFrames * STEREO * SizeOf(Single), 0);
+
   for lSampleEngineIndex := 0 to Pred(FSampleEngineList.Count) do
   begin
     // Listens to AMidiPattern midi buffer and mixes samples to ABuffer for a length of
@@ -2316,149 +2303,125 @@ procedure TSampleEngine.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
 var
   lVoiceIndex: Integer;
   lVoice: TSampleVoiceEngine;
-  lBufferIndex: Integer;
   lStealVoice: Boolean;
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
   lIndex: Integer;
+  lLeftAdder: Integer;
+  lRightAdder: Integer;
+  lValue: Single;
 begin
-  AMidiBuffer.Seek(0);
-
-  FillByte(AOutputBuffer[0], AFrames * STEREO * SizeOf(Single), 0);
-
-  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-  begin
-    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-    // Idle trigger flag; are voices which do nothing and should not be played
-    lVoice.Idle := not lVoice.Running;
-  end;
-
-  if AMidiBuffer.Count > 0 then
-  begin
-    for lMidiBufferIndex := 0 to Pred(AMidiBuffer.Count) do
-    begin
-      // Shortcut for current event in buffer
-      lMidiEvent := AMidiBuffer.ReadEvent;
-
-      if lMidiEvent.DataType = mtNoteOn then
-      begin
-        {
-          Are there any empty voice slots to receive NOTE ON's?
-        }
-        if (lMidiEvent.DataValue1 >= FSample.Lownote) and
-          (lMidiEvent.DataValue1 <= FSample.HighNote) then
-        begin
-          lStealVoice := True;
-
-          for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-          begin
-            lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-            if (lVoice.Running and
-              ((lMidiEvent.DataValue1 = lVoice.Note) or
-              (lVoice.AmpEnvelopeEngine.State in [esRelease]))) or
-              (not lVoice.Running) then
-            begin
-              // Retrigger note when te same note value or steal
-              lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length, lMidiEvent.DataValue2);
-
-              FLFO1Engine.Rate := FSample.LFO1.Pitch;
-              FLFO2Engine.Rate := FSample.LFO2.Pitch;
-
-              lStealVoice := False;
-              break;
-            end;
-          end;
-
-          if lStealVoice then
-          begin
-            // Sort just before stealing, only needed when stealing
-            // TODO hmm maybe a performance penalty sorting?
-            FSampleVoiceEngineList.Sort(@SortVoicePriority);
-
-            lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[Pred(FSampleVoiceEngineList.Count)]);
-            lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length, lMidiEvent.DataValue2);
-
-            FLFO1Engine.Rate := FSample.LFO1.Pitch;
-            FLFO2Engine.Rate := FSample.LFO2.Pitch;
-          end;
-        end;
-      end
-      else if lMidiEvent.DataType = mtCC then
-      begin
-        // TODO
-      end
-      else if lMidiEvent.DataType = mtVelocity then
-      begin
-        // TODO
-      end;
-    end;
-  end;
-
   try
-    // Play all assigned voices
+    lLeftAdder := 0;
+    lRightAdder := 1;
+
     for lIndex := 0 to Pred(AFrames) do
     begin
+      if AMidiBuffer.Count > 0 then
+      begin
+        AMidiBuffer.Seek(0);
+        for lMidiBufferIndex := 0 to Pred(AMidiBuffer.Count) do
+        begin
+          // Shortcut for current event in buffer
+          lMidiEvent := AMidiBuffer.ReadEvent;
+          if lIndex = lMidiEvent.RelativeOffset then
+          begin
+            if lMidiEvent.DataType = mtNoteOn then
+            begin
+              // Are there any empty voice slots to receive NOTE ON's?
+              if (lMidiEvent.DataValue1 >= FSample.Lownote) and
+                (lMidiEvent.DataValue1 <= FSample.HighNote) then
+              begin
+                lStealVoice := True;
+
+                for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+                begin
+                  lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+
+                  if (lVoice.Running and (lMidiEvent.DataValue1 = lVoice.Note))
+                     or (not lVoice.Running) then
+                  begin
+                    // Take voice when te same note value or steal
+                    lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length, lMidiEvent.DataValue2);
+
+                    FLFO1Engine.Rate := FSample.LFO1.Pitch;
+                    FLFO2Engine.Rate := FSample.LFO2.Pitch;
+
+                    lStealVoice := False;
+                    break;
+                  end;
+                end;
+
+                if lStealVoice then
+                begin
+                  // Sort just before stealing, only needed when stealing
+                  // TODO hmm maybe a performance penalty sorting?
+                  FSampleVoiceEngineList.Sort(@SortVoicePriority);
+
+                  lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[Pred(FSampleVoiceEngineList.Count)]);
+                  lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length, lMidiEvent.DataValue2);
+
+                  FLFO1Engine.Rate := FSample.LFO1.Pitch;
+                  FLFO2Engine.Rate := FSample.LFO2.Pitch;
+                end;
+              end;
+            end
+            else if lMidiEvent.DataType = mtCC then
+            begin
+              // TODO
+            end
+            else if lMidiEvent.DataType = mtVelocity then
+            begin
+              // TODO
+            end;
+          end;
+        end;
+      end;
+
+      // Global LFO's
       FLFO1Engine.Process;
       FLFO2Engine.Process;
 
-      for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
+      // Per Voice processing
+      if FSample.GlobalLevel > DENORMAL_KILLER then
       begin
-        lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-        if not lVoice.Idle then
+        for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
         begin
-          if lIndex >= lVoice.NoteOnOffset then
+          lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
+
+          if lVoice.Running then
           begin
             lVoice.Process(AInputBuffer, AOutputBuffer, lIndex);
+            lValue := lVoice.InternalBuffer[lIndex] * FSample.GlobalLevelInternal;
           end
           else
           begin
-            AOutputBuffer[lIndex] := 0;
+            lValue := 0;
           end;
+
+          // Mono to stereo
+          AOutputBuffer[lLeftAdder] := AOutputBuffer[lLeftAdder] + lValue;
+          AOutputBuffer[lRightAdder] := AOutputBuffer[lRightAdder] + lValue;
         end;
       end;
+
+      // Increase iterators
+      Inc(lLeftAdder, STEREO);
+      Inc(lRightAdder, STEREO);
     end;
   except
     on e: exception do
     begin
+      // Do nothing and let the engine run on
+{      DBLog('Sampler exception: ' + e.Message);
+
       // Most likely the filters excepted so just reset them
       for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
       begin
         lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
         lVoice.FilterEngine.Initialize;
         lVoice.FilterEngine.Calc;
-      end;
-
-      // Do nothing and let the engine run on
-      GLogger.PushMessage('Sampler exception: ' + e.Message);
-    end;
-  end;
-
-  // Reset NoteOffsets to 0
-  for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-  begin
-    lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-    lVoice.NoteOnOffset := 0;
-  end;
-
-  // Mix all voices into buffer
-  if FSample.GlobalLevel > DENORMAL_KILLER then
-  begin
-    for lVoiceIndex := 0 to Pred(FSampleVoiceEngineList.Count) do
-    begin
-      lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[lVoiceIndex]);
-
-      if not lVoice.Idle then
-      begin
-        for lBufferIndex := 0 to Pred(Frames) do
-        begin
-          // Mono to stereo
-          AOutputBuffer[lBufferIndex * 2] := AOutputBuffer[lBufferIndex * 2] + lVoice.InternalBuffer[lBufferIndex] * FSample.GlobalLevelInternal;
-          AOutputBuffer[lBufferIndex * 2 + 1] := AOutputBuffer[lBufferIndex * 2 + 1] + lVoice.InternalBuffer[lBufferIndex] * FSample.GlobalLevelInternal;
-        end;
-      end;
+      end;}
     end;
   end;
 end;
@@ -2648,20 +2611,12 @@ begin
     if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
     begin
       // Amp & Overdrive
-      lSample := lSample * FAmpEnvelopeEngine.Level * FSample.SaturateDrivePostFilter;
-
-      // Overdrive
-      if lSample > DENORMAL_KILLER then
-      begin
-        lSample := Tanh2(lSample);
-      end;
+      lSample := lSample * FAmpEnvelopeEngine.Level;
     end
     else
     begin
       lSample := 0;
     end;
-
-    // FX
   end;
 
   FInternalBuffer[AFrameIndex] := lSample;
@@ -2682,8 +2637,8 @@ begin
   end;
 
   // Debug statistics
-  //GLogger.PushMessage(Format('IntLevel: %g', [FAmpEnvelopeEngine.FInternalLevel]));
-  {GLogger.PushMessage(
+  //DBLog(Format('IntLevel: %g', [FAmpEnvelopeEngine.FInternalLevel]));
+  {DBLog(
     Format('IntLevel: %g, Attack: %g Adr: %g,Decay: %g Adr: %g, Sustain: %g, Release: %g Adr: %g  ',
     [FAmpEnvelopeEngine.FInternalLevel,
     FAmpEnvelopeEngine.Envelope.Attack,
@@ -2711,7 +2666,6 @@ procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer; 
   end;
 
 begin
-  FIdle := False;
   FRunning := True;
   FSamplePosition := 0;
   FStopVoice := False;

@@ -117,10 +117,13 @@ type
     FSliceEnd: Single;
     FSliceStart: Single;
     FCursor: Single;
+    FSliceHalfLength: Integer;
+    procedure SetSliceEnd(AValue: Single);
+    procedure SetSliceStart(AValue: Single);
   public
-    function Process(APitch: Single): Single;
-    property SliceStart: Single read FSliceStart write FSliceStart;
-    property SliceEnd: Single read FSliceEnd write FSliceEnd;
+    function Process: Single;
+    property SliceStart: Single read FSliceStart write SetSliceStart;
+    property SliceEnd: Single read FSliceEnd write SetSliceEnd;
     property Cursor: Single read FCursor write FCursor;
     property Pitch: Single read FPitch write FPitch;
   end;
@@ -171,6 +174,7 @@ type
     FSliceEndLocation: single;
     FSliceLastStartLocation: single;
     FSliceLastEndLocation: single;
+    FSliceHalfLength: Integer;
     FSliceLength: Single;
     FSliceCounter: Single;
     FSliceLastCounter: Single;
@@ -560,19 +564,31 @@ end;
 
 { TSliceLooper }
 
-function TSliceLooper.Process(APitch: Single): Single;
+procedure TSliceLooper.SetSliceEnd(AValue: Single);
+begin
+  FSliceEnd := AValue;
+
+  FSliceHalfLength := Round(FSliceEnd - FSliceStart) div 2;
+end;
+
+procedure TSliceLooper.SetSliceStart(AValue: Single);
+begin
+  FSliceStart := AValue;
+
+  FSliceHalfLength := Round(FSliceEnd - FSliceStart) div 2;
+end;
+
+function TSliceLooper.Process: Single;
 var
-  lModulo: Integer;
   lSliceLoopModulo: Integer;
 begin
   // Ran past end of slice so loop a part of the previous section
-  lModulo := Round(FSliceEnd - FSliceStart) div 2;
-  if lModulo <> 0 then
+  if FSliceHalfLength <> 0 then
   begin
-    lSliceLoopModulo := Round(FCursor - FSliceEnd) mod lModulo;
-    if Odd(Round(FCursor - FSliceEnd) div lModulo) then
+    lSliceLoopModulo := Round(FCursor - FSliceEnd) mod FSliceHalfLength;
+    if Odd(Round(FCursor - FSliceEnd) div FSliceHalfLength) then
     begin
-      Result := Round(FSliceEnd - lModulo) + lSliceLoopModulo;
+      Result := Round(FSliceEnd - FSliceHalfLength) + lSliceLoopModulo;
     end
     else
     begin
@@ -1303,6 +1319,8 @@ begin
 
   AFrameData.Location := ALocation;
   AFrameData.Ramp := 1;
+  ALoopingFrameData.Location := ALocation;
+  ALoopingFrameData.Ramp := 1;
 
   for i := AStartIndex to FSliceList.Count - 2 do
   begin
@@ -1314,20 +1332,10 @@ begin
       if PitchAlgorithm = paSliceStretch then
       begin
         // Detect slice synchronize
-        FSliceCounter :=
-          fmod(ALocation - lSliceStart.Location, lSliceStart.Length);
+        FSliceCounter := fmod(ALocation - lSliceStart.Location, lSliceStart.Length);
 
+        // Slicecounter looped so it's a slice sync
         if FSliceCounter < FSliceLastCounter then
-        begin
-          FSliceSynced := True;
-        end
-        else
-        begin
-          FSliceSynced := False;
-        end;
-
-        // Only trigger sync if not in manually defined slice
-        if FSliceSynced then
         begin
           // Keep last slice looping
           FSliceLooper.SliceStart := FSliceStartLocation;
@@ -1346,25 +1354,15 @@ begin
 
           FSliceCursor := FSliceStartLocation;
 
+          FSliceHalfLength := Round(FSliceEndLocation - FSliceStartLocation) div 2;
+
           AFrameData.FadeOutFactor := 1;
           AFrameData.FadeInFactor :=  0;
-
-{          if FSliceLastCounter <> 0 then
-          begin
-            DBLog(format('slicestart %d, slicelength %f, modlength %f end-start %f, startlocation %f endlocation %f decayrate %f',
-              [lSliceStart.Location,
-              lSliceStart.Length,
-              FSliceLastCounter,
-              FSliceEndLocation - FSliceStartLocation,
-              FSliceStartLocation,
-              FSliceEndLocation,
-              lSliceStart.DecayRate]));
-          end;}
         end;
 
         if AFrameData.FadeOutFactor > 0 then
         begin
-          AFrameData.FadeOutFactor := AFrameData.FadeOutFactor - 0.0005;
+          AFrameData.FadeOutFactor := AFrameData.FadeOutFactor - 0.1; {0.05}
         end
         else
         begin
@@ -1372,23 +1370,27 @@ begin
         end;
         if AFrameData.FadeInFactor < 1 then
         begin
-          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.0005;
+          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.1; {0.05}
         end
         else
         begin
           AFrameData.FadeInFactor := 1;
         end;
 
+        if (AFrameData.FadeInFactor < 1) or (AFrameData.FadeOutFactor > 0) then
+        begin
+          ALoopingFrameData.Location := FSliceLooper.Process;
+        end;
+
         if FSliceCursor >= FSliceEndLocation then
         begin
           // Ran past end of slice so loop a part of the previous section
-          lModulo := Round(FSliceEndLocation - FSliceStartLocation) div 2;
-          if lModulo <> 0 then
+          if FSliceHalfLength <> 0 then
           begin
-            FSliceLoopModulo := Round(FSliceCursor - FSliceEndLocation) mod lModulo;
-            if Odd(Round(FSliceCursor - FSliceEndLocation) div lModulo) then
+            FSliceLoopModulo := Round(FSliceCursor - FSliceEndLocation) mod FSliceHalfLength;
+            if Odd(Round(FSliceCursor - FSliceEndLocation) div FSliceHalfLength) then
             begin
-              AFrameData.Location := Round(FSliceEndLocation - lModulo) + FSliceLoopModulo;
+              AFrameData.Location := Round(FSliceEndLocation - FSliceHalfLength) + FSliceLoopModulo;
             end
             else
             begin
@@ -1401,8 +1403,6 @@ begin
           // Still inside slice so calculate cursor position
           AFrameData.Location := FSliceCursor;
         end;
-
-        ALoopingFrameData.Location := FSliceLooper.Process(Pitch);
 
         // Protect against accidental overflow
         if AFrameData.Location > TMarker(FSliceList.Last).Location then
@@ -1578,7 +1578,7 @@ begin
         if Trunc(CursorAdder) < (Wave.Frames * FWave.ChannelCount) then
         begin
           GetSampleAtCursor(CursorAdder, lBuffer, WorkBuffer, AFrameIndex, Wave.ChannelCount);
-          GetSampleAtCursor(CursorAdder, lBuffer, FLoopingBuffer, AFrameIndex, Wave.ChannelCount);
+          GetSampleAtCursor({CursorAdder}lLoopingFramePacket.Location, lBuffer, FLoopingBuffer, AFrameIndex, Wave.ChannelCount);
 
           // Scale buffer up to now when the scaling-factor has changed or
           // the end of the buffer has been reached.
@@ -1677,17 +1677,6 @@ begin
   inherited;
 
   UpdateBPMScale;
-
-  // 8th
-  //FSliceLength := GSettings.SampleRate * (1 / 4);
-  // 16th
-  //FSliceLength := GSettings.SampleRate * (1 / 8);
-  // 32th
-  //FSliceLength := GSettings.SampleRate * (1 / 16);
-  // 64th
-  //FSliceLength := GSettings.SampleRate * (1 / 32);
-
-  FSliceLength := GSettings.SampleRate * (1 / 8);
 
   if Looped then
   begin
