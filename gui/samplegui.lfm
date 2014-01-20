@@ -30,7 +30,7 @@ object SampleView: TSampleView
       Width = 153
       Align = alClient
       Caption = 'Global'
-      ClientHeight = 125
+      ClientHeight = 121
       ClientWidth = 149
       TabOrder = 0
       object dcGlobalLevel: TDialControl
@@ -52,43 +52,27 @@ object SampleView: TSampleView
       end
       object lblLowNote: TLabel
         Left = 41
-        Height = 14
+        Height = 18
         Top = -2
-        Width = 45
+        Width = 57
         Caption = 'Low note'
         ParentColor = False
       end
       object lblHighNote: TLabel
         Left = 43
-        Height = 14
+        Height = 18
         Top = 40
-        Width = 48
+        Width = 59
         Caption = 'High note'
         ParentColor = False
       end
       object lblBaseNote: TLabel
         Left = 92
-        Height = 14
+        Height = 18
         Top = -2
-        Width = 49
+        Width = 60
         Caption = 'Base note'
         ParentColor = False
-      end
-      object dcSaturateDrivePostFilter: TDialControl
-        Left = 4
-        Height = 40
-        Top = 79
-        Width = 36
-        Value = 0
-        Caption = 'Saturate'
-        Lowest = 1
-        Highest = 25
-        Enabled = True
-        ValueVisible = False
-        Constraints.MaxHeight = 40
-        Constraints.MaxWidth = 36
-        Constraints.MinHeight = 40
-        Constraints.MinWidth = 36
       end
       object lsLowNote: TListSelect
         Left = 40
@@ -119,7 +103,7 @@ object SampleView: TSampleView
       Width = 111
       Align = alLeft
       Caption = 'LFO'
-      ClientHeight = 125
+      ClientHeight = 121
       ClientWidth = 107
       TabOrder = 1
       object dcLFO1Rate: TDialControl
@@ -129,7 +113,7 @@ object SampleView: TSampleView
         Width = 36
         Value = 0
         Caption = 'Rate'
-        Lowest = 0.05000000074506
+        Lowest = 0.0500000007450581
         Highest = 1000
         Enabled = True
         ValueVisible = True
@@ -146,7 +130,7 @@ object SampleView: TSampleView
         Width = 36
         Value = 0
         Caption = 'Rate'
-        Lowest = 0.05000000074506
+        Lowest = 0.0500000007450581
         Highest = 4000
         Enabled = True
         ValueVisible = True
@@ -163,7 +147,7 @@ object SampleView: TSampleView
         Width = 36
         Value = 0
         Caption = 'Rate'
-        Lowest = 0.05000000074506
+        Lowest = 0.0500000007450581
         Highest = 4000
         Enabled = True
         ValueVisible = True
@@ -175,9 +159,9 @@ object SampleView: TSampleView
       end
       object lblLFO1: TLabel
         Left = 40
-        Height = 14
+        Height = 18
         Top = 0
-        Width = 27
+        Width = 32
         Caption = 'LFO1'
         Font.Style = [fsBold]
         ParentColor = False
@@ -185,9 +169,9 @@ object SampleView: TSampleView
       end
       object lblLFO2: TLabel
         Left = 40
-        Height = 14
+        Height = 18
         Top = 42
-        Width = 27
+        Width = 32
         Caption = 'LFO2'
         Font.Style = [fsBold]
         ParentColor = False
@@ -195,9 +179,9 @@ object SampleView: TSampleView
       end
       object lblLFO3: TLabel
         Left = 40
-        Height = 14
+        Height = 18
         Top = 80
-        Width = 27
+        Width = 32
         Caption = 'LFO3'
         Font.Style = [fsBold]
         ParentColor = False
@@ -232,7 +216,7 @@ object SampleView: TSampleView
       Width = 185
       Align = alLeft
       Caption = 'Envelopes'
-      ClientHeight = 125
+      ClientHeight = 121
       ClientWidth = 181
       TabOrder = 2
       object dcFilterEnvelopeAttack: TDialControl
@@ -441,9 +425,9 @@ object SampleView: TSampleView
       end
       object lblFilter: TLabel
         Left = 7
-        Height = 14
+        Height = 18
         Top = 0
-        Width = 29
+        Width = 36
         Caption = 'Filter'
         Font.Style = [fsBold]
         ParentColor = False
@@ -451,9 +435,9 @@ object SampleView: TSampleView
       end
       object lblAmp: TLabel
         Left = 6
-        Height = 14
+        Height = 18
         Top = 42
-        Width = 24
+        Width = 31
         Caption = 'Amp'
         Font.Style = [fsBold]
         ParentColor = False
@@ -461,9 +445,9 @@ object SampleView: TSampleView
       end
       object lblPitch: TLabel
         Left = 7
-        Height = 14
+        Height = 18
         Top = 80
-        Width = 27
+        Width = 34
         Caption = 'Pitch'
         Font.Style = [fsBold]
         ParentColor = False
@@ -477,7 +461,7 @@ object SampleView: TSampleView
       Width = 133
       Align = alLeft
       Caption = 'Filter'
-      ClientHeight = 125
+      ClientHeight = 121
       ClientWidth = 129
       TabOrder = 3
       object dcLpCutoff: TDialControl
@@ -516,9 +500,9 @@ object SampleView: TSampleView
       end
       object lblOSC2ModAmount1: TLabel
         Left = 2
-        Height = 14
+        Height = 18
         Top = 80
-        Width = 60
+        Width = 76
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False
@@ -558,23 +542,6 @@ object SampleView: TSampleView
         Constraints.MinHeight = 40
         Constraints.MinWidth = 36
       end
-      object dcSaturateDrivePreFilter: TDialControl
-        Left = 71
-        Height = 40
-        Top = 41
-        Width = 36
-        Value = 0
-        Caption = 'Saturate'
-        Lowest = 1
-        Highest = 25
-        Enabled = True
-        ValueVisible = False
-        Color = clForm
-        Constraints.MaxHeight = 40
-        Constraints.MaxWidth = 36
-        Constraints.MinHeight = 40
-        Constraints.MinWidth = 36
-      end
       object tcFilterSwith: TToggleControl
         Left = 107
         Height = 14
@@ -603,9 +570,9 @@ object SampleView: TSampleView
       end
       object lblFilterSelect: TLabel
         Left = 3
-        Height = 14
+        Height = 18
         Top = 43
-        Width = 55
+        Width = 68
         Caption = 'Filter type'
         Color = clDefault
         Font.Style = [fsBold]
@@ -621,7 +588,7 @@ object SampleView: TSampleView
       Width = 273
       Align = alLeft
       Caption = 'Oscillators'
-      ClientHeight = 125
+      ClientHeight = 121
       ClientWidth = 269
       TabOrder = 4
       object dcOsc1Pitch: TDialControl
@@ -660,9 +627,9 @@ object SampleView: TSampleView
       end
       object lblOSC1: TLabel
         Left = 4
-        Height = 14
+        Height = 18
         Top = 0
-        Width = 28
+        Width = 34
         Caption = 'Osc 1'
         Font.Style = [fsBold]
         ParentColor = False
@@ -670,9 +637,9 @@ object SampleView: TSampleView
       end
       object lblOSC1ModAmount: TLabel
         Left = 137
-        Height = 14
+        Height = 18
         Top = 0
-        Width = 60
+        Width = 76
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False
@@ -680,9 +647,9 @@ object SampleView: TSampleView
       end
       object lblOSC2: TLabel
         Left = 4
-        Height = 14
+        Height = 18
         Top = 42
-        Width = 28
+        Width = 34
         Caption = 'Osc 2'
         Font.Style = [fsBold]
         ParentColor = False
@@ -707,9 +674,9 @@ object SampleView: TSampleView
       end
       object lblOSC2ModAmount: TLabel
         Left = 137
-        Height = 14
+        Height = 18
         Top = 41
-        Width = 60
+        Width = 76
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False
@@ -734,9 +701,9 @@ object SampleView: TSampleView
       end
       object lblOSC3: TLabel
         Left = 4
-        Height = 14
+        Height = 18
         Top = 80
-        Width = 28
+        Width = 34
         Caption = 'Osc 3'
         Font.Style = [fsBold]
         ParentColor = False
@@ -761,9 +728,9 @@ object SampleView: TSampleView
       end
       object lblOSC3ModAmount: TLabel
         Left = 137
-        Height = 14
+        Height = 18
         Top = 79
-        Width = 60
+        Width = 76
         Caption = 'Mod Source'
         Font.Style = [fsBold]
         ParentColor = False

@@ -485,11 +485,11 @@ begin
   begin
     FPluginProcessor.Process(nil, ABuffer, ABuffer, AFrameCount);
 
+    lLeftOffset := 0;
+    lRightOffset := 1;
+
     for i := 0 to Pred(AFrameCount) do
     begin
-      lLeftOffset := i * 2;
-      lRightOffset := lLeftOffset + 1;
-
       ABuffer[lLeftOffset] := ABuffer[lLeftOffset] * FVolumeMultiplier * FLeftPanGain;
       ABuffer[lRightOffset] := ABuffer[lRightOffset] * FVolumeMultiplier * FRightPanGain;
 
@@ -506,6 +506,9 @@ begin
       begin
         FRightLevel := TempRightLevel;
       end;
+
+      Inc(lLeftOffset, STEREO);
+      Inc(lRightOffset, STEREO);
     end;
   end
   else

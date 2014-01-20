@@ -155,7 +155,7 @@ type
 
   IObserver = interface['{38AEACE2-2EFB-4EA3-A540-23BD70D4FEF8}']
     procedure Update(Subject: THybridPersistentModel);
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean);
     procedure Connect;
     procedure Disconnect;
     function GetModel: THybridPersistentModel;
@@ -245,7 +245,7 @@ type
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property ObjectID: string read GetObjectID write SetObjectID;
     procedure Update(Subject: THybridPersistentModel); virtual;
-    procedure UpdateView; virtual;
+    procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     function GetModel: THybridPersistentModel; virtual;
     procedure SetModel(AModel: THybridPersistentModel); virtual;
     procedure Connect; override;
@@ -268,7 +268,7 @@ type
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     procedure Update(Subject: THybridPersistentModel); virtual;
-    procedure UpdateView; virtual;
+    procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -294,7 +294,7 @@ type
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     procedure Update(Subject: THybridPersistentModel); virtual;
-    procedure UpdateView; virtual;
+    procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
     function GetObjectOwnerID: string; virtual;
@@ -318,7 +318,7 @@ type
   public
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); virtual;
-    procedure UpdateView; virtual;
+    procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -344,7 +344,7 @@ type
   public
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); virtual;
-    procedure UpdateView; virtual;
+    procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -761,7 +761,7 @@ begin
    // Virtual base method
 end;
 
-procedure TPersistentCustomControl.UpdateView;
+procedure TPersistentCustomControl.UpdateView(AForceRedraw: Boolean = False);
 begin
   //
 end;
@@ -814,7 +814,7 @@ begin
   // Virtual base method
 end;
 
-procedure TPersistentScrollBox.UpdateView;
+procedure TPersistentScrollBox.UpdateView(AForceRedraw: Boolean = False);
 begin
   //
 end;
@@ -1371,7 +1371,7 @@ begin
   FObjectID := Subject.ObjectID;
 end;
 
-procedure THybridPersistentView.UpdateView;
+procedure THybridPersistentView.UpdateView(AForceRedraw: Boolean = False);
 begin
   //
 end;
@@ -1451,7 +1451,7 @@ begin
   // Virtual base method
 end;
 
-procedure TPersistentPanel.UpdateView;
+procedure TPersistentPanel.UpdateView(AForceRedraw: Boolean = False);
 begin
   //
 end;
@@ -1543,7 +1543,7 @@ begin
   // Virtual base class
 end;
 
-procedure TPersistentGraphicControl.UpdateView;
+procedure TPersistentGraphicControl.UpdateView(AForceRedraw: Boolean = False);
 begin
   //
 end;

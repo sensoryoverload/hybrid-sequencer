@@ -72,7 +72,7 @@ type
     procedure Connect;
     procedure Disconnect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
 
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
@@ -162,7 +162,7 @@ begin
   DBLog('end TWavePatternControl.Update');
 end;
 
-procedure TWavePatternControlGUI.UpdateView;
+procedure TWavePatternControlGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
   if FIsDirty and Assigned(FUpdateSubject) then
   begin

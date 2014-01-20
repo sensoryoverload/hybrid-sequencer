@@ -210,7 +210,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
     procedure Connect;
     procedure Disconnect;
     procedure EraseBackground(DC: HDC); override;
@@ -755,6 +755,8 @@ begin
   ZoomFactorX := 1000000 / (AZoomTimeRight - AZoomTimeLeft);
   FOffset := 0 - ConvertTimeToScreen(AZoomTimeLeft);
 
+  FIsDirty := True;
+
   Invalidate;
 end;
 
@@ -839,179 +841,36 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-  FBitmap.Canvas.Clear;
-  FBitmap.Height := Height;
-  FBitmap.Width := Width;
-  FBitmap.Canvas.Pen.Width := 1;
-
-  // Draw default background
-  if FEditMode = emPatternEdit then
+{  FBitmap.Canvas.Clear;}
+  if FIsDirty then
   begin
-    FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
-    FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
-    lSelectedNoteColer := clGreen;
-    lNoteColor := clLime;
-    lNoteOutline := clBlack;
-  end
-  else
-  begin
-    FBitmap.Canvas.Brush.Color := clMidigridBackgroundDark;
-    FBitmap.Canvas.Pen.Color := clMidigridBackgroundDark;
-    lSelectedNoteColer := clDarkGreen;
-    lNoteColor := clDarkLime;
-    lNoteOutline := clDarkOutline;
-  end;
-  FBitmap.Canvas.Rectangle(0, 0, FBitmap.Width, FBitmap.Height);
+    FIsDirty := False;
+    FBitmap.Height := Height;
+    FBitmap.Width := Width;
+    FBitmap.Canvas.Pen.Width := 1;
 
-  // Draw note indictor lines
-  FBitmap.Canvas.Pen.Color := clMidigridBackgroundBlack;
-  FBitmap.Canvas.Brush.Color := clMidigridBackgroundBlack;
-  lMidiNoteModula := 0;
-  for lNoteIndex := 0 to 127 do
-  begin
-    case lMidiNoteModula of
-     0: lMidiNoteKey := keyWhite;
-     1: lMidiNoteKey := keyBlack;
-     2: lMidiNoteKey := keyWhite;
-     3: lMidiNoteKey := keyBlack;
-     4: lMidiNoteKey := keyWhite;
-     5: lMidiNoteKey := keyWhite;
-     6: lMidiNoteKey := keyBlack;
-     7: lMidiNoteKey := keyWhite;
-     8: lMidiNoteKey := keyBlack;
-     9: lMidiNoteKey := keyWhite;
-    10: lMidiNoteKey := keyBlack;
-    11: lMidiNoteKey := keyWhite;
-    end;
-
-    if lMidiNoteKey = keyBlack then
+    // Draw default background
+    if FEditMode = emPatternEdit then
     begin
-      FBitmap.Canvas.Rectangle(
-        PIANO_WIDTH,
-        ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
-        FBitmap.Width,
-        ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
-    end;
-
-    Inc(lMidiNoteModula);
-    if lMidiNoteModula = KEYS_PER_OCTAVE then
-    begin
-      lMidiNoteModula := 0;
-    end;
-  end;
-
-  // Draw vertica time indicators
-  FBitmap.Canvas.Pen.Color := clGlobalOutline;
-
-  lTimeSpacing := QuantizeValue;
-  if lTimeSpacing < 1 then
-    lTimeSpacing := 22050;
-
-  {if FZoomFactorX < 50 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  if FZoomFactorX < 25 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  if FZoomFactorX < 12 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  if FZoomFactorX < 6.25 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  if FZoomFactorX < 3.125 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  if FZoomFactorX < 1.5625 then
-    lTimeSpacing := lTimeSpacing * 2;}
-
-  if FZoomFactorX < 0.78125 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  if FZoomFactorX < 0.390625 then
-    lTimeSpacing := lTimeSpacing * 2;
-
-  repeat
-    x := ConvertTimeToScreen(Round(lTime)) + FOffset;
-    lNewTime := Round(lTime) div Round(GSettings.HalfSampleRate) + 1;
-    if x < FBitmap.Width then
-    begin
-      FBitmap.Canvas.Pen.Color := clGray;
-      FBitmap.Canvas.Line(x, 0, x, FBitmap.Height);
-      if lLastTime <> lNewTime then
-      begin
-        FBitmap.Canvas.TextOut(x + 2, 1, Format('%d', [lNewTime]));
-      end;
-    end;
-    lLastTime := lNewTime;
-    lTime := lTime + lTimeSpacing;
-  until x >= FBitmap.Width;
-
-  // Draw note cursor box
-  FBitmap.Canvas.Pen.Color := clCream;
-  FBitmap.Canvas.Brush.Color := clCream;
-  lHighlightLocation := ConvertTimeToScreen(FNoteHighlightLocation) + FOffset;
-  lHighlightNote := ConvertNoteToScreen(FNoteHighlightNote) + FNoteOffset;
-  lHighlightWidth := Round(FQuantizeValue * FZoomFactorToScreenX);
-
-  FBitmap.Canvas.Rectangle(
-    lHighlightLocation,
-    lHighlightNote,
-    lHighlightLocation + lHighlightWidth,
-    lHighlightNote + FZoomNoteHeight);
-
-  // Draw rubberband selector with dashed outline
-  if FRubberBandMode then
-  begin
-    FBitmap.Canvas.Brush.Style := bsClear;
-    FBitmap.Canvas.Pen.Color := clBlack;
-    FBitmap.Canvas.Pen.Style := psDash;
-    FBitmap.Canvas.Rectangle(FRubberBandSelect);
-    FBitmap.Canvas.Brush.Style := bsSolid;
-    FBitmap.Canvas.Pen.Style := psSolid;
-  end;
-
-  // Draw midi notes
-  FBitmap.Canvas.Pen.Color := lNoteOutline;
-  FBitmap.Canvas.Brush.Color := lNoteOutline;
-
-  for lIndex := 0 to Pred(NoteListGUI.Count) do
-  begin
-    lNote := TMidiNoteGUI(NoteListGUI[lIndex]);
-
-    if lNote.Selected then
-    begin
-      FBitmap.Canvas.Brush.Color := lSelectedNoteColer;
+      FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
+      FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
+      lSelectedNoteColer := clGreen;
+      lNoteColor := clLime;
+      lNoteOutline := clBlack;
     end
     else
     begin
-      FBitmap.Canvas.Brush.Color := lNoteColor;
+      FBitmap.Canvas.Brush.Color := clMidigridBackgroundDark;
+      FBitmap.Canvas.Pen.Color := clMidigridBackgroundDark;
+      lSelectedNoteColer := clDarkGreen;
+      lNoteColor := clDarkLime;
+      lNoteOutline := clDarkOutline;
     end;
+    FBitmap.Canvas.Rectangle(0, 0, FBitmap.Width, FBitmap.Height);
 
-    FBitmap.Canvas.Rectangle(
-      ConvertTimeToScreen(lNote.NoteLocation) + FOffset,
-      ConvertNoteToScreen(lNote.Note) + FNoteOffset,
-      ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FOffset,
-      ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset
-      );
-
-    { note value debug code
-    if FZoomNoteHeight > 8 then
-    begin
-      FBitmap.Canvas.TextOut(
-        ConvertTimeToScreen(lNote.NoteLocation) + FOffset,
-        ConvertNoteToScreen(lNote.Note) + FNoteOffset,
-        Format('%d, %d', [lNote.Note, lNote.NoteLocation]));
-    end; }
-  end;
-
-  // Draw keyboard
-  if PianoKeyboard in FOptionsView then
-  begin
-    FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
-    FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
-    FBitmap.Canvas.Clipping := True;
-    FBitmap.Canvas.Rectangle(0, 0, PIANO_WIDTH, FBitmap.Height);
+    // Draw note indictor lines
+    FBitmap.Canvas.Pen.Color := clMidigridBackgroundBlack;
+    FBitmap.Canvas.Brush.Color := clMidigridBackgroundBlack;
     lMidiNoteModula := 0;
     for lNoteIndex := 0 to 127 do
     begin
@@ -1032,113 +891,259 @@ begin
 
       if lMidiNoteKey = keyBlack then
       begin
-        FBitmap.Canvas.Pen.Color := clBlack;
-        FBitmap.Canvas.Brush.Color := clBlack;
         FBitmap.Canvas.Rectangle(
-          0,
-          ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
           PIANO_WIDTH,
+          ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
+          FBitmap.Width,
           ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
       end;
 
-      if lMidiNoteModula in [4, 11] then
-      begin
-      FBitmap.Canvas.Pen.Color := clBlack;
-      FBitmap.Canvas.Brush.Color := clBlack;
-      FBitmap.Canvas.Line(
-        0,
-        ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
-        PIANO_WIDTH,
-        ConvertNoteToScreen(lNoteIndex) + FNoteOffset);
-      end;
       Inc(lMidiNoteModula);
       if lMidiNoteModula = KEYS_PER_OCTAVE then
       begin
         lMidiNoteModula := 0;
       end;
     end;
-    FBitmap.Canvas.Line(PIANO_WIDTH, 0, 30, FBitmap.Height);
-  end;
 
-  // Draw loopstartmarker
-  FBitmap.Canvas.Pen.Width := 2;
-  x := Round((LoopStart.Location * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
-  if x >= FNoteInfoWidth then
-  begin
-    FBitmap.Canvas.Pen.Color := clRed;
-    FBitmap.Canvas.Line(x, 0, x, Height);
-    //FBitmap.Canvas.TextOut(x + 10, 10, Format('Start %d', [LoopStart.Location]))
-  end;
+    // Draw vertica time indicators
+    FBitmap.Canvas.Pen.Color := clGlobalOutline;
 
-  // Draw loopendmarker
-  x := Round((LoopEnd.Location * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
-  if x >= FNoteInfoWidth then
-  begin
-    FBitmap.Canvas.Pen.Color := clRed;
-    FBitmap.Canvas.Line(x, 0, x, Height);
-    //FBitmap.Canvas.TextOut(x + 10, 10, Format('End %d', [LoopEnd.Location]))
-  end;
+    lTimeSpacing := QuantizeValue;
+    if lTimeSpacing < 1 then
+      lTimeSpacing := 22050;
 
-  // Draw automation data
-  if FEditMode = emAutomationEdit then
-  begin
-    FBitmap.Canvas.Pen.Width := 1;
+    {if FZoomFactorX < 50 then
+      lTimeSpacing := lTimeSpacing * 2;
 
-    if Assigned(FSelectedAutomationParameter) then
-    begin
-      if FSelectedAutomationParameter.List.Count > 0 then
+    if FZoomFactorX < 25 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 12 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 6.25 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 3.125 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 1.5625 then
+      lTimeSpacing := lTimeSpacing * 2;}
+
+    if FZoomFactorX < 0.78125 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    if FZoomFactorX < 0.390625 then
+      lTimeSpacing := lTimeSpacing * 2;
+
+    repeat
+      x := ConvertTimeToScreen(Round(lTime)) + FOffset;
+      lNewTime := Round(lTime) div Round(GSettings.HalfSampleRate) + 1;
+      if x < FBitmap.Width then
       begin
-        FSelectedAutomationParameter.First;
-        lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
-
-        lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
-        FBitmap.Canvas.MoveTo(Succ(PIANO_WIDTH), lAutomationScreenY);
-
-        while not FSelectedAutomationParameter.Eof do
+        FBitmap.Canvas.Pen.Color := clGray;
+        FBitmap.Canvas.Line(x, 0, x, FBitmap.Height);
+        if lLastTime <> lNewTime then
         begin
-          lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
-
-          lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
-          lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
-          FBitmap.Canvas.Brush.Color := clRed;
-          FBitmap.Canvas.LineTo(
-            lAutomationScreenX,
-            lAutomationScreenY);
-
-          if (Abs(FMouseX - lAutomationScreenX) < 5) and
-            (Abs(FMouseY - lAutomationScreenY) < 5) then
-          begin // Mouse over dataselectionpoint
-            FBitmap.Canvas.Brush.Color := clLime;
-            FBitmap.Canvas.Rectangle(
-              lAutomationScreenX - 5,
-              lAutomationScreenY - 5,
-              lAutomationScreenX + 5,
-              lAutomationScreenY + 5);
-          end
-          else
-          begin
-            FBitmap.Canvas.Brush.Color := clRed;
-            FBitmap.Canvas.Rectangle(
-              lAutomationScreenX - 4,
-              lAutomationScreenY - 4,
-              lAutomationScreenX + 4,
-              lAutomationScreenY + 4);
-          end;
-
-          FSelectedAutomationParameter.Next;
+          FBitmap.Canvas.TextOut(x + 2, 1, Format('%d', [lNewTime]));
         end;
-        FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+      end;
+      lLastTime := lNewTime;
+      lTime := lTime + lTimeSpacing;
+    until x >= FBitmap.Width;
+
+    // Draw note cursor box
+    FBitmap.Canvas.Pen.Color := clCream;
+    FBitmap.Canvas.Brush.Color := clCream;
+    lHighlightLocation := ConvertTimeToScreen(FNoteHighlightLocation) + FOffset;
+    lHighlightNote := ConvertNoteToScreen(FNoteHighlightNote) + FNoteOffset;
+    lHighlightWidth := Round(FQuantizeValue * FZoomFactorToScreenX);
+
+    FBitmap.Canvas.Rectangle(
+      lHighlightLocation,
+      lHighlightNote,
+      lHighlightLocation + lHighlightWidth,
+      lHighlightNote + FZoomNoteHeight);
+
+    // Draw rubberband selector with dashed outline
+    if FRubberBandMode then
+    begin
+      FBitmap.Canvas.Brush.Style := bsClear;
+      FBitmap.Canvas.Pen.Color := clBlack;
+      FBitmap.Canvas.Pen.Style := psDash;
+      FBitmap.Canvas.Rectangle(FRubberBandSelect);
+      FBitmap.Canvas.Brush.Style := bsSolid;
+      FBitmap.Canvas.Pen.Style := psSolid;
+    end;
+
+    // Draw midi notes
+    FBitmap.Canvas.Pen.Color := lNoteOutline;
+    FBitmap.Canvas.Brush.Color := lNoteOutline;
+
+    for lIndex := 0 to Pred(NoteListGUI.Count) do
+    begin
+      lNote := TMidiNoteGUI(NoteListGUI[lIndex]);
+
+      if lNote.Selected then
+      begin
+        FBitmap.Canvas.Brush.Color := lSelectedNoteColer;
       end
       else
       begin
-        // No automation so just draw a straight line
-        lAutomationScreenY := Height div 2;
-        FBitmap.Canvas.MoveTo(Succ(PIANO_WIDTH), lAutomationScreenY);
-        FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+        FBitmap.Canvas.Brush.Color := lNoteColor;
+      end;
+
+      FBitmap.Canvas.Rectangle(
+        ConvertTimeToScreen(lNote.NoteLocation) + FOffset,
+        ConvertNoteToScreen(lNote.Note) + FNoteOffset,
+        ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FOffset,
+        ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset
+        );
+
+      { note value debug code
+      if FZoomNoteHeight > 8 then
+      begin
+        FBitmap.Canvas.TextOut(
+          ConvertTimeToScreen(lNote.NoteLocation) + FOffset,
+          ConvertNoteToScreen(lNote.Note) + FNoteOffset,
+          Format('%d, %d', [lNote.Note, lNote.NoteLocation]));
+      end; }
+    end;
+
+    // Draw keyboard
+    if PianoKeyboard in FOptionsView then
+    begin
+      FBitmap.Canvas.Brush.Color := clMidigridBackgroundWhite;
+      FBitmap.Canvas.Pen.Color := clMidigridBackgroundWhite;
+      FBitmap.Canvas.Clipping := True;
+      FBitmap.Canvas.Rectangle(0, 0, PIANO_WIDTH, FBitmap.Height);
+      lMidiNoteModula := 0;
+      for lNoteIndex := 0 to 127 do
+      begin
+        case lMidiNoteModula of
+         0: lMidiNoteKey := keyWhite;
+         1: lMidiNoteKey := keyBlack;
+         2: lMidiNoteKey := keyWhite;
+         3: lMidiNoteKey := keyBlack;
+         4: lMidiNoteKey := keyWhite;
+         5: lMidiNoteKey := keyWhite;
+         6: lMidiNoteKey := keyBlack;
+         7: lMidiNoteKey := keyWhite;
+         8: lMidiNoteKey := keyBlack;
+         9: lMidiNoteKey := keyWhite;
+        10: lMidiNoteKey := keyBlack;
+        11: lMidiNoteKey := keyWhite;
+        end;
+
+        if lMidiNoteKey = keyBlack then
+        begin
+          FBitmap.Canvas.Pen.Color := clBlack;
+          FBitmap.Canvas.Brush.Color := clBlack;
+          FBitmap.Canvas.Rectangle(
+            0,
+            ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
+            PIANO_WIDTH,
+            ConvertNoteToScreen(lNoteIndex) + FZoomNoteHeight + FNoteOffset);
+        end;
+
+        if lMidiNoteModula in [4, 11] then
+        begin
+        FBitmap.Canvas.Pen.Color := clBlack;
+        FBitmap.Canvas.Brush.Color := clBlack;
+        FBitmap.Canvas.Line(
+          0,
+          ConvertNoteToScreen(lNoteIndex) + FNoteOffset,
+          PIANO_WIDTH,
+          ConvertNoteToScreen(lNoteIndex) + FNoteOffset);
+        end;
+        Inc(lMidiNoteModula);
+        if lMidiNoteModula = KEYS_PER_OCTAVE then
+        begin
+          lMidiNoteModula := 0;
+        end;
+      end;
+      FBitmap.Canvas.Line(PIANO_WIDTH, 0, 30, FBitmap.Height);
+    end;
+
+    // Draw loopstartmarker
+    FBitmap.Canvas.Pen.Width := 2;
+    x := Round((LoopStart.Location * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
+    if x >= FNoteInfoWidth then
+    begin
+      FBitmap.Canvas.Pen.Color := clRed;
+      FBitmap.Canvas.Line(x, 0, x, Height);
+      //FBitmap.Canvas.TextOut(x + 10, 10, Format('Start %d', [LoopStart.Location]))
+    end;
+
+    // Draw loopendmarker
+    x := Round((LoopEnd.Location * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
+    if x >= FNoteInfoWidth then
+    begin
+      FBitmap.Canvas.Pen.Color := clRed;
+      FBitmap.Canvas.Line(x, 0, x, Height);
+      //FBitmap.Canvas.TextOut(x + 10, 10, Format('End %d', [LoopEnd.Location]))
+    end;
+
+    // Draw automation data
+    if FEditMode = emAutomationEdit then
+    begin
+      FBitmap.Canvas.Pen.Width := 1;
+
+      if Assigned(FSelectedAutomationParameter) then
+      begin
+        if FSelectedAutomationParameter.List.Count > 0 then
+        begin
+          FSelectedAutomationParameter.First;
+          lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
+
+          lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
+          FBitmap.Canvas.MoveTo(Succ(PIANO_WIDTH), lAutomationScreenY);
+
+          while not FSelectedAutomationParameter.Eof do
+          begin
+            lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
+
+            lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
+            lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+            FBitmap.Canvas.Brush.Color := clRed;
+            FBitmap.Canvas.LineTo(
+              lAutomationScreenX,
+              lAutomationScreenY);
+
+            if (Abs(FMouseX - lAutomationScreenX) < 5) and
+              (Abs(FMouseY - lAutomationScreenY) < 5) then
+            begin // Mouse over dataselectionpoint
+              FBitmap.Canvas.Brush.Color := clLime;
+              FBitmap.Canvas.Rectangle(
+                lAutomationScreenX - 5,
+                lAutomationScreenY - 5,
+                lAutomationScreenX + 5,
+                lAutomationScreenY + 5);
+            end
+            else
+            begin
+              FBitmap.Canvas.Brush.Color := clRed;
+              FBitmap.Canvas.Rectangle(
+                lAutomationScreenX - 4,
+                lAutomationScreenY - 4,
+                lAutomationScreenX + 4,
+                lAutomationScreenY + 4);
+            end;
+
+            FSelectedAutomationParameter.Next;
+          end;
+          FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+        end
+        else
+        begin
+          // No automation so just draw a straight line
+          lAutomationScreenY := Height div 2;
+          FBitmap.Canvas.MoveTo(Succ(PIANO_WIDTH), lAutomationScreenY);
+          FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+        end;
       end;
     end;
   end;
-
   Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
@@ -1187,11 +1192,11 @@ begin
   DBLog('end TMidiGridGUI.Update');
 end;
 
-procedure TMidiPatternGUI.UpdateView;
+procedure TMidiPatternGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
-    FIsDirty := False;
+//    FIsDirty := False;
 
     DiffLists(
       TMidiPattern(FUpdateSubject).NoteList,
@@ -1280,6 +1285,8 @@ end;
 procedure TMidiPatternGUI.SetOffset(AValue: Integer);
 begin
   FOffset := Round(FZoomFactorToScreenX * LoopEnd.Location / 100 * AValue);
+
+  FIsDirty := True;
 end;
 
 procedure TMidiPatternGUI.SetQuantizeSetting(AValue: Integer);
@@ -1483,6 +1490,8 @@ end;
 procedure TMidiPatternGUI.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
+  FIsDirty := True;
+
   inherited MouseDown(Button, Shift, X, Y);
 
   FMouseX := X;
@@ -1540,6 +1549,8 @@ end;
 procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
+  FIsDirty := True;
+
   inherited MouseUp(Button, Shift, X, Y);
 
   if FEditMode = emPatternEdit then
@@ -1606,6 +1617,8 @@ end;
 
 procedure TMidiPatternGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
+  FIsDirty := True;
+
   inherited MouseMove(Shift, X, Y);
 
   FMouseX := X;

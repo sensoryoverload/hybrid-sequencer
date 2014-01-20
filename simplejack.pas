@@ -226,7 +226,7 @@ type
   public
     { public Declarations }
     procedure Update(Subject: THybridPersistentModel); reintroduce;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
     procedure Connect;
     procedure Disconnect;
     function GetObjectID: string;
@@ -1298,7 +1298,7 @@ begin
 
   GAudioStruct.Attach(MainApp);
 
-  ScreenUpdater.Interval := 100;
+  ScreenUpdater.Interval := 50;
   ScreenUpdater.Enabled := True;
 
   pnlVarious.Width := 0;
@@ -1639,7 +1639,7 @@ begin
   FIsDirty := True;
 end;
 
-procedure TMainApp.UpdateView;
+procedure TMainApp.UpdateView(AForceRedraw: Boolean = False);
 begin
   if FIsDirty and Assigned(FUpdateSubject) then
   begin

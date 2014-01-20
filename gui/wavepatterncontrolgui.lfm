@@ -50,7 +50,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object cbPitchAlgo: TComboBox
       Left = 375
-      Height = 23
+      Height = 29
       Top = 1
       Width = 100
       ItemHeight = 0
@@ -60,7 +60,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object cbQuantize: TComboBox
       Left = 593
-      Height = 23
+      Height = 29
       Top = 1
       Width = 100
       ItemHeight = 0
@@ -109,9 +109,9 @@ object WavePatternControlGUI: TWavePatternControlGUI
     end
     object lblAutomation: TLabel
       Left = 703
-      Height = 14
+      Height = 18
       Top = 5
-      Width = 66
+      Width = 73
       Caption = 'Automation'
       ParentColor = False
     end
@@ -132,7 +132,6 @@ object WavePatternControlGUI: TWavePatternControlGUI
       Top = 0
       Width = 160
       Align = alRight
-      DefaultItemHeight = 16
       TabOrder = 0
     end
   end

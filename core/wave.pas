@@ -706,6 +706,7 @@ begin
   FTransientThreshold:= AValue;
   BeatDetect.setThresHold(FTransientThreshold / 100);
   AutoMarkerProcess(True);
+  Notify;
 end;
 
 procedure TWavePattern.DoCreateInstance(var AObject: TObject; AClassName: string);
@@ -943,6 +944,8 @@ begin
 
     UpdateSampleScale;
   end;
+
+  Notify;
 
   DBLog('start TWaveForm.LoadSampleData');
 end;
@@ -1757,7 +1760,6 @@ begin
   end;
 
   SortSlices;
-  Notify;
 
   {for i := 0 to Pred(32)  do
   begin
@@ -1795,8 +1797,6 @@ begin
       end;
     end;
   end; }
-
-  Notify;
 end;
 
 { TAddMarkerCommand }

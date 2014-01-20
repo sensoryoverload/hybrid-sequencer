@@ -70,7 +70,7 @@ type
     function GetObjectOwnerID: string; virtual;
     procedure SetObjectOwnerID(const AObjectOwnerID: string);
     procedure Update(Subject: THybridPersistentModel); virtual; reintroduce;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
     function GetModel: THybridPersistentModel; virtual;
     procedure SetModel(AModel: THybridPersistentModel); virtual;
     procedure Connect;
@@ -514,14 +514,12 @@ begin
   FIsDirty := True;
 end;
 
-procedure TPatternView.UpdateView;
+procedure TPatternView.UpdateView(AForceRedraw: Boolean = False);
 begin
   FObjectID := FUpdateSubject.ObjectID;
 
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
-    FIsDirty := False;
-
     if FUpdateSubject is TTrack then
     begin
       // Blank page if not a valid pattern in memory anymore
@@ -543,15 +541,6 @@ begin
           tsPattern.TabVisible := False;
         end;
       end;
-    end
-    else if FUpdateSubject is TAudioStructure then
-    begin
-      // Add/Remove tracks
-      DiffLists(
-        TAudioStructure(FUpdateSubject).Tracks,
-        FTracks,
-        @CreateTrackGUI,
-        @DeleteTrackGUI);
     end;
   end;
 
@@ -567,10 +556,7 @@ begin
     else
     begin
       FPluginProcessorGUI.OnChangeNodeList := @FMidiPatternControlGUI.PopulateAutomationControls;
-      FMidiPatternControlGUI.MidiPatternGUI.UpdateView;
-
-      // Update cursor
-      FMidiPatternControlGUI.MidiPatternGUI.Invalidate;
+      FMidiPatternControlGUI.MidiPatternGUI.UpdateView(True);
     end;
   end
   else if FWavePatternControlGUI.Parent = tsPattern then
@@ -584,11 +570,9 @@ begin
     else
     begin
       FPluginProcessorGUI.OnChangeNodeList := @FWavePatternControlGUI.PopulateAutomationControls;
-      FWavePatternControlGUI.WaveGUI.UpdateView;
-
-      // Update cursor
-      FWavePatternControlGUI.WaveGUI.Invalidate;
+      FWavePatternControlGUI.WaveGUI.UpdateView(True);
     end;
+    FIsDirty := False;
   end;
 
   FPluginProcessorGUI.UpdateView;

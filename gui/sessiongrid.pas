@@ -130,7 +130,7 @@ type
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); override;
-    procedure UpdateView; override;
+    procedure UpdateView(AForceRedraw: Boolean = False); override;
     procedure Render(AX, AY: Integer; ABGRABitmap: TBGRABitmap);
     procedure RenderCursor(ACanvas: TCanvas);
     function PatternAtMouseXY(AX, AY: Integer): TPattern;
@@ -246,7 +246,7 @@ type
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
-    procedure UpdateView; override;
+    procedure UpdateView(AForceRedraw: Boolean = False); override;
     procedure EraseBackground(DC: HDC); override;
     procedure DragDrop(Source: TObject; X, Y: Integer); override;
     function PatternAtMouseXY(X, Y: Integer): TPattern;
@@ -466,7 +466,7 @@ begin
   DBLog('end TTrackView.Update');
 end;
 
-procedure TTrackView.UpdateView;
+procedure TTrackView.UpdateView(AForceRedraw: Boolean = False);
 begin
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
@@ -881,7 +881,7 @@ begin
   FIsDirty := True;
 end;
 
-procedure TSessionGrid.UpdateView;
+procedure TSessionGrid.UpdateView(AForceRedraw: Boolean = False);
 var
   lIndex: Integer;
 begin
@@ -1525,6 +1525,8 @@ begin
 
   FLastMouseX := X;
   FLastMouseY := Y;
+
+  Invalidate;
 
   inherited MouseMove(Shift, X, Y);
 end;

@@ -172,7 +172,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
-    procedure UpdateView; override;
+    procedure UpdateView(AForceRedraw: Boolean = False); override;
     procedure Connect; override;
     procedure Disconnect; override;
     procedure EraseBackground(DC: HDC); override;
@@ -310,6 +310,8 @@ procedure TWaveGUI.SetZoomFactorX(const AValue: Single);
 var
   lFramesPerScreenWidth: Single;
 begin
+  FIsDirty := True;
+
   FZoomFactorX := AValue;
 
   lFramesPerScreenWidth := LoopEnd.Location / Width;
@@ -317,10 +319,13 @@ begin
   if FZoomFactorX = 0 then FZoomFactorX := 0.00001;
   FZoomFactorToScreen:= (ZoomFactorX / lFramesPerScreenWidth);
   FZoomFactorToData:= (lFramesPerScreenWidth / ZoomFactorX);
+
+  Invalidate;
 end;
 
 procedure TWaveGUI.SetZoomFactorY(const AValue: Single);
 begin
+  FIsDirty := True;
 end;
 
 procedure TWaveGUI.Setpitch(const Avalue: Single);
@@ -336,6 +341,8 @@ end;
 constructor TWaveGUI.Create(Aowner: Tcomponent);
 begin
   inherited Create(Aowner);
+
+  FBitmap := TBitmap.Create;
 
   FIsDirty := False;
 
@@ -384,6 +391,8 @@ begin
   FSampleStart.Free;
   FSampleEnd.Free;
 
+  FBitmap.Free;
+
   inherited Destroy;
 end;
 
@@ -398,12 +407,15 @@ begin
   DBLog('end TWaveFormGUI.Update');
 end;
 
-procedure TWaveGUI.UpdateView;
+procedure TWaveGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
+  if AForceRedraw then
+  begin
+    FIsDirty := True;
+  end;
+
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
-    FIsDirty := False;
-
     DiffLists(
       TWavePattern(FUpdateSubject).SliceList,
       SliceListGUI,
@@ -506,9 +518,9 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-  FBitmap := TBitmap.Create;
-  try
-    FBitmap.Canvas.Clear;
+  if FIsDirty then
+  begin
+    FIsDirty := False;
 
     // Initializes the Bitmap Size
     FBitmap.Height := Height;
@@ -832,11 +844,8 @@ begin
       end;
       FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
     end;
-
-    Canvas.Draw(0, 0, FBitmap);
-  finally
-    FBitmap.Free;
   end;
+  Canvas.Draw(0, 0, FBitmap);
 
   // Draw cursor
   SliceLeft := Round(FModel.RealCursorPosition * FZoomFactorToScreen - FOffset);
@@ -925,8 +934,6 @@ begin
       lAddMarkerCommand.Free;
     end;
   end;
-
-  Invalidate;
 
   inherited DblClick;
 end;
@@ -1069,9 +1076,9 @@ begin
     HandleAutomationEditMouseDown(Button, Shift, X, Y);
   end;
 
-  Invalidate;
-
   inherited Mousedown(Button, Shift, X, Y);
+
+//  Invalidate;
 end;
 
 procedure TWaveGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
@@ -1148,9 +1155,9 @@ begin
     HandleAutomationEditMouseUp(Button, Shift, X, Y);
   end;
 
-  Invalidate;
-
   inherited MouseUp(Button, Shift, X, Y);
+
+  UpdateView(True);
 end;
 
 procedure TWaveGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
@@ -1206,9 +1213,9 @@ begin
     HandleAutomationEditMouseMove(Shift, X, Y);
   end;
 
-  Invalidate;
-
   inherited MouseMove(Shift, X, Y);
+
+  UpdateView(True);
 end;
 
 procedure TWaveGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
@@ -1539,7 +1546,10 @@ end;
 
 procedure TWaveGUI.SetOffset(AValue: Integer);
 begin
+  FIsDirty := True;
+
   FOffset := Round(FZoomFactorToScreen * LoopEnd.Location / 100 * AValue);
+
   Invalidate;
 end;
 

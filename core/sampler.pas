@@ -86,14 +86,13 @@ type
     FAttackAdder: single;
     FDecayAdder: single;
     FReleaseAdder: single;
-    FInternalLevel: single;
     FLevel: single;
     FEnvelope: TEnvelope;
     FFrameCounter: Integer;
     procedure SetEnvelope(const AValue: TEnvelope);
   public
     procedure Initialize; override;
-    procedure Process; inline;
+    procedure Process;
     procedure NoteOn;
     procedure NoteOff;
     property Envelope: TEnvelope read FEnvelope write SetEnvelope;
@@ -300,9 +299,6 @@ type
     FAmpEnvelope: TEnvelope;
     FFilterEnvelope: TEnvelope;
 
-    FSaturateDrivePreFilter: Single;
-    FSaturateOn: Boolean;
-
     FGlobalLevel: Single;
 
     FFilter: TFilter;
@@ -356,9 +352,6 @@ type
     property PitchEnvelope: TEnvelope read FPitchEnvelope write FPitchEnvelope;
     property AmpEnvelope: TEnvelope read FAmpEnvelope write FAmpEnvelope;
     property FilterEnvelope: TEnvelope read FFilterEnvelope write FFilterEnvelope;
-
-    property SaturateDrivePreFilter: Single read FSaturateDrivePreFilter write FSaturateDrivePreFilter;
-    property SaturateOn: Boolean read FSaturateOn write FSaturateOn;
 
     property Filter: TFilter read FFilter write FFilter;
 
@@ -473,9 +466,7 @@ type
     spGlobal_Level,
     spLow_Note,
     spHigh_Note,
-    spBase_Note,
-
-    spSaturateDrivePreFilter
+    spBase_Note
   );
 
   { TSampleParameterCommand }
@@ -562,8 +553,6 @@ type
     FSampleEngine: TSampleEngine;
     FSamplePosition: single;
 
-    FEnvelopeFollowerEngine: TEnvelopeFollowerEngine;
-
     FFilterEnvelopeEngine: TEnvelopeEngine;
 
     FAmpEnvelopeEngine: TEnvelopeEngine;
@@ -583,7 +572,6 @@ type
     FLFOPhase: single;
     FNote: Integer;
     FRunning: Boolean;
-    FNoteOnOffset: Integer;
     FLength: single;
     FCutoffKeytracking: single;
     FVelocity: single;
@@ -601,7 +589,7 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Process(AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrameIndex: Integer);
-    procedure NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single; AVelocity: Single);
+    procedure NoteOn(ANote: Integer; ALength: Single; AVelocity: Single);
     procedure NoteOff;
 
     function RunningNote: Integer;
@@ -614,7 +602,6 @@ type
     property LFO1Engine: TOscillatorEngine read FLFO1Engine write FLFO1Engine;
     property LFO2Engine: TOscillatorEngine read FLFO2Engine write FLFO2Engine;
     property LFO3Engine: TOscillatorEngine read FLFO3Engine write FLFO3Engine;
-    property NoteOnOffset: Integer read FNoteOnOffset write FNoteOnOffset;
   published
     property Sample: TSample read FSample write SetSample;
   end;
@@ -980,11 +967,6 @@ begin
       FOldValue := FSample.Key;
       FSample.Key := FValue;
     end;
-    spSaturateDrivePreFilter:
-    begin
-      FOldValue := FSample.SaturateDrivePreFilter;
-      FSample.SaturateDrivePreFilter := FValue;
-    end;
   end;
 
   FSample.EndUpdate;
@@ -1205,10 +1187,6 @@ begin
     spBase_Note:
     begin
       FSample.Key := FOldValue;
-    end;
-    spSaturateDrivePreFilter:
-    begin
-      FSample.SaturateDrivePreFilter := FOldValue;
     end;
   end;
 
@@ -1521,42 +1499,42 @@ procedure TEnvelopeEngine.Initialize;
 begin
   inherited Initialize;
 
-  FInternalLevel := 0;
+  FLevel := 0;
   FState := esStart;
 end;
 
-procedure TEnvelopeEngine.Process; inline;
+procedure TEnvelopeEngine.Process;
 begin
   Inc(FFrameCounter);
 
   case FState of
   esStart:
     begin
-      //prevent clicks FInternalLevel := 0;
+      FLevel := 0;
     end;
   esAttack:
     begin
-      FInternalLevel := FInternalLevel + FAttackAdder;
-      if FInternalLevel >= 1 then
+      FLevel := FLevel + FAttackAdder;
+      if FLevel >= 1 then
       begin
-        FInternalLevel := 1;
+        FLevel := 1;
 
         FState := esDecay;
       end;
     end;
   esDecay:
     begin
-      FInternalLevel := FInternalLevel - FDecayAdder;
-      if FInternalLevel <= FEnvelope.Sustain then
+      FLevel := FLevel - FDecayAdder;
+      if FLevel <= FEnvelope.Sustain then
       begin
-        if FInternalLevel > 0 then
+        if FLevel > 0 then
         begin
-          FInternalLevel := FEnvelope.Sustain;
+          FLevel := FEnvelope.Sustain;
           FState := esSustain;
         end
         else
         begin
-          FInternalLevel := 0;
+          FLevel := 0;
           FState := esEnd;
         end;
       end;
@@ -1567,10 +1545,10 @@ begin
     end;
   esRelease:
     begin
-      FInternalLevel := FInternalLevel - FReleaseAdder;
-      if FInternalLevel < 0.01 then
+      FLevel := FLevel - FReleaseAdder;
+      if FLevel < 0.01 then
       begin
-        FInternalLevel := 0;
+        FLevel := 0;
         FState := esEnd;
       end;
     end;
@@ -1578,21 +1556,16 @@ begin
     begin
       // Stay here at the end, this should be a signal to put the voice engine
       // back in the voice pool
-      FInternalLevel := 0;
+      FLevel := 0;
 
       // Set max steal priority
       FFrameCounter := High(Integer);
-      FState := esEnd;
     end;
   end;
 
-  if FInternalLevel > DENORMAL_KILLER then
+  if FLevel < DENORMAL_KILLER then
   begin
-    FLevel := FInternalLevel;
-  end
-  else
-  begin
-    FLevel := 0;
+    FLevel := DENORMAL_KILLER;
   end;
 end;
 
@@ -1607,7 +1580,7 @@ begin
   if FEnvelope.Decay = 0 then
   begin
     FState := esSustain;
-    FInternalLevel := FEnvelope.Sustain;
+    FLevel := FEnvelope.Sustain;
   end
   else
   begin
@@ -1622,7 +1595,7 @@ end;
 
 procedure TEnvelopeEngine.NoteOff;
 begin
-  if FInternalLevel = 0 then
+  if FLevel = 0 then
   begin
     FState := esEnd;
   end
@@ -1630,13 +1603,13 @@ begin
   begin
     if FEnvelope.Release = 0 then
     begin
-      FInternalLevel := 0;
+      FLevel := 0;
       FState := esEnd;
     end
     else
     begin
       FReleaseAdder :=
-        FInternalLevel /
+        FLevel /
         (Samplerate * log_approx( FEnvelope.Release ) * 5);
     end;
 
@@ -1722,7 +1695,6 @@ begin
   LowNote := 0;
   HighNote := 127;
   Key := 48;
-  SaturateDrivePreFilter := 1;
   GlobalLevel := 1;
 
   FPitchScaleFactor := 1;
@@ -2342,7 +2314,7 @@ begin
                      or (not lVoice.Running) then
                   begin
                     // Take voice when te same note value or steal
-                    lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length, lMidiEvent.DataValue2);
+                    lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.Length, lMidiEvent.DataValue2);
 
                     FLFO1Engine.Rate := FSample.LFO1.Pitch;
                     FLFO2Engine.Rate := FSample.LFO2.Pitch;
@@ -2359,7 +2331,7 @@ begin
                   FSampleVoiceEngineList.Sort(@SortVoicePriority);
 
                   lVoice := TSampleVoiceEngine(FSampleVoiceEngineList[Pred(FSampleVoiceEngineList.Count)]);
-                  lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.RelativeOffset, lMidiEvent.Length, lMidiEvent.DataValue2);
+                  lVoice.NoteOn(lMidiEvent.DataValue1, lMidiEvent.Length, lMidiEvent.DataValue2);
 
                   FLFO1Engine.Rate := FSample.LFO1.Pitch;
                   FLFO2Engine.Rate := FSample.LFO2.Pitch;
@@ -2445,7 +2417,6 @@ begin
 
   FInternalBuffer := GetMem(Frames * SizeOf(Single));
 
-  FEnvelopeFollowerEngine := TEnvelopeFollowerEngine.Create(Frames);
   FOsc1Engine := TOscillatorEngine.Create(Frames);
   FOsc2Engine := TOscillatorEngine.Create(Frames);
   FOsc3Engine := TOscillatorEngine.Create(Frames);
@@ -2461,7 +2432,6 @@ begin
   FRunning := False;
   FSamplePosition := 0;
   FNote := -1;
-  FNoteOnOffset := 0;
   FStopVoice := False;
 end;
 
@@ -2477,7 +2447,6 @@ begin
   FLFO2Engine.Free;
   FLFO3Engine.Free;
   FFilterEngine.Free;
-  FEnvelopeFollowerEngine.Free;
 
   FreeMem(FInternalBuffer);
 
@@ -2519,7 +2488,6 @@ begin
   FRunning := False;
   FSamplePosition := 0;
   FNote := -1;
-  FNoteOnOffset := 0;
   FStopVoice := False;
 end;
 
@@ -2534,7 +2502,7 @@ begin
   begin
     FRunning := False;
 
-    lSample := 0;
+    lSample := DENORMAL_KILLER;
   end
   else
   begin
@@ -2556,9 +2524,6 @@ begin
       begin
         FInternalBuffer[AFrameIndex] := 0;
       end;
-
-      // Waveform input in Envelope follower
-      FEnvelopeFollowerEngine.Process(FInternalBuffer[AFrameIndex]);
     end;
 
     // Oscillatorbank
@@ -2574,15 +2539,7 @@ begin
     lSampleC := FOsc3Engine.Process;
 
     // Mix and overdrive oscillators
-    lSample := 0;
-    if FSample.SaturateDrivePreFilter > DENORMAL_KILLER then
-    begin
-      lSample := (lSampleA + lSampleB + lSampleC) * FSample.SaturateDrivePreFilter;
-      if lSample > DENORMAL_KILLER then
-      begin
-        lSample := tanh2(lSample);
-      end;
-    end;
+    lSample := lSampleA + lSampleB + lSampleC;
 
     // Filter
     if FFilterEngine.Filter.Active then
@@ -2608,14 +2565,15 @@ begin
     end;
 
     // Amplifier
-    if FAmpEnvelopeEngine.Envelope.Active and (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
+    if FAmpEnvelopeEngine.Envelope.Active and
+      (FAmpEnvelopeEngine.Level > DENORMAL_KILLER) then
     begin
       // Amp & Overdrive
       lSample := lSample * FAmpEnvelopeEngine.Level;
     end
     else
     begin
-      lSample := 0;
+      lSample := DENORMAL_KILLER;
     end;
   end;
 
@@ -2637,10 +2595,10 @@ begin
   end;
 
   // Debug statistics
-  //DBLog(Format('IntLevel: %g', [FAmpEnvelopeEngine.FInternalLevel]));
+  //DBLog(Format('IntLevel: %g', [FAmpEnvelopeEngine.FLevel]));
   {DBLog(
     Format('IntLevel: %g, Attack: %g Adr: %g,Decay: %g Adr: %g, Sustain: %g, Release: %g Adr: %g  ',
-    [FAmpEnvelopeEngine.FInternalLevel,
+    [FAmpEnvelopeEngine.FLevel,
     FAmpEnvelopeEngine.Envelope.Attack,
     FAmpEnvelopeEngine.FAttackAdder,
     FAmpEnvelopeEngine.Envelope.Decay,
@@ -2653,7 +2611,7 @@ end;
 {
   Reinitialize start state
 }
-procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ARelativeLocation: Integer; ALength: Single; AVelocity: Single);
+procedure TSampleVoiceEngine.NoteOn(ANote: Integer; ALength: Single; AVelocity: Single);
 
   function ClampNote(ANote: Integer): Integer;
   begin
@@ -2673,8 +2631,6 @@ begin
   FPitchEnvelopeEngine.NoteOn;
   FFilterEnvelopeEngine.NoteOn;
   FAmpEnvelopeEngine.NoteOn;
-
-  FNoteOnOffset := ARelativeLocation;
 
   FNote := ANote;
 
@@ -2751,10 +2707,6 @@ begin
     msPitchEnvelope:
     begin
       Result := @FPitchEnvelopeEngine.Level;
-    end;
-    msEnvelopeFollower:
-    begin
-      Result := @FEnvelopeFollowerEngine.Level;
     end;
     msOscillator1:
     begin

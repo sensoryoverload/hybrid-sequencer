@@ -50,7 +50,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); virtual;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
     procedure Connect; virtual;
     procedure Disconnect; virtual;
     function GetObjectID: string;
@@ -100,7 +100,7 @@ begin
   FUpdateSubject := Subject;
 end;
 
-procedure TGenericPluginGUI.UpdateView;
+procedure TGenericPluginGUI.UpdateView(AForceRedraw: Boolean = False);
 var
   lParameterIndex: Integer;
   lPlugin: TPluginNode;

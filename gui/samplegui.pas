@@ -90,8 +90,6 @@ type
     dcLFO1Rate: TDialControl;
     dcLFO2Rate: TDialControl;
     dcLFO3Rate: TDialControl;
-    dcSaturateDrivePreFilter: TDialControl;
-    dcSaturateDrivePostFilter: TDialControl;
     gbLFO: TGroupBox;
     lblBaseNote: TLabel;
     lblLowNote: TLabel;
@@ -154,7 +152,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
     procedure Connect;
     procedure Disconnect;
     procedure DoKeyChange(Sender: TObject; AKey: Integer);
@@ -465,9 +463,6 @@ begin
   FillNoteComboBox(lsHighNote, spHigh_Note);
   FillNoteComboBox(lsBaseNote, spBase_Note);
 
-  SetupDialControl(dcSaturateDrivePreFilter, spSaturateDrivePreFilter, 1, 10, 1);
-  SetupDialControl(dcSaturateDrivePostFilter, spPostFilterFeedback, 1, 5, 1);
-
   SetEnableControls(False);
 end;
 
@@ -537,15 +532,12 @@ begin
   lsHighNote.ItemIndex := TSample(Subject).HighNote;
   lsBaseNote.ItemIndex := TSample(Subject).Key;
 
-  dcSaturateDrivePreFilter.Value := TSample(Subject).SaturateDrivePreFilter;
-  dcSaturateDrivePostFilter.Value := TSample(Subject).SaturateDrivePostFilter;
-
   SetEnableControls(FEnabled);
 
   DBLog('end TSampleView.Update');
 end;
 
-procedure TSampleView.UpdateView;
+procedure TSampleView.UpdateView(AForceRedraw: Boolean = False);
 begin
   //
 end;

@@ -62,7 +62,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
     procedure EraseBackground(DC: HDC); override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
@@ -223,7 +223,7 @@ begin
   DBLog('end TPluginProcessorGUI.Update');
 end;
 
-procedure TPluginProcessorGUI.UpdateView;
+procedure TPluginProcessorGUI.UpdateView(AForceRedraw: Boolean = False);
 var
   lIndex: Integer;
 begin
@@ -252,8 +252,6 @@ begin
       TGenericPluginGUI(FNodeListGUI[lIndex]).UpdateView;
     end;
   end;
-
-  Invalidate;
 end;
 
 procedure TPluginProcessorGUI.UpdatePluginOrder;

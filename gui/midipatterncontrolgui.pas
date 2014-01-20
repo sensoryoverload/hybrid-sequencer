@@ -54,7 +54,7 @@ type
     procedure Connect;
     procedure Disconnect;
     procedure Update(Subject: THybridPersistentModel); reintroduce;
-    procedure UpdateView;
+    procedure UpdateView(AForceRedraw: Boolean = False);
 
     procedure PopulateAutomationControls(Sender: TObject);
 
@@ -281,7 +281,7 @@ begin
   DBLog('end TPatternControls.Update');
 end;
 
-procedure TMidiPatternControlGUI.UpdateView;
+procedure TMidiPatternControlGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
   //
 end;

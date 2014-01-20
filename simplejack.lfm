@@ -5,7 +5,7 @@ object MainApp: TMainApp
   Width = 1183
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
-  ClientHeight = 551
+  ClientHeight = 553
   ClientWidth = 1183
   Font.Height = 7
   KeyPreview = True
@@ -17,7 +17,7 @@ object MainApp: TMainApp
   OnKeyPress = FormKeyPress
   OnKeyUp = FormKeyUp
   OnShow = FormShow
-  LCLVersion = '1.0.4.0'
+  LCLVersion = '1.0.14.0'
   object pnlTop: TPanel
     Left = 0
     Height = 340
@@ -172,17 +172,17 @@ object MainApp: TMainApp
   end
   object pnlBottom: TPanel
     Left = 0
-    Height = 207
+    Height = 209
     Top = 344
     Width = 1183
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 207
+    ClientHeight = 209
     ClientWidth = 1183
     TabOrder = 2
     object pnlVarious: TPanel
       Left = 0
-      Height = 207
+      Height = 209
       Top = 0
       Width = 170
       Align = alLeft
@@ -191,7 +191,7 @@ object MainApp: TMainApp
     end
     object Splitter1: TSplitter
       Left = 170
-      Height = 207
+      Height = 209
       Top = 0
       Width = 5
     end
