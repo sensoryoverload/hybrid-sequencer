@@ -145,8 +145,8 @@ end;
 
 procedure TPluginDecimate.Instantiate;
 begin
-  CreatePortParameter('Bits', 1, 32, True, True, False, True, False, False, 32, @FBits, @SetBitsFloat);
-  CreatePortParameter('Samplerate', 0, 1, True, True, False, True, False, False, 1, @FSampleRate, @SetSampleRate);
+  CreatePortParameter('Bits', 1, 32, True, True, False, True, False, False, 32, FBits, @SetBitsFloat);
+  CreatePortParameter('Samplerate', 0, 1, True, True, False, True, False, False, 1, FSampleRate, @SetSampleRate);
 end;
 
 procedure TPluginDecimate.SetBits(AValue: Integer);

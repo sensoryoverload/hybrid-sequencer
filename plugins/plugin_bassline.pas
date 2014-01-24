@@ -46,6 +46,7 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
     procedure Instantiate; override;
+    procedure UpdateParameters; override;
   published
     property EnvMod: Single read GetEnvMod write SetEnvMod;
     property Pitch: Single read GetPitch write SetPitch;
@@ -201,6 +202,8 @@ var
   lMidiEvent: TMidiEvent;
   lMidiBufferIndex: Integer;
 begin
+  Inherited;
+
   lOffsetL := 0;
   lOffsetR := 1;
   for i := 0 to Pred(AFrames) do
@@ -250,15 +253,28 @@ end;
 
 procedure TPluginBassline.Instantiate;
 begin
-  CreatePortParameter('Cutoff', 0, 1, True, True, False, True, False, False, 1, @FTB303.Cutoff, @FTB303.setcut);
-  CreatePortParameter('Resonance', 0, 1, True, True, False, True, False, False, 1, @FTB303.Resonance, @FTB303.setres);
-  CreatePortParameter('Envelope', 0, 1, True, True, False, True, False, False, 1, @FTB303.EnvMod, @FTB303.setenvmod);
-  CreatePortParameter('Decay', 0, 1, True, True, False, True, False, False, 1, @FTB303.EnvDecay, @FTB303.setenvdec);
-  CreatePortParameter('Accent', 0, 1, True, True, False, True, False, False, 1, @FTB303.AccAmt, @FTB303.setaccamt);
-  CreatePortParameter('Wave', 0, 1, True, True, True, True, False, False, 1, @FTB303.Waveform, @FTB303.setwaveform);
-  CreatePortParameter('Overdrive', 1, 20, True, True, False, True, False, False, 1, @FOverDrive, @SetOverDrive);
+  CreatePortParameter('Cutoff', 0, 1, True, True, False, True, False, False, 1, FTB303.Cutoff, @FTB303.setcut);
+  CreatePortParameter('Resonance', 0, 1, True, True, False, True, False, False, 1, FTB303.Resonance, @FTB303.setres);
+  CreatePortParameter('Envelope', 0, 1, True, True, False, True, False, False, 1, FTB303.EnvMod, @FTB303.setenvmod);
+  CreatePortParameter('Decay', 0, 1, True, True, False, True, False, False, 1, FTB303.EnvDecay, @FTB303.setenvdec);
+  CreatePortParameter('Accent', 0, 1, True, True, False, True, False, False, 1, FTB303.AccAmt, @FTB303.setaccamt);
+  CreatePortParameter('Wave', 0, 1, True, True, True, True, False, False, 1, FTB303.Waveform, @FTB303.setwaveform);
+  CreatePortParameter('Overdrive', 1, 20, True, True, False, True, False, False, 1, FOverDrive, @SetOverDrive);
 
   inherited;
+end;
+
+procedure TPluginBassline.UpdateParameters;
+var
+  lIndex: Integer;
+begin
+  FTB303.Cutoff := InputControls[0].Value;
+  FTB303.Resonance := InputControls[1].Value;
+  FTB303.EnvMod := InputControls[2].Value;
+  FTB303.EnvDecay := InputControls[3].Value;
+  FTB303.AccAmt := InputControls[4].Value;
+  FTB303.Waveform := Round(InputControls[5].Value);
+  FOverDrive := InputControls[6].Value;
 end;
 
 function TPluginBassline.GetPitch: Single;

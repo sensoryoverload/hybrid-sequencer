@@ -733,8 +733,7 @@ begin
                 lCalculatedValue :=
                   lFirstAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
 
-                lPort.Value^ := lCalculatedValue;
-                lPort.SetValue(lCalculatedValue);
+                lPort.Value := lCalculatedValue;
 
                 break;
               end
@@ -802,8 +801,7 @@ begin
                       lCalculatedValue := lPort.DefaultValue;
                     end;
 
-                    lPort.Value^ := lCalculatedValue;
-                    lPort.SetValue(lCalculatedValue);
+                    lPort.Value := lCalculatedValue;
 
                     //dblog(format('value %f', [lPort.Value^]));
 
@@ -813,7 +811,7 @@ begin
                       lRightValue,
                       lLeftLocation,
                       lRightLocation,
-                      lPort.Value^]));
+                      lPort.Value]));
                   end;
 
                   break;

@@ -112,7 +112,7 @@ begin
     for lParameterIndex := 0 to Pred(lPlugin.InputControlCount) do
     begin
       TParameterControl(FParameterList.Objects[lParameterIndex]).Value :=
-        lPlugin.InputControls[lParameterIndex].Value^;
+        lPlugin.InputControls[lParameterIndex].Value;
     end;
 
     Width := (lPlugin.InputControlCount div 8) * 100 + 100;

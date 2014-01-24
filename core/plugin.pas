@@ -46,8 +46,7 @@ type
     IsInteger: Boolean;
     IsToggled: Boolean;
     DefaultValue: Single;
-    SetValue: TSingleParameter;
-    Value: PSingle;
+    Value: Single;
     AutomationDataList: TAutomationDataList;
   end;
 
@@ -124,8 +123,9 @@ type
     procedure Activate; virtual;
     procedure Deactivate; virtual;
     procedure Clean; virtual;
-    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); virtual; abstract;
+    procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); virtual;
     procedure Clear;
+    procedure UpdateParameters; virtual; abstract;
 
     function CreatePortParameter(
       ACaption: string;
@@ -138,9 +138,11 @@ type
       AIsSampleRate: Boolean;
       AIsToggled: Boolean;
       ADefaultValue: Single;
-      AValue: PSingle;
+      AValue: Single;
       ASetValue: TSingleParameter
       ): Integer;
+
+    function PortParameterByName(ACaption: string): TPortParameter;
 
     property OnPopulateAutomationDevices: TPopulateAutomationDevices
       read FPopulateAutomationDevices write FPopulateAutomationDevices;
@@ -309,8 +311,8 @@ procedure TLADSPACommand.DoExecute;
 begin
   if Assigned(FModel) then
   begin
-    FOldValue := FModel.InputControls[FParameter].Value^;
-    FModel.InputControls[FParameter].SetValue(FValue);
+    FOldValue := FModel.InputControls[FParameter].Value;
+    FModel.InputControls[FParameter].Value := FValue;
 
     FModel.Notify;
   end;
@@ -320,7 +322,7 @@ procedure TLADSPACommand.DoRollback;
 begin
   if Assigned(FModel) then
   begin
-    FModel.InputControls[FParameter].SetValue(FOldValue);
+    FModel.InputControls[FParameter].Value := FOldValue;
 
     FModel.Notify;
   end;
@@ -520,9 +522,9 @@ begin
       FPluginDescriptor^.connect_port(
         FPluginInstance,
         lPortIndex,
-        lPortParameter.Value);
+        @lPortParameter.Value);
 
-      //lPortParameter.Value^ := lDefaultValue;
+      lPortParameter.Value := lDefaultValue;
     end
     else if LADSPA_IS_PORT_OUTPUT(lPortDescriptor) and LADSPA_IS_PORT_CONTROL(lPortDescriptor) then
     begin
@@ -690,6 +692,12 @@ begin
   //
 end;
 
+procedure TPluginNode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
+  AOutputBuffer: PSingle; AFrames: Integer);
+begin
+  UpdateParameters;
+end;
+
 procedure TPluginNode.Clear;
 var
   i: Integer;
@@ -711,7 +719,7 @@ function TPluginNode.CreatePortParameter(
   AIsSampleRate: Boolean;
   AIsToggled: Boolean;
   ADefaultValue: Single;
-  AValue: PSingle;
+  AValue: Single;
   ASetValue: TSingleParameter
   ): Integer;
 var
@@ -733,7 +741,22 @@ begin
   lPortParameter.IsToggled := AIsToggled;
   lPortParameter.DefaultValue := ADefaultValue;
   lPortParameter.Value := AValue;
-  lPortParameter.SetValue := ASetValue;
+end;
+
+function TPluginNode.PortParameterByName(ACaption: string): TPortParameter;
+var
+  lIndex: Integer;
+begin
+  Result := nil;
+
+  for lIndex := 0 to Pred(FInputControlCount) do
+  begin
+    if SameText(FInputControls[lIndex].Caption, ACaption) then
+    begin
+      Result := FInputControls[lIndex];
+      Break;
+    end;
+  end;
 end;
 
 { TExternalNode }
