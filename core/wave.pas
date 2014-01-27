@@ -1261,13 +1261,6 @@ begin
 
     if i = FSliceList.Count - 2 then
     begin
-      TMarker(FSliceList.Items[i]).DecayRate :=
-      (TMarker(FSliceList.Last).OrigLocation - TMarker(FSliceList.First).OrigLocation) /
-      (TMarker(FSliceList.Last).Location - TMarker(FSliceList.First).Location);
-
-      TMarker(FSliceList.Items[i]).PitchRate :=
-        1 / TMarker(FSliceList.Items[i]).DecayRate;
-
       TMarker(FSliceList.Items[i]).Length :=
         CalculateNominalSliceLength(
           TMarker(FSliceList.Last).Location -
@@ -1365,7 +1358,7 @@ begin
 
         if AFrameData.FadeOutFactor > 0 then
         begin
-          AFrameData.FadeOutFactor := AFrameData.FadeOutFactor - 0.1; {0.05}
+          AFrameData.FadeOutFactor := AFrameData.FadeOutFactor - 0.01;//0.05
         end
         else
         begin
@@ -1373,7 +1366,7 @@ begin
         end;
         if AFrameData.FadeInFactor < 1 then
         begin
-          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.1; {0.05}
+          AFrameData.FadeInFactor := AFrameData.FadeInFactor + 0.01;//0.05;
         end
         else
         begin
@@ -1565,7 +1558,6 @@ begin
     // Fetch frame data packet containing warp factor and virtual location in wave data
     if AFrameIndex = 0 then
     begin
-//      StartingSliceIndex := 0;//StartOfWarpLocation(FSampleCursor{ - LOOP_FRACTIONAL_MARGE});
       StartingSliceIndex := StartOfWarpLocation(FSampleCursor);
     end;
 
@@ -1581,7 +1573,7 @@ begin
         if Trunc(CursorAdder) < (Wave.Frames * FWave.ChannelCount) then
         begin
           GetSampleAtCursor(CursorAdder, lBuffer, WorkBuffer, AFrameIndex, Wave.ChannelCount);
-          GetSampleAtCursor({CursorAdder}lLoopingFramePacket.Location, lBuffer, FLoopingBuffer, AFrameIndex, Wave.ChannelCount);
+          GetSampleAtCursor(lLoopingFramePacket.Location, lBuffer, FLoopingBuffer, AFrameIndex, Wave.ChannelCount);
 
           // Scale buffer up to now when the scaling-factor has changed or
           // the end of the buffer has been reached.
@@ -1629,13 +1621,11 @@ begin
           end
           else if PitchAlgorithm in [paSliceStretch] then
           begin // paSliceStretch
-//            ABuffer[AFrameIndex * 2] := WorkBuffer[AFrameIndex * 2];
             ABuffer[AFrameIndex * 2] :=
               (WorkBuffer[AFrameIndex * 2] * lFramePacket.FadeInFactor)
               +
               (FLoopingBuffer[AFrameIndex * 2] * lFramePacket.FadeOutFactor);
 
-//            ABuffer[AFrameIndex * 2 + 1] := WorkBuffer[AFrameIndex * 2 + 1];
             ABuffer[AFrameIndex * 2 + 1] :=
               (WorkBuffer[AFrameIndex * 2 + 1] * lFramePacket.FadeInFactor)
               +
@@ -1664,9 +1654,6 @@ begin
     begin
       ABuffer[AFrameIndex] := 0;
     end;
-
-//    ABuffer[AFrameIndex * 2] := FLeftGlitchSmooth.Process(ABuffer[AFrameIndex * 2], FSliceSynced);
-//    ABuffer[AFrameIndex * 2 + 1] := FRightGlitchSmooth.Process(ABuffer[AFrameIndex * 2 + 1], FSliceSynced);
   except
     on e:exception do
     begin
@@ -1764,9 +1751,9 @@ begin
   {for i := 0 to Pred(32)  do
   begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
-  end;  }
-  {writeln(format('slicecount %d', [FSliceList.Count]));
-  if FWave.ChannelCount > 0 then
+  end;
+  writeln(format('slicecount %d', [FSliceList.Count]));}
+(*  if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1796,7 +1783,7 @@ begin
         Inc(WindowLength);
       end;
     end;
-  end; }
+  end;*)
 end;
 
 { TAddMarkerCommand }

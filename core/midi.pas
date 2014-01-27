@@ -910,7 +910,8 @@ begin
       else
       begin
         // Add diff to original length
-        lMidinote.NoteLength:= lMidinote.OriginalNoteLength + NoteLengthDiff;
+        lMidinote.NoteLength := lMidinote.OriginalNoteLength + NoteLengthDiff;
+        writeln(format('model notelength %d diff %d', [lMidinote.NoteLength, NoteLengthDiff]));
         lMidinote.Notify;
       end;
     end;

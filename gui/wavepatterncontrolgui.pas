@@ -164,12 +164,14 @@ end;
 
 procedure TWavePatternControlGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
-  if FIsDirty and Assigned(FUpdateSubject) then
+  FWaveGUI.UpdateView(FIsDirty or AForceRedraw);
+
+  if FIsDirty then
   begin
     FIsDirty := False;
-  end;
 
-  FWaveGUI.UpdateView;
+    Invalidate;
+  end;
 end;
 
 function TWavePatternControlGUI.GetObjectID: string;
@@ -227,6 +229,7 @@ begin
     lDeviceItem.Caption := lPluginNode.PluginName;
     lDeviceItem.ObjectId := lPluginNode.ObjectID;
     lDeviceItem.ObjectType := miotDevice;
+    lDeviceItem.DeviceId := '';
     pupSelectAutomation.Items.Add(lDeviceItem);
 
     for lParamaterIndex := Low(lPluginNode.InputControls) to High(lPluginNode.InputControls) do
@@ -234,7 +237,10 @@ begin
       lDeviceParameterItem := TMenuItemObject.Create(pupSelectAutomation);
       lDeviceParameterItem.Caption := lPluginNode.InputControls[lParamaterIndex].Caption;
       lDeviceParameterItem.ObjectId := lPluginNode.InputControls[lParamaterIndex].ObjectID;
+      lDeviceParameterItem.Plugin := lPluginNode;
+      lDeviceParameterItem.PluginParameter := lPluginNode.InputControls[lParamaterIndex];
       lDeviceParameterItem.ObjectType := miotDeviceParameter;
+      lDeviceParameterItem.DeviceId := lPluginNode.ObjectID;
       lDeviceParameterItem.OnClick := @DeviceParameterClick;
       lDeviceItem.Add(lDeviceParameterItem);
     end;
@@ -248,8 +254,13 @@ begin
     if TMenuItemObject(Sender).ObjectType = miotDeviceParameter then
     begin
       FWaveGUI.EditMode := emAutomationEdit;
-      FWaveGUI.SelectedAutomationParameter := TMenuItemObject(Sender).ObjectId;
-      FWaveGUI.SelectedAutomationDevice := TMenuItemObject(Sender).DeviceId;
+
+      FWaveGUI.SelectedAutomationParameterId :=
+        FModel.FindAutomationParameter(
+          TMenuItemObject(Sender).Plugin,
+          TMenuItemObject(Sender).PluginParameter).ObjectID;
+
+      FWaveGUI.SelectedAutomationDeviceId := TMenuItemObject(Sender).DeviceId;
       btnAutomationSelect.Caption :=
         TMenuItemObject(Sender).Parent.Caption + ' > ' +
         TMenuItemObject(Sender).Caption;

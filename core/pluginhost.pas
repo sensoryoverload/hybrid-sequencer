@@ -315,6 +315,7 @@ begin
   FFrames := AFrames;
   FChannels := 2;
   FBuffer := GetMem(FFrames * SizeOf(Single) * FChannels);
+  FEnabled := True;
 
   DBLog('end TPluginProcessor.Create');
 end;
@@ -348,36 +349,43 @@ var
   lIndex: Integer;
   lPreviousOutputBuffer: PSingle;
 begin
-  if FNodeList.Count > 0 then
+  if FEnabled then
   begin
-    // Process the complete chain
-    for lIndex := 0 to Pred(FNodeList.Count) do
+    if FNodeList.Count > 0 then
     begin
-      if TPluginNode(FNodeList[lIndex]).Active then
+      // Process the complete chain
+      for lIndex := 0 to Pred(FNodeList.Count) do
       begin
-        if lIndex = 0 then
+        if TPluginNode(FNodeList[lIndex]).Active then
         begin
-          TPluginNode(FNodeList[lIndex]).Process(
-            AMidiBuffer,
-            AInputBuffer,
-            TPluginNode(FNodeList[lIndex]).OutputBuffer,
-            AFrames);
-        end
-        else
-        begin
-          TPluginNode(FNodeList[lIndex]).Process(
-            AMidiBuffer,
-            lPreviousOutputBuffer,
-            TPluginNode(FNodeList[lIndex]).OutputBuffer,
-            AFrames);
+          if lIndex = 0 then
+          begin
+            TPluginNode(FNodeList[lIndex]).Process(
+              AMidiBuffer,
+              AInputBuffer,
+              TPluginNode(FNodeList[lIndex]).OutputBuffer,
+              AFrames);
+          end
+          else
+          begin
+            TPluginNode(FNodeList[lIndex]).Process(
+              AMidiBuffer,
+              lPreviousOutputBuffer,
+              TPluginNode(FNodeList[lIndex]).OutputBuffer,
+              AFrames);
+          end;
+
+          lPreviousOutputBuffer := TPluginNode(FNodeList[lIndex]).OutputBuffer;
         end;
-
-        lPreviousOutputBuffer := TPluginNode(FNodeList[lIndex]).OutputBuffer;
       end;
-    end;
 
-    // Pull audio from pluginchain
-    Move(TPluginNode(FNodeList.Last).OutputBuffer^, AOutputBuffer^, AFrames * sizeof(single) * FChannels);
+      // Pull audio from pluginchain
+      Move(TPluginNode(FNodeList.Last).OutputBuffer^, AOutputBuffer^, AFrames * sizeof(single) * FChannels);
+    end;
+  end
+  else
+  begin
+    FillByte(AOutputBuffer^, AFrames * SizeOf(Single) * STEREO, 0);
   end;
 end;
 
@@ -417,6 +425,8 @@ var
 begin
   DBLog('start TDeleteNodesCommand.DoExecute');
 
+  FPluginProcessor.Enabled := False;
+
   FPluginProcessor.BeginUpdate;
 
   for i := Pred(FPluginProcessor.NodeList.Count) downto 0 do
@@ -440,6 +450,8 @@ begin
   FPluginProcessor.SortPlugins;
 
   FPluginProcessor.EndUpdate;
+
+  FPluginProcessor.Enabled := True;
 
   DBLog('end TDeleteNodesCommand.DoExecute');
 end;
@@ -583,6 +595,8 @@ var
 begin
   DBLog('start TCreateNodesCommand.DoRollback');
 
+  FPluginProcessor.Enabled := False;
+
   FPluginProcessor.BeginUpdate;
 
   for lMementoIndex := 0 to Pred(ObjectIdList.Count) do
@@ -604,6 +618,8 @@ begin
   FPluginProcessor.SortPlugins;
 
   FPluginProcessor.EndUpdate;
+
+  FPluginProcessor.Enabled := True;
 
   DBLog('end TCreateNodesCommand.DoRollback');
 end;

@@ -356,8 +356,8 @@ var
   lControl: PSingle;
   lPortParameter: TPortParameter;
   lDefaultValue: Single;
-  lMinValue: Single;
-  lMaxValue: Single;
+  lLowerBound: Single;
+  lUpperBound: Single;
 begin
   if FUniqueID = 0 then
   begin
@@ -421,30 +421,32 @@ begin
         OnPopulateAutomationDevices(Self.ObjectID, lPortParameter.ObjectID, paaInsert);
       end;
 
-      lMinValue := 0;
       if LADSPA_IS_HINT_BOUNDED_BELOW(lPortRangeHint.HintDescriptor) then
       begin
-        if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
-        begin
-          lMinValue := lPortParameter.LowerBound * GSettings.SampleRate;
-        end
-        else
-        begin
-          lMinValue := lPortRangeHint.LowerBound;
-        end;
+        lLowerBound := lPortRangeHint.LowerBound;
+      end
+      else
+      begin
+        lLowerBound := 0;
       end;
 
-      lMaxValue := 1;
+      if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
+      begin
+        lLowerBound := lLowerBound * GSettings.SampleRate;
+      end;
+
       if LADSPA_IS_HINT_BOUNDED_ABOVE(lPortRangeHint.HintDescriptor) then
       begin
-        if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
-        begin
-          lMaxValue := lPortParameter.UpperBound * GSettings.SampleRate;
-        end
-        else
-        begin
-          lMaxValue := lPortRangeHint.UpperBound;
-        end;
+        lUpperBound := lPortRangeHint.UpperBound;
+      end;
+
+      if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
+      begin
+        lUpperBound := lUpperBound * GSettings.SampleRate;
+      end
+      else
+      begin
+        lUpperBound := 1;
       end;
 
       lDefaultValue := 0;
@@ -457,38 +459,38 @@ begin
         begin
     			if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
           begin
-    				lDefaultValue := exp(ln(lMinValue) * 0.75 + ln(lMaxValue) * 0.25);
+    				lDefaultValue := exp(ln(lLowerBound) * 0.75 + ln(lUpperBound) * 0.25);
           end
           else
           begin
-    				lDefaultValue := (lMinValue * 0.75 + lMaxValue * 0.25);
+    				lDefaultValue := (lLowerBound * 0.75 + lUpperBound * 0.25);
     			end;
     		end;
     		LADSPA_HINT_DEFAULT_MIDDLE:
         begin
           if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
           begin
-    				lDefaultValue := sqrt(lMinValue * lMaxValue);
+    				lDefaultValue := sqrt(lLowerBound * lUpperBound);
     			end
           else
           begin
-    				lDefaultValue := (lMinValue + lMaxValue) * 0.5;
+    				lDefaultValue := (lLowerBound + lUpperBound) * 0.5;
     			end;
         end;
     		LADSPA_HINT_DEFAULT_HIGH:
         begin
           if LADSPA_IS_HINT_LOGARITHMIC(lPortRangeHint.HintDescriptor) then
           begin
-      			lDefaultValue := exp(ln(lMinValue) * 0.25 + ln(lMaxValue) * 0.75);
+      			lDefaultValue := exp(ln(lLowerBound) * 0.25 + ln(lUpperBound) * 0.75);
           end
           else
           begin
-    				lDefaultValue := (lMinValue * 0.25 + lMaxValue * 0.75);
+    				lDefaultValue := (lLowerBound * 0.25 + lUpperBound * 0.75);
           end;
         end;
     		LADSPA_HINT_DEFAULT_MAXIMUM:
     		begin
-          lDefaultValue := lMaxValue;
+          lDefaultValue := lUpperBound;
     		end;
     		LADSPA_HINT_DEFAULT_0:
     		begin
@@ -509,8 +511,8 @@ begin
       end;
 
       lPortParameter.Caption := lPortName;
-      lPortParameter.LowerBound := lMinValue;
-      lPortParameter.UpperBound := lMaxValue;
+      lPortParameter.LowerBound := lLowerBound;
+      lPortParameter.UpperBound := lUpperBound;
       lPortParameter.IsBoundedAbove := LADSPA_IS_HINT_BOUNDED_ABOVE(lPortRangeHint.HintDescriptor);
       lPortParameter.IsBoundenBelow := LADSPA_IS_HINT_BOUNDED_BELOW(lPortRangeHint.HintDescriptor);
       lPortParameter.IsInteger := LADSPA_IS_HINT_INTEGER(lPortRangeHint.HintDescriptor);
@@ -518,13 +520,12 @@ begin
       lPortParameter.IsSampleRate := LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor);
       lPortParameter.IsToggled := LADSPA_IS_HINT_TOGGLED(lPortRangeHint.HintDescriptor);
       lPortParameter.DefaultValue := lDefaultValue;
+      lPortParameter.Value := lDefaultValue;
 
       FPluginDescriptor^.connect_port(
         FPluginInstance,
         lPortIndex,
         @lPortParameter.Value);
-
-      lPortParameter.Value := lDefaultValue;
     end
     else if LADSPA_IS_PORT_OUTPUT(lPortDescriptor) and LADSPA_IS_PORT_CONTROL(lPortDescriptor) then
     begin

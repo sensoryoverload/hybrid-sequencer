@@ -334,6 +334,8 @@ begin
   lAutomationData.Location := FLocation;
   lAutomationData.DataValue := FDataValue;
 
+  writeln(format('FLocation %d FDataValue %f FDeviceId %s FParameterId %s',[FLocation, FDataValue, FDeviceId, FParameterId]));
+
   FStoredObjectId := lAutomationData.ObjectID;
 
   lAutomationParameter.AddAutomation(lAutomationData);

@@ -37,7 +37,7 @@ const
 type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
   TKey = (keyBlack, keyWhite);
-
+  TNoteAction = (naAdjustLeft, naAdjustRight, naDrag, naNone);
 //  TZoomCallback = procedure(AZoomTimeLeft, AZoomTimeRight: Integer) of object;
 
   TMidiPatternGUI = class;
@@ -99,6 +99,7 @@ type
   private
     FUpdateSubject: THybridPersistentModel;
     FIsDirty: Boolean;
+    FForceRedraw: Boolean;
 
     FObjectID: string;
     FObjectOwnerID: string;
@@ -157,7 +158,9 @@ type
     FDraggedLoopMarker: TLoopMarkerGUI;
     FMouseButton: TMouseButton;
 
-    FNoteHighlightLocation: Integer;
+    FNoteAction: TNoteAction;
+
+      FNoteHighlightLocation: Integer;
     FNoteHighlightNote: Integer;
 
     { Audio }
@@ -194,7 +197,7 @@ type
 
     function LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerGUI;
     function QuantizeLocation(ALocation: Integer): Integer;
-    function NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
+    function NoteUnderCursor(AX, AY: Integer; var ANoteAction: TNoteAction): TMidiNoteGUI;
     function ConvertTimeToScreen(ATime: Integer): Integer;
     function ConvertScreenToTime(AX: Integer): Integer;
     function ConvertNoteToScreen(ANote: Integer): Integer;
@@ -442,7 +445,8 @@ begin
   FDraggedNote.OriginalNoteLocation := FDraggedNote.NoteLocation;
   FDraggedNote.OriginalNote := FDraggedNote.Note;
 
-  if Width - X < 10 then
+//  if Width - X < 10 then
+  if FNoteAction = naAdjustRight then
   begin
     FDragMode := ndLength;
   end
@@ -511,6 +515,7 @@ procedure TMidiPatternGUI.HandleNoteMouseUp(Button: TMouseButton; Shift: TShiftS
 begin
   FDragging:= False;
   FDraggedNote := nil;
+  FNoteAction := naNone;
 end;
 
 procedure TMidiPatternGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
@@ -658,9 +663,10 @@ begin
 
           lStretchNotesCommand := TStretchNotesCommand.Create(Self.ObjectID);
           try
+            lStretchNotesCommand.ObjectID := FDraggedNote.ObjectID;
             lStretchNotesCommand.Persist := False;
             lStretchNotesCommand.NoteLengthDiff := lNoteLength - FDraggedNote.OriginalNoteLength;
-
+            writeln(format('view notelength %d diff %d', [lNoteLength, lNoteLength - FDraggedNote.OriginalNoteLength]));
             GCommandQueue.PushCommand(lStretchNotesCommand);
           except
             lStretchNotesCommand.Free;
@@ -841,7 +847,6 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-{  FBitmap.Canvas.Clear;}
   if FIsDirty then
   begin
     FIsDirty := False;
@@ -1194,10 +1199,10 @@ end;
 
 procedure TMidiPatternGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
-  if FIsDirty and Assigned(FUpdateSubject) then
-  begin
-//    FIsDirty := False;
+  FForceRedraw := AForceRedraw;
 
+  if (FIsDirty or FForceRedraw) and Assigned(FUpdateSubject) then
+  begin
     DiffLists(
       TMidiPattern(FUpdateSubject).NoteList,
       FNoteListGUI,
@@ -1209,9 +1214,9 @@ begin
     FLoopLength.Update(TMidiPattern(FUpdateSubject).LoopLength);
 
     QuantizeSetting := TMidiPattern(FUpdateSubject).QuantizeSetting;
-
-    Invalidate;
   end;
+
+  Invalidate;
 end;
 
 procedure TMidiPatternGUI.Connect;
@@ -1460,7 +1465,7 @@ begin
   Result := Round((Height - AY) * lScale);
 end;
 
-function TMidiPatternGUI.NoteUnderCursor(AX, AY: Integer): TMidiNoteGUI;
+function TMidiPatternGUI.NoteUnderCursor(AX, AY: Integer; var ANoteAction: TNoteAction): TMidiNoteGUI;
 var
   lIndex: Integer;
   lNote: TMidiNoteGUI;
@@ -1470,6 +1475,8 @@ var
   lBottom: Integer;
 begin
   Result := nil;
+  FNoteAction := naNone;
+
   for lIndex := 0 to Pred(FNoteListGUI.Count) do
   begin
     lNote := TMidiNoteGUI(FNoteListGUI[lIndex]);
@@ -1482,6 +1489,20 @@ begin
     if (lLeft <= AX) and (lTop <= AY) and (lRight >= AX) and (lBottom >= AY) then
     begin
       Result := lNote;
+      writeln(format('AX %d lRight %d', [AX, lRight]));
+      if AX - lLeft < 10 then
+      begin
+        ANoteAction := naAdjustLeft;
+      end
+      else if (lRight - AX < 10) and (AX < lRight) then
+      begin
+        ANoteAction := naAdjustRight;
+      end
+      else
+      begin
+        ANoteAction := naDrag;
+      end;
+
       break;
     end;
   end;
@@ -1490,8 +1511,6 @@ end;
 procedure TMidiPatternGUI.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
-  FIsDirty := True;
-
   inherited MouseDown(Button, Shift, X, Y);
 
   FMouseX := X;
@@ -1508,7 +1527,7 @@ begin
     end
     else
     begin
-      FDraggedNote := NoteUnderCursor(X, Y);
+      FDraggedNote := NoteUnderCursor(X, Y, FNoteAction);
 
       if Assigned(FDraggedNote) then
       begin
@@ -1549,8 +1568,6 @@ end;
 procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
-  FIsDirty := True;
-
   inherited MouseUp(Button, Shift, X, Y);
 
   if FEditMode = emPatternEdit then
@@ -1578,6 +1595,8 @@ begin
   begin
     HandleAutomationEditMouseUp(Button, Shift, X, Y);
   end;
+
+  UpdateView(True);
 end;
 
 function TMidiPatternGUI.QuantizeLocation(ALocation: Integer): Integer;
@@ -1617,8 +1636,6 @@ end;
 
 procedure TMidiPatternGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
-  FIsDirty := True;
-
   inherited MouseMove(Shift, X, Y);
 
   FMouseX := X;
@@ -1685,6 +1702,7 @@ begin
   // requested by the observer and not the subject ie mousemove changes are not always
   // persistent towards the subject.
   //Invalidate;
+  UpdateView(True);
 end;
 
 procedure TMidiPatternGUI.DblClick;

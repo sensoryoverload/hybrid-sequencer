@@ -1523,10 +1523,13 @@ begin
       (abs(FMouseDownX - X) > 5) or (abs(FMouseDownY - Y) > 5);
   end;
 
+  if FMouseDownL then
+  begin
+    Invalidate;
+  end;
+
   FLastMouseX := X;
   FLastMouseY := Y;
-
-  Invalidate;
 
   inherited MouseMove(Shift, X, Y);
 end;

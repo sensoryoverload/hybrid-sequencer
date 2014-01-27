@@ -93,9 +93,12 @@ type
   private
     FUpdateSubject: THybridPersistentModel;
     FIsDirty: Boolean;
+    FForceRedraw: Boolean;
     FEditMode: TEditMode;
-    FSelectedAutomationDevice: string;
-    FSelectedAutomationParameter: string;
+    FSelectedAutomationDevice: TAutomationDevice;
+    FSelectedAutomationDeviceId: string;
+    FSelectedAutomationParameter: TAutomationDataList;
+    FSelectedAutomationParameterId: string;
     FSelectedAutomationEvent: TAutomationData;
 
     { GUI }
@@ -150,6 +153,7 @@ type
     FBpmAdder: Single;
     FSampleStartLocation: Integer;
     FMouseX: Integer;
+    FMouseY: Integer;
     FMaximumVisibleRange: Integer;
 
     function ConvertScreenToTime(AX: Integer): Integer;
@@ -157,6 +161,8 @@ type
     procedure RecalculateWarp;
     procedure ReleaseMarker(Data: PtrInt);
     procedure SetOffset(AValue: Integer);
+    procedure SetSelectedAutomationDeviceId(AValue: string);
+    procedure SetSelectedAutomationParameterId(AValue: string);
     procedure SetTransientThreshold(const AValue: Integer);
     procedure SetZoomFactorX(const AValue: Single);
     procedure SetZoomFactorY(const AValue: Single);
@@ -209,8 +215,8 @@ type
     property Pitched: Boolean read FPitched write FPitched default False;
     property RealBPM: Single read FRealBPM write FRealBPM default 120;
     property EditMode: TEditMode read FEditMode write FEditMode;
-    property SelectedAutomationDevice: string read FSelectedAutomationDevice write FSelectedAutomationDevice;
-    property SelectedAutomationParameter: string read FSelectedAutomationParameter write FSelectedAutomationParameter;
+    property SelectedAutomationParameterId: string read FSelectedAutomationParameterId write SetSelectedAutomationParameterId;
+    property SelectedAutomationDeviceId: string read FSelectedAutomationDeviceId write SetSelectedAutomationDeviceId;
   protected
     procedure DblClick; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -310,7 +316,7 @@ procedure TWaveGUI.SetZoomFactorX(const AValue: Single);
 var
   lFramesPerScreenWidth: Single;
 begin
-  FIsDirty := True;
+//  FIsDirty := True;
 
   FZoomFactorX := AValue;
 
@@ -320,12 +326,14 @@ begin
   FZoomFactorToScreen:= (ZoomFactorX / lFramesPerScreenWidth);
   FZoomFactorToData:= (lFramesPerScreenWidth / ZoomFactorX);
 
-  Invalidate;
+//  Invalidate;
+  UpdateView(True);
 end;
 
 procedure TWaveGUI.SetZoomFactorY(const AValue: Single);
 begin
-  FIsDirty := True;
+//  FIsDirty := True;
+  UpdateView(True);
 end;
 
 procedure TWaveGUI.Setpitch(const Avalue: Single);
@@ -409,12 +417,9 @@ end;
 
 procedure TWaveGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
-  if AForceRedraw then
-  begin
-    FIsDirty := True;
-  end;
+  FForceRedraw := AForceRedraw;
 
-  if FIsDirty and Assigned(FUpdateSubject) then
+  if (FIsDirty or FForceRedraw) and Assigned(FUpdateSubject) then
   begin
     DiffLists(
       TWavePattern(FUpdateSubject).SliceList,
@@ -434,9 +439,9 @@ begin
     Sortslices;
 
     UpdateSampleScale;
-
-    Invalidate;
   end;
+
+  Invalidate;
 end;
 
 procedure TWaveGUI.Connect;
@@ -518,9 +523,17 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-  if FIsDirty then
+  if FIsDirty or FForceRedraw then
   begin
-    FIsDirty := False;
+    if FIsDirty then
+    begin
+      FIsDirty := False;
+    end;
+
+    if FForceRedraw then
+    begin
+      FForceRedraw := False;
+    end;
 
     // Initializes the Bitmap Size
     FBitmap.Height := Height;
@@ -814,35 +827,61 @@ begin
     // Draw automation data
     if FEditMode = emAutomationEdit then
     begin
-      lAutomationScreenY := Height div 2;
-      FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
+      FBitmap.Canvas.Pen.Width := 1;
 
-      for lDeviceIndex := 0 to Pred(FModel.AutomationChannelList.Count) do
+      if Assigned(FSelectedAutomationParameter) then
       begin
-        lAutomationDataList := TAutomationDataList(FModel.AutomationChannelList[lDeviceIndex]);
-
-        lAutomationDataList.First;
-        while not lAutomationDataList.Eof do
+        if FSelectedAutomationParameter.List.Count > 0 then
         begin
-          lAutomationData := lAutomationDataList.CurrentAutomationData;
+          FSelectedAutomationParameter.First;
+          lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
 
-          lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
-          lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
-          FBitmap.Canvas.LineTo(
-            lAutomationScreenX,
-            lAutomationScreenY);
+          lAutomationScreenY := Round(Height - lAutomationData.DataValue * (Height));
+          FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
 
-          FBitmap.Canvas.Brush.Color := clRed;
-          FBitmap.Canvas.Rectangle(
-            lAutomationScreenX - 4,
-            lAutomationScreenY - 4,
-            lAutomationScreenX + 4,
-            lAutomationScreenY + 4);
+          while not FSelectedAutomationParameter.Eof do
+          begin
+            lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
 
-          lAutomationDataList.Next;
+            lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
+            lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+            FBitmap.Canvas.Brush.Color := clRed;
+            FBitmap.Canvas.LineTo(
+              lAutomationScreenX,
+              lAutomationScreenY);
+
+            if (Abs(FMouseX - lAutomationScreenX) < 5) and
+              (Abs(FMouseY - lAutomationScreenY) < 5) then
+            begin // Mouse over dataselectionpoint
+              FBitmap.Canvas.Brush.Color := clLime;
+              FBitmap.Canvas.Rectangle(
+                lAutomationScreenX - 5,
+                lAutomationScreenY - 5,
+                lAutomationScreenX + 5,
+                lAutomationScreenY + 5);
+            end
+            else
+            begin
+              FBitmap.Canvas.Brush.Color := clRed;
+              FBitmap.Canvas.Rectangle(
+                lAutomationScreenX - 4,
+                lAutomationScreenY - 4,
+                lAutomationScreenX + 4,
+                lAutomationScreenY + 4);
+            end;
+
+            FSelectedAutomationParameter.Next;
+          end;
+          FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+        end
+        else
+        begin
+          // No automation so just draw a straight line
+          lAutomationScreenY := Height div 2;
+          FBitmap.Canvas.MoveTo(0, lAutomationScreenY);
+          FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
         end;
       end;
-      FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
     end;
   end;
   Canvas.Draw(0, 0, FBitmap);
@@ -949,6 +988,7 @@ var
   lUpdateWaveSampleMarkerCommand: TUpdateWaveSampleMarkerCommand;
 begin
   FMouseX := X;
+  FMouseY := Y;
 
   if FEditMode = emPatternEdit then
   begin
@@ -1077,8 +1117,6 @@ begin
   end;
 
   inherited Mousedown(Button, Shift, X, Y);
-
-//  Invalidate;
 end;
 
 procedure TWaveGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
@@ -1090,6 +1128,7 @@ var
   lUpdateWaveSampleMarkerCommand: TUpdateWaveSampleMarkerCommand;
 begin
   FMouseX := X;
+  FMouseY := Y;
 
   if FEditMode = emPatternEdit then
   begin
@@ -1166,6 +1205,7 @@ var
   lXLocationInSample: Integer;
 begin
   FMouseX := X;
+  FMouseY := Y;
 
   if FEditMode = emPatternEdit then
   begin
@@ -1230,22 +1270,26 @@ procedure TWaveGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
   begin
     Result := nil;
 
-    lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameter));
-    lAutomationDataList.First;
-    while not lAutomationDataList.Eof do
+    if Assigned(FSelectedAutomationParameter) then
     begin
-      lAutomationData := lAutomationDataList.CurrentAutomationData;
-
-      lEventX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
-      lEventY := Round(Height - lAutomationData.DataValue * Height);
-      if (X >= lEventX - 4) and (X < lEventX + 4) and
-        (Y >= lEventY - 4) and (Y < lEventY + 4) then
+      FSelectedAutomationParameter.First;
+      while not FSelectedAutomationParameter.Eof do
       begin
-        Result := lAutomationDataList.CurrentAutomationData;
-        break;
-      end;
+        lAutomationData := FSelectedAutomationParameter.CurrentAutomationData;
+        if Assigned(lAutomationData) then
+        begin
+          lEventX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+          lEventY := Round(Height - lAutomationData.DataValue * Height);
+          if (X >= lEventX - 4) and (X < lEventX + 4) and
+            (Y >= lEventY - 4) and (Y < lEventY + 4) then
+          begin
+            Result := FSelectedAutomationParameter.CurrentAutomationData;
+            break;
+          end;
+        end;
 
-      lAutomationDataList.Next;
+        FSelectedAutomationParameter.Next;
+      end;
     end;
   end;
 
@@ -1262,8 +1306,8 @@ begin
   begin
     lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
     try
-      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDevice;
-      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
       lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
       lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
       lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
@@ -1288,8 +1332,8 @@ begin
     try
       lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
       lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
-      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDevice;
-      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
       lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
       lEditAutomationDataCommand.Persist := True;
 
@@ -1307,8 +1351,8 @@ begin
     try
       lCreateAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
       lCreateAutomationDataCommand.DataValue := (Height - Y) / Height;
-      lCreateAutomationDataCommand.DeviceId := FSelectedAutomationDevice;
-      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameter;
+      lCreateAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
 
       GCommandQueue.PushCommand(lCreateAutomationDataCommand);
     except
@@ -1546,11 +1590,28 @@ end;
 
 procedure TWaveGUI.SetOffset(AValue: Integer);
 begin
-  FIsDirty := True;
+//  FIsDirty := True;
 
   FOffset := Round(FZoomFactorToScreen * LoopEnd.Location / 100 * AValue);
 
-  Invalidate;
+//  Invalidate;
+  UpdateView(True);
+end;
+
+procedure TWaveGUI.SetSelectedAutomationDeviceId(AValue: string);
+begin
+  if FSelectedAutomationDeviceId = AValue then Exit;
+  FSelectedAutomationDeviceId := AValue;
+
+  FSelectedAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FSelectedAutomationDeviceId));
+end;
+
+procedure TWaveGUI.SetSelectedAutomationParameterId(AValue: string);
+begin
+  if FSelectedAutomationParameterId = AValue then Exit;
+  FSelectedAutomationParameterId := AValue;
+
+  FSelectedAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameterId));
 end;
 
 procedure TWaveGUI.DeleteMarkerGUI(AObjectID: string);

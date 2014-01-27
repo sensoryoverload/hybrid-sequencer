@@ -141,7 +141,7 @@ object MainApp: TMainApp
       Anchors = []
       BorderStyle = bsNone
       ExpandSignType = tvestPlusMinus
-      Font.Height = 7
+      Font.Height = 9
       Images = ilGlobalImages
       ParentColor = True
       ParentFont = False
