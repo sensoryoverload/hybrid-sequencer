@@ -468,7 +468,7 @@ end;
 
 procedure TTrackView.UpdateView(AForceRedraw: Boolean = False);
 begin
-  if FIsDirty and Assigned(FUpdateSubject) then
+  if (FIsDirty or AForceRedraw) and Assigned(FUpdateSubject) then
   begin
     FVolumeFader.LevelLeft := TTrack(FUpdateSubject).LeftLevel;
     FVolumeFader.LevelRight := TTrack(FUpdateSubject).RightLevel;

@@ -200,13 +200,21 @@ Type
     FOnStartChange: TNotifyEvent;
     FOnChange: TNotifyEvent;
     FChanging: Boolean;
+    FScaleValueToScreen: Single;
+    FScaleScreenToValue: Single;
+    FWidth: Integer;
+
+    function GetWidth: Integer;
     procedure SetCaption(AValue: string);
     procedure SetMax(AValue: Single);
     procedure SetMin(AValue: Single);
     procedure SetOrientation(AValue: TOrientation);
     procedure SetSize(AValue: Integer);
     procedure SetValue(const AValue: Single);
+    procedure SetWidth(AValue: Integer);
     procedure UpdateScreenValue(X, Y: Integer);
+  protected
+    procedure UpdateScale;
   public
     constructor Create(AOwner : TComponent); override;
     destructor Destroy; override;
@@ -221,6 +229,7 @@ Type
     property ShowValue: Boolean read FBoolean write FBoolean;
     property Orientation: TOrientation read FOrientation write SetOrientation;
     property Size: Integer read FSize write SetSize;
+    property Width: Integer read GetWidth write SetWidth;
 
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property OnStartChange: TNotifyEvent read FOnStartChange write FOnStartChange;
@@ -759,22 +768,33 @@ end;
 procedure TParameterControl.SetValue(const AValue: Single);
 begin
   FValue := AValue;
+
   if (FOrientation = oHorizontal) or (FOrientation = oBalance) then
   begin
-    FScreenValue := Round((Pred(Width) / (FMax - FMin)) * FValue);
+    FScreenValue := Round(FScaleValueToScreen * (FValue - FMin));
   end
   else
   begin
-    FScreenValue := Round((Pred(Height) / (FMax - FMin)) * FValue);
+    FScreenValue := Round(FScaleValueToScreen * (FValue - FMin));
   end;
 
   Invalidate;
 end;
 
+procedure TParameterControl.SetWidth(AValue: Integer);
+begin
+  inherited Width := AValue;
+
+  FWidth := AValue;
+
+  UpdateScale;
+end;
+
 procedure TParameterControl.SetMax(AValue: Single);
 begin
-  if FMax = AValue then Exit;
   FMax := AValue;
+
+  UpdateScale;
 end;
 
 procedure TParameterControl.SetCaption(AValue: string);
@@ -783,10 +803,16 @@ begin
   FCaption := AValue;
 end;
 
+function TParameterControl.GetWidth: Integer;
+begin
+  Result := inherited Width;
+end;
+
 procedure TParameterControl.SetMin(AValue: Single);
 begin
-  if FMin = AValue then Exit;
   FMin := AValue;
+
+  UpdateScale;
 end;
 
 procedure TParameterControl.SetOrientation(AValue: TOrientation);
@@ -927,9 +953,9 @@ begin
   begin
     if (Orientation = oHorizontal) or (Orientation = oBalance) then
     begin
-      if X > Pred(Width) then
+      if X > Pred(FWidth) then
       begin
-        FScreenValue := Pred(Width);
+        FScreenValue := Pred(FWidth);
       end
       else if X < 1 then
       begin
@@ -939,7 +965,8 @@ begin
       begin
         FScreenValue := X;
       end;
-      FValue := ((FMax - FMin) / Width) * FScreenValue;
+
+      FValue := FScaleScreenToValue * FScreenValue + FMin;
     end
     else if Orientation = oVertical then
     begin
@@ -955,8 +982,23 @@ begin
       begin
         FScreenValue := Y;
       end;
-      FValue := ((FMax - FMin) / Height) * FScreenValue;
+
+      FValue := FScaleScreenToValue * FScreenValue + FMin;
     end;
+  end;
+end;
+
+procedure TParameterControl.UpdateScale;
+begin
+  if (Orientation = oHorizontal) or (Orientation = oBalance) then
+  begin
+    FScaleScreenToValue := (FMax - FMin) / FWidth;
+    FScaleValueToScreen := FWidth / (FMax - FMin);
+  end
+  else
+  begin
+    FScaleScreenToValue := (FMax - FMin) / Height;
+    FScaleValueToScreen := Height / (FMax - FMin);
   end;
 end;
 

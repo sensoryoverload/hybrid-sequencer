@@ -249,6 +249,8 @@ var
   lAutomationDevice: TAutomationDevice;
   lAutomationDataList: TAutomationDataList;
 begin
+  FPattern.BeginUpdate;
+
   lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
   lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
   lAutomationDataList.First;
@@ -286,6 +288,8 @@ begin
 
     lAutomationDataList.Next;
   end;
+
+  FPattern.EndUpdate;
 end;
 
 procedure TEditAutomationDataCommand.DoRollback;
@@ -320,6 +324,8 @@ var
   lParameterIndex: Integer;
   lPlugin: TPluginNode;
 begin
+  FPattern.BeginUpdate;
+
   // First find if there is already a automation track
   lAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
 
@@ -334,11 +340,11 @@ begin
   lAutomationData.Location := FLocation;
   lAutomationData.DataValue := FDataValue;
 
-  writeln(format('FLocation %d FDataValue %f FDeviceId %s FParameterId %s',[FLocation, FDataValue, FDeviceId, FParameterId]));
-
   FStoredObjectId := lAutomationData.ObjectID;
 
   lAutomationParameter.AddAutomation(lAutomationData);
+
+  FPattern.EndUpdate;
 end;
 
 procedure TCreateAutomationDataCommand.DoRollback;
@@ -347,6 +353,8 @@ var
   lAutomationDevice: TAutomationDevice;
   lIndex: Integer;
 begin
+  FPattern.BeginUpdate;
+
   lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
   lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));;
 
@@ -367,6 +375,8 @@ begin
       lAutomationDataList.Next;
     end;
   end;
+
+  FPattern.EndUpdate;
 end;
 
 { TSavePatternCommand }

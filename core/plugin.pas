@@ -421,33 +421,26 @@ begin
         OnPopulateAutomationDevices(Self.ObjectID, lPortParameter.ObjectID, paaInsert);
       end;
 
+      lLowerBound := 0;
       if LADSPA_IS_HINT_BOUNDED_BELOW(lPortRangeHint.HintDescriptor) then
       begin
         lLowerBound := lPortRangeHint.LowerBound;
-      end
-      else
-      begin
-        lLowerBound := 0;
+        if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
+        begin
+          lLowerBound := lLowerBound * GSettings.SampleRate;
+        end;
       end;
 
-      if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
-      begin
-        lLowerBound := lLowerBound * GSettings.SampleRate;
-      end;
-
+      lUpperBound := 1;
       if LADSPA_IS_HINT_BOUNDED_ABOVE(lPortRangeHint.HintDescriptor) then
       begin
         lUpperBound := lPortRangeHint.UpperBound;
+        if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
+        begin
+          lUpperBound := lUpperBound * GSettings.SampleRate;
+        end
       end;
 
-      if LADSPA_IS_HINT_SAMPLE_RATE(lPortRangeHint.HintDescriptor) then
-      begin
-        lUpperBound := lUpperBound * GSettings.SampleRate;
-      end
-      else
-      begin
-        lUpperBound := 1;
-      end;
 
       lDefaultValue := 0;
       case (lPortRangeHint.HintDescriptor AND LADSPA_HINT_DEFAULT_MASK) of

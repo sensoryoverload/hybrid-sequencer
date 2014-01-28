@@ -847,9 +847,18 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-  if FIsDirty then
+  if FIsDirty or FForceRedraw then
   begin
-    FIsDirty := False;
+    if FIsDirty then
+    begin
+      FIsDirty := False;
+    end;
+
+    if FForceRedraw then
+    begin
+      FForceRedraw := False;
+    end;
+
     FBitmap.Height := Height;
     FBitmap.Width := Width;
     FBitmap.Canvas.Pen.Width := 1;
