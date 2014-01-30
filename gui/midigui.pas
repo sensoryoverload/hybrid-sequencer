@@ -244,6 +244,7 @@ type
     property EditMode: TEditMode read FEditMode write FEditMode;
     property SelectedAutomationDeviceId: string read FSelectedAutomationDeviceId write SetSelectedAutomationDeviceId;
     property SelectedAutomationParameterId: string read FSelectedAutomationParameterId write SetSelectedAutomationParameterId;
+    property IsDirty: Boolean read FIsDirty write FIsDirty;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -1210,7 +1211,7 @@ procedure TMidiPatternGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
   FForceRedraw := AForceRedraw;
 
-  if (FIsDirty or FForceRedraw) and Assigned(FUpdateSubject) then
+  if (FIsDirty {or FForceRedraw}) and Assigned(FUpdateSubject) then
   begin
     DiffLists(
       TMidiPattern(FUpdateSubject).NoteList,
@@ -1327,6 +1328,8 @@ begin
   if FSelectedAutomationDeviceId = AValue then Exit;
   FSelectedAutomationDeviceId := AValue;
 
+  FModel.SelectedAutomationDeviceId := AValue;
+
   FSelectedAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FSelectedAutomationDeviceId));
 end;
 
@@ -1334,6 +1337,8 @@ procedure TMidiPatternGUI.SetSelectedAutomationParameterId(AValue: string);
 begin
   if FSelectedAutomationParameterId = AValue then Exit;
   FSelectedAutomationParameterId := AValue;
+
+  FModel.SelectedAutomationParameterId := AValue;
 
   FSelectedAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameterId));
 end;
@@ -1707,10 +1712,6 @@ begin
     HandleAutomationEditMouseMove(Shift, X, Y);
   end;
 
-  // Invalidate here as this one of the few situations that screen updates are
-  // requested by the observer and not the subject ie mousemove changes are not always
-  // persistent towards the subject.
-  //Invalidate;
   UpdateView(True);
 end;
 

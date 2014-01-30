@@ -556,7 +556,8 @@ begin
     else
     begin
       FPluginProcessorGUI.OnChangeNodeList := @FMidiPatternControlGUI.PopulateAutomationControls;
-      FMidiPatternControlGUI.MidiPatternGUI.UpdateView(False);
+      FMidiPatternControlGUI.MidiPatternGUI.IsDirty := FIsDirty;
+      FMidiPatternControlGUI.MidiPatternGUI.UpdateView;
     end;
   end
   else if FWavePatternControlGUI.Parent = tsPattern then
@@ -570,10 +571,11 @@ begin
     else
     begin
       FPluginProcessorGUI.OnChangeNodeList := @FWavePatternControlGUI.PopulateAutomationControls;
-      FWavePatternControlGUI.WaveGUI.UpdateView(False);
+      FWavePatternControlGUI.WaveGUI.IsDirty := FIsDirty;
+      FWavePatternControlGUI.WaveGUI.UpdateView;
     end;
-    FIsDirty := False;
   end;
+  FIsDirty := False;
 
   FPluginProcessorGUI.UpdateView;
 end;

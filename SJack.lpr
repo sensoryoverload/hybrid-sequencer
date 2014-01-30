@@ -24,7 +24,7 @@ program SJack;
 uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
-  cmem,
+//  cmem,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms,

@@ -109,8 +109,12 @@ begin
   begin
     FModel.Attach(FWaveGUI);
     FModel.Attach(FWaveOverview);
+    FModel.SelectedAutomationDeviceId := FModel.SelectedAutomationDeviceId;
+    FModel.SelectedAutomationParameterId := FModel.SelectedAutomationParameterId;
 
     DoWaveZoom(0, 100);
+
+    FWaveGUI.UpdateView(True);
 
     FConnected := True;
   end;

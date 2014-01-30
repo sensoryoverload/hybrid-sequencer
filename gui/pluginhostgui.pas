@@ -292,7 +292,6 @@ end;
 procedure TPluginProcessorGUI.SortPlugins(Sender: TObject);
 var
   lIndex: Integer;
-  lOffsetAdder: Integer;
   lPluginGUI: TGenericPluginGUI;
   lOrderNodesCommand: TOrderNodesCommand;
   lOrderList: TStringList;

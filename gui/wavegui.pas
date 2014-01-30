@@ -217,6 +217,7 @@ type
     property EditMode: TEditMode read FEditMode write FEditMode;
     property SelectedAutomationParameterId: string read FSelectedAutomationParameterId write SetSelectedAutomationParameterId;
     property SelectedAutomationDeviceId: string read FSelectedAutomationDeviceId write SetSelectedAutomationDeviceId;
+    property IsDirty: Boolean read FIsDirty write FIsDirty;
   protected
     procedure DblClick; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -419,7 +420,7 @@ procedure TWaveGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
   FForceRedraw := AForceRedraw;
 
-  if (FIsDirty or FForceRedraw) and Assigned(FUpdateSubject) then
+  if FIsDirty and Assigned(FUpdateSubject) then
   begin
     DiffLists(
       TWavePattern(FUpdateSubject).SliceList,
@@ -973,6 +974,8 @@ begin
       lAddMarkerCommand.Free;
     end;
   end;
+
+  UpdateView(True);
 
   inherited DblClick;
 end;

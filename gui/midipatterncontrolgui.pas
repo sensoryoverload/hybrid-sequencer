@@ -155,8 +155,12 @@ begin
     FMidiPatternGUI.ZoomFactorY := 1000;
     FMidiPatternGUI.QuantizeSetting := FModel.QuantizeSetting;
     FMidiPatternGUI.MidiChannel := FModel.MidiChannel;
+    FMidiPatternGUI.SelectedAutomationDeviceId := FModel.SelectedAutomationDeviceId;
+    FMidiPatternGUI.SelectedAutomationParameterId := FModel.SelectedAutomationParameterId;
 
     DoMidiZoom(0, 100);
+
+    FMidiPatternGUI.UpdateView(True);
 
     FConnected := True;
   end;

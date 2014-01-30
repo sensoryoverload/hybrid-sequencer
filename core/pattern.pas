@@ -56,6 +56,8 @@ type
     FLatency: Integer;
     FPitched: Boolean;
     FPosition: Integer; // Vertical position in the patterngrid
+    FSelectedAutomationDeviceId: string;
+    FSelectedAutomationParameterId: string;
     FText: string;
     FSyncQuantize: Boolean;
     FOkToPlay: Boolean;
@@ -132,6 +134,8 @@ type
     property LoopLength: TLoopMarker read FLoopLength write SetLoopLength;
     property Looped: Boolean read FLooped write FLooped;
     property Enabled: Boolean read FEnabled write FEnabled;
+    property SelectedAutomationDeviceId: string read FSelectedAutomationDeviceId write FSelectedAutomationDeviceId;
+    property SelectedAutomationParameterId: string read FSelectedAutomationParameterId write FSelectedAutomationParameterId;
   end;
 
   { TPatternCommand }

@@ -161,10 +161,6 @@ type
     t1,t2,t3: single;
     f,p,q: single;
 
-    t, x, k, r,
-    y1, y2, y3, y4,
-    oldx, oldy1, oldy2, oldy3,
-    _kd: Single;
     procedure SetFrequency(AValue: Single);
     procedure SetResonance(AValue: Single);
   public

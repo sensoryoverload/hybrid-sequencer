@@ -631,7 +631,7 @@ begin
                 FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
 
                 // Effects chain
-                TMidiPattern(lPlayingPattern).PluginProcessor.Process(
+                lPlayingPattern.PluginProcessor.Process(
                   TMidiPattern(lPlayingPattern).MidiBuffer,
                   lTrack.OutputBuffer,
                   lTrack.OutputBuffer,
@@ -640,7 +640,7 @@ begin
               else
               begin
                 // Effects chain
-                TWavePattern(lPlayingPattern).PluginProcessor.Process(
+                lPlayingPattern.PluginProcessor.Process(
                   nil,
                   lTrack.OutputBuffer,
                   lTrack.OutputBuffer,
