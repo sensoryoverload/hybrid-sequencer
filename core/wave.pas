@@ -172,15 +172,11 @@ type
     FSliceState: TSliceState;
     FSliceStartLocation: single;
     FSliceEndLocation: single;
-    FSliceLastStartLocation: single;
-    FSliceLastEndLocation: single;
     FSliceHalfLength: Integer;
     FSliceLength: Single;
     FSliceCounter: Single;
     FSliceLastCounter: Single;
     FSliceCursor: Single;
-    FSliceCustomCursor: Single;
-    FSliceAutoCursor: Single;
     FSliceSynced: Boolean;
     FSliceLoopModulo: Integer;
     FLastSlice: TMarker;
@@ -930,7 +926,7 @@ begin
       except
         on e: exception do
         begin
-          writeln('Error: ' + e.Message);
+          DBLog('Error: ' + e.Message);
         end;
       end;
     finally
@@ -1277,7 +1273,7 @@ end;
 
 function TWavePattern.LoadSampleInfo: Boolean;
 begin
-  //
+  Result := True;
 end;
 
 function TWavePattern.GetSliceAt(Location: Integer; AMargin: single): TMarker;
@@ -1309,7 +1305,6 @@ var
   i: Integer;
   lSliceStart: TMarker;
   lSliceEnd: TMarker;
-  lModulo: Integer;
 begin
   Result := True;
 
@@ -1501,10 +1496,10 @@ end;
 procedure TWavePattern.GetSampleAtCursor(ASampleCursor: Single;
   ASourceBuffer: PSingle; ATargetBuffer: PSingle; AFrameIndex: Integer; AChannelCount: Integer);
 var
-  lFracPosition: Single;
+//  lFracPosition: Single;
   lBufferOffset: integer;
 begin
-  lFracPosition := Frac(ASampleCursor);
+//  lFracPosition := Frac(ASampleCursor);
   lBufferOffset := Round(ASampleCursor * AChannelCount);
 
   if AChannelCount = 1 then
@@ -1728,14 +1723,14 @@ end;
 procedure TWavePattern.AutoMarkerProcess(ACalculateStatistics: Boolean = True);
 var
   i: Integer;
-  WindowLength: Integer;
+{  WindowLength: Integer;
   lCurrentSlice: TMarker;
-  lFirstSlice: Boolean;
+  lFirstSlice: Boolean;}
 begin
-  lFirstSlice := True;
-  lCurrentSlice := TMarker(FSliceList[0]);
+//  lFirstSlice := True;
+//  lCurrentSlice := TMarker(FSliceList[0]);
 
-  WindowLength := 0;
+//  WindowLength := 0;
 
   // First remove old slices
   for i := Pred(FSliceList.Count) downto 0 do
@@ -1752,7 +1747,7 @@ begin
   begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;
-  writeln(format('slicecount %d', [FSliceList.Count]));}
+  DBlog(format('slicecount %d', [FSliceList.Count]));}
 (*  if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
@@ -2142,7 +2137,7 @@ end;
 
 procedure TDiskWriterThread.Updater;
 begin
-  //writeln(Format('IO Data written %d', [FBufferOffset]));
+  //DBLog(Format('IO Data written %d', [FBufferOffset]));
 end;
 
 procedure TDiskWriterThread.Execute;
@@ -2238,7 +2233,7 @@ end;
 
 procedure TDiskReaderThread.Updater;
 begin
-  writeln(Format('Streaming from disk: %d', [FBufferOffset]));
+  DBLog(Format('Streaming from disk: %d', [FBufferOffset]));
 end;
 
 procedure TDiskReaderThread.Execute;

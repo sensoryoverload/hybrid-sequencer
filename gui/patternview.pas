@@ -19,7 +19,7 @@ type
   private
     FPatternView: TPatternView;
   public
-    constructor Create(AObjectOwner: string; TheOwner: TComponent);
+    constructor Create(AObjectOwner: string; TheOwner: TComponent); reintroduce;
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); override;

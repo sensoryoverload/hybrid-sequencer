@@ -294,8 +294,6 @@ end;
   signal chain.
 }
 procedure TPluginProcessor.SortPlugins;
-var
-  lIndex: Integer;
 begin
   FNodeList.Sort(@SortOnSequenceNr);
 end;
@@ -490,7 +488,6 @@ end;
 
 procedure TCreateNodesCommand.DoExecute;
 var
-  lPluginNode: TPluginNode;
   lPluginDistortion: TPluginDistortion;
   lPluginFreeverb: TPluginFreeverb;
   lPluginBassline: TPluginBassline;

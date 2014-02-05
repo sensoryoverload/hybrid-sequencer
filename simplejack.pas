@@ -353,7 +353,7 @@ end;
 function process_midi_buffer(AMidiPattern: TMidiPattern; AMidiOutBuf: pointer; AFrames: Integer; ATrack: TTrack): Integer;
 var
   buffer: ^byte;
-  lFrameOffsetLow: Integer;
+//  lFrameOffsetLow: Integer;
   lFrameOffsetHigh: Integer;
   lRelativeLocation: Integer;
   lMidiData: TMidiData;
@@ -362,7 +362,7 @@ begin
   // Only process when not in state change
   if AMidiPattern.Enabled and (AMidiPattern.MidiDataList.Count > 0) then
   begin
-    lFrameOffsetLow := ((AMidiPattern.RealCursorPosition div AFrames) * AFrames);
+//    lFrameOffsetLow := ((AMidiPattern.RealCursorPosition div AFrames) * AFrames);
     lFrameOffsetHigh := ((AMidiPattern.RealCursorPosition div AFrames) * AFrames) + AFrames;
 
     while (AMidiPattern.MidiDataList.CurrentMidiData.Location < lFrameOffsetHigh) and
@@ -1073,9 +1073,6 @@ begin
 end;
 
 procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
-var
-  i: Integer;
-  lTrack: TTrack;
 begin
   Application.ProcessMessages;
   try
@@ -1116,7 +1113,7 @@ begin
   except
     on e:exception do
     begin
-      writeln('Hybrid error: ' + e.Message);
+      DBLog('Hybrid error: ' + e.Message);
     end;
   end;
 end;
@@ -1197,7 +1194,7 @@ begin
     client := jack_client_open('loopbox', JackNullOption, nil);
 	  if not assigned(client) then
     begin
-      DBLog('Error creating jack client!');
+      writeln('Error creating jack client!');
       Halt(1);
     end;
 
@@ -1347,7 +1344,6 @@ end;
 procedure TMainApp.TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
 var
   lPattern: TPattern;
-  lTrack: TTrack;
   lSavePatternCommand: TSavePatternCommand;
   lSavePatternDialog: TSaveDialog;
 begin
@@ -1463,7 +1459,6 @@ procedure TMainApp.LoadTreeDirectory;
 var
   RootNode: TTreeNode;
   lFilterRootNode: TTreeNode;
-  lFilterNode: TTreeNode;
   lIndex: Integer;
   TreeFolderData: TTreeFolderData;
   lTreeViewPluginInfo: TTreeViewPluginInfo;
@@ -1491,12 +1486,12 @@ begin
     // Add plugins
     lFilterRootNode := TreeView1.Items.Add(RootNode, 'Native Plugins');
     lFilterRootNode.ImageIndex := 17;
-    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Reverb');
-    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Bassline');
-    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Sampler');
-    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Distortion');
-    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'BitReducer');
-    lFilterNode := TreeView1.Items.AddChild(lFilterRootNode, 'Moog filter');
+    TreeView1.Items.AddChild(lFilterRootNode, 'Reverb');
+    TreeView1.Items.AddChild(lFilterRootNode, 'Bassline');
+    TreeView1.Items.AddChild(lFilterRootNode, 'Sampler');
+    TreeView1.Items.AddChild(lFilterRootNode, 'Distortion');
+    TreeView1.Items.AddChild(lFilterRootNode, 'BitReducer');
+    TreeView1.Items.AddChild(lFilterRootNode, 'Moog filter');
 
     lFilterRootNode := TreeView1.Items.Add(RootNode, 'LADSPA Plugins');
     lFilterRootNode.ImageIndex := 17;
@@ -1508,7 +1503,7 @@ begin
       lTreeViewPluginInfo.Caption :=
         TLadspaPluginCatalogItem(GLadspaPluginFactory.PluginList.Objects[lIndex]).Name;
 
-      lFilterNode := TreeView1.Items.AddChildObject(lFilterRootNode,
+      TreeView1.Items.AddChildObject(lFilterRootNode,
         TLadspaPluginCatalogItem(GLadspaPluginFactory.PluginList.Objects[lIndex]).Name,
         lTreeViewPluginInfo);
     end;

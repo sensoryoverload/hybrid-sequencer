@@ -225,6 +225,7 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState;
                     var Accept: Boolean); override;
+    procedure DoOnResize; override;
     procedure CreateMarkerGUI(AObjectID: string);
     procedure DeleteMarkerGUI(AObjectID: string);
   published
@@ -518,9 +519,6 @@ var
   lAutomationData: TAutomationData;
   lAutomationScreenY: Integer;
   lAutomationScreenX: Integer;
-  lDeviceIndex: Integer;
-  lParameterIndex: Integer;
-  lAutomationDataList: TAutomationDataList;
 begin
   if not Assigned(FModel) then exit;
 
@@ -1269,7 +1267,6 @@ procedure TWaveGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
     lEventX: Integer;
     lEventY: Integer;
     lAutomationData: TAutomationData;
-    lAutomationDataList: TAutomationDataList;
   begin
     Result := nil;
 
@@ -1430,6 +1427,13 @@ begin
   inherited DragOver(Source, X, Y, State, Accept);
 
   Accept := True;
+end;
+
+procedure TWaveGUI.DoOnResize;
+begin
+  UpdateView(True);
+
+  inherited DoOnResize;
 end;
 
 
@@ -1606,6 +1610,8 @@ begin
   if FSelectedAutomationDeviceId = AValue then Exit;
   FSelectedAutomationDeviceId := AValue;
 
+  FModel.SelectedAutomationDeviceId := AValue;
+
   FSelectedAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FSelectedAutomationDeviceId));
 end;
 
@@ -1613,6 +1619,8 @@ procedure TWaveGUI.SetSelectedAutomationParameterId(AValue: string);
 begin
   if FSelectedAutomationParameterId = AValue then Exit;
   FSelectedAutomationParameterId := AValue;
+
+  FModel.SelectedAutomationParameterId := AValue;
 
   FSelectedAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameterId));
 end;

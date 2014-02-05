@@ -13,13 +13,13 @@ type
 
   TPluginBasslineGUI = class(TGenericPluginGUI)
   private
-    FCutoff: TParameterControl;
+{    FCutoff: TParameterControl;
     FReso: TParameterControl;
     FEnvMod: TParameterControl;
     FDecay: TParameterControl;
     FAccent: TParameterControl;
     FWave: TParameterControl;
-    FOverDrive: TParameterControl;
+    FOverDrive: TParameterControl;}
   protected
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);

@@ -201,7 +201,6 @@ var
   lPluginIndex: Integer;
   lLibHandle: TLibHandle;
   lPluginCatalogItem: TLadspaPluginCatalogItem;
-  lPluginItem: TLadspaLoadedPluginItem;
   lDescriptorFunction: LADSPA_DescriptorFunction;
 begin
   lLibIndex := FLoadedPlugins.IndexOf(IntToStr(APluginId));

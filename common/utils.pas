@@ -404,10 +404,6 @@ procedure DBLog(AMessage: string); inline;
 begin
   if FLogging then
   begin
-    // Send final output to DebugServer
-    //SendDebug(AMessage);
-    //writeln(AMessage);
-    //FLogger.RingbufferWrite(shortstring(AMessage), 256);
     GLogger.PushMessage(Format('%s: %s', [DateTimeToStr(Now), AMessage]));
   end;
 end;
@@ -469,7 +465,7 @@ end;
 
 procedure StopTimer(ALogMessage: string);
 begin
-  writeln(Format(ALogMessage + ': %d ms', [GetTickCount - FTimer]));
+  DBLog(Format(ALogMessage + ': %d ms', [GetTickCount - FTimer]));
 end;
 
 // laurent de soras

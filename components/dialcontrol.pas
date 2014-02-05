@@ -127,7 +127,6 @@ Type
     FCaption: string;
     FCaptionOn: string;
     FCaptionOff: string;
-    FCaptionWidth: Integer;
     FOnChange: TNotifyEvent;
     procedure SetCaptionOff(const AValue: string);
     procedure SetCaptionOn(const AValue: string);
@@ -171,11 +170,11 @@ Type
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
 //    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
-    procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
   public
     constructor Create(AOwner : TComponent); override;
     destructor Destroy; override;
+    procedure EraseBackground(DC: HDC); override;
   published
     property Items: TStringList read FItems write FItems;
     property ItemIndex: Integer read FItemIndex write SetItemIndex;
@@ -394,13 +393,9 @@ Type
     FPosition: Single;
     FY: Integer;
     FFaderMoving: Boolean;
-    FPeakHold: Integer;
-    FVolumeMultiplier: Single;
     FRange: Integer;
 
     // This points to a location where the present audio level is located
-    FLevelLeft: Single;
-    FLevelRight: Single;
     FChannelCount: Byte;
     FChannelLevel: TChannel;
     FOnChange: TNotifyEvent;
@@ -421,7 +416,7 @@ Type
     destructor Destroy; override;
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
-    procedure Update;
+    procedure Update; reintroduce;
     procedure UpdateControl;
     property Position: Single read FPosition write SetPosition;
     property VolumeMultiplier: Single read GetVolumeMultiplier;
@@ -663,8 +658,6 @@ end;
 procedure TListSelect.Paint;
 var
   lBGRABitmap: TBGRABitmap;
-  lCaption: string;
-  lCenter: Integer;
   lItemIndex: Integer;
 begin
   lBGRABitmap := TBGRABitmap.Create(Width, Height);
@@ -861,7 +854,6 @@ procedure TParameterControl.Paint;
 var
   lBGRABitmap: TBGRABitmap;
   lCaption: string;
-  lCenter: Integer;
 begin
   lBGRABitmap := TBGRABitmap.Create(Width, Height);
   try

@@ -202,7 +202,7 @@ type
     procedure SetNoteLocation(const AValue: Integer);
     procedure SetNoteVelocity(const AValue: Integer);
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean);
+    constructor Create(AObjectOwner: string; AMapped: Boolean); reintroduce;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
@@ -247,8 +247,6 @@ type
     FWindowEnd: Single;
     FLooped: Boolean;
 
-    FLatency: Integer;
-
     FMidiBuffer: TMidiBuffer;
 
     function GetEnabled: Boolean;
@@ -267,7 +265,7 @@ type
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
     procedure ProcessAdvance; override;
 
-    function Latency: Integer;
+    function Latency: Integer; reintroduce;
 
     property Enabled: Boolean read GetEnabled write FEnabled default True;
     property MidiDataCursor: TMidiData read FMidiDataCursor write FMidiDataCursor;
@@ -911,7 +909,6 @@ begin
       begin
         // Add diff to original length
         lMidinote.NoteLength := lMidinote.OriginalNoteLength + NoteLengthDiff;
-        writeln(format('model notelength %d diff %d', [lMidinote.NoteLength, NoteLengthDiff]));
         lMidinote.Notify;
       end;
     end;

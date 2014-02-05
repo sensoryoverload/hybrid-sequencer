@@ -146,7 +146,7 @@ type
     FPlayState: Integer;
     FSelectedBank: TSampleBank;
     FOldSelectedBank: TSampleBank;
-    FMasterTrack: TTrack;
+    //FMasterTrack: TTrack;
     FSync: Boolean;
 
     procedure SetBPM(const AValue: Single);

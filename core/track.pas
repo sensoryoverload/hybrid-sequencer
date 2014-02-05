@@ -54,12 +54,12 @@ type
     FScheduledPattern: TPattern;
 
     FToTrackID: Integer;   // Push audio to this track => group/master mix buffer
-    FFromTrackID: Integer; // Record audio/midi from here
+    //FFromTrackID: Integer; // Record audio/midi from here
 
     // Denotes when the track should generate audio, normal track should have
     // data first, after that groups, after that returns and finally master
     // One exception is when recording, track which is recording is processed last
-    FProcessPriority: Integer;
+    //FProcessPriority: Integer;
 
     FLatencyCompensationBuffer: TFIFOAudioBuffer;
 
@@ -109,7 +109,7 @@ type
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;

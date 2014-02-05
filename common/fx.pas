@@ -91,7 +91,7 @@ type
 
   TDummyFilter = class(TInternalNode)
   public
-    constructor Create(AObjectOwnerID: string);
+    constructor Create(AObjectOwnerID: string); reintroduce;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
@@ -116,7 +116,7 @@ type
     procedure SetSpeed(v:Single);
   public
     { Public declarations }
-    constructor Create(AObjectOwnerID: string);
+    constructor Create(AObjectOwnerID: string); reintroduce;
   published
     property Value:Single read GetValue;
     property Speed:Single read FSpeed Write SetSpeed;
@@ -133,7 +133,6 @@ type
 
 implementation
 
-var RandSeed:Integer=$DEAD;
 const
   c3      : Single =  3;
   c6      : Single =  6;

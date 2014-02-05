@@ -60,7 +60,7 @@ type
     FRealBPM: Single;
     procedure DeviceClick(Sender: TObject);
     procedure DeviceParameterClick(Sender: TObject);
-    function GetEnabled: Boolean;
+    function GetEnabled: Boolean; reintroduce;
     procedure Setpitch(const Avalue: Single);
   protected
     procedure DoWaveZoom(ALeftPercentage, ARightPercentage: single);
@@ -103,16 +103,41 @@ uses utils, global_command, global;
 { TWavePatternControlGUI }
 
 procedure TWavePatternControlGUI.Connect;
+var
+  lPortParameter: TPortParameter;
+  lPluginNode: TPluginNode;
 begin
   DBLog(Format('Start Connect waveform (%s)', [FModel.ObjectID]));
   if Assigned(FModel) then
   begin
     FModel.Attach(FWaveGUI);
     FModel.Attach(FWaveOverview);
-    FModel.SelectedAutomationDeviceId := FModel.SelectedAutomationDeviceId;
-    FModel.SelectedAutomationParameterId := FModel.SelectedAutomationParameterId;
+    FWaveGUI.SelectedAutomationDeviceId := FModel.SelectedAutomationDeviceId;
+    FWaveGUI.SelectedAutomationParameterId := FModel.SelectedAutomationParameterId;
 
     DoWaveZoom(0, 100);
+
+    case FWaveGUI.EditMode of
+      emPatternEdit:
+      begin
+        lPluginNode := TPluginNode(
+          GObjectMapper.GetModelObject(FModel.SelectedAutomationParameterId));
+        if Assigned(lPluginNode) then
+        begin
+          lPortParameter := TPortParameter(
+            GObjectMapper.GetModelObject(FModel.SelectedAutomationParameterId));
+          if Assigned(lPortParameter) then
+          begin
+            btnAutomationSelect.Caption :=
+              lPluginNode.PluginName + ' > ' + lPortParameter.Caption;
+          end;
+        end;
+      end;
+      emAutomationEdit:
+      begin
+        btnAutomationSelect.Caption := 'None';
+      end;
+    end;
 
     FWaveGUI.UpdateView(True);
 

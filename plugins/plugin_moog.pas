@@ -24,7 +24,7 @@ type
     procedure SetFS(v:single);
     procedure FreqCalc;
   public
-    constructor Create(AObjectOwnerID: string);
+    constructor Create(AObjectOwnerID: string); reintroduce;
     function Process(const I : Single):Single;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;

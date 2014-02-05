@@ -133,7 +133,7 @@ type
     FModSource: TModSource;
     FRelease: single;
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     procedure Initialize; override;
   published
     property Attack: single read FAttack write FAttack;
@@ -172,7 +172,7 @@ type
     FModAmount: single;
     FModSource: TModSource;
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     procedure Initialize; override;
   published
     property Amplify: single read FAmplify write FAmplify;
@@ -325,7 +325,7 @@ type
   protected
     procedure RecalculatePitchFactor;
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;

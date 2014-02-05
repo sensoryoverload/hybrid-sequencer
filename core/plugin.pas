@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, ContNrs, globalconst, utils, global_command, global,
-  ladspaloader, ladspa, math, Menus;
+  ladspaloader, ladspa, Menus;
 
 type
   TAutomationDataList = class;
@@ -92,8 +92,6 @@ type
     FPopulateAutomationDevices: TPopulateAutomationDevices;
     FPortList: TObjectList;
     FParameterList: TObjectList;
-    FReturnBuffer: PSingle;
-    FMidiBuffer: TMidiBuffer;
     FInputBuffer: PSingle;
     FOutputBuffer: PSingle;
     FInputControlCount: Integer;
@@ -115,7 +113,7 @@ type
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); virtual;
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);  reintroduce; virtual;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
@@ -125,7 +123,7 @@ type
     procedure Clean; virtual;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); virtual;
     procedure Clear;
-    procedure UpdateParameters; virtual; abstract;
+    procedure UpdateParameters; virtual;
 
     function CreatePortParameter(
       ACaption: string;
@@ -175,7 +173,7 @@ type
 
   TScriptNode = class(TPluginNode)
   public
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
@@ -187,7 +185,6 @@ type
     FLadspaLoadedPluginItem: TLadspaLoadedPluginItem;
     FPluginInstance: LADSPA_Handle;
     FPluginDescriptor: PLADSPA_Descriptor;
-    FFirstRun: Boolean;
     FUniqueID: Integer;
   public
     procedure Instantiate; override;
@@ -235,7 +232,7 @@ type
   TExternalNode = class(TInternalNode)
   private
   public
-    constructor Create(AObjectOwnerID: string);
+    constructor Create(AObjectOwnerID: string); reintroduce;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
   end;
@@ -253,7 +250,7 @@ type
     FPortId: string;
   protected
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     function FrameFirstIndex(ALocation: Integer): Integer;
     function FrameLastIndex(ALocation: Integer): Integer;
@@ -700,6 +697,11 @@ begin
   begin
     FInputBuffer[i] := 0;
   end;
+end;
+
+procedure TPluginNode.UpdateParameters;
+begin
+  // To be override;
 end;
 
 function TPluginNode.CreatePortParameter(

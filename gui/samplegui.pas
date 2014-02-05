@@ -46,11 +46,11 @@ type
     FDataSize: Integer;
     FZoom: Single;
   protected
-    procedure EraseBackground(DC: HDC); override;
-    procedure Paint; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure EraseBackground(DC: HDC); override;
+    procedure Paint; override;
     property Data: PSingle read FData write FData;
     property DataSize: Integer read FDataSize write FDataSize;
     property ChannelCount: Integer read FChannelCount write FChannelCount;
@@ -554,7 +554,7 @@ end;
 
 procedure TSampleView.DoKeyChange(Sender: TObject; AKey: Integer);
 begin
-  writeln(format('Play note: %d', [AKey]));
+  DBLog(format('Play note: %d', [AKey]));
 end;
 
 function TSampleView.GetObjectID: string;
@@ -596,7 +596,7 @@ end;
 
 procedure TSampleSelectControl.Update(Subject: THybridPersistentModel);
 begin
-  writeln('start TSampleSelectControl.Update');
+  DBLog('start TSampleSelectControl.Update');
 
   FCaption := TSample(Subject).SampleName;
   FSelected := TSample(Subject).Selected;
@@ -606,7 +606,7 @@ begin
     FSampleView.Update(THybridPersistentModel(FSampleView.Model));
   end;
 
-  writeln('end TSampleSelectControl.Update');
+  DBLog('end TSampleSelectControl.Update');
 end;
 
 { TSampleKeyboardControl }

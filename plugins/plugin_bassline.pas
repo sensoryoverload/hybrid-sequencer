@@ -41,7 +41,7 @@ type
     procedure SetWave(AValue: Integer);
     procedure SetOverDrive(AValue: Single);
   public
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
@@ -265,8 +265,6 @@ begin
 end;
 
 procedure TPluginBassline.UpdateParameters;
-var
-  lIndex: Integer;
 begin
   FTB303.Cutoff := InputControls[0].Value;
   FTB303.Resonance := InputControls[1].Value;
@@ -279,7 +277,7 @@ end;
 
 function TPluginBassline.GetPitch: Single;
 begin
-//  Result := FTB303.getPitch;
+  Result := 1; //FTB303.getPitch;
 end;
 
 function TPluginBassline.GetCutoff: Single;

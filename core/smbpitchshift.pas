@@ -107,7 +107,6 @@ var
   freqPerBin, freqPerBin_inverse, expct: double;
   oversampling_inverse: double;
   fftFrameSizeMulOverSampling: double;
-  lCos, lSin: Extended;
   i,k, qpd, index, inFifoLatency, stepSize, fftFrameSize2: Longint;
 begin
   { set up some handy variables }

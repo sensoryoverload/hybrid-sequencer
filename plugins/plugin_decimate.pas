@@ -25,7 +25,7 @@ type
     procedure SetBitsFloat(AValue: single);
     procedure SetSampleRate(AValue: Single);
   public
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); reintroduce;
     function Decimate(i: single): single;
     procedure Init(ABits: integer; ASampleRate: single);
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;

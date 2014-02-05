@@ -218,8 +218,8 @@ type
     procedure Attach(AObserver: IObserver);
     procedure Detach(AObserver: IObserver);
     procedure Notify;
-    procedure Initialize; virtual; abstract;
-    procedure Finalize; virtual; abstract;
+    procedure Initialize; virtual;
+    procedure Finalize; virtual;
     procedure Assign(Source: TPersistent); override;
     procedure SaveToXML(pVisitor: THybridPersistentModel; ALevel: Integer; AXMLNode: TDOMNode);
     procedure SaveToFile(AXMLFileName: string);
@@ -267,7 +267,7 @@ type
     destructor Destroy; override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
-    procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual; reintroduce;
     procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
@@ -293,7 +293,7 @@ type
     destructor Destroy; override;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
-    procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual; reintroduce;
     procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
@@ -317,7 +317,7 @@ type
     FObjectOwner: TObject;
   public
     destructor Destroy; override;
-    procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual; reintroduce;
     procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
@@ -343,7 +343,7 @@ type
     FObjectOwner: TObject;
   public
     destructor Destroy; override;
-    procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual; reintroduce;
     procedure UpdateView(AForceRedraw: Boolean = False); virtual;
     procedure Connect; virtual;
     procedure Disconnect; virtual;
@@ -391,7 +391,7 @@ type
     FDataType: TLoopMarkerType;
     FValue: Integer;
   public
-    constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType);
+    constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType); reintroduce;
     procedure Initialize; override;
     procedure Finalize; override;
   published
@@ -406,7 +406,7 @@ type
     FDataType: TSampleMarkerType;
     FValue: Integer;
   public
-    constructor Create(AObjectOwner: string; ADataType: TSampleMarkerType);
+    constructor Create(AObjectOwner: string; ADataType: TSampleMarkerType); reintroduce;
     procedure Initialize; override;
     procedure Finalize; override;
   published
@@ -505,7 +505,7 @@ type
     FLocation: Integer;
     FLoopMarker: TLoopMarker;
   public
-    constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType);
+    constructor Create(AObjectOwner: string; ADataType: TLoopMarkerType); reintroduce;
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
     property LoopMarker: TLoopMarker read FLoopMarker write FLoopMarker;
     property DataType: TLoopMarkerType read FDataType write FDataType;
@@ -520,7 +520,7 @@ type
     FLocation: Integer;
     FSampleMarker: TSampleMarker;
   public
-    constructor Create(AObjectOwner: string; ADataType: TSampleMarkerType);
+    constructor Create(AObjectOwner: string; ADataType: TSampleMarkerType); reintroduce;
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
     property SampleMarker: TSampleMarker read FSampleMarker write FSampleMarker;
     property DataType: TSampleMarkerType read FDataType write FDataType;
@@ -981,7 +981,6 @@ end;
 procedure THybridPersistentModel.Notify;
 var
   i: Integer;
-  lObserverlist: string;
 begin
   if FObservers <> nil then
   begin
@@ -1009,6 +1008,16 @@ begin
   end;
 
   DBLog(Format('end %s.Notify', [Self.ClassName]));
+end;
+
+procedure THybridPersistentModel.Initialize;
+begin
+  // To be overidden
+end;
+
+procedure THybridPersistentModel.Finalize;
+begin
+  // To be overidden
 end;
 
 procedure THybridPersistentModel.Assign(Source: TPersistent);
@@ -1040,7 +1049,7 @@ begin
   // Goes to the child node
   lPropXMLNode := AXMLNode;
 
-  WriteLn(lPropXMLNode.NodeValue);
+  DBLog(lPropXMLNode.NodeValue);
 
   // Processes all child nodes
   while lPropXMLNode <> nil do
@@ -1064,7 +1073,7 @@ begin
     if lPropFound then
     begin
       lPropertyType := TDOMElement(lPropXMLNode).GetAttribute('DataType');
-      writeln('Reading Class: ' + lPropertyType);
+      DBLog('Reading Class: ' + lPropertyType);
 
       if lPropType^.Kind = tkMethod then
       begin
@@ -1075,7 +1084,7 @@ begin
         lVisited := GetObjectProp(Self, PropName);
         if Assigned(lVisited) then
         begin
-          writeln('PropName ' + PropName);
+          DBLog('PropName ' + PropName);
 
           // Is property an owner list item
           if (lVisited is TObjectList) then
@@ -1106,13 +1115,13 @@ begin
                 THybridPersistentModel(lVisited).LoadFromXML(lPropXMLNode.FirstChild);
               end;
             end;
-            writeln('recurse THybridPersistentModel');
+            DBLog('recurse THybridPersistentModel');
           end;
         end;
       end
       else
       begin
-        writeln(Format('%s.%s = %s', [ClassName, PropName, lPropXMLNode.Attributes[0].NodeValue]));
+        DBLog(Format('%s.%s = %s', [ClassName, PropName, lPropXMLNode.Attributes[0].NodeValue]));
         case lPropType^.Kind of
           // All integer properties...
           tkInteger, tkChar, tkSet, tkWChar:

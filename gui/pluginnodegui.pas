@@ -49,7 +49,7 @@ type
     { public declarations }
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Update(Subject: THybridPersistentModel); virtual;
+    procedure Update(Subject: THybridPersistentModel); virtual; reintroduce;
     procedure UpdateView(AForceRedraw: Boolean = False);
     procedure Connect; virtual;
     procedure Disconnect; virtual;

@@ -30,7 +30,7 @@ type
     procedure SetWidth(AValue: Single);
     procedure SetPreDelay(AValue: Single);
   public
-    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
         AOutputBuffer: PSingle; AFrames: Integer); override;

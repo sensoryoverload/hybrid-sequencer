@@ -144,6 +144,9 @@ begin
 end;
 
 procedure TMidiPatternControlGUI.Connect;
+var
+  lPortParameter: TPortParameter;
+  lPluginNode: TPluginNode;
 begin
   if Assigned(FModel) then
   begin
@@ -159,6 +162,28 @@ begin
     FMidiPatternGUI.SelectedAutomationParameterId := FModel.SelectedAutomationParameterId;
 
     DoMidiZoom(0, 100);
+
+    case FMidiPatternGUI.EditMode of
+      emPatternEdit:
+      begin
+        lPluginNode := TPluginNode(
+          GObjectMapper.GetModelObject(FModel.SelectedAutomationParameterId));
+        if Assigned(lPluginNode) then
+        begin
+          lPortParameter := TPortParameter(
+            GObjectMapper.GetModelObject(FModel.SelectedAutomationParameterId));
+          if Assigned(lPortParameter) then
+          begin
+            btnAutomationSelect.Caption :=
+              lPluginNode.PluginName + ' > ' + lPortParameter.Caption;
+          end;
+        end;
+      end;
+      emAutomationEdit:
+      begin
+        btnAutomationSelect.Caption := 'None';
+      end;
+    end;
 
     FMidiPatternGUI.UpdateView(True);
 

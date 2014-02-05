@@ -76,7 +76,7 @@ type
     procedure SetFrequency(AValue: Single);
   protected
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;

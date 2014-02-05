@@ -48,7 +48,6 @@ type
 
   TMidiPatternOverview = class(TPatternOverview)
   private
-    FNoteListGUI: TObjectList;
     function ConvertNoteToScreen(ANote: Integer): Integer;
     function ConvertScreenToTime(AX: Integer): Integer;
     function ConvertTimeToScreen(ATime: Integer): Integer;

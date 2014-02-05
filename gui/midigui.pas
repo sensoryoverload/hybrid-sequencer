@@ -33,6 +33,7 @@ const
   DIVBY1000 = 1 / 1000;
   KEYS_PER_OCTAVE = 12;
   PIANO_WIDTH = 30;
+  STRETCHNOTE_HOTSPOT = 20;
 
 type
   TMidiGridOptions = set of (PianoKeyboard, DrumMap, MidiChannel, MidiNote);
@@ -61,7 +62,7 @@ type
     FSelected: Boolean;
     function QuantizeLocation(ALocation: Integer): Integer;
   public
-    constructor Create(AObjectOwner: string);
+    constructor Create(AObjectOwner: string); reintroduce;
     destructor Destroy; override;
     procedure Connect; override;
     procedure Disconnect; override;
@@ -142,6 +143,7 @@ type
 
     FOldQuantizedNote: Integer;
     FOldQuantizedLocation: Integer;
+    FOldNoteLengthDiff: Integer;
 
     FZoomingMode: Boolean;
     FBitmap: TBitmap;
@@ -178,7 +180,7 @@ type
     FRootNote: Integer;
     FMidiChannel: Integer;
 
-    function GetEnabled: Boolean;
+    function GetEnabled: Boolean; reintroduce;
     procedure HandleLoopMarkerMouseDown(Button: TMouseButton; Shift: TShiftState; X,
       Y: Integer);
     procedure HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState;
@@ -250,6 +252,7 @@ type
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure DblClick; override;
+    procedure DoOnResize; override;
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     procedure CreateNoteGUI(AObjectID: string);
@@ -446,7 +449,6 @@ begin
   FDraggedNote.OriginalNoteLocation := FDraggedNote.NoteLocation;
   FDraggedNote.OriginalNote := FDraggedNote.Note;
 
-//  if Width - X < 10 then
   if FNoteAction = naAdjustRight then
   begin
     FDragMode := ndLength;
@@ -494,6 +496,7 @@ begin
           lStretchNotesCommand := TStretchNotesCommand.Create(Self.ObjectID);
           try
             lStretchNotesCommand.Persist := True;
+            lStretchNotesCommand.ObjectID := FDraggedNote.ObjectID;
             lStretchNotesCommand.NoteLengthDiff := 0;
 
             GCommandQueue.PushCommand(lStretchNotesCommand);
@@ -643,7 +646,7 @@ var
   lMoveNotesCommand: TMoveNotesCommand;
   lStretchNotesCommand: TStretchNotesCommand;
   lNoteLocation: Integer;
-  lNoteLength: Integer;
+  lNoteLengthDiff: Integer;
   lNote: Integer;
 begin
   FMouseNoteX := X;
@@ -652,22 +655,20 @@ begin
   if (FMouseButton = mbLeft) and FDragging then
   begin
     lNoteLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
-    lNoteLength := QuantizeLocation(ConvertScreenToTime(X - FOrgNoteX));
+    lNoteLengthDiff := ConvertScreenToTime(X + PIANO_WIDTH - FOrgNoteX);
     lNote := ConvertScreenToNote(Y - FNoteOffset);
 
-    if (FOldQuantizedNote <> lNote) or (FOldQuantizedLocation <> lNoteLocation) then
+    if (FOldQuantizedNote <> lNote) or (FOldQuantizedLocation <> lNoteLocation) or
+      (FOldNoteLengthDiff <> lNoteLengthDiff) then
     begin
       case FDragMode of
         ndLength: // Change length of note
         begin
-          FDraggedNote.NoteLength := FDraggedNote.OriginalNoteLength + lNoteLength;
-
           lStretchNotesCommand := TStretchNotesCommand.Create(Self.ObjectID);
           try
             lStretchNotesCommand.ObjectID := FDraggedNote.ObjectID;
             lStretchNotesCommand.Persist := False;
-            lStretchNotesCommand.NoteLengthDiff := lNoteLength - FDraggedNote.OriginalNoteLength;
-            writeln(format('view notelength %d diff %d', [lNoteLength, lNoteLength - FDraggedNote.OriginalNoteLength]));
+            lStretchNotesCommand.NoteLengthDiff := lNoteLengthDiff;
             GCommandQueue.PushCommand(lStretchNotesCommand);
           except
             lStretchNotesCommand.Free;
@@ -690,6 +691,7 @@ begin
       end;
       FOldQuantizedLocation := lNoteLocation;
       FOldQuantizedNote := lNote;
+      FOldNoteLengthDiff := lNoteLengthDiff;
     end;
   end;
 end;
@@ -1211,7 +1213,7 @@ procedure TMidiPatternGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
   FForceRedraw := AForceRedraw;
 
-  if (FIsDirty {or FForceRedraw}) and Assigned(FUpdateSubject) then
+  if FIsDirty and Assigned(FUpdateSubject) then
   begin
     DiffLists(
       TMidiPattern(FUpdateSubject).NoteList,
@@ -1503,12 +1505,11 @@ begin
     if (lLeft <= AX) and (lTop <= AY) and (lRight >= AX) and (lBottom >= AY) then
     begin
       Result := lNote;
-      writeln(format('AX %d lRight %d', [AX, lRight]));
-      if AX - lLeft < 10 then
+      if AX - lLeft < STRETCHNOTE_HOTSPOT then
       begin
         ANoteAction := naAdjustLeft;
       end
-      else if (lRight - AX < 10) and (AX < lRight) then
+      else if (lRight - AX < STRETCHNOTE_HOTSPOT) and (AX < lRight) then
       begin
         ANoteAction := naAdjustRight;
       end
@@ -1749,7 +1750,16 @@ begin
     end;
   end;
 
+  UpdateView(True);
+
   inherited DblClick;
+end;
+
+procedure TMidiPatternGUI.DoOnResize;
+begin
+  UpdateView(True);
+
+  inherited DoOnResize;
 end;
 
 function TMidiPatternGUI.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint

@@ -36,7 +36,7 @@ type
     FParameterList: TObjectList;
     FDeviceId: string;
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
   published
     property DeviceId: string read FDeviceId write FDeviceId;
@@ -88,9 +88,8 @@ type
     procedure Setpitch(const Avalue: Single);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
-    procedure CalculateAutomationCache;
   public
-    constructor Create(AObjectOwner: string; AMapped: Boolean = True);
+    constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Assign(Source: TPersistent); override;
     procedure Initialize; override;
@@ -250,12 +249,10 @@ end;
 
 procedure TEditAutomationDataCommand.DoExecute;
 var
-  lAutomationDevice: TAutomationDevice;
   lAutomationDataList: TAutomationDataList;
 begin
   FPattern.BeginUpdate;
 
-  lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
   lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
   lAutomationDataList.First;
   while not lAutomationDataList.Eof do
@@ -298,10 +295,8 @@ end;
 
 procedure TEditAutomationDataCommand.DoRollback;
 var
-  lAutomationDevice: TAutomationDevice;
   lAutomationDataList: TAutomationDataList;
 begin
-  lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
   lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
   lAutomationDataList.First;
   while not lAutomationDataList.Eof do
@@ -323,10 +318,6 @@ procedure TCreateAutomationDataCommand.DoExecute;
 var
   lAutomationData: TAutomationData;
   lAutomationParameter: TAutomationDataList;
-  lAutomationDevice: TAutomationDevice;
-  lIndex: Integer;
-  lParameterIndex: Integer;
-  lPlugin: TPluginNode;
 begin
   FPattern.BeginUpdate;
 
@@ -354,12 +345,9 @@ end;
 procedure TCreateAutomationDataCommand.DoRollback;
 var
   lAutomationDataList: TAutomationDataList;
-  lAutomationDevice: TAutomationDevice;
-  lIndex: Integer;
 begin
   FPattern.BeginUpdate;
 
-  lAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FDeviceId));
   lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));;
 
   if Assigned(lAutomationDataList) then
@@ -516,20 +504,6 @@ begin
   DBLog('end TPattern.DoCreateInstance');
 end;
 
-procedure TPattern.CalculateAutomationCache;
-var
-  lIndex: Integer;
-begin
-  {FAutomationDataList.First;
-  while not FAutomationDataList.Eof do
-  begin
-    //FAutomationDataList.CurrentAutomationData;
-
-    FAutomationDataList.Next;
-  end; }
-end;
-
-
 procedure TPattern.Initialize;
 begin
   OkToPlay := True;
@@ -572,7 +546,6 @@ procedure TPattern.DoPopulateAutomationDevices(ADeviceId: string;
   AParameterId: string; AAction: TPopulateAutomationAction);
 var
   lAutomationParameter: TAutomationDataList;
-  lAutomationDevice: TAutomationDevice;
   lPlugin: TPluginNode;
   lPluginParameter: TPortParameter;
 begin
@@ -611,8 +584,6 @@ begin
 end;
 
 constructor TPattern.Create(AObjectOwner: string; AMapped: Boolean = True);
-var
-  lIndex: Integer;
 begin
   DBLog('start TPattern.Create');
 
@@ -697,7 +668,6 @@ end;
 procedure TPattern.ProcessAutomation;
 var
   lIndex: Integer;
-  lAutomationData: TAutomationData;
   lFirstAutomationData: TAutomationData;
   lLeftIndex: Integer;
   lLeftAutomationData: TAutomationData;
@@ -709,13 +679,9 @@ var
   lRightValue: Single;
   lCalculatedValue: Single;
   lPlugin: TPluginNode;
-  lPluginIndex: Integer;
   lPortIndex: Integer;
   lPort: TPortParameter;
-  lLeftLocationFound: Boolean;
-  lAutomationDevice: TAutomationDevice;
   lAutomationParameter: TAutomationDataList;
-  lDeviceIndex: Integer;
   lParameterIndex: Integer;
 begin
   {
@@ -726,112 +692,105 @@ begin
   begin
     lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
 
-    if Assigned(lAutomationData) then
+    //  This reference could be much more efficient when stored in parameterlist
+    lPlugin := lAutomationParameter.Plugin;
+
+    // Only set automation when there are automation events
+    if lAutomationParameter.List.Count > 0 then
     begin
-      //  This reference could be much more efficient when stored in parameterlist
-      lPlugin := lAutomationParameter.Plugin;
-
-      // Only set automation when there are automation events
-      if lAutomationParameter.List.Count > 0 then
+      if Assigned(lPlugin) then
       begin
-        if Assigned(lPlugin) then
+        for lPortIndex := 0 to Pred(lPlugin.InputControlCount) do
         begin
-          for lPortIndex := 0 to Pred(lPlugin.InputControlCount) do
+          lPort := lPlugin.InputControls[lPortIndex];
+
+          if lAutomationParameter.PluginParameter = lPort then
           begin
-            lPort := lPlugin.InputControls[lPortIndex];
-
-            if lAutomationParameter.PluginParameter = lPort then
+            // Cursor before first automation event so just use that value
+            lFirstAutomationData := TAutomationData(lAutomationParameter.List[0]);
+            if FPatternCursor < lFirstAutomationData.Location then
             begin
-              // Cursor before first automation event so just use that value
-              lFirstAutomationData := TAutomationData(lAutomationParameter.List[0]);
-              if FPatternCursor < lFirstAutomationData.Location then
+              lCalculatedValue :=
+                lFirstAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+
+              lPort.Value := lCalculatedValue;
+
+              break;
+            end
+            else
+            begin
+              // Find previous and next automation data points and do a linear interpolate.
+              lLeftIndex := 0;
+              for lIndex := 0 to Pred(lAutomationParameter.List.Count) do
               begin
-                lCalculatedValue :=
-                  lFirstAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
-
-                lPort.Value := lCalculatedValue;
-
-                break;
-              end
-              else
-              begin
-                lLeftLocationFound := False;
-
-                // Find previous and next automation data points and do a linear interpolate.
-                lLeftIndex := 0;
-                for lIndex := 0 to Pred(lAutomationParameter.List.Count) do
+                if TAutomationData(lAutomationParameter.List[lIndex]).Location > FPatternCursor then
                 begin
-                  lAutomationData := TAutomationData(lAutomationParameter.List[lIndex]);
-
-                  if TAutomationData(lAutomationParameter.List[lIndex]).Location > FPatternCursor then
+                  if lIndex = 0 then
                   begin
-                    if lIndex = 0 then
-                    begin
-                      lLeftIndex := 0
-                    end
-                    else
-                    begin
-                      lLeftIndex := Pred(lIndex);
-                    end;
-
-                    break;
-                  end;
-                end;
-
-                lRightIndex := Succ(lLeftIndex);
-
-                if lRightIndex > Pred(lAutomationParameter.List.Count) then
-                begin
-                  lRightIndex := Pred(lAutomationParameter.List.Count);
-                end;
-
-                lLeftAutomationData := TAutomationData(lAutomationParameter.List[lLeftIndex]);
-                lLeftLocation := lLeftAutomationData.Location;
-
-                lRightAutomationData := TAutomationData(lAutomationParameter.List[lRightIndex]);
-                lRightLocation := lRightAutomationData.Location;
-
-                if (lLeftLocation < FPatternCursor) and (lRightLocation > FPatternCursor) then
-                begin
-                  lLeftValue :=
-                    lLeftAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
-
-                  lRightValue :=
-                    lRightAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
-
-                  if lRightLocation - lLeftLocation <> 0 then
+                    lLeftIndex := 0
+                  end
+                  else
                   begin
-                    if lRightLocation <> lLeftLocation then
-                    begin
-                      // Linear interpolate to find the actual automation value at the cursor
-                      lCalculatedValue :=
-                        lLeftValue + (lRightValue - lLeftValue) *
-                        (
-                          (FPatternCursor - lLeftLocation)
-                          /
-                          (lRightLocation - lLeftLocation)
-                        );
-                    end
-                    else
-                    begin
-                      lCalculatedValue := lPort.DefaultValue;
-                    end;
-
-                    lPort.Value := lCalculatedValue;
-
-                    //dblog(format('value %f', [lPort.Value^]));
-
-                    dblog(format('Cursor %f Leftvalue %f rightvalue %f leftlocation %d rightlocation %d value %f', [
-                      FPatternCursor,
-                      lLeftValue,
-                      lRightValue,
-                      lLeftLocation,
-                      lRightLocation,
-                      lPort.Value]));
+                    lLeftIndex := Pred(lIndex);
                   end;
 
                   break;
                 end;
+              end;
+
+              lRightIndex := Succ(lLeftIndex);
+
+              if lRightIndex > Pred(lAutomationParameter.List.Count) then
+              begin
+                lRightIndex := Pred(lAutomationParameter.List.Count);
+              end;
+
+              lLeftAutomationData := TAutomationData(lAutomationParameter.List[lLeftIndex]);
+              lLeftLocation := lLeftAutomationData.Location;
+
+              lRightAutomationData := TAutomationData(lAutomationParameter.List[lRightIndex]);
+              lRightLocation := lRightAutomationData.Location;
+
+              if (lLeftLocation < FPatternCursor) and (lRightLocation > FPatternCursor) then
+              begin
+                lLeftValue :=
+                  lLeftAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+
+                lRightValue :=
+                  lRightAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+
+                if lRightLocation - lLeftLocation <> 0 then
+                begin
+                  if lRightLocation <> lLeftLocation then
+                  begin
+                    // Linear interpolate to find the actual automation value at the cursor
+                    lCalculatedValue :=
+                      lLeftValue + (lRightValue - lLeftValue) *
+                      (
+                        (FPatternCursor - lLeftLocation)
+                        /
+                        (lRightLocation - lLeftLocation)
+                      );
+                  end
+                  else
+                  begin
+                    lCalculatedValue := lPort.DefaultValue;
+                  end;
+
+                  lPort.Value := lCalculatedValue;
+
+                  //dblog(format('value %f', [lPort.Value^]));
+
+                  dblog(format('Cursor %f Leftvalue %f rightvalue %f leftlocation %d rightlocation %d value %f', [
+                    FPatternCursor,
+                    lLeftValue,
+                    lRightValue,
+                    lLeftLocation,
+                    lRightLocation,
+                    lPort.Value]));
+                end;
+
+                break;
               end;
             end;
           end;
