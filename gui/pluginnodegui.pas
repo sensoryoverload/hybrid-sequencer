@@ -80,7 +80,6 @@ begin
   inherited Create(AOwner);
 
   FParameterList := TStringList.Create;
-  FParameterList.Sorted := True;
 
   FDragging := False;
   pnlTop.OnMouseDown := @DoMouseDown;

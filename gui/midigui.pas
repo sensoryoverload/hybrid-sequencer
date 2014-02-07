@@ -847,6 +847,10 @@ var
   lNoteColor: TColor;
   lSelectedNoteColer: TColor;
   lNoteOutline: TColor;
+  lNoteX1: Integer;
+  lNoteY1: Integer;
+  lNoteX2: Integer;
+  lNoteY2: Integer;
 begin
   if not Assigned(FModel) then exit;
 
@@ -1001,21 +1005,30 @@ begin
     begin
       lNote := TMidiNoteGUI(NoteListGUI[lIndex]);
 
-      if lNote.Selected then
+      lNoteX1 := ConvertTimeToScreen(lNote.NoteLocation) + FOffset;
+      lNoteY1 := ConvertNoteToScreen(lNote.Note) + FNoteOffset;
+      lNoteX2 := ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FOffset;
+      lNoteY2 := ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset;
+
+      if ((FMouseX >= lNoteX1) and (FMouseX <= lNoteX2) and
+         (FMouseY >= lNoteY1) and (FMouseY <= lNoteY2)) or
+         (lNote = FDraggedNote) then
       begin
-        FBitmap.Canvas.Brush.Color := lSelectedNoteColer;
+        FBitmap.Canvas.Brush.Color := clWhite;
       end
       else
       begin
-        FBitmap.Canvas.Brush.Color := lNoteColor;
+        if lNote.Selected then
+        begin
+          FBitmap.Canvas.Brush.Color := lSelectedNoteColer;
+        end
+        else
+        begin
+          FBitmap.Canvas.Brush.Color := lNoteColor;
+        end;
       end;
 
-      FBitmap.Canvas.Rectangle(
-        ConvertTimeToScreen(lNote.NoteLocation) + FOffset,
-        ConvertNoteToScreen(lNote.Note) + FNoteOffset,
-        ConvertTimeToScreen(lNote.NoteLocation + lNote.NoteLength) + FOffset,
-        ConvertNoteToScreen(lNote.Note) + FZoomNoteHeight + FNoteOffset
-        );
+      FBitmap.Canvas.Rectangle(lNoteX1, lNoteY1, lNoteX2, lNoteY2);
 
       { note value debug code
       if FZoomNoteHeight > 8 then
@@ -1505,11 +1518,12 @@ begin
     if (lLeft <= AX) and (lTop <= AY) and (lRight >= AX) and (lBottom >= AY) then
     begin
       Result := lNote;
+      { Note start adjust not supported yet
       if AX - lLeft < STRETCHNOTE_HOTSPOT then
       begin
         ANoteAction := naAdjustLeft;
       end
-      else if (lRight - AX < STRETCHNOTE_HOTSPOT) and (AX < lRight) then
+      else }if (lRight - AX < STRETCHNOTE_HOTSPOT) and (AX < lRight) then
       begin
         ANoteAction := naAdjustRight;
       end
@@ -1650,11 +1664,29 @@ begin
 end;
 
 procedure TMidiPatternGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
+var
+  lNoteAction: TNoteAction;
 begin
   inherited MouseMove(Shift, X, Y);
 
   FMouseX := X;
   FMouseY := Y;
+
+  if FDragging then
+  begin
+    lNoteAction := FNoteAction;
+  end
+  else
+  begin
+    NoteUnderCursor(X, Y, lNoteAction);
+  end;
+  case lNoteAction of
+    naAdjustRight: Screen.Cursor := crSizeWE;
+    naAdjustLeft: Screen.Cursor := crSizeWE;
+    naDrag: Screen.Cursor := crSize;
+  else
+    Screen.Cursor := crArrow;
+  end;
 
   if FEditMode = emPatternEdit then
   begin

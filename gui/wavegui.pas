@@ -945,31 +945,34 @@ var
   lAddMarkerCommand: TAddMarkerCommand;
   lXRelative: Integer;
 begin
-  lXRelative := Round((FOffset + FMouseX) * FZoomFactorToData * FBpmAdder) - Round(SampleStart.Location * FBpmAdder);
-
-  lDetectSliceMarker := GetSliceAt(lXRelative, 5 * FZoomFactorToData);
-  if Assigned(lDetectSliceMarker) then
+  if FEditMode = emPatternEdit then
   begin
-    lRemoveMarkerCommand := TRemoveMarkerCommand.Create(Self.ObjectID);
-    try
-      lRemoveMarkerCommand.ObjectID := lDetectSliceMarker.ObjectID;
-      lRemoveMarkerCommand.Persist := True;
+    lXRelative := Round((FOffset + FMouseX) * FZoomFactorToData * FBpmAdder) - Round(SampleStart.Location * FBpmAdder);
 
-      GCommandQueue.PushCommand(lRemoveMarkerCommand);
-    except
-      lRemoveMarkerCommand.Free;
-    end;
-  end
-  else
-  begin
-    lAddMarkerCommand := TAddMarkerCommand.Create(Self.ObjectID);
-    try
-      lAddMarkerCommand.Location := lXRelative;
-      lAddMarkerCommand.Persist := True;
+    lDetectSliceMarker := GetSliceAt(lXRelative, 5 * FZoomFactorToData);
+    if Assigned(lDetectSliceMarker) then
+    begin
+      lRemoveMarkerCommand := TRemoveMarkerCommand.Create(Self.ObjectID);
+      try
+        lRemoveMarkerCommand.ObjectID := lDetectSliceMarker.ObjectID;
+        lRemoveMarkerCommand.Persist := True;
 
-      GCommandQueue.PushCommand(lAddMarkerCommand);
-    except
-      lAddMarkerCommand.Free;
+        GCommandQueue.PushCommand(lRemoveMarkerCommand);
+      except
+        lRemoveMarkerCommand.Free;
+      end;
+    end
+    else
+    begin
+      lAddMarkerCommand := TAddMarkerCommand.Create(Self.ObjectID);
+      try
+        lAddMarkerCommand.Location := lXRelative;
+        lAddMarkerCommand.Persist := True;
+
+        GCommandQueue.PushCommand(lAddMarkerCommand);
+      except
+        lAddMarkerCommand.Free;
+      end;
     end;
   end;
 
@@ -1021,9 +1024,8 @@ begin
       begin
         FSelectedSlice :=
           GetSliceAt(
-            Round(lXRelative * FBpmAdder) -
-            Round(SampleStart.Location * FBpmAdder),
-          FMargin);
+            Round((lXRelative - SampleStart.Location) * FBpmAdder),
+            FMargin);
 
         if Assigned(FSelectedSlice) then
         begin
@@ -1212,6 +1214,20 @@ begin
   begin
     lXRelative := Round((FOffset + X) * FZoomFactorToData);
 
+    if FDragSlice then
+    begin
+      Screen.Cursor := crSizeWE;
+    end
+    else if Assigned(GetSliceAt(Round((lXRelative - SampleStart.Location) * FBpmAdder), FMargin)) then
+    begin
+      Screen.Cursor := crSizeWE;
+    end
+    else
+    begin
+      Screen.Cursor := crArrow;
+    end;
+
+
     if Assigned(FSelectedLoopMarkerGUI) then
     begin
       FSelectedLoopMarkerGUI.Location := lXRelative;
@@ -1246,7 +1262,6 @@ begin
       FZoomFactorX := FOriginalZoomFactorX + ((FOriginalOffsetY - Y) / 5);
       if FZoomFactorX < 0.3 then FZoomFactorX := 0.3;
       FOffset := FOldOffset - (X - FOldX);
-
     end;
   end
   else if FEditMode = emAutomationEdit then
@@ -1295,6 +1310,11 @@ procedure TWaveGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
 
 begin
   FSelectedAutomationEvent := FindAutomationEvent(X, Y);
+
+  if Assigned(FSelectedAutomationEvent) then
+  begin
+    Screen.Cursor := crSize;
+  end;
 end;
 
 procedure TWaveGUI.HandleAutomationEditMouseMove(Shift: TShiftState; X,
@@ -1343,6 +1363,8 @@ begin
     end;
 
     FSelectedAutomationEvent := nil;
+
+    Screen.Cursor := crArrow;
   end
   else
   begin

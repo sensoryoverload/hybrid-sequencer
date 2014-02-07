@@ -49,6 +49,8 @@ type
   TSliceState = (ssCustom, ssAuto);
   TSliceDirection = (sdIdle, sdForward, sdReverse);
 
+  TInterpolationAlgorithm = (iaLinear, iaHermite, iaNone);
+
   TRingBufferData = class(TObject)
   private
     FData: Pointer;
@@ -179,14 +181,16 @@ type
     FSliceCursor: Single;
     FSliceSynced: Boolean;
     FSliceLoopModulo: Integer;
+    FSliceFadeIn: Single;
+    FSliceFadeOut: Single;
     FLastSlice: TMarker;
-    FLeftGlitchSmooth: TAudioSmooth;
-    FRightGlitchSmooth: TAudioSmooth;
     FSliceLooper: TSliceLooper;
 
 //    FDiskWriterThread: TDiskWriterThread;
     FDiskReaderThread: TDiskReaderThread;
     FPitchAlgorithm: TPitchAlgorithm;
+
+    FInterpolationAlgorithm: TInterpolationAlgorithm;
 
     function CalculateSampleCursor: Boolean;
     procedure GetSampleAtCursor(ASampleCursor: Single; ASourceBuffer: PSingle;
@@ -199,6 +203,11 @@ type
     procedure SetTransientThreshold(const AValue: Integer);
     procedure UpdateBPMScale;
     procedure UpdateSampleScale;
+    procedure WarpedAudioLocation(
+      AStartIndex: Integer;
+      ASampleCursor: single;
+      ASourceBuffer, ATargetBuffer: PSingle;
+      AFrameIndex: Integer);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -752,6 +761,10 @@ begin
   FWSOLAStretcher := TSoundTouch.Create;
   FWSOLAStretcher.setChannels(2);
   FWSOLAStretcher.setSampleRate(Round(GSettings.SampleRate));
+  FWSOLAStretcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
+  FWSOLAStretcher.setSetting(SETTING_SEQUENCE_MS, 40);
+  FWSOLAStretcher.setSetting(SETTING_OVERLAP_MS, 10);
+  FWSOLAStretcher.setSetting(SETTING_USE_QUICKSEEK, 1);
   FWSOLAStretcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FWSOLAStretcher.setPitch(1);
 
@@ -764,6 +777,7 @@ begin
   FFFTStretcher.Initialize;
 
   PitchAlgorithm := paSliceStretch;
+  FInterpolationAlgorithm := iaHermite;
 
   Getmem(FWorkBuffer, Round(GSettings.SampleRate * 2));
   Getmem(FLoopingBuffer, Round(GSettings.SampleRate * 2));
@@ -775,12 +789,7 @@ begin
 
   QuantizeSetting := qsBeat;
 
-  FLeftGlitchSmooth := TAudioSmooth.Create;
-  FLeftGlitchSmooth.TrackSpeed(0.01);
-  FRightGlitchSmooth := TAudioSmooth.Create;
-  FRightGlitchSmooth.TrackSpeed(0.01);
   FSliceLooper := TSliceLooper.Create;
-
 
   DBLog('end Twaveform.Create');
 end;
@@ -812,8 +821,6 @@ begin
 
   Freemem(FConvertBuffer);
 
-  FLeftGlitchSmooth.Free;
-  FRightGlitchSmooth.Free;
   FSliceLooper.Free;
 
   inherited Destroy;
@@ -1116,18 +1123,16 @@ begin
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 1);
       TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
       TimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
-      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 15);
-      TimeStretch.setSetting(SETTING_OVERLAP_MS, 8);
-      TimeStretch.setSetting(SETTING_USE_TRANSIENT_DETECTION, 1);
+      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 20);
+      TimeStretch.setSetting(SETTING_OVERLAP_MS, 10);
     end;
   paSoundTouch:
     begin
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 0);
       TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
       TimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
-      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 15);
-      TimeStretch.setSetting(SETTING_OVERLAP_MS, 8);
-      TimeStretch.setSetting(SETTING_USE_TRANSIENT_DETECTION, 1);
+      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 20);
+      TimeStretch.setSetting(SETTING_OVERLAP_MS, 10);
     end;
   else
     begin
@@ -1435,6 +1440,204 @@ begin
   end;
 end;
 
+procedure TWavePattern.WarpedAudioLocation(
+  AStartIndex: Integer;
+  ASampleCursor: single;
+  ASourceBuffer, ATargetBuffer: PSingle;
+  AFrameIndex: Integer);
+var
+  i: Integer;
+  lSliceStart: TMarker;
+  lSliceEnd: TMarker;
+  lLeftValue: Single;
+  lRightValue: Single;
+  lLeftValueLooper: Single;
+  lRightValueLooper: Single;
+  lCursor: Single;
+  lLoopingCursor: Single;
+
+  procedure GetSample(
+    ACursor: Single;
+    var ALeftValue: Single;
+    var ARightValue: Single;
+    AChannelCount: Integer);
+  var
+    lFracPosition: Single;
+    lBufferOffset: integer;
+  begin
+    lBufferOffset := Round(ACursor * AChannelCount);
+
+    case FInterpolationAlgorithm of
+      iaHermite:
+      begin
+        lFracPosition := Frac(ACursor);
+
+        if AChannelCount = 1 then
+        begin
+          ALeftValue := hermite4(
+            lFracPosition,
+            ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 1]),
+            ASourceBuffer[lBufferOffset],
+            ASourceBuffer[lBufferOffset + 1],
+            ASourceBuffer[lBufferOffset + 2]);
+
+          ARightValue := ALeftValue;
+        end
+        else
+        begin
+          ALeftValue := hermite4(
+            lFracPosition,
+            ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 2]),
+            ASourceBuffer[lBufferOffset],
+            ASourceBuffer[lBufferOffset + 2],
+            ASourceBuffer[lBufferOffset + 4]);
+
+          ARightValue := hermite4(
+            lFracPosition,
+            ifthen(lBufferOffset + 1 <= 2, 0, ASourceBuffer[lBufferOffset - 1]),
+            ASourceBuffer[lBufferOffset + 1],
+            ASourceBuffer[lBufferOffset + 3],
+            ASourceBuffer[lBufferOffset + 5]);
+        end;
+      end;
+      iaLinear:
+      begin
+
+      end;
+      iaNone:
+      begin
+        if AChannelCount = 1 then
+        begin
+          ALeftValue := ASourceBuffer[lBufferOffset];
+          ARightValue := ASourceBuffer[lBufferOffset];
+        end
+        else
+        begin
+          ALeftValue := ASourceBuffer[lBufferOffset];
+          ARightValue := ASourceBuffer[lBufferOffset + 1];
+        end;
+      end;
+    end;
+  end;
+
+begin
+  for i := AStartIndex to FSliceList.Count - 2 do
+  begin
+    lSliceStart := TMarker(FSliceList.Items[i]);
+    lSliceEnd := TMarker(FSliceList.Items[i + 1]);
+
+    if (ASampleCursor >= lSliceStart.Location) and (ASampleCursor < lSliceEnd.Location) then
+    begin
+      // Detect slice synchronize
+      FSliceCounter := fmod(ASampleCursor - lSliceStart.Location, lSliceStart.Length);
+
+      // Slicecounter looped so it's a slice sync
+      if FSliceCounter < FSliceLastCounter then
+      begin
+        // Keep last slice looping
+        FSliceLooper.SliceStart := FSliceStartLocation;
+        FSliceLooper.SliceEnd := FSliceEndLocation;
+        FSliceLooper.Cursor := FSliceCursor;
+        FSliceLooper.Pitch := Pitch;
+
+        // Start of slice
+        FSliceStartLocation :=
+          lSliceStart.OrigLocation +
+          (lSliceStart.DecayRate * (ASampleCursor - lSliceStart.Location));
+
+        FSliceEndLocation :=
+          FSliceStartLocation +
+          lSliceStart.Length * FSampleScale * lSliceStart.DecayRate;
+
+        FSliceCursor := FSliceStartLocation;
+
+        FSliceHalfLength := Round(FSliceEndLocation - FSliceStartLocation) div 2;
+
+        FSliceFadeOut := 1;
+        FSliceFadeIn :=  0;
+      end;
+
+      if FSliceFadeOut > 0 then
+      begin
+        FSliceFadeOut := FSliceFadeOut - 0.01;//0.05
+      end
+      else
+      begin
+        FSliceFadeOut := 0;
+      end;
+      if FSliceFadeIn < 1 then
+      begin
+        FSliceFadeIn := FSliceFadeIn + 0.01;//0.05;
+      end
+      else
+      begin
+        FSliceFadeIn := 1;
+      end;
+
+      if (FSliceFadeIn < 1) or (FSliceFadeOut > 0) then
+      begin
+        lLoopingCursor := FSliceLooper.Process;
+      end;
+
+      if FSliceCursor >= FSliceEndLocation then
+      begin
+        // Ran past end of slice so loop a part of the previous section
+        if FSliceHalfLength <> 0 then
+        begin
+          FSliceLoopModulo := Round(FSliceCursor - FSliceEndLocation) mod FSliceHalfLength;
+          if Odd(Round(FSliceCursor - FSliceEndLocation) div FSliceHalfLength) then
+          begin
+            lCursor := Round(FSliceEndLocation - FSliceHalfLength) + FSliceLoopModulo;
+          end
+          else
+          begin
+            lCursor := Round(FSliceEndLocation) - FSliceLoopModulo;
+          end;
+        end;
+      end
+      else
+      begin
+        // Still inside slice so calculate cursor position
+        lCursor := FSliceCursor;
+      end;
+
+      // Protect against accidental overflow
+      if lCursor > TMarker(FSliceList.Last).Location then
+      begin
+        lCursor := TMarker(FSliceList.Last).Location;
+      end
+      else if lCursor < TMarker(FSliceList.First).Location then
+      begin
+        lCursor := TMarker(FSliceList.First).Location;
+      end;
+
+      // Increate nominal always playing at samplespeed * pitch
+      FSliceCursor := FSliceCursor + Pitch;
+
+      FSliceLastCounter := FSliceCounter;
+
+      // Get normal stream
+      GetSample(lCursor, lLeftValue, lRightValue, Wave.ChannelCount);
+
+      // Get looping stream
+      GetSample(lLoopingCursor, lLeftValueLooper, lRightValueLooper, Wave.ChannelCount);
+
+      // Mix both streams together
+      ATargetBuffer[AFrameIndex * 2] :=
+        lLeftValue * FSliceFadeIn
+        +
+        lLeftValueLooper * FSliceFadeOut;
+
+      ATargetBuffer[AFrameIndex * 2 + 1] :=
+        lRightValue * FSliceFadeIn
+        +
+        lRightValueLooper * FSliceFadeOut;
+
+      break;
+    end;
+  end;
+end;
+
 {
   Looks for the index of the current slice and can be used to provide the startindex
   for the method VirtualLocation. This prevents a big loop every sample when there are
@@ -1496,29 +1699,29 @@ end;
 procedure TWavePattern.GetSampleAtCursor(ASampleCursor: Single;
   ASourceBuffer: PSingle; ATargetBuffer: PSingle; AFrameIndex: Integer; AChannelCount: Integer);
 var
-//  lFracPosition: Single;
+  lFracPosition: Single;
   lBufferOffset: integer;
 begin
-//  lFracPosition := Frac(ASampleCursor);
+  lFracPosition := Frac(ASampleCursor);
   lBufferOffset := Round(ASampleCursor * AChannelCount);
 
   if AChannelCount = 1 then
   begin
-    {ATargetBuffer[AFrameIndex * 2] := hermite4(
+    ATargetBuffer[AFrameIndex * 2] := hermite4(
       lFracPosition,
       ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 1]),
       ASourceBuffer[lBufferOffset],
       ASourceBuffer[lBufferOffset + 1],
       ASourceBuffer[lBufferOffset + 2]);
-    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];}
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
 
     // Make dual mono
-    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
-    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset];
+{    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset];}
   end
   else
   begin
-    {ATargetBuffer[AFrameIndex * 2] := hermite4(
+    ATargetBuffer[AFrameIndex * 2] := hermite4(
       lFracPosition,
       ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 2]),
       ASourceBuffer[lBufferOffset],
@@ -1530,10 +1733,10 @@ begin
       ifthen(lBufferOffset + 1 <= 2, 0, ASourceBuffer[lBufferOffset - 1]),
       ASourceBuffer[lBufferOffset + 1],
       ASourceBuffer[lBufferOffset + 3],
-      ASourceBuffer[lBufferOffset + 5]);}
+      ASourceBuffer[lBufferOffset + 5]);
 
-    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
-    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset + 1];
+{    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset + 1];}
   end;
 end;
 
@@ -1560,94 +1763,82 @@ begin
     begin
       lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
 
-      if WarpedLocation(StartingSliceIndex, FSampleCursor, lFramePacket, lLoopingFramePacket, lBuffer) then
+      if PitchAlgorithm = paSliceStretch then
       begin
-        CursorAdder := lFramePacket.Location;
-        CursorRamp := lFramePacket.Ramp;
-
-        if Trunc(CursorAdder) < (Wave.Frames * FWave.ChannelCount) then
-        begin
-          GetSampleAtCursor(CursorAdder, lBuffer, WorkBuffer, AFrameIndex, Wave.ChannelCount);
-          GetSampleAtCursor(lLoopingFramePacket.Location, lBuffer, FLoopingBuffer, AFrameIndex, Wave.ChannelCount);
-
-          // Scale buffer up to now when the scaling-factor has changed or
-          // the end of the buffer has been reached.
-          if PitchAlgorithm in [paSoundTouch, paSoundTouchEco, paFFT] then
-          begin
-            if (CursorRamp <> psLastScaleValue) or
-              (FBPMscaleOld <> FBPMscale) or
-              (FSampleScaleOld <> FSampleScale) or
-              (FLastSliceIndex <> lFramePacket.Index) or
-              (AFrameIndex = (AFrameCount - 1)) then
-            begin
-              psEndLocation := AFrameIndex;
-              CalculatedPitch := Pitch * ((1 / (CursorRamp * FBPMscale)) / FSampleScale);
-              if CalculatedPitch > MAX_STRETCH then CalculatedPitch := MAX_STRETCH;
-              if CalculatedPitch < MIN_STRETCH then CalculatedPitch := MIN_STRETCH;
-
-              // Frames to process this window
-              lFrames := (psEndLocation - psBeginLocation) + 1;
-
-              case PitchAlgorithm of
-                paSoundTouch, paSoundTouchEco:
-                begin
-                  if FLastSliceIndex <> lFramePacket.Index then
-                  begin
-                    TimeStretch.setSetting(SETTING_USE_TRANSIENT_DETECTION, 1);
-                  end;
-
-                  TimeStretch.setPitch(CalculatedPitch);
-                  TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
-                  TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
-                end;
-                paFFT:
-                begin
-                  FFFTStretcher.Pitch := CalculatedPitch;
-                  FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
-                end;
-              end;
-
-              // Remember last change
-              psBeginLocation := AFrameIndex;
-              psLastScaleValue := CursorRamp;
-              FBPMscaleOld := FBPMscale;
-              FSampleScaleOld := FSampleScale;
-            end;
-          end
-          else if PitchAlgorithm in [paSliceStretch] then
-          begin // paSliceStretch
-            ABuffer[AFrameIndex * 2] :=
-              (WorkBuffer[AFrameIndex * 2] * lFramePacket.FadeInFactor)
-              +
-              (FLoopingBuffer[AFrameIndex * 2] * lFramePacket.FadeOutFactor);
-
-            ABuffer[AFrameIndex * 2 + 1] :=
-              (WorkBuffer[AFrameIndex * 2 + 1] * lFramePacket.FadeInFactor)
-              +
-              (FLoopingBuffer[AFrameIndex * 2 + 1] * lFramePacket.FadeOutFactor);
-          end
-          else if PitchAlgorithm in [paPitched] then
-          begin
-            // Copy stereo pair
-            ABuffer[AFrameIndex * 2] := WorkBuffer[AFrameIndex * 2];
-            ABuffer[AFrameIndex * 2 + 1] := WorkBuffer[AFrameIndex * 2 + 1];
-          end;
-        end
-        else
-        begin
-          ABuffer[AFrameIndex] := 0;
-        end;
+        WarpedAudioLocation(StartingSliceIndex, FSampleCursor, lBuffer, ABuffer, AFrameIndex);
       end
       else
       begin
-        ABuffer[AFrameIndex] := 0;
+        if WarpedLocation(StartingSliceIndex, FSampleCursor, lFramePacket, lLoopingFramePacket, lBuffer) then
+        begin
+          CursorAdder := lFramePacket.Location;
+          CursorRamp := lFramePacket.Ramp;
+
+          if Trunc(CursorAdder) < (Wave.Frames * FWave.ChannelCount) then
+          begin
+            GetSampleAtCursor(CursorAdder, lBuffer, WorkBuffer, AFrameIndex, Wave.ChannelCount);
+            GetSampleAtCursor(lLoopingFramePacket.Location, lBuffer, FLoopingBuffer, AFrameIndex, Wave.ChannelCount);
+
+            // Scale buffer up to now when the scaling-factor has changed or
+            // the end of the buffer has been reached.
+            if PitchAlgorithm in [paSoundTouch, paSoundTouchEco, paFFT] then
+            begin
+              if (CursorRamp <> psLastScaleValue) or
+                (FBPMscaleOld <> FBPMscale) or
+                (FSampleScaleOld <> FSampleScale) or
+                (FLastSliceIndex <> lFramePacket.Index) or
+                (AFrameIndex = (AFrameCount - 1)) then
+              begin
+                psEndLocation := AFrameIndex;
+                CalculatedPitch := Pitch * ((1 / (CursorRamp * FBPMscale)) / FSampleScale);
+                if CalculatedPitch > MAX_STRETCH then CalculatedPitch := MAX_STRETCH;
+                if CalculatedPitch < MIN_STRETCH then CalculatedPitch := MIN_STRETCH;
+
+                // Frames to process this window
+                lFrames := (psEndLocation - psBeginLocation) + 1;
+
+                case PitchAlgorithm of
+                  paSoundTouch, paSoundTouchEco:
+                  begin
+                    TimeStretch.setPitch(CalculatedPitch);
+                    TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
+                    TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
+                  end;
+                  paFFT:
+                  begin
+                    FFFTStretcher.Pitch := CalculatedPitch;
+                    FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
+                  end;
+                end;
+
+                // Remember last change
+                psBeginLocation := AFrameIndex;
+                psLastScaleValue := CursorRamp;
+                FBPMscaleOld := FBPMscale;
+                FSampleScaleOld := FSampleScale;
+              end;
+            end
+            else if PitchAlgorithm in [paPitched] then
+            begin
+              // Copy stereo pair
+              ABuffer[AFrameIndex * 2] := WorkBuffer[AFrameIndex * 2];
+              ABuffer[AFrameIndex * 2 + 1] := WorkBuffer[AFrameIndex * 2 + 1];
+            end;
+          end
+          else
+          begin
+            ABuffer[AFrameIndex * 2] := 0;
+            ABuffer[AFrameIndex * 2 + 1] := 0;
+          end;
+        end;
       end;
 
       FLastSliceIndex := lFramePacket.Index;
     end
     else
     begin
-      ABuffer[AFrameIndex] := 0;
+      ABuffer[AFrameIndex * 2] := 0;
+      ABuffer[AFrameIndex * 2 + 1] := 0;
     end;
   except
     on e:exception do
@@ -1723,14 +1914,14 @@ end;
 procedure TWavePattern.AutoMarkerProcess(ACalculateStatistics: Boolean = True);
 var
   i: Integer;
-{  WindowLength: Integer;
+  WindowLength: Integer;
   lCurrentSlice: TMarker;
-  lFirstSlice: Boolean;}
+  lFirstSlice: Boolean;
 begin
-//  lFirstSlice := True;
-//  lCurrentSlice := TMarker(FSliceList[0]);
+  lFirstSlice := True;
+  lCurrentSlice := TMarker(FSliceList[0]);
 
-//  WindowLength := 0;
+  WindowLength := 0;
 
   // First remove old slices
   for i := Pred(FSliceList.Count) downto 0 do
@@ -1748,7 +1939,7 @@ begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;
   DBlog(format('slicecount %d', [FSliceList.Count]));}
-(*  if FWave.ChannelCount > 0 then
+{  if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1761,7 +1952,7 @@ begin
           WindowLength := 0;
         end;
 
-        lCurrentSlice := AddSlice(i - 250, SLICE_VIRTUAL, True);
+        lCurrentSlice := AddSlice(i{ - 250}, SLICE_VIRTUAL, True);
         if lFirstSlice then
         begin
           //LoopStart.Value := i;
@@ -1778,7 +1969,7 @@ begin
         Inc(WindowLength);
       end;
     end;
-  end;*)
+  end;}
 end;
 
 { TAddMarkerCommand }

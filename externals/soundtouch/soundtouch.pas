@@ -142,8 +142,6 @@ const
 ///   tempo/pitch/rate/samplerate settings.
   SETTING_NOMINAL_OUTPUT_SEQUENCE	=	7;
 
-  SETTING_USE_TRANSIENT_DETECTION = 8;
-
 type
 
   { TSoundTouch }
@@ -594,12 +592,6 @@ begin
             pTDStretch.setParameters(sampleRate, sequenceMs, seekWindowMs, value);
             Result := TRUE;
     end;
-    SETTING_USE_TRANSIENT_DETECTION:
-    begin
-            // change time-stretch overlap length parameter
-            pTDStretch.enableTransientDetection(value);
-            Result := False;
-    end
     else
     begin
       Result := FALSE;

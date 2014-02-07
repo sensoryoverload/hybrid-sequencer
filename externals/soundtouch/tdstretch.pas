@@ -177,9 +177,6 @@ type
     bAutoSeqSetting: Boolean;
     bAutoSeekSetting: Boolean;
 
-    transient: Boolean;
-    transientenvelope: Integer;
-
     procedure acceptNewOverlapLength(newOverlapLength: Integer);
 
     procedure calculateOverlapLength(aoverlapInMsec: Integer);
@@ -196,8 +193,6 @@ type
 
     procedure overlapStereo(poutput: PSingle; const pinput: PSingle);
     procedure overlapMono(poutput: PSingle; const pinput: PSingle);
-
-    function detectTransient(const refPos: PSingle): Integer;
 
     procedure clearMidBuffer;
     procedure overlap(poutput: PSingle; const pinput: PSingle; ovlPos: longword);
@@ -274,7 +269,6 @@ type
 
     function getInputSampleReq: Integer;
     function getOutputBatchSize: Integer;
-    procedure enableTransientDetection(enable: Integer);
     function getLatency: Integer;
   end;
 
@@ -301,9 +295,6 @@ begin
   beatdetect.setSampleRate(44100);
   beatdetect.setThresHold(0.3);
   beatdetect.setFilterCutOff(2000);
-
-  transient := False;
-  transientenvelope := 0;
 
   bQuickSeek := FALSE;
   channels := 1;
@@ -433,25 +424,6 @@ begin
   begin
     itemp := overlapLength - i;
     pOutput[i] := (pInput[i] * i + pMidBuffer[i] * itemp ) * DivByOverlapLength;
-  end;
-end;
-
-function TTDStretch.detectTransient(const refPos: PSingle): Integer;
-var
-  i: Integer;
-begin
-  Result := -1;
-  for i := 0 to Pred(seekLength) do
-  begin
-    if transient then
-    begin
-      beatdetect.AudioProcess((refPos + i)^);
-      if beatdetect.BeatPulse then
-      begin
-        Result := i;
-        break;
-      end;
-    end;
   end;
 end;
 
@@ -1092,11 +1064,6 @@ end;
 function TTDStretch.getOutputBatchSize: Integer;
 begin
  	Result := seekWindowLength - overlapLength;
-end;
-
-procedure TTDStretch.enableTransientDetection(enable: Integer);
-begin
-  transient := (enable = 1);
 end;
 
 function TTDStretch.getLatency: Integer;
