@@ -228,7 +228,7 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  FMainQuantizeLength := 44100 * 2; // Syncronize at a 1 bar quantization
+  FMainQuantizeLength := Round(44100 * 2); // Syncronize at a 1 bar quantization
   FMainTimeLine := 10000; // Default 1 bar (4 beat) length
   FMainSyncCounter := 0;
   MainCounter := 0; // Should be longer than 1 bar

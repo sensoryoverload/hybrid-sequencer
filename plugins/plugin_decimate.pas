@@ -175,7 +175,7 @@ begin
   inherited Create(AObjectOwnerID, AMapped);
 
   // Default to this
-  Init(16, 44100);
+  Init(16, GSettings.SampleRate);
 end;
 
 
