@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="9"/>
+    <BuildModes Active="Default"/>
+    <Units Count="10">
+      <Unit0>
+        <Filename Value="xcorrfft.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="xcorrfft"/>
+        <UsageCount Value="20"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="uxcorrfft.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Form1"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="uxcorrfft"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="0"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="239"/>
+        <CursorPos X="13" Y="253"/>
+        <UsageCount Value="20"/>
+        <Bookmarks Count="1">
+          <Item0 X="1" Y="240" ID="2"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="../../bindings/libsndfile/sndfile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="sndfile"/>
+        <UsageCount Value="20"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fftw/src/fftw_s.pas"/>
+        <UnitName Value="fftw_s"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="87"/>
+        <CursorPos X="11" Y="102"/>
+        <UsageCount Value="10"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="../../simplejack.pas"/>
+        <UnitName Value="simplejack"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1263"/>
+        <CursorPos X="39" Y="1287"/>
+        <UsageCount Value="10"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="../../gui/wavegui.pas"/>
+        <UnitName Value="wavegui"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="10"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="../../core/wave.pas"/>
+        <UnitName Value="wave"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="877"/>
+        <CursorPos X="19" Y="891"/>
+        <UsageCount Value="10"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="../../core/global.pas"/>
+        <UnitName Value="global"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="17" Y="28"/>
+        <UsageCount Value="10"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="../../core/smbpitchshift.pas"/>
+        <UnitName Value="smbPitchShift"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="48"/>
+        <CursorPos X="28" Y="63"/>
+        <UsageCount Value="10"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="fftreal.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FFTReal"/>
+        <EditorIndex Value="1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="151"/>
+        <CursorPos X="1" Y="377"/>
+        <UsageCount Value="20"/>
+        <Loaded Value="True"/>
+      </Unit9>
+    </Units>
+    <General>
+      <ActiveWindowIndexAtStart Value="0"/>
+    </General>
+    <JumpHistory Count="30" HistoryIndex="29">
+      <Position1>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="128" Column="1" TopLine="122"/>
+      </Position1>
+      <Position2>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="129" Column="1" TopLine="123"/>
+      </Position2>
+      <Position3>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="140" Column="23" TopLine="129"/>
+      </Position3>
+      <Position4>
+        <Filename Value="fftreal.pas"/>
+        <Caret Line="615" Column="20" TopLine="602"/>
+      </Position4>
+      <Position5>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="85" Column="25" TopLine="67"/>
+      </Position5>
+      <Position6>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="218" Column="18" TopLine="195"/>
+      </Position6>
+      <Position7>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="76" Column="27" TopLine="62"/>
+      </Position7>
+      <Position8>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="43" Column="1" TopLine="14"/>
+      </Position8>
+      <Position9>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="125" Column="5" TopLine="96"/>
+      </Position9>
+      <Position10>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="162" Column="35" TopLine="137"/>
+      </Position10>
+      <Position11>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="145" Column="3" TopLine="140"/>
+      </Position11>
+      <Position12>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="169" Column="18" TopLine="148"/>
+      </Position12>
+      <Position13>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="189" Column="20" TopLine="168"/>
+      </Position13>
+      <Position14>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="10" Column="1" TopLine="1"/>
+      </Position14>
+      <Position15>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="30" Column="1" TopLine="1"/>
+      </Position15>
+      <Position16>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="174" Column="1" TopLine="140"/>
+      </Position16>
+      <Position17>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="175" Column="1" TopLine="141"/>
+      </Position17>
+      <Position18>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="177" Column="1" TopLine="143"/>
+      </Position18>
+      <Position19>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="160" Column="1" TopLine="137"/>
+      </Position19>
+      <Position20>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="145" Column="1" TopLine="122"/>
+      </Position20>
+      <Position21>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="268" Column="13" TopLine="265"/>
+      </Position21>
+      <Position22>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="190" Column="35" TopLine="174"/>
+      </Position22>
+      <Position23>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="192" Column="35" TopLine="176"/>
+      </Position23>
+      <Position24>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="201" Column="8" TopLine="168"/>
+      </Position24>
+      <Position25>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="198" Column="21" TopLine="178"/>
+      </Position25>
+      <Position26>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="206" Column="1" TopLine="177"/>
+      </Position26>
+      <Position27>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="208" Column="1" TopLine="179"/>
+      </Position27>
+      <Position28>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="195" Column="1" TopLine="194"/>
+      </Position28>
+      <Position29>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="254" Column="13" TopLine="240"/>
+      </Position29>
+      <Position30>
+        <Filename Value="uxcorrfft.pas"/>
+        <Caret Line="253" Column="13" TopLine="239"/>
+      </Position30>
+    </JumpHistory>
+  </ProjectSession>
+</CONFIG>
