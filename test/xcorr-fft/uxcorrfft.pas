@@ -9,7 +9,7 @@ uses
   sndfile, LCLType, StdCtrls, ExtCtrls, ComCtrls, Dos, FFTReal, UComplex;
 
 const
-  buffer_size = 1024;
+  buffer_size = 1024 * 2;
   STEREO = 2;
 
 type
@@ -22,6 +22,7 @@ type
     FDataSize: Integer;
     FChannelCount: Integer;
     FFrames: Integer;
+    FOffset: Integer;
     FZoom: single;
   public
     constructor Create(AOwner: TComponent); override;
@@ -33,6 +34,7 @@ type
     property DataSize: Integer read FDataSize write FDataSize;
     property Frames: Integer read FFrames write FFrames;
     property ChannelCount: Integer read FChannelCount write FChannelCount;
+    property Offset: Integer read FOffset write FOffset;
   protected
   published
   end;
@@ -73,6 +75,7 @@ type
   private
     { private declarations }
     Wave: TSimpleWaveForm;
+    FoundWave: TSimpleWaveForm;
     FDataSize: Integer;
     FChannelCount: Integer;
     FFrames: Integer;
@@ -80,8 +83,10 @@ type
     FReadCount: Integer;
     x, f: pflt_array;
     FSpectrum: TSpectrum;
+    procedure CreateSineAt(AFFT: pflt_array; Frequency: single; AStart,
+      ALength: Integer);
     procedure CrossCorrelate;
-    function LoadSample(AFileName: PChar): Boolean;
+    function LoadSample(AFileName: PChar; AWaveform: TSimpleWaveForm): Boolean;
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
@@ -132,10 +137,9 @@ begin
     bmp.Canvas.Clipping := False;
     bmp.Canvas.Rectangle(0, 0, Width, Height);
 
-    scale := 1024 div 2 / bmp.width;
-    if maximum = 0 then maximum:=Height;
+    scale := buffer_size div 2 / bmp.width;
+    if maximum = 0 then maximum := 0.0000000;
     y_scale := Height / maximum;
-//    y_scale := maximum/Height;
 
     bmp.Canvas.Pen.Color := clBlack;
     bmp.Canvas.Line(0, zeroline, Width, zeroline);
@@ -167,62 +171,79 @@ end;
 procedure TForm1.CrossCorrelate;
 var
   a_input, b_input, a_output, b_output, f_input, f_output: pflt_array;
-  a_real, b_real, a_img, b_img: single;
+  a_real, b_real, a_img, b_img: double;
   lFFT: TFFTReal;
   lHalfWave: Integer;
-  lScale: Single;
+  lScale: double;
   i: Integer;
   a_cmp, b_cmp, f_cmp: complex;
-  lResult: pflt_array;
-  f_abs: single;
+  f_abs: double;
   offset: integer;
 begin
-  lHalfWave := Wave.Frames div 2 + random(500);
+  lHalfWave := Wave.Frames div 2;
 
   // Prepare source buffer
-  GetMem(a_input, buffer_size * sizeof_flt * 2);
-
+  GetMem(a_input, buffer_size * sizeof_flt * 4);
   for i := 0 to Pred(buffer_size) do
   begin
-    a_input^[i] := Wave.Data[i * STEREO];
+//    a_input^[i] := Wave.Data[i * STEREO];
+    a_input^[i] := 0;
     a_input^[i + buffer_size] := 0;
   end;
+  CreateSineAt(a_input, 1000, 0, 200);
 
   // Prepare target buffer
-  GetMem(b_input, buffer_size * sizeof_flt * 2);
-
+  GetMem(b_input, buffer_size * sizeof_flt * 4);
   for i := 0 to Pred(buffer_size) do
   begin
-    b_input^[i] := Wave.Data[(i + lHalfWave) * STEREO];
+    //b_input^[i] := FoundWave.Data[(i + lHalfWave) * STEREO];
+    b_input^[i] := 0;
     b_input^[i + buffer_size] := 0;
   end;
+  CreateSineAt(b_input, 1000, 100, 200);
+  CreateSineAt(b_input, 1010, 500, 200);
 
   // Prepare .. buffer
   GetMem(a_output, buffer_size * sizeof_flt * 2);
+  for i := 0 to Pred(buffer_size * 2) do
+  begin
+    a_output^[i] := 0;
+  end;
+
   GetMem(b_output, buffer_size * sizeof_flt * 2);
+  for i := 0 to Pred(buffer_size * 2) do
+  begin
+    b_output^[i] := 0;
+  end;
 
   GetMem(f_input, buffer_size * sizeof_flt * 2);
+  for i := 0 to Pred(buffer_size * 2) do
+  begin
+    f_input^[i] := 0;
+  end;
+
   GetMem(f_output, buffer_size * sizeof_flt * 2);
+  for i := 0 to Pred(buffer_size * 2) do
+  begin
+    f_output^[i] := 0;
+  end;
 
-  GetMem(lResult, buffer_size * sizeof_flt * 2);
-
-  lFFT := TFFTReal.Create(buffer_size*2-1);
+  lFFT := TFFTReal.Create(buffer_size * 2 - 1);
   try
-    // Compute FFT and IFFT
     lFFT.do_fft(a_output, a_input);
     lFFT.do_fft(b_output, b_input);
 
-    lScale := 1.0/(2 * buffer_size -1);
-    for i := 0 to Pred(buffer_size) do
+    lScale := 1/(2 * buffer_size -1);
+    for i := 0 to Pred(buffer_size div 2) do
     begin
       a_cmp.re := a_output^[i];
-      if i < buffer_size div 2 then
+      if (i > 0) and (i < buffer_size div 2) then
         a_cmp.im := a_output^[i + buffer_size div 2]
       else
         a_cmp.im := 0;
 
       b_cmp.re := b_output^[i];
-      if i < buffer_size div 2 then
+      if (i > 0) and (i < buffer_size div 2) then
         b_cmp.im := b_output^[i + buffer_size div 2]
       else
         b_cmp.im := 0;
@@ -234,45 +255,42 @@ begin
 
     lFFT.do_ifft(f_input, f_output);
 
-    lFFT.rescale(f_output);
-    for i := 0 to Pred(buffer_size) do
+    FSpectrum.maximum := 0;
+    offset := 0;
+    for i := 0 to Pred(buffer_size div 2) do
     begin
-//      FSpectrum.spectrum_array[i] := f_output^[i];
-      FSpectrum.spectrum_array[i] := a_output^[i];
-    end;
+      a_real := f_output^[i];
+      if (i > 0) and (i < buffer_size div 2) then
+        a_img := f_output^[i + buffer_size div 2]
+      else
+        a_img := 0;
 
-    {for i := 0 to Pred(buffer_size) do
-     begin
-       a_real := a_output^[i];
-       if i < buffer_size div 2 then
-         a_img := a_output^[i + buffer_size div 2]
-       else
-         a_img := 0;
+      f_abs := Sqrt(a_real * a_real + a_img * a_img);
+      FSpectrum.spectrum_array[i] := f_abs;
 
-       f_abs := Sqrt(a_real * a_real + a_img * a_img);
-       FSpectrum.spectrum_array[i] := f_abs;
-     end;
-    FSpectrum.maximum:=0;
-     for i := 0 to buffer_size div 2 do
+      if FSpectrum.spectrum_array[i] > FSpectrum.maximum then
       begin
-           if FSpectrum.spectrum_array[i] > FSpectrum.maximum then
-           begin
-             FSpectrum.maximum:=FSpectrum.spectrum_array[i];
-             offset:=i;
-           end;
-      end;           }
-     showmessage(format('max %f offset %d', [FSpectrum.maximum, offset]));
+        FSpectrum.maximum := FSpectrum.spectrum_array[i];
+        offset := i;
+      end;
+    end;
+    FoundWave.Offset := offset + lHalfWave;
   finally
+    FreeMem(a_input);
+    FreeMem(b_input);
+    FreeMem(a_output);
+    FreeMem(b_output);
+    FreeMem(f_input);
+    FreeMem(f_output);
     lFFT.Free;
   end;
 
-  FreeMem(a_input);
-  FreeMem(b_input);
-  FreeMem(a_output);
-  FreeMem(b_output);
-  FreeMem(f_input);
-  FreeMem(f_output);
-  FreeMem(lResult);
+  {FoundWave.Invalidate;
+  Wave.Invalidate;}
+  Invalidate;
+
+  showmessage(format('max %f offset %d', [FSpectrum.maximum, offset]));
+
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
@@ -313,6 +331,23 @@ begin
   end;
 
   Invalidate;
+end;
+
+procedure TForm1.CreateSineAt(AFFT: pflt_array; Frequency: single; AStart, ALength: Integer);
+var
+  i:integer;
+  PI, dt, t:single;
+  omega:single;
+begin
+  PI := ArcTan(1) * 4;
+  omega := 2 * pi * frequency;
+  dt:=1/44100;
+  t:=0;
+  for i := 0 to ALength-1 do
+  begin
+    AFFT^[i + AStart] := sin(omega*t);
+    t := t + dt;
+  end;
 end;
 
 procedure TForm1.Button2Click(Sender: TObject);
@@ -391,7 +426,7 @@ procedure TForm1.TrackBar3Change(Sender: TObject);
 var
   i:integer;
 begin
-  TrackBar3.Max:=wave.DataSize div (STEREO * sizeof(single)) - 1024;
+  TrackBar3.Max:=wave.DataSize div (STEREO * sizeof(single)) - buffer_size;
 
   for i := 0 to Pred(buffer_size) do
   begin
@@ -401,7 +436,7 @@ begin
   Button1Click(nil);
 end;
 
-function TForm1.LoadSample(AFileName: PChar): Boolean;
+function TForm1.LoadSample(AFileName: PChar; AWaveform: TSimpleWaveForm): Boolean;
 var
   lChannelIndex: Integer;
   lChannelSize: Integer;
@@ -422,21 +457,21 @@ begin
     end
     else
     begin
-      Wave.DataSize := lSampleInfo.frames * lSampleInfo.channels * SizeOf(Single);
+      AWaveform.DataSize := lSampleInfo.frames * lSampleInfo.channels * SizeOf(Single);
       FFrames := lSampleInfo.frames;
       FSampleRate := lSampleInfo.samplerate;
       FChannelCount := lSampleInfo.channels;
-      Wave.ChannelCount:=lSampleInfo.channels;
-      Wave.Frames:=lSampleInfo.frames;
+      AWaveform.ChannelCount:=lSampleInfo.channels;
+      AWaveform.Frames:=lSampleInfo.frames;
 
-      if Assigned(Wave.Data) then
+      if Assigned(AWaveform.Data) then
       begin
-        Freemem(Wave.Data);
+        Freemem(AWaveform.Data);
       end;
 
-      Wave.Data := GetMem(Wave.DataSize * 4 + 1000);
+      AWaveform.Data := GetMem(AWaveform.DataSize * 4 + 1000);
       try
-        FReadCount := sf_read_float(lSampleHandle, Wave.Data, Wave.DataSize);
+        FReadCount := sf_read_float(lSampleHandle, AWaveform.Data, AWaveform.DataSize);
 
       except
         on e: exception do
@@ -466,25 +501,34 @@ begin
     x^[i] := 0;
   end;
 
+  FoundWave := TSimpleWaveForm.Create(nil);
+  FoundWave.parent := Panel2;
+  FoundWave.Left:=0;
+  FoundWave.Top:=0;
+  FoundWave.Height:=100;
+  FoundWave.Align := alTop;
+
   Wave := TSimpleWaveForm.Create(nil);
   wave.parent := Panel2;
   wave.Left:=0;
   wave.Top:=0;
-  wave.Height:=200;
+  wave.Height:=100;
   wave.Align := alTop;
 
   FSpectrum := TSpectrum.Create(nil);
   FSpectrum.Parent := panel2;
   FSpectrum.Left:=0;
-  FSpectrum.Height:=400;
+  FSpectrum.Height:=200;
   FSpectrum.Align:=alTop;
 
-  LoadSample('nogood.wav');
+  LoadSample('nogood.wav', Wave);
+  LoadSample('nogood.wav', FoundWave);
 end;
 
 destructor TForm1.Destroy;
 begin
   Wave.Free;
+  FoundWave.Free;
 
   FreeMem(x);
   FreeMem(f);
@@ -498,6 +542,7 @@ constructor Tsimplewaveform.Create(Aowner: Tcomponent);
 begin
   inherited Create(Aowner);
 
+  FOffset := 0;
   FZoom := 4;
 end;
 
@@ -539,7 +584,7 @@ begin
       bmp.Canvas.MoveTo(0, zeroline);
 
       for ScreenLoop := 0 to Pred(bmp.Width) do
-        bmp.Canvas.LineTo(ScreenLoop, Round(FData[Round(ScreenLoop * FChannelCount * scale)] * zeroline) + zeroline);
+        bmp.Canvas.LineTo(ScreenLoop, Round(FData[Round(FOffset + ScreenLoop * FChannelCount * scale)] * zeroline) + zeroline);
     end;
     Canvas.Draw(0, 0, bmp);
   finally

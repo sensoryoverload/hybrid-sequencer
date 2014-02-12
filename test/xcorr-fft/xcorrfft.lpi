@@ -72,8 +72,6 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
-      <TargetProcessor Value="80386"/>
-      <TargetCPU Value="i386"/>
       <TargetOS Value="linux"/>
       <Optimizations>
         <OptimizationLevel Value="0"/>
