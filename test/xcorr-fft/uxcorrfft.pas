@@ -6,10 +6,11 @@ interface
 
 uses
   Classes, SysUtils, BaseUnix, FileUtil, Forms, Controls, Graphics, Dialogs,
-  sndfile, fftw_s, LCLType, StdCtrls, ExtCtrls, ComCtrls, Dos, FFTReal;
+  sndfile, LCLType, StdCtrls, ExtCtrls, ComCtrls, Dos, FFTReal, UComplex;
 
 const
   buffer_size = 1024;
+  STEREO = 2;
 
 type
 
@@ -59,11 +60,13 @@ type
     Panel2: TPanel;
     TrackBar1: TTrackBar;
     TrackBar2: TTrackBar;
+    TrackBar3: TTrackBar;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
+    procedure TrackBar3Change(Sender: TObject);
   private
     { private declarations }
     Wave: TSimpleWaveForm;
@@ -74,6 +77,7 @@ type
     FReadCount: Integer;
     x, f: pflt_array;
     FSpectrum: TSpectrum;
+{    procedure CrossCorrelate;}
     function LoadSample(AFileName: PChar): Boolean;
   public
     { public declarations }
@@ -149,13 +153,93 @@ end;
 
 { TForm1 }
 
+{function Conj(AComplex: Complex): Complex;
+begin
+  Result.im := -1 * AComplex.im;
+  Result.re = AComplex.re;
+end;
+
+procedure TForm1.CrossCorrelate;
+var
+  a_input, b_input, a_output, b_output, f_input, f_output: pflt_array;
+  a_real, b_real, a_img, b_img: single;
+  lFFT: TFFTReal;
+  lHalfWave: Integer;
+  lScale: Single;
+  i: Integer;
+  a_cmp, b_cmp, f_cmp: complex;
+begin
+  lHalfWave := (Wave.DataSize div STEREO) div SizeOf(Single);
+
+  // Prepare source buffer
+  GetMem(a_input, buffer_size * sizeof_flt * 2);
+
+  for i := 0 to Pred(buffer_size) do
+  begin
+    a_input^[i] := Wave.Data[i * STEREO];
+  end;
+
+  // Prepare target buffer
+  GetMem(b_input, buffer_size * sizeof_flt * 2);
+
+  for i := 0 to Pred(buffer_size) do
+  begin
+    b_input^[i] := Wave.Data[i * STEREO + lHalfWave];
+  end;
+
+  // Prepare .. buffer
+  GetMem(a_output, buffer_size * sizeof_flt * 2);
+  GetMem(b_output, buffer_size * sizeof_flt * 2);
+
+  GetMem(f_input, buffer_size * sizeof_flt * 2);
+  GetMem(f_output, buffer_size * sizeof_flt * 2);
+
+  lFFT := TFFTReal.Create(buffer_size);
+  try
+    // Compute FFT and IFFT
+    lFFT.do_fft(a_output, a_input);
+    lFFT.do_fft(b_output, b_input);
+
+    lScale := 1.0/(2 * buffer_size -1);
+    for i := 0 to buffer_size div 2 do
+    begin
+      a_cmp.re := a_output^[i];
+      if (i > 0) and (i < buffer_size div 2) then
+        a_cmp.im := a_output^[i + buffer_size div 2]
+      else
+        a_cmp.im := 0;
+
+      b_cmp.re := b_output^[i];
+      if (i > 0) and (i < buffer_size div 2) then
+        b_cmp.im := b_output^[i + buffer_size div 2]
+      else
+        b_cmp.im := 0;
+
+      f_cmp := a_cmp * Conj(b_cmp) * lScale;
+      f_output^[i] := f_cmp.re;
+      f_output^[i + buffer_size div 2] := f_cmp.im;
+    end;
+
+    lFFT.do_ifft(f_output, f_input);
+
+    lFFT.rescale(f_input);
+  finally
+    lFFT.Free;
+  end;
+
+  FreeMem(a_input);
+  FreeMem(b_input);
+  FreeMem(a_output);
+  FreeMem(b_output);
+  FreeMem(f_output);
+end;
+ }
 procedure TForm1.Button1Click(Sender: TObject);
 var
   lFFT: TFFTReal;
   i: Integer;
   areal, img  : double;
   f_abs       : double;
-  fft: TFFTReal;
 begin
   lFFT := TFFTReal.Create(buffer_size);
   try
@@ -252,6 +336,20 @@ begin
   begin
     x^[i] := sin(omega*t);
     t := t + dt;
+  end;
+
+  Button1Click(nil);
+end;
+
+procedure TForm1.TrackBar3Change(Sender: TObject);
+var
+  i:integer;
+begin
+  TrackBar3.Max:=wave.DataSize div (STEREO * sizeof(single)) - 1024;
+
+  for i := 0 to Pred(buffer_size) do
+  begin
+    x^[i] := Wave.Data[(i + TrackBar3.Position) * 2];
   end;
 
   Button1Click(nil);
