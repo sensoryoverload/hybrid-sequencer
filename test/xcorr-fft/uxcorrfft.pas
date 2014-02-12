@@ -54,8 +54,10 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    Button1: TButton;
     Button2: TButton;
     Button3: TButton;
+    Button4: TButton;
     Panel1: TPanel;
     Panel2: TPanel;
     TrackBar1: TTrackBar;
@@ -64,6 +66,7 @@ type
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
     procedure TrackBar3Change(Sender: TObject);
@@ -77,13 +80,15 @@ type
     FReadCount: Integer;
     x, f: pflt_array;
     FSpectrum: TSpectrum;
-{    procedure CrossCorrelate;}
+    procedure CrossCorrelate;
     function LoadSample(AFileName: PChar): Boolean;
   public
     { public declarations }
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   end;
+
+procedure smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
 
 var
   Form1: TForm1;
@@ -153,10 +158,10 @@ end;
 
 { TForm1 }
 
-{function Conj(AComplex: Complex): Complex;
+function Conj(AComplex: Complex): Complex;
 begin
-  Result.im := -1 * AComplex.im;
-  Result.re = AComplex.re;
+  Result.re := AComplex.re;
+  Result.im := -AComplex.im;
 end;
 
 procedure TForm1.CrossCorrelate;
@@ -168,8 +173,11 @@ var
   lScale: Single;
   i: Integer;
   a_cmp, b_cmp, f_cmp: complex;
+  lResult: pflt_array;
+  f_abs: single;
+  offset: integer;
 begin
-  lHalfWave := (Wave.DataSize div STEREO) div SizeOf(Single);
+  lHalfWave := Wave.Frames div 2 + random(500);
 
   // Prepare source buffer
   GetMem(a_input, buffer_size * sizeof_flt * 2);
@@ -177,6 +185,7 @@ begin
   for i := 0 to Pred(buffer_size) do
   begin
     a_input^[i] := Wave.Data[i * STEREO];
+    a_input^[i + buffer_size] := 0;
   end;
 
   // Prepare target buffer
@@ -184,7 +193,8 @@ begin
 
   for i := 0 to Pred(buffer_size) do
   begin
-    b_input^[i] := Wave.Data[i * STEREO + lHalfWave];
+    b_input^[i] := Wave.Data[(i + lHalfWave) * STEREO];
+    b_input^[i + buffer_size] := 0;
   end;
 
   // Prepare .. buffer
@@ -194,35 +204,64 @@ begin
   GetMem(f_input, buffer_size * sizeof_flt * 2);
   GetMem(f_output, buffer_size * sizeof_flt * 2);
 
-  lFFT := TFFTReal.Create(buffer_size);
+  GetMem(lResult, buffer_size * sizeof_flt * 2);
+
+  lFFT := TFFTReal.Create(buffer_size*2-1);
   try
     // Compute FFT and IFFT
     lFFT.do_fft(a_output, a_input);
     lFFT.do_fft(b_output, b_input);
 
     lScale := 1.0/(2 * buffer_size -1);
-    for i := 0 to buffer_size div 2 do
+    for i := 0 to Pred(buffer_size) do
     begin
       a_cmp.re := a_output^[i];
-      if (i > 0) and (i < buffer_size div 2) then
+      if i < buffer_size div 2 then
         a_cmp.im := a_output^[i + buffer_size div 2]
       else
         a_cmp.im := 0;
 
       b_cmp.re := b_output^[i];
-      if (i > 0) and (i < buffer_size div 2) then
+      if i < buffer_size div 2 then
         b_cmp.im := b_output^[i + buffer_size div 2]
       else
         b_cmp.im := 0;
 
       f_cmp := a_cmp * Conj(b_cmp) * lScale;
-      f_output^[i] := f_cmp.re;
-      f_output^[i + buffer_size div 2] := f_cmp.im;
+      f_input^[i] := f_cmp.re;
+      f_input^[i + buffer_size div 2] := f_cmp.im;
     end;
 
-    lFFT.do_ifft(f_output, f_input);
+    lFFT.do_ifft(f_input, f_output);
 
-    lFFT.rescale(f_input);
+    lFFT.rescale(f_output);
+    for i := 0 to Pred(buffer_size) do
+    begin
+//      FSpectrum.spectrum_array[i] := f_output^[i];
+      FSpectrum.spectrum_array[i] := a_output^[i];
+    end;
+
+    {for i := 0 to Pred(buffer_size) do
+     begin
+       a_real := a_output^[i];
+       if i < buffer_size div 2 then
+         a_img := a_output^[i + buffer_size div 2]
+       else
+         a_img := 0;
+
+       f_abs := Sqrt(a_real * a_real + a_img * a_img);
+       FSpectrum.spectrum_array[i] := f_abs;
+     end;
+    FSpectrum.maximum:=0;
+     for i := 0 to buffer_size div 2 do
+      begin
+           if FSpectrum.spectrum_array[i] > FSpectrum.maximum then
+           begin
+             FSpectrum.maximum:=FSpectrum.spectrum_array[i];
+             offset:=i;
+           end;
+      end;           }
+     showmessage(format('max %f offset %d', [FSpectrum.maximum, offset]));
   finally
     lFFT.Free;
   end;
@@ -231,9 +270,11 @@ begin
   FreeMem(b_input);
   FreeMem(a_output);
   FreeMem(b_output);
+  FreeMem(f_input);
   FreeMem(f_output);
+  FreeMem(lResult);
 end;
- }
+
 procedure TForm1.Button1Click(Sender: TObject);
 var
   lFFT: TFFTReal;
@@ -305,6 +346,11 @@ begin
   end;
 
   Button1Click(nil);
+end;
+
+procedure TForm1.Button4Click(Sender: TObject);
+begin
+  CrossCorrelate;
 end;
 
 procedure TForm1.TrackBar1Change(Sender: TObject);
@@ -502,6 +548,94 @@ begin
 
   inherited Paint;
 end;
+
+procedure smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
+
+// FFT routine, (C)1996 S.M.Bernsee. Sign = -1 is FFT, 1 is iFFT (inverse)
+// Fills fftBuffer[0..2*fftFrameSize-1] with the Fourier transform of the
+// time domain data in fftBuffer[0..2*fftFrameSize-1]. The FFT array takes
+// and returns the cosine and sine parts in an interleaved manner, ie.
+// fftBuffer[0] = cosPart[0], fftBuffer[1] = sinPart[0], asf. fftFrameSize
+// must be a power of 2. It expects a complex input signal (see footnote 2),
+// ie. when working with 'common' audio signals our input signal has to be
+// passed as beginin[0],0.,in[1],0.,in[2],0.,...end asf. In that case, the
+// transform of the frequencies of interest is in fftBuffer[0...fftFrameSize].
+
+var
+  wr, wi, arg, temp: Single;
+  p1, p2: PSingle;
+  tr, ti, ur, ui: Single;
+  p1r, p1i, p2r, p2i: PSingle;
+  i, bitm, j, le, le2, k: Longint;
+begin
+  i := 2;
+  while i < 2 * fftFrameSize - 2 do
+  begin
+    bitm := 2;
+    j := 0;
+    while bitm < 2 * fftFrameSize do
+    begin
+      if (i and bitm) <> 0 then
+        Inc(j);
+      j := j shl 1;
+      bitm := bitm shl 1;
+    end;
+    if i < j then
+    begin
+      p1 := fftBuffer + i;
+      p2 := fftBuffer + j;
+      temp := p1^;
+      p1^ := p2^;
+      p2^ := temp;
+      Inc(p1);
+      Inc(p2);
+      temp := p1^;
+      p1^ := p2^;
+      p2^ := temp;
+    end;
+    Inc(i, 2);
+  end;
+
+  le := 2;
+  for k := 0 to Trunc(Ln(fftFrameSize)/Ln(2.0) + 0.5) - 1 do
+  begin
+    le := le shl 1;
+    le2 := le shr 1;
+    ur := 1.0;
+    ui := 0.0;
+    arg := Pi / (le2 shr 1);
+    wr := Cos(arg);
+    wi := sign * Sin(arg);
+    j := 0;
+    while j < le2 do
+    begin
+      p1r := fftBuffer + j;
+      p1i := p1r + 1;
+      p2r := p1r + le2;
+      p2i := p2r + 1;
+      i := j;
+      while i < 2 * fftFrameSize do
+      begin
+        tr := p2r^ * ur - p2i^ * ui;
+        ti := p2r^ * ui + p2i^ * ur;
+        p2r^ := p1r^ - tr;
+        p2i^ := p1i^ - ti;
+        p1r^ := p1r^ + tr;
+        p1i^ := p1i^ + ti;
+        Inc(p1r, le);
+        Inc(p1i, le);
+        Inc(p2r, le);
+        Inc(p2i, le);
+        Inc(i, le);
+      end;
+      tr := ur * wr - ui * wi;
+      ui := ur * wi + ui * wr;
+      ur := tr;
+      Inc(j, 2);
+    end
+  end
+end;
+
 
 end.
 
