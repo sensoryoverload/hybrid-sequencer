@@ -3,12 +3,12 @@
   <ProjectSession>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="13">
+    <Units Count="14">
       <Unit0>
         <Filename Value="xcorrfft.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="xcorrfft"/>
-        <UsageCount Value="32"/>
+        <UsageCount Value="36"/>
       </Unit0>
       <Unit1>
         <Filename Value="uxcorrfft.pas"/>
@@ -20,13 +20,12 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="206"/>
-        <CursorPos X="1" Y="214"/>
-        <UsageCount Value="32"/>
-        <Bookmarks Count="3">
-          <Item0 X="1" Y="180" ID="2"/>
-          <Item1 X="1" Y="455" ID="1"/>
-          <Item2 X="1" Y="233" ID="3"/>
+        <TopLine Value="201"/>
+        <CursorPos X="33" Y="232"/>
+        <UsageCount Value="36"/>
+        <Bookmarks Count="2">
+          <Item0 X="56" Y="162" ID="1"/>
+          <Item1 X="1" Y="222" ID="2"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -35,17 +34,17 @@
         <Filename Value="../../bindings/libsndfile/sndfile.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sndfile"/>
-        <UsageCount Value="32"/>
+        <UsageCount Value="36"/>
       </Unit2>
       <Unit3>
         <Filename Value="fftreal.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="FFTReal"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="518"/>
-        <CursorPos X="26" Y="530"/>
-        <UsageCount Value="32"/>
+        <TopLine Value="1"/>
+        <CursorPos X="43" Y="30"/>
+        <UsageCount Value="36"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
@@ -99,21 +98,21 @@
       <Unit10>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/inc/ucomplex.pp"/>
         <UnitName Value="UComplex"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
         <TopLine Value="280"/>
         <CursorPos X="14" Y="290"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="16"/>
         <Loaded Value="True"/>
       </Unit10>
       <Unit11>
         <Filename Value="testapp.dpr"/>
         <UnitName Value="testapp"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="12"/>
+        <UsageCount Value="14"/>
         <Loaded Value="True"/>
       </Unit11>
       <Unit12>
@@ -123,130 +122,144 @@
         <CursorPos X="21" Y="201"/>
         <UsageCount Value="10"/>
       </Unit12>
+      <Unit13>
+        <Filename Value="../../externals/soundtouch/tdstretch.pas"/>
+        <UnitName Value="tdstretch"/>
+        <EditorIndex Value="1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1000"/>
+        <CursorPos X="3" Y="1022"/>
+        <UsageCount Value="12"/>
+        <Bookmarks Count="2">
+          <Item0 X="44" Y="487" ID="3"/>
+          <Item1 X="38" Y="879" ID="4"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
+      </Unit13>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="264" Column="1" TopLine="244"/>
+        <Filename Value="../../externals/soundtouch/tdstretch.pas"/>
+        <Caret Line="591" Column="44" TopLine="554"/>
       </Position1>
       <Position2>
-        <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="255" Column="1" TopLine="244"/>
+        <Filename Value="../../externals/soundtouch/tdstretch.pas"/>
+        <Caret Line="634" Column="44" TopLine="597"/>
       </Position2>
       <Position3>
-        <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="256" Column="1" TopLine="244"/>
+        <Filename Value="../../externals/soundtouch/tdstretch.pas"/>
+        <Caret Line="691" Column="44" TopLine="654"/>
       </Position3>
       <Position4>
-        <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="257" Column="1" TopLine="244"/>
+        <Filename Value="../../externals/soundtouch/tdstretch.pas"/>
+        <Caret Line="736" Column="44" TopLine="699"/>
       </Position4>
       <Position5>
-        <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="274" Column="8" TopLine="252"/>
+        <Filename Value="../../externals/soundtouch/tdstretch.pas"/>
+        <Caret Line="861" Column="26" TopLine="842"/>
       </Position5>
       <Position6>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="270" Column="1" TopLine="252"/>
+        <Caret Line="21" Column="69" TopLine="1"/>
       </Position6>
       <Position7>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="234" Column="17" TopLine="226"/>
+        <Caret Line="198" Column="1" TopLine="181"/>
       </Position7>
       <Position8>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="177" Column="3" TopLine="164"/>
+        <Caret Line="116" Column="24" TopLine="104"/>
       </Position8>
       <Position9>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="226" Column="1" TopLine="202"/>
+        <Caret Line="217" Column="15" TopLine="182"/>
       </Position9>
       <Position10>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="228" Column="1" TopLine="213"/>
+        <Caret Line="123" Column="9" TopLine="105"/>
       </Position10>
       <Position11>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="270" Column="1" TopLine="258"/>
+        <Caret Line="171" Column="1" TopLine="128"/>
       </Position11>
       <Position12>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="272" Column="1" TopLine="258"/>
+        <Caret Line="294" Column="1" TopLine="260"/>
       </Position12>
       <Position13>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="273" Column="1" TopLine="258"/>
+        <Caret Line="104" Column="1" TopLine="88"/>
       </Position13>
       <Position14>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="274" Column="1" TopLine="258"/>
+        <Caret Line="25" Column="14" TopLine="1"/>
       </Position14>
       <Position15>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="275" Column="1" TopLine="258"/>
+        <Caret Line="33" Column="89" TopLine="3"/>
       </Position15>
       <Position16>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="276" Column="1" TopLine="258"/>
+        <Caret Line="28" Column="30" TopLine="8"/>
       </Position16>
       <Position17>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="277" Column="1" TopLine="258"/>
+        <Caret Line="26" Column="15" TopLine="4"/>
       </Position17>
       <Position18>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="273" Column="1" TopLine="258"/>
+        <Caret Line="365" Column="1" TopLine="343"/>
       </Position18>
       <Position19>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="173" Column="3" TopLine="160"/>
+        <Caret Line="284" Column="3" TopLine="261"/>
       </Position19>
       <Position20>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="172" Column="9" TopLine="159"/>
+        <Caret Line="198" Column="1" TopLine="190"/>
       </Position20>
       <Position21>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="255" Column="39" TopLine="252"/>
+        <Caret Line="155" Column="1" TopLine="131"/>
       </Position21>
       <Position22>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="208" Column="1" TopLine="184"/>
+        <Caret Line="206" Column="1" TopLine="177"/>
       </Position22>
       <Position23>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="349" Column="21" TopLine="334"/>
+        <Caret Line="156" Column="1" TopLine="133"/>
       </Position23>
       <Position24>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="39" Column="1" TopLine="32"/>
+        <Caret Line="214" Column="1" TopLine="178"/>
       </Position24>
       <Position25>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="157" Column="1" TopLine="134"/>
       </Position25>
       <Position26>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="12" Column="21" TopLine="1"/>
+        <Caret Line="220" Column="1" TopLine="179"/>
       </Position26>
       <Position27>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="505" Column="1" TopLine="484"/>
+        <Caret Line="158" Column="1" TopLine="135"/>
       </Position27>
       <Position28>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="27" Column="1" TopLine="27"/>
+        <Caret Line="226" Column="1" TopLine="200"/>
       </Position28>
       <Position29>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="12" Column="23" TopLine="1"/>
+        <Caret Line="159" Column="1" TopLine="135"/>
       </Position29>
       <Position30>
         <Filename Value="uxcorrfft.pas"/>
-        <Caret Line="229" Column="1" TopLine="206"/>
+        <Caret Line="232" Column="1" TopLine="201"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

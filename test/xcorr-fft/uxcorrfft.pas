@@ -14,6 +14,29 @@ const
 
 type
 
+  { TCrossCorrelate }
+
+  TCrossCorrelate = class
+  private
+    FFFT: TFFTReal;
+    a_input, b_input, a_output, b_output, f_input, f_output: pflt_array;
+    FOverlapLength: Integer;
+    FSeekWindowLength: Integer;
+    FBufferSize: Integer;
+    procedure SetOverlapLength(AValue: Integer);
+    procedure SetSeekWindowLength(AValue: Integer);
+  protected
+    procedure CalcParameters;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    function XCorr(AOverlapWindow: PSingle; AOverlapLength: Integer;
+      ASeekWindow: PSingle; ASeekLength: Integer): Integer;
+
+    property OverlapLength: Integer read FOverlapLength write SetOverlapLength;
+    property SeekWindowLength: Integer read FSeekWindowLength write SetSeekWindowLength;
+  end;
+
   { TSimpleWaveForm }
 
   TSimpleWaveForm = class(TCustomControl)
@@ -93,12 +116,168 @@ type
     destructor Destroy; override;
   end;
 
+function Conj(AComplex: Complex): Complex;
 procedure smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
 
 var
   Form1: TForm1;
 
 implementation
+
+{ TCrossCorrelate }
+
+procedure TCrossCorrelate.SetOverlapLength(AValue: Integer);
+begin
+  if FOverlapLength=AValue then Exit;
+  FOverlapLength:=AValue;
+
+  CalcParameters;
+end;
+
+procedure TCrossCorrelate.SetSeekWindowLength(AValue: Integer);
+begin
+  if FSeekWindowLength=AValue then Exit;
+  FSeekWindowLength:=AValue;
+
+  CalcParameters;
+end;
+
+procedure TCrossCorrelate.CalcParameters;
+begin
+  if (FOverlapLength > 0) and (FSeekWindowLength > 0) then
+  begin
+    FBufferSize := FOverlapLength + FSeekWindowLength;
+
+    if Assigned(FFFT) then
+    begin
+      FFFT.Free;
+    end;
+    FFFT := TFFTReal.Create(FBufferSize);
+
+    GetMem(a_input, FBufferSize * sizeof_flt * 4);
+    GetMem(b_input, FBufferSize * sizeof_flt * 4);
+    GetMem(a_output, FBufferSize * sizeof_flt * 2);
+    GetMem(b_output, FBufferSize * sizeof_flt * 2);
+    GetMem(f_input, FBufferSize * sizeof_flt * 2);
+    GetMem(f_output, FBufferSize * sizeof_flt * 2);
+  end;
+end;
+
+constructor TCrossCorrelate.Create;
+begin
+  //
+end;
+
+destructor TCrossCorrelate.Destroy;
+begin
+  if Assigned(FFFT) then
+  begin
+    FFFT.Free;
+  end;
+
+  FreeMem(a_input);
+  FreeMem(b_input);
+  FreeMem(a_output);
+  FreeMem(b_output);
+  FreeMem(f_input);
+  FreeMem(f_output);
+
+  inherited Destroy;
+end;
+
+function TCrossCorrelate.XCorr(
+  AOverlapWindow: PSingle;
+  AOverlapLength: Integer;
+  ASeekWindow: PSingle;
+  ASeekLength: Integer
+  ): Integer;
+var
+  a_real, b_real, a_img, b_img: double;
+  scale: double;
+  i: Integer;
+  a_cmp, b_cmp, f_cmp: complex;
+  f_abs: double;
+  lMaximum: double;
+begin
+  // Prepare source buffer
+  for i := 0 to Pred(AOverlapLength) do
+  begin
+    a_input^[i] := AOverlapWindow[i * STEREO];
+    a_input^[i + AOverlapLength] := 0;
+  end;
+
+  // Prepare target buffer
+  for i := 0 to Pred(FBufferSize) do
+  begin
+    b_input^[i] := ASeekWindow[i * STEREO];
+    b_input^[i + FBufferSize] := 0;
+  end;
+
+  // Prepare .. buffer
+  for i := 0 to Pred(AOverlapLength * 2) do
+  begin
+    a_output^[i] := 0;
+  end;
+
+  for i := 0 to Pred(FBufferSize * 2) do
+  begin
+    b_output^[i] := 0;
+  end;
+
+  for i := 0 to Pred(FBufferSize * 2) do
+  begin
+    f_input^[i] := 0;
+  end;
+
+  for i := 0 to Pred(FBufferSize * 2) do
+  begin
+    f_output^[i] := 0;
+  end;
+
+  FFFT.do_fft(a_output, a_input);
+  FFFT.do_fft(b_output, b_input);
+
+  scale := 1/(2 * FBufferSize -1);
+  for i := 0 to Pred(FBufferSize div 2) do
+  begin
+    a_cmp.re := a_output^[i];
+    if (i > 0) and (i < FBufferSize div 2) then
+      a_cmp.im := a_output^[i + FBufferSize div 2]
+    else
+      a_cmp.im := 0;
+
+    b_cmp.re := b_output^[i];
+    if (i > 0) and (i < FBufferSize div 2) then
+      b_cmp.im := b_output^[i + FBufferSize div 2]
+    else
+      b_cmp.im := 0;
+
+    f_cmp := a_cmp * Conj(b_cmp) * scale;
+    f_input^[i] := f_cmp.re;
+    f_input^[i + FBufferSize div 2] := f_cmp.im;
+  end;
+
+  FFFT.do_ifft(f_input, f_output);
+
+  lMaximum := 0;
+  Result := 0;
+  for i := 0 to Pred(FBufferSize div 2) do
+  begin
+    a_real := f_output^[i];
+    if (i > 0) and (i < FBufferSize div 2) then
+      a_img := f_output^[i + FBufferSize div 2]
+    else
+      a_img := 0;
+
+    f_abs := Sqrt(a_real * a_real + a_img * a_img);
+
+    if f_abs > lMaximum then
+    begin
+      lMaximum := f_abs;
+      Result := i;
+    end;
+  end;
+end;
 
 { TSpectrum }
 
