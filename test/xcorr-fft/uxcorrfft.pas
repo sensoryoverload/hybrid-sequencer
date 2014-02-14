@@ -23,18 +23,20 @@ type
     FOverlapLength: Integer;
     FSeekWindowLength: Integer;
     FBufferSize: Integer;
-    procedure SetOverlapLength(AValue: Integer);
-    procedure SetSeekWindowLength(AValue: Integer);
+    FSampleRate: Integer;
+    function GetOverlapLengthMs: Integer;
+    function GetSeekWindowLengthMs: Integer;
+    procedure SetOverlapLengthMs(AValue: Integer);
+    procedure SetSeekWindowLengthMs(AValue: Integer);
   protected
     procedure CalcParameters;
   public
-    constructor Create;
+    constructor Create(ASampleRate: Integer); reintroduce;
     destructor Destroy; override;
-    function XCorr(AOverlapWindow: PSingle; AOverlapLength: Integer;
-      ASeekWindow: PSingle; ASeekLength: Integer): Integer;
+    function XCorr(AOverlapWindow, ASeekWindow: PSingle): Integer;
 
-    property OverlapLength: Integer read FOverlapLength write SetOverlapLength;
-    property SeekWindowLength: Integer read FSeekWindowLength write SetSeekWindowLength;
+    property OverlapLengthMs: Integer read GetOverlapLengthMs write SetOverlapLengthMs;
+    property SeekWindowLengthMs: Integer read GetSeekWindowLengthMs write SetSeekWindowLengthMs;
   end;
 
   { TSimpleWaveForm }
@@ -83,6 +85,7 @@ type
     Button2: TButton;
     Button3: TButton;
     Button4: TButton;
+    Button5: TButton;
     Panel1: TPanel;
     Panel2: TPanel;
     TrackBar1: TTrackBar;
@@ -92,6 +95,7 @@ type
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
+    procedure Button5Click(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
     procedure TrackBar3Change(Sender: TObject);
@@ -126,20 +130,28 @@ implementation
 
 { TCrossCorrelate }
 
-procedure TCrossCorrelate.SetOverlapLength(AValue: Integer);
+procedure TCrossCorrelate.SetOverlapLengthMs(AValue: Integer);
 begin
-  if FOverlapLength=AValue then Exit;
-  FOverlapLength:=AValue;
+  FOverlapLength := Round(FSampleRate / (1000 / AValue));
 
   CalcParameters;
 end;
 
-procedure TCrossCorrelate.SetSeekWindowLength(AValue: Integer);
+function TCrossCorrelate.GetOverlapLengthMs: Integer;
 begin
-  if FSeekWindowLength=AValue then Exit;
-  FSeekWindowLength:=AValue;
+  Result := FSeekWindowLength * 1000 div FSampleRate;
+end;
+
+procedure TCrossCorrelate.SetSeekWindowLengthMs(AValue: Integer);
+begin
+  FSeekWindowLength := Round(FSampleRate / (1000 / AValue));
 
   CalcParameters;
+end;
+
+function TCrossCorrelate.GetSeekWindowLengthMs: Integer;
+begin
+  Result := FSeekWindowLength * 1000 div FSampleRate;
 end;
 
 procedure TCrossCorrelate.CalcParameters;
@@ -152,7 +164,7 @@ begin
     begin
       FFFT.Free;
     end;
-    FFFT := TFFTReal.Create(FBufferSize);
+    FFFT := TFFTReal.Create({FBufferSize * 2}1024);
 
     GetMem(a_input, FBufferSize * sizeof_flt * 4);
     GetMem(b_input, FBufferSize * sizeof_flt * 4);
@@ -163,9 +175,11 @@ begin
   end;
 end;
 
-constructor TCrossCorrelate.Create;
+constructor TCrossCorrelate.Create(ASampleRate: Integer);
 begin
-  //
+  inherited Create;
+
+  FSampleRate := ASampleRate;
 end;
 
 destructor TCrossCorrelate.Destroy;
@@ -185,12 +199,7 @@ begin
   inherited Destroy;
 end;
 
-function TCrossCorrelate.XCorr(
-  AOverlapWindow: PSingle;
-  AOverlapLength: Integer;
-  ASeekWindow: PSingle;
-  ASeekLength: Integer
-  ): Integer;
+function TCrossCorrelate.XCorr(AOverlapWindow, ASeekWindow: PSingle): Integer;
 var
   a_real, b_real, a_img, b_img: double;
   scale: double;
@@ -200,10 +209,12 @@ var
   lMaximum: double;
 begin
   // Prepare source buffer
-  for i := 0 to Pred(AOverlapLength) do
+  for i := 0 to Pred(FBufferSize * 2) do
   begin
-    a_input^[i] := AOverlapWindow[i * STEREO];
-    a_input^[i + AOverlapLength] := 0;
+    if i < FOverlapLength then
+      a_input^[i] := AOverlapWindow[i * STEREO]
+    else
+      a_input^[i] := 0;
   end;
 
   // Prepare target buffer
@@ -214,7 +225,7 @@ begin
   end;
 
   // Prepare .. buffer
-  for i := 0 to Pred(AOverlapLength * 2) do
+  for i := 0 to Pred(FBufferSize * 2) do
   begin
     a_output^[i] := 0;
   end;
@@ -565,6 +576,22 @@ end;
 procedure TForm1.Button4Click(Sender: TObject);
 begin
   CrossCorrelate;
+end;
+
+procedure TForm1.Button5Click(Sender: TObject);
+var
+  lXCorr: TCrossCorrelate;
+  lOffset: Integer;
+begin
+  lXCorr := TCrossCorrelate.Create(44100);
+  try
+    lXCorr.OverlapLengthMs := 8;
+    lXCorr.SeekWindowLengthMs := 20;
+    lOffset := lXCorr.XCorr(Wave.Data, @FoundWave.Data[Random(5000)]);
+    ShowMessage(Format('Offset %d', [lOffset]));
+  finally
+    lXCorr.Free;
+  end;
 end;
 
 procedure TForm1.TrackBar1Change(Sender: TObject);
