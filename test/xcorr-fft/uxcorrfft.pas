@@ -5,8 +5,9 @@ unit uxcorrfft;
 interface
 
 uses
-  Classes, SysUtils, BaseUnix, FileUtil, Forms, Controls, Graphics, Dialogs,
-  sndfile, LCLType, StdCtrls, ExtCtrls, ComCtrls, Dos, FFTReal, UComplex;
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
+  sndfile, LCLType, StdCtrls, ExtCtrls, ComCtrls, Dos, FFTReal, UComplex,
+  uCrossCorrelateFFT, LCLIntf;
 
 const
   buffer_size = 1024 * 2;
@@ -14,35 +15,11 @@ const
 
 type
 
-  { TCrossCorrelate }
-
-  TCrossCorrelate = class
-  private
-    FFFT: TFFTReal;
-    a_input, b_input, a_output, b_output, f_input, f_output: pflt_array;
-    FOverlapLength: Integer;
-    FSeekWindowLength: Integer;
-    FBufferSize: Integer;
-    FSampleRate: Integer;
-    function GetOverlapLengthMs: Integer;
-    function GetSeekWindowLengthMs: Integer;
-    procedure SetOverlapLengthMs(AValue: Integer);
-    procedure SetSeekWindowLengthMs(AValue: Integer);
-  protected
-    procedure CalcParameters;
-  public
-    constructor Create(ASampleRate: Integer); reintroduce;
-    destructor Destroy; override;
-    function XCorr(AOverlapWindow, ASeekWindow: PSingle): Integer;
-
-    property OverlapLengthMs: Integer read GetOverlapLengthMs write SetOverlapLengthMs;
-    property SeekWindowLengthMs: Integer read GetSeekWindowLengthMs write SetSeekWindowLengthMs;
-  end;
-
   { TSimpleWaveForm }
 
   TSimpleWaveForm = class(TCustomControl)
   private
+    FBufferSize: Integer;
     FData: PSingle;
     FDataSize: Integer;
     FChannelCount: Integer;
@@ -60,6 +37,7 @@ type
     property Frames: Integer read FFrames write FFrames;
     property ChannelCount: Integer read FChannelCount write FChannelCount;
     property Offset: Integer read FOffset write FOffset;
+    property BufferSize: Integer write FBufferSize;
   protected
   published
   end;
@@ -91,6 +69,7 @@ type
     TrackBar1: TTrackBar;
     TrackBar2: TTrackBar;
     TrackBar3: TTrackBar;
+    TrackBar4: TTrackBar;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
@@ -99,6 +78,7 @@ type
     procedure TrackBar1Change(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
     procedure TrackBar3Change(Sender: TObject);
+    procedure TrackBar4Change(Sender: TObject);
   private
     { private declarations }
     Wave: TSimpleWaveForm;
@@ -121,174 +101,12 @@ type
   end;
 
 function Conj(AComplex: Complex): Complex;
-procedure smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
 
 var
   Form1: TForm1;
 
 implementation
 
-{ TCrossCorrelate }
-
-procedure TCrossCorrelate.SetOverlapLengthMs(AValue: Integer);
-begin
-  FOverlapLength := Round(FSampleRate / (1000 / AValue));
-
-  CalcParameters;
-end;
-
-function TCrossCorrelate.GetOverlapLengthMs: Integer;
-begin
-  Result := FSeekWindowLength * 1000 div FSampleRate;
-end;
-
-procedure TCrossCorrelate.SetSeekWindowLengthMs(AValue: Integer);
-begin
-  FSeekWindowLength := Round(FSampleRate / (1000 / AValue));
-
-  CalcParameters;
-end;
-
-function TCrossCorrelate.GetSeekWindowLengthMs: Integer;
-begin
-  Result := FSeekWindowLength * 1000 div FSampleRate;
-end;
-
-procedure TCrossCorrelate.CalcParameters;
-begin
-  if (FOverlapLength > 0) and (FSeekWindowLength > 0) then
-  begin
-    FBufferSize := FOverlapLength + FSeekWindowLength;
-
-    if Assigned(FFFT) then
-    begin
-      FFFT.Free;
-    end;
-    FFFT := TFFTReal.Create({FBufferSize * 2}1024);
-
-    GetMem(a_input, FBufferSize * sizeof_flt * 4);
-    GetMem(b_input, FBufferSize * sizeof_flt * 4);
-    GetMem(a_output, FBufferSize * sizeof_flt * 2);
-    GetMem(b_output, FBufferSize * sizeof_flt * 2);
-    GetMem(f_input, FBufferSize * sizeof_flt * 2);
-    GetMem(f_output, FBufferSize * sizeof_flt * 2);
-  end;
-end;
-
-constructor TCrossCorrelate.Create(ASampleRate: Integer);
-begin
-  inherited Create;
-
-  FSampleRate := ASampleRate;
-end;
-
-destructor TCrossCorrelate.Destroy;
-begin
-  if Assigned(FFFT) then
-  begin
-    FFFT.Free;
-  end;
-
-  FreeMem(a_input);
-  FreeMem(b_input);
-  FreeMem(a_output);
-  FreeMem(b_output);
-  FreeMem(f_input);
-  FreeMem(f_output);
-
-  inherited Destroy;
-end;
-
-function TCrossCorrelate.XCorr(AOverlapWindow, ASeekWindow: PSingle): Integer;
-var
-  a_real, b_real, a_img, b_img: double;
-  scale: double;
-  i: Integer;
-  a_cmp, b_cmp, f_cmp: complex;
-  f_abs: double;
-  lMaximum: double;
-begin
-  // Prepare source buffer
-  for i := 0 to Pred(FBufferSize * 2) do
-  begin
-    if i < FOverlapLength then
-      a_input^[i] := AOverlapWindow[i * STEREO]
-    else
-      a_input^[i] := 0;
-  end;
-
-  // Prepare target buffer
-  for i := 0 to Pred(FBufferSize) do
-  begin
-    b_input^[i] := ASeekWindow[i * STEREO];
-    b_input^[i + FBufferSize] := 0;
-  end;
-
-  // Prepare .. buffer
-  for i := 0 to Pred(FBufferSize * 2) do
-  begin
-    a_output^[i] := 0;
-  end;
-
-  for i := 0 to Pred(FBufferSize * 2) do
-  begin
-    b_output^[i] := 0;
-  end;
-
-  for i := 0 to Pred(FBufferSize * 2) do
-  begin
-    f_input^[i] := 0;
-  end;
-
-  for i := 0 to Pred(FBufferSize * 2) do
-  begin
-    f_output^[i] := 0;
-  end;
-
-  FFFT.do_fft(a_output, a_input);
-  FFFT.do_fft(b_output, b_input);
-
-  scale := 1/(2 * FBufferSize -1);
-  for i := 0 to Pred(FBufferSize div 2) do
-  begin
-    a_cmp.re := a_output^[i];
-    if (i > 0) and (i < FBufferSize div 2) then
-      a_cmp.im := a_output^[i + FBufferSize div 2]
-    else
-      a_cmp.im := 0;
-
-    b_cmp.re := b_output^[i];
-    if (i > 0) and (i < FBufferSize div 2) then
-      b_cmp.im := b_output^[i + FBufferSize div 2]
-    else
-      b_cmp.im := 0;
-
-    f_cmp := a_cmp * Conj(b_cmp) * scale;
-    f_input^[i] := f_cmp.re;
-    f_input^[i + FBufferSize div 2] := f_cmp.im;
-  end;
-
-  FFFT.do_ifft(f_input, f_output);
-
-  lMaximum := 0;
-  Result := 0;
-  for i := 0 to Pred(FBufferSize div 2) do
-  begin
-    a_real := f_output^[i];
-    if (i > 0) and (i < FBufferSize div 2) then
-      a_img := f_output^[i + FBufferSize div 2]
-    else
-      a_img := 0;
-
-    f_abs := Sqrt(a_real * a_real + a_img * a_img);
-
-    if f_abs > lMaximum then
-    begin
-      lMaximum := f_abs;
-      Result := i;
-    end;
-  end;
-end;
 
 { TSpectrum }
 
@@ -582,16 +400,26 @@ procedure TForm1.Button5Click(Sender: TObject);
 var
   lXCorr: TCrossCorrelate;
   lOffset: Integer;
+  lStartTime, lEndTime: Cardinal;
+  lIndex: Integer;
 begin
+  lStartTime := LclIntf.GetTickCount;
   lXCorr := TCrossCorrelate.Create(44100);
   try
     lXCorr.OverlapLengthMs := 8;
-    lXCorr.SeekWindowLengthMs := 20;
-    lOffset := lXCorr.XCorr(Wave.Data, @FoundWave.Data[Random(5000)]);
-    ShowMessage(Format('Offset %d', [lOffset]));
+    lXCorr.SeekWindowLengthMs := 40;
+    lOffset := lXCorr.Process(Wave.Data, @FoundWave.Data[10000+Random(500)],Wave.ChannelCount);
+    Wave.Offset:=lOffset;
+    FoundWave.Offset:=lOffset;
+    FoundWave.BufferSize:=lXCorr.BufferSize;
+    FoundWave.Invalidate;
+    Wave.BufferSize:=lXCorr.BufferSize;
+    Wave.Invalidate;
   finally
     lXCorr.Free;
   end;
+  lEndTime := LclIntf.GetTickCount;
+  ShowMessage(Format('Performance %d ms', [lEndTime - lStartTime]));
 end;
 
 procedure TForm1.TrackBar1Change(Sender: TObject);
@@ -640,6 +468,14 @@ begin
   end;
 
   Button1Click(nil);
+end;
+
+procedure TForm1.TrackBar4Change(Sender: TObject);
+begin
+  FoundWave.Zoom:=TrackBar4.Position / 1000;
+  Wave.Zoom:=TrackBar4.Position / 1000;
+  FoundWave.Invalidate;
+  Wave.Invalidate;
 end;
 
 function TForm1.LoadSample(AFileName: PChar; AWaveform: TSimpleWaveForm): Boolean;
@@ -781,7 +617,7 @@ begin
 
     if (FData <> nil) and (FDataSize > 0) and (FChannelCount in [1,2]) then
     begin
-      scale := FFrames / bmp.width;
+      scale := FFrames / bmp.width * FZoom;
 
       bmp.Canvas.Pen.Color := clBlack;
       bmp.Canvas.Line(0, zeroline, Width, zeroline);
@@ -790,8 +626,18 @@ begin
       bmp.Canvas.MoveTo(0, zeroline);
 
       for ScreenLoop := 0 to Pred(bmp.Width) do
-        bmp.Canvas.LineTo(ScreenLoop, Round(FData[Round(FOffset + ScreenLoop * FChannelCount * scale)] * zeroline) + zeroline);
+      begin
+        bmp.Canvas.Pen.Color := clBlue;
+        bmp.Canvas.LineTo(ScreenLoop,
+        Round(FData[Round(ScreenLoop * FChannelCount * scale)] * zeroline) + zeroline);
+      end;
+      bmp.Canvas.Pen.Color := clRed;
+      bmp.Canvas.Line(Round(FOffset * FChannelCount * scale), 0,
+      Round(FOffset * FChannelCount * scale), Height);
+
     end;
+    bmp.Canvas.Pen.Color := clRed;
+    bmp.Canvas.TextOut(5, 5, Format('Offset %d, BufferSize %d', [FOffset, FBufferSize]));
     Canvas.Draw(0, 0, bmp);
   finally
     bmp.Free;
@@ -799,94 +645,6 @@ begin
 
   inherited Paint;
 end;
-
-procedure smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
-
-// FFT routine, (C)1996 S.M.Bernsee. Sign = -1 is FFT, 1 is iFFT (inverse)
-// Fills fftBuffer[0..2*fftFrameSize-1] with the Fourier transform of the
-// time domain data in fftBuffer[0..2*fftFrameSize-1]. The FFT array takes
-// and returns the cosine and sine parts in an interleaved manner, ie.
-// fftBuffer[0] = cosPart[0], fftBuffer[1] = sinPart[0], asf. fftFrameSize
-// must be a power of 2. It expects a complex input signal (see footnote 2),
-// ie. when working with 'common' audio signals our input signal has to be
-// passed as beginin[0],0.,in[1],0.,in[2],0.,...end asf. In that case, the
-// transform of the frequencies of interest is in fftBuffer[0...fftFrameSize].
-
-var
-  wr, wi, arg, temp: Single;
-  p1, p2: PSingle;
-  tr, ti, ur, ui: Single;
-  p1r, p1i, p2r, p2i: PSingle;
-  i, bitm, j, le, le2, k: Longint;
-begin
-  i := 2;
-  while i < 2 * fftFrameSize - 2 do
-  begin
-    bitm := 2;
-    j := 0;
-    while bitm < 2 * fftFrameSize do
-    begin
-      if (i and bitm) <> 0 then
-        Inc(j);
-      j := j shl 1;
-      bitm := bitm shl 1;
-    end;
-    if i < j then
-    begin
-      p1 := fftBuffer + i;
-      p2 := fftBuffer + j;
-      temp := p1^;
-      p1^ := p2^;
-      p2^ := temp;
-      Inc(p1);
-      Inc(p2);
-      temp := p1^;
-      p1^ := p2^;
-      p2^ := temp;
-    end;
-    Inc(i, 2);
-  end;
-
-  le := 2;
-  for k := 0 to Trunc(Ln(fftFrameSize)/Ln(2.0) + 0.5) - 1 do
-  begin
-    le := le shl 1;
-    le2 := le shr 1;
-    ur := 1.0;
-    ui := 0.0;
-    arg := Pi / (le2 shr 1);
-    wr := Cos(arg);
-    wi := sign * Sin(arg);
-    j := 0;
-    while j < le2 do
-    begin
-      p1r := fftBuffer + j;
-      p1i := p1r + 1;
-      p2r := p1r + le2;
-      p2i := p2r + 1;
-      i := j;
-      while i < 2 * fftFrameSize do
-      begin
-        tr := p2r^ * ur - p2i^ * ui;
-        ti := p2r^ * ui + p2i^ * ur;
-        p2r^ := p1r^ - tr;
-        p2i^ := p1i^ - ti;
-        p1r^ := p1r^ + tr;
-        p1i^ := p1i^ + ti;
-        Inc(p1r, le);
-        Inc(p1i, le);
-        Inc(p2r, le);
-        Inc(p2i, le);
-        Inc(i, le);
-      end;
-      tr := ur * wr - ui * wi;
-      ui := ur * wi + ui * wr;
-      ur := tr;
-      Inc(j, 2);
-    end
-  end
-end;
-
 
 end.
 
