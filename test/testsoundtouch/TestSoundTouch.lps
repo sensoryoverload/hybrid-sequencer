@@ -1,0 +1,244 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="9"/>
+    <BuildModes Active="Default"/>
+    <Units Count="11">
+      <Unit0>
+        <Filename Value="TestSoundTouch.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="TestSoundTouch"/>
+        <EditorIndex Value="2"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="25" Y="10"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="utestsoundtouch.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Form1"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="uTestSoundTouch"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="0"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="189"/>
+        <CursorPos X="1" Y="204"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="externals/soundtouch/soundtouch.pas"/>
+        <UnitName Value="soundtouch"/>
+        <UsageCount Value="20"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="externals/soundtouch/tdstretch.pas"/>
+        <UnitName Value="tdstretch"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="52" Y="8"/>
+        <UsageCount Value="10"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="../../externals/soundtouch/soundtouch.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="soundtouch"/>
+        <UsageCount Value="22"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="../../common/utils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="utils"/>
+        <EditorIndex Value="3"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="510"/>
+        <CursorPos X="17" Y="525"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="../../bindings/libjack/jacktypes.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="jacktypes"/>
+        <UsageCount Value="22"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="../../externals/soundtouch/tdstretch.pas"/>
+        <UnitName Value="tdstretch"/>
+        <EditorIndex Value="5"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="50" Y="8"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="../xcorr-fft/uxcorrfft.pas"/>
+        <UnitName Value="uxcorrfft"/>
+        <EditorIndex Value="4"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="542"/>
+        <CursorPos X="35" Y="566"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="../../bindings/libsndfile/sndfile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="sndfile"/>
+        <UsageCount Value="22"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="../../externals/soundtouch/ratetransposer.pas"/>
+        <UnitName Value="ratetransposer"/>
+        <EditorIndex Value="1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="283"/>
+        <CursorPos X="14" Y="298"/>
+        <UsageCount Value="11"/>
+        <Loaded Value="True"/>
+      </Unit10>
+    </Units>
+    <General>
+      <ActiveWindowIndexAtStart Value="0"/>
+    </General>
+    <JumpHistory Count="30" HistoryIndex="29">
+      <Position1>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="176" Column="1" TopLine="154"/>
+      </Position1>
+      <Position2>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="177" Column="1" TopLine="154"/>
+      </Position2>
+      <Position3>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="178" Column="1" TopLine="154"/>
+      </Position3>
+      <Position4>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="176" Column="1" TopLine="154"/>
+      </Position4>
+      <Position5>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="177" Column="1" TopLine="154"/>
+      </Position5>
+      <Position6>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="178" Column="1" TopLine="154"/>
+      </Position6>
+      <Position7>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="176" Column="1" TopLine="154"/>
+      </Position7>
+      <Position8>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="177" Column="1" TopLine="154"/>
+      </Position8>
+      <Position9>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="178" Column="1" TopLine="154"/>
+      </Position9>
+      <Position10>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="176" Column="1" TopLine="154"/>
+      </Position10>
+      <Position11>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="177" Column="1" TopLine="154"/>
+      </Position11>
+      <Position12>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="178" Column="1" TopLine="154"/>
+      </Position12>
+      <Position13>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="176" Column="1" TopLine="154"/>
+      </Position13>
+      <Position14>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="177" Column="1" TopLine="154"/>
+      </Position14>
+      <Position15>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="178" Column="1" TopLine="154"/>
+      </Position15>
+      <Position16>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="176" Column="1" TopLine="154"/>
+      </Position16>
+      <Position17>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="177" Column="1" TopLine="154"/>
+      </Position17>
+      <Position18>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="178" Column="1" TopLine="154"/>
+      </Position18>
+      <Position19>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="176" Column="1" TopLine="154"/>
+      </Position19>
+      <Position20>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="177" Column="1" TopLine="154"/>
+      </Position20>
+      <Position21>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="178" Column="1" TopLine="154"/>
+      </Position21>
+      <Position22>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="167" Column="23" TopLine="154"/>
+      </Position22>
+      <Position23>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="92" Column="32" TopLine="75"/>
+      </Position23>
+      <Position24>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="113" Column="1" TopLine="98"/>
+      </Position24>
+      <Position25>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="252" Column="1" TopLine="223"/>
+      </Position25>
+      <Position26>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="28" Column="21" TopLine="4"/>
+      </Position26>
+      <Position27>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="231" Column="10" TopLine="211"/>
+      </Position27>
+      <Position28>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="203" Column="27" TopLine="191"/>
+      </Position28>
+      <Position29>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="128" Column="15" TopLine="112"/>
+      </Position29>
+      <Position30>
+        <Filename Value="utestsoundtouch.pas"/>
+        <Caret Line="207" Column="20" TopLine="189"/>
+      </Position30>
+    </JumpHistory>
+  </ProjectSession>
+  <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="utestsoundtouch.pas"/>
+        <Line Value="204"/>
+      </Item1>
+    </BreakPoints>
+  </Debugging>
+</CONFIG>
