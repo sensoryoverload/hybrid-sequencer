@@ -142,6 +142,8 @@ const
 ///   tempo/pitch/rate/samplerate settings.
   SETTING_NOMINAL_OUTPUT_SEQUENCE	=	7;
 
+  SETTING_XCORR_FFT = 8;
+
 type
 
   { TSoundTouch }
@@ -592,6 +594,11 @@ begin
             pTDStretch.setParameters(sampleRate, sequenceMs, seekWindowMs, value);
             Result := TRUE;
     end;
+    SETTING_XCORR_FFT:
+    begin
+      pTDStretch.enableFFTSeek(value <> 0);
+      Result := TRUE;
+    end
     else
     begin
       Result := FALSE;

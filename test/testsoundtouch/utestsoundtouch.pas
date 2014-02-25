@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, soundtouch,
-  LCLType, ExtCtrls, Spin, StdCtrls, sndfile;
+  LCLType, ExtCtrls, Spin, StdCtrls, ComCtrls, sndfile;
 
 type
   { TSimpleWaveForm }
@@ -41,12 +41,16 @@ type
 
   TForm1 = class(TForm)
     CheckBox1: TCheckBox;
+    CheckBox2: TCheckBox;
     fspnPitch: TFloatSpinEdit;
     Panel1: TPanel;
+    TrackBar1: TTrackBar;
     procedure CheckBox1Change(Sender: TObject);
+    procedure CheckBox2Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure fspnPitchChange(Sender: TObject);
+    procedure TrackBar1Change(Sender: TObject);
   private
     { private declarations }
     FST: TSoundTouch;
@@ -93,6 +97,7 @@ begin
   FOutputLoop.DataSize := FFrames * SizeOf(Single) * FChannelCount * 2;
   FOutputLoop.ChannelCount := FChannelCount;
   FOutputLoop.Frames := FFrames;
+  FOutputLoop.Zoom:=0.1;
 
   FST.setChannels(FChannelCount);
   FST.setSampleRate(44100);
@@ -104,6 +109,11 @@ begin
 end;
 
 procedure TForm1.CheckBox1Change(Sender: TObject);
+begin
+  fspnPitchChange(self);
+end;
+
+procedure TForm1.CheckBox2Change(Sender: TObject);
 begin
   fspnPitchChange(self);
 end;
@@ -128,12 +138,20 @@ begin
   begin
     FST.setSetting(SETTING_USE_QUICKSEEK, 0);
   end;
+  if CheckBox2.Checked then
+  begin
+    FST.setSetting(SETTING_XCORR_FFT, 1);
+  end
+  else
+  begin
+    FST.setSetting(SETTING_XCORR_FFT, 0);
+  end;
   FST.setPitch(fspnPitch.Value);
   lOutputOffset := 0;
   lInputOffset := 0;
   {FST.flush;}
 
-  FOutputLoop.Zoom:=0.01;
+
   lPart:= fframes div 16;
   for i := 0 to lPart div 1024 do
   begin
@@ -156,6 +174,12 @@ begin
   FST.receiveSamples(FOutputLoop.Data, 8 * 1024);
   FST.Clear;}
 
+  FOutputLoop.Invalidate;
+end;
+
+procedure TForm1.TrackBar1Change(Sender: TObject);
+begin
+  FOutputLoop.Zoom:=TrackBar1.Position/50+0.01;
   FOutputLoop.Invalidate;
 end;
 

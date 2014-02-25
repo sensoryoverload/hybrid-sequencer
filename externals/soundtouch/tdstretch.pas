@@ -172,6 +172,7 @@ type
     outputBuffer: TFIFOSampleBuffer;
     inputBuffer: TFIFOSampleBuffer;
     bQuickSeek: Boolean;
+    BFFTSeek: Boolean;
     sampleRate: Integer;
     sequenceMs: Integer;
     seekWindowMs: Integer;
@@ -235,6 +236,8 @@ type
     /// nonzero to enable
     procedure enableQuickSeek(enable: Boolean);
 
+    procedure enableFFTSeek(enable: Boolean);
+
     /// Returns nonzero if the quick seeking algorithm is enabled.
     function isQuickSeekEnabled: Boolean;
 
@@ -292,6 +295,7 @@ begin
   inherited Create(outputBuffer);
 
   bQuickSeek := FALSE;
+  BFFTSeek := FALSE;
   channels := 1;
 
   pMidBuffer := nil;
@@ -453,6 +457,11 @@ begin
   bQuickSeek := enable;
 end;
 
+procedure TTDStretch.enableFFTSeek(enable: Boolean);
+begin
+  BFFTSeek := enable;
+end;
+
 // Returns nonzero if the quick seeking algorithm is enabled.
 function TTDStretch.isQuickSeekEnabled: Boolean;
 begin
@@ -471,8 +480,14 @@ begin
     end
     else
     begin
-//      Result := seekBestOverlapPositionStereo(refPos);
-      Result := xcorr.Process(pRefMidBuffer, refPos, 2);
+      if BFFTSeek then
+      begin
+        Result := xcorr.Process(pRefMidBuffer, refPos, 2);
+      end
+      else
+      begin
+        Result := seekBestOverlapPositionStereo(refPos);
+      end;
     end;
   end
   else
@@ -484,8 +499,14 @@ begin
     end
     else
     begin
-//      Result := seekBestOverlapPositionMono(refPos);
-      Result := xcorr.Process(pRefMidBuffer, refPos, 1);
+      if BFFTSeek then
+      begin
+        Result := xcorr.Process(pRefMidBuffer, refPos, 1);
+      end
+      else
+      begin
+        Result := seekBestOverlapPositionMono(refPos);
+      end;
     end;
   end;
 end;
