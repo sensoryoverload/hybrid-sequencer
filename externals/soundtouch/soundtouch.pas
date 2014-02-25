@@ -491,7 +491,7 @@ begin
         pTDStretch.moveSamples(pRateTransposer);
       end;
       pTDStretch.putSamples(samples, anumSamples);
-  end    *)
+  end  *)
   // SOUNDTOUCH_PREVENT_CLICK_AT_RATE_CROSSOVER
   else if rate <= 1.0 then
   begin

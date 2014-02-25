@@ -254,7 +254,7 @@ var
 begin
   if capacityRequirement > getCapacity then
   begin
-    // enlarge the buffer in 4kbyte steps (round up to next 4k boundary)
+(*    // enlarge the buffer in 4kbyte steps (round up to next 4k boundary)
     sizeInBytes := (capacityRequirement * fchannels * sizeof(Single) + Boundary - 1) and not (Boundary - 1);
     assert(sizeInBytes mod 2 = 0);
     tempUnaligned := getmem(sizeInBytes + Alignment);
@@ -271,6 +271,17 @@ begin
     Freemem(bufferUnaligned);
     buffer := temp;
     bufferUnaligned := tempUnaligned;
+    bufferPos := 0;
+*)
+
+    sizeInBytes := (capacityRequirement * fchannels * sizeof(Single) + Boundary - 1) and not (Boundary - 1);
+    assert(sizeInBytes mod 2 = 0);
+    FreeMem(buffer);
+    buffer := getmem(sizeInBytes + Alignment);
+    if samplesInBuffer > 0 then
+    begin
+      Move(ptrBegin^, buffer^, samplesInBuffer * fchannels * sizeof(Single));
+    end;
     bufferPos := 0;
   end
   else

@@ -24,12 +24,21 @@ object Form1: TForm1
       Height = 27
       Top = 7
       Width = 72
-      Increment = 1
-      MaxValue = 2
-      MinValue = 0.5
+      Increment = 0.05
+      MaxValue = 8
+      MinValue = 0.125
       OnChange = fspnPitchChange
       TabOrder = 0
       Value = 1
+    end
+    object CheckBox1: TCheckBox
+      Left = 192
+      Height = 21
+      Top = 15
+      Width = 84
+      Caption = 'Quickseek'
+      OnChange = CheckBox1Change
+      TabOrder = 1
     end
   end
 end

@@ -5,7 +5,7 @@ unit tdstretch;
 interface
 
 uses
-  sysutils, fifosamplebuffer, fifosamplepipe, mmx, beattrigger, utils;
+  sysutils, fifosamplebuffer, fifosamplepipe, mmx, uCrossCorrelateFFT;
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
@@ -157,6 +157,8 @@ type
     sampleReq: Integer;
     tempo: Single;
 
+    xcorr: TCrossCorrelate;
+
     pMidBuffer: PSingle;
     pRefMidBuffer: PSingle;
     overlapLength: Integer;
@@ -184,10 +186,8 @@ type
     function calcCrossCorrStereo(const mixingPos: PSingle; const compare: PSingle): double;
     function calcCrossCorrMono(const mixingPos: PSingle; const compare: PSingle): double;
     function seekBestOverlapPositionStereo(const refPos: PSingle): Integer;
-    function seekBestOverlapPositionStereoEfficient(const refPos: PSingle): Integer;
     function seekBestOverlapPositionStereoQuick(const refPos: PSingle): Integer;
     function seekBestOverlapPositionMono(const refPos: PSingle): Integer;
-    function seekBestOverlapPositionMonoEfficient(const refPos: PSingle): Integer;
     function seekBestOverlapPositionMonoQuick(const refPos: PSingle): Integer;
     function seekBestOverlapPosition(const refPos: PSingle): Integer;
 
@@ -208,7 +208,6 @@ type
     /// the 'set_returnBuffer_size' function.
 
   public
-    beatdetect: TBeatDetector;
     procedure processSamples;
     constructor Create; override;
     destructor Destroy; override;
@@ -288,13 +287,9 @@ begin
   outputBuffer := TFIFOSampleBuffer.Create(1);
   inputBuffer := TFIFOSampleBuffer.Create(1);
 
+  xcorr := TCrossCorrelate.Create(44100);
+
   inherited Create(outputBuffer);
-
-  beatdetect := TBeatDetector.Create;
-
-  beatdetect.setSampleRate(44100);
-  beatdetect.setThresHold(0.3);
-  beatdetect.setFilterCutOff(2000);
 
   bQuickSeek := FALSE;
   channels := 1;
@@ -317,7 +312,7 @@ destructor TTDStretch.Destroy;
 begin
   FreeMem(pMidBuffer);
 
-  beatdetect.Free;
+  xcorr.Free;
 
   inherited Destroy;
 end;
@@ -346,7 +341,11 @@ procedure TTDStretch.setParameters(asampleRate: Integer; asequenceMS: Integer;
 begin
   // accept only positive parameter values - if zero or negative, use old values instead
   if aSampleRate > 0 then Self.sampleRate := aSampleRate;
-  if aOverlapMS > 0 then Self.overlapMs := aOverlapMS;
+  if aOverlapMS > 0 then
+  begin
+    Self.overlapMs := aOverlapMS;
+    xcorr.OverlapLengthMs:=aoverlapMS;
+  end;
 
   if aSequenceMS > 0 then
   begin
@@ -362,12 +361,14 @@ begin
   if aSeekWindowMS > 0 then
   begin
     Self.seekWindowMs := aSeekWindowMS;
+    xcorr.SeekWindowLengthMs:=aseekwindowMS;
     bAutoSeekSetting := FALSE;
   end
   else if aSeekWindowMS = 0 then
   begin
     // if zero, use automatic setting
     bAutoSeekSetting := TRUE;
+    xcorr.SeekWindowLengthMs:=40;
   end;
 
   calcSeqParameters;
@@ -467,11 +468,11 @@ begin
     if bQuickSeek then
     begin
       Result := seekBestOverlapPositionStereoQuick(refPos);
-//      Result := seekBestOverlapPositionStereoEfficient(refPos);
     end
     else
     begin
-      Result := seekBestOverlapPositionStereo(refPos);
+//      Result := seekBestOverlapPositionStereo(refPos);
+      Result := xcorr.Process(pRefMidBuffer, refPos, 2);
     end;
   end
   else
@@ -480,11 +481,11 @@ begin
     if bQuickSeek then
     begin
       Result := seekBestOverlapPositionMonoQuick(refPos);
-//      Result := seekBestOverlapPositionMonoEfficient(refPos);
     end
     else
     begin
-      Result := seekBestOverlapPositionMono(refPos);
+//      Result := seekBestOverlapPositionMono(refPos);
+      Result := xcorr.Process(pRefMidBuffer, refPos, 1);
     end;
   end;
 end;
@@ -544,85 +545,6 @@ begin
   end;
 
   Result := bestOffs;
-end;
-
-function TTDStretch.seekBestOverlapPositionStereoEfficient(const refPos: PSingle): Integer;
-var
-  i, j: Integer;
-  adder: single;
-  main_adder: single;
-  position: Integer;
-  pRefMidBuffer_iterate: PSingle;
-  refPos_iterate: PSingle;
-begin
-  // Slopes the amplitude of the 'midBuffer' samples
-  precalcCorrReferenceStereo;
-
-  main_adder := 99999999;
-  for i := 0 to Pred(2 * seekLength) do
-  begin
-    adder := 0;
-    pRefMidBuffer_iterate := pRefMidBuffer;
-    refPos_iterate := refPos + i * 2;
-    for j := 0 to Pred(2 * overlapLength) do
-    begin
-      adder :=
-        (pRefMidBuffer_iterate^ + (pRefMidBuffer_iterate + 1)^) -
-        (refPos_iterate^ + (refPos_iterate + 1)^);
-
-      Inc(pRefMidBuffer_iterate, 2);
-      Inc(refPos_iterate, 2);
-{      adder +=
-        (pRefMidBuffer[j] + pRefMidBuffer[j + 1]) -
-        ((refPos + i)[j] + (refPos + i)[j + 1]);}
-    end;
-    if adder < main_adder then
-    begin
-      main_adder := adder;
-      position := i;
-    end;
-  end;
-  if main_adder = 99999999 then
-    Result := 0
-  else
-    Result := position;
-end;
-
-function TTDStretch.seekBestOverlapPositionMonoEfficient(const refPos: PSingle): Integer;
-var
-  i, j: Integer;
-  adder: single;
-  main_adder: single;
-  position: Integer;
-  pRefMidBuffer_iterate: PSingle;
-  refPos_iterate: PSingle;
-begin
-  // Slopes the amplitude of the 'midBuffer' samples
-  precalcCorrReferenceMono;
-
-  main_adder := 99999999;
-  for i := 0 to Pred(seekLength) do
-  begin
-    adder := 0;
-    pRefMidBuffer_iterate := pRefMidBuffer;
-    refPos_iterate := refPos + i;
-    for j := 0 to Pred(overlapLength) do
-    begin
-      adder := pRefMidBuffer_iterate^ - refPos_iterate^;
-      Inc(pRefMidBuffer_iterate);
-      Inc(refPos_iterate);
-    end;
-    if adder < main_adder then
-    begin
-      main_adder := adder;
-      position := i;
-    end;
-  end;
-
-  if main_adder = 99999999 then
-    Result := 0
-  else
-    Result := position;
 end;
 
 // Seeks for the optimal overlap-mixing position. The 'stereo' version of the
@@ -812,7 +734,9 @@ begin
     seek := AUTOSEEK_C + AUTOSEEK_K * tempo;
     seek := CHECK_LIMITS(seek, AUTOSEEK_AT_MAX, AUTOSEEK_AT_MIN);
     seekWindowMs := Round(seek);
+    xcorr.SeekWindowLengthMs:=seekWindowMs;
   end;
+
 
   // Update seek window lengths
   seekWindowLength := (sampleRate * sequenceMs) div 1000;
@@ -891,10 +815,10 @@ begin
     temp := (seekWindowLength - 2 * overlapLength);
 
     // crosscheck that we don't have buffer overflow...
-    if (inputBuffer.numSamples < (offset + temp + overlapLength * 2)) then
+{    if (inputBuffer.numSamples < (offset + temp + overlapLength * 2)) then
     begin
       continue;    // just in case, shouldn't really happen
-    end;
+    end;}
 
     outputBuffer.putSamples(inputBuffer.ptrBegin + channels * (offset + overlapLength), temp);
 

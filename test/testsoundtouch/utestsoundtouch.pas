@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, soundtouch,
-  LCLType, ExtCtrls, Spin, sndfile;
+  LCLType, ExtCtrls, Spin, StdCtrls, sndfile;
 
 type
   { TSimpleWaveForm }
@@ -40,8 +40,10 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    CheckBox1: TCheckBox;
     fspnPitch: TFloatSpinEdit;
     Panel1: TPanel;
+    procedure CheckBox1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure fspnPitchChange(Sender: TObject);
@@ -97,8 +99,13 @@ begin
   FST.setSetting(SETTING_OVERLAP_MS, 8);
   FST.setSetting(SETTING_SEEKWINDOW_MS, 20);
   FST.setSetting(SETTING_SEQUENCE_MS, 80);
-  FST.setSetting(SETTING_USE_QUICKSEEK, 1);
+  FST.setSetting(SETTING_USE_QUICKSEEK, 0);
   FST.setSetting(SETTING_USE_AA_FILTER, 0);
+end;
+
+procedure TForm1.CheckBox1Change(Sender: TObject);
+begin
+  fspnPitchChange(self);
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -110,21 +117,44 @@ procedure TForm1.fspnPitchChange(Sender: TObject);
 var
   i: Integer;
   lInputOffset, lOutputOffset: Integer;
+  lPart: Integer;
 begin
   FOutputLoop.Clear;
+  if CheckBox1.Checked then
+  begin
+    FST.setSetting(SETTING_USE_QUICKSEEK, 1);
+  end
+  else
+  begin
+    FST.setSetting(SETTING_USE_QUICKSEEK, 0);
+  end;
   FST.setPitch(fspnPitch.Value);
   lOutputOffset := 0;
   lInputOffset := 0;
-  for i := 0 to FFrames div 1024 do
+  {FST.flush;}
+
+  FOutputLoop.Zoom:=0.01;
+  lPart:= fframes div 16;
+  for i := 0 to lPart div 1024 do
   begin
     lInputOffset := i * 1024;
     FST.putSamples(@FInputLoop.Data[lInputOffset], 1024);
     lOutputOffset := lOutputOffset + FST.receiveSamples(@FOutputLoop.Data[lOutputOffset], 1024);
   end;
-  while FST.numSamples > 0 do
+  FST.Clear;
+{  while FST.numSamples > 0 do
   begin
     lOutputOffset := lOutputOffset + FST.receiveSamples(@FOutputLoop.Data[lOutputOffset], 1024);
-  end;
+  end;   }
+
+
+
+
+{  FOutputLoop.Zoom:=0.1;
+  FOutputLoop.DataSize:=8 * 1024;
+  FST.putSamples(FInputLoop.Data, 8 * 1024);
+  FST.receiveSamples(FOutputLoop.Data, 8 * 1024);
+  FST.Clear;}
 
   FOutputLoop.Invalidate;
 end;
@@ -201,7 +231,7 @@ end;
 
 procedure TSimpleWaveForm.Clear;
 begin
-  FillByte(FData, DataSize, 0);
+  //FillByte(FData, DataSize, 0);
 end;
 
 function TForm1.LoadSample(AFileName: PChar; AWaveform: TSimpleWaveForm): Boolean;
