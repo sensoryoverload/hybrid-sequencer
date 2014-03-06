@@ -28,7 +28,7 @@ uses
  jacktypes, StdCtrls, Dialogs, Spin, bpmdetect, beattrigger, Utils,
  globalconst, soundtouch, contnrs, global_command,
  ShellCtrls, global, flqueue, math, ringbuffer, pattern,
- audiostructure, smbPitchShift, audioutils;
+ audiostructure, smbPitchShift, audioutils, stretcher;
 
 const
   MAX_LATENCY = 20000;
@@ -48,8 +48,6 @@ type
 
   TSliceState = (ssCustom, ssAuto);
   TSliceDirection = (sdIdle, sdForward, sdReverse);
-
-  TInterpolationAlgorithm = (iaLinear, iaHermite, iaNone);
 
   TRingBufferData = class(TObject)
   private
@@ -220,7 +218,7 @@ type
     FDiskReaderThread: TDiskReaderThread;
     FPitchAlgorithm: TPitchAlgorithm;
 
-    FSliceStretcher: TSliceStretcher;
+    FSliceStretcher: TStretcher; //TSliceStretcher;
 
     FInterpolationAlgorithm: TInterpolationAlgorithm;
 
@@ -785,11 +783,10 @@ begin
   FWSOLAStretcher := TSoundTouch.Create;
   FWSOLAStretcher.setChannels(2);
   FWSOLAStretcher.setSampleRate(Round(GSettings.SampleRate));
-  FWSOLAStretcher.setSetting(SETTING_SEEKWINDOW_MS, 20);
+  FWSOLAStretcher.setSetting(SETTING_SEEKWINDOW_MS, 15);
   FWSOLAStretcher.setSetting(SETTING_SEQUENCE_MS, 40);
-  FWSOLAStretcher.setSetting(SETTING_OVERLAP_MS, 10);
+  FWSOLAStretcher.setSetting(SETTING_OVERLAP_MS, 8);
   FWSOLAStretcher.setSetting(SETTING_USE_QUICKSEEK, 1);
-  FWSOLAStretcher.setSetting(SETTING_USE_AA_FILTER, 0);
   FWSOLAStretcher.setPitch(1);
 
   Pitch := 1;
@@ -801,11 +798,14 @@ begin
   FFFTStretcher.Initialize;
 
   PitchAlgorithm := paSliceStretch;
-  FInterpolationAlgorithm := iaHermite;
+  FInterpolationAlgorithm := iaNone;//iaHermite;
 
-  FSliceStretcher := TSliceStretcher.Create;
+  FSliceStretcher := TStretcher.Create(Round(GSettings.SampleRate)); //TSliceStretcher.Create;
   FSliceStretcher.InterpolationAlgorithm := FInterpolationAlgorithm;
   FSliceStretcher.SliceList := FSliceList;
+  FSliceStretcher.OverlapLengthMs := 8;
+  FSliceStretcher.SeekwindowMs := 15;
+  FSliceStretcher.SequencewindowMs := 100;
 
   Getmem(FWorkBuffer, Round(GSettings.SampleRate * 2));
   Getmem(FConvertBuffer, Round(GSettings.SampleRate) * SizeOf(Single));
@@ -1144,18 +1144,18 @@ begin
   paSoundTouchEco:
     begin
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 1);
-      TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
+      TimeStretch.setSetting(SETTING_XCORR_FFT, 0);
       TimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
-      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 20);
-      TimeStretch.setSetting(SETTING_OVERLAP_MS, 10);
+      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 15);
+      TimeStretch.setSetting(SETTING_OVERLAP_MS, 8);
     end;
   paSoundTouch:
     begin
       TimeStretch.setSetting(SETTING_USE_QUICKSEEK, 0);
-      TimeStretch.setSetting(SETTING_USE_AA_FILTER, 0);
+      TimeStretch.setSetting(SETTING_XCORR_FFT, 1);
       TimeStretch.setSetting(SETTING_SEQUENCE_MS, 40);
-      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 20);
-      TimeStretch.setSetting(SETTING_OVERLAP_MS, 10);
+      TimeStretch.setSetting(SETTING_SEEKWINDOW_MS, 15);
+      TimeStretch.setSetting(SETTING_OVERLAP_MS, 8);
     end;
   else
     begin
@@ -1443,21 +1443,21 @@ begin
 
   if AChannelCount = 1 then
   begin
-    ATargetBuffer[AFrameIndex * 2] := hermite4(
+{    ATargetBuffer[AFrameIndex * 2] := hermite4(
       lFracPosition,
       ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 1]),
       ASourceBuffer[lBufferOffset],
       ASourceBuffer[lBufferOffset + 1],
       ASourceBuffer[lBufferOffset + 2]);
-    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];}
 
     // Make dual mono
-{    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
-    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset];}
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset];
   end
   else
   begin
-    ATargetBuffer[AFrameIndex * 2] := hermite4(
+{    ATargetBuffer[AFrameIndex * 2] := hermite4(
       lFracPosition,
       ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 2]),
       ASourceBuffer[lBufferOffset],
@@ -1469,10 +1469,10 @@ begin
       ifthen(lBufferOffset + 1 <= 2, 0, ASourceBuffer[lBufferOffset - 1]),
       ASourceBuffer[lBufferOffset + 1],
       ASourceBuffer[lBufferOffset + 3],
-      ASourceBuffer[lBufferOffset + 5]);
+      ASourceBuffer[lBufferOffset + 5]);}
 
-{    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
-    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset + 1];}
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset + 1];
   end;
 end;
 
@@ -1533,6 +1533,8 @@ begin
 
                 // Frames to process this window
                 lFrames := (psEndLocation - psBeginLocation) + 1;
+
+                DBLog(Format('CalculatedPitch %f', [CalculatedPitch]));
 
                 case PitchAlgorithm of
                   paSoundTouch, paSoundTouchEco:
@@ -1676,7 +1678,7 @@ begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;
   DBlog(format('slicecount %d', [FSliceList.Count]));}
-{  if FWave.ChannelCount > 0 then
+  {if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1689,7 +1691,7 @@ begin
           WindowLength := 0;
         end;
 
-        lCurrentSlice := AddSlice(i{ - 250}, SLICE_VIRTUAL, True);
+        lCurrentSlice := AddSlice(i - 250, SLICE_VIRTUAL, True);
         if lFirstSlice then
         begin
           //LoopStart.Value := i;

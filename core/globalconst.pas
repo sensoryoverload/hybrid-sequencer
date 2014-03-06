@@ -130,6 +130,8 @@ type
 
   TSerializeAction = (saRetrieveProperties, saInitilizeObjects);
 
+  TInterpolationAlgorithm = (iaLinear, iaHermite, iaNone);
+
   TTreeViewPluginInfo = class
   public
     FullFilePath: string;
