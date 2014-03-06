@@ -798,14 +798,14 @@ begin
   FFFTStretcher.Initialize;
 
   PitchAlgorithm := paSliceStretch;
-  FInterpolationAlgorithm := iaNone;//iaHermite;
+  FInterpolationAlgorithm := {iaNone;//}iaHermite;
 
   FSliceStretcher := TStretcher.Create(Round(GSettings.SampleRate)); //TSliceStretcher.Create;
   FSliceStretcher.InterpolationAlgorithm := FInterpolationAlgorithm;
   FSliceStretcher.SliceList := FSliceList;
   FSliceStretcher.OverlapLengthMs := 8;
   FSliceStretcher.SeekwindowMs := 15;
-  FSliceStretcher.SequencewindowMs := 100;
+  FSliceStretcher.SequencewindowMs := 80;
 
   Getmem(FWorkBuffer, Round(GSettings.SampleRate * 2));
   Getmem(FConvertBuffer, Round(GSettings.SampleRate) * SizeOf(Single));
@@ -1678,7 +1678,7 @@ begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;
   DBlog(format('slicecount %d', [FSliceList.Count]));}
-  {if FWave.ChannelCount > 0 then
+  if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1708,7 +1708,7 @@ begin
         Inc(WindowLength);
       end;
     end;
-  end;}
+  end;
 end;
 
 { TAddMarkerCommand }

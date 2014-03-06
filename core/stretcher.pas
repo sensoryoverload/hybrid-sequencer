@@ -8,25 +8,6 @@ uses
   Classes, SysUtils, contnrs, utils, math, globalconst, uCrossCorrelateFFT;
 
 type
-  { TSliceLooper }
-
-  TSliceLooper = class
-  private
-    FPitch: Single;
-    FSliceEnd: Single;
-    FSliceStart: Single;
-    FCursor: Single;
-    FSliceHalfLength: Integer;
-    procedure SetSliceEnd(AValue: Single);
-    procedure SetSliceStart(AValue: Single);
-  public
-    function Process: Single;
-    property SliceStart: Single read FSliceStart write SetSliceStart;
-    property SliceEnd: Single read FSliceEnd write SetSliceEnd;
-    property Cursor: Single read FCursor write FCursor;
-    property Pitch: Single read FPitch write FPitch;
-  end;
-
   { TStretcher }
 
   TStretcher = class
@@ -38,7 +19,6 @@ type
     FSliceList: TObjectList;
     FSliceStartLocation: single;
     FSliceEndLocation: single;
-    FSliceHalfLength: Integer;
     FSliceLastCounter: Single;
 
     FSliceMainCursor: Single;
@@ -46,11 +26,6 @@ type
     FOverlapFadeOut: Single;
     FOverlapFadeIn: Single;
     FOverlapFadeAdder: Single;
-
-    FSliceLoopModulo: Integer;
-    FSliceFadeIn: Single;
-    FSliceFadeOut: Single;
-    FSliceLooper: TSliceLooper;
 
     FOverlapTrigger: Boolean;
     FOverlapping: Boolean;
@@ -96,49 +71,12 @@ type
 
 implementation
 
-{ TSliceLooper }
-
-procedure TSliceLooper.SetSliceEnd(AValue: Single);
-begin
-  FSliceEnd := AValue;
-
-  FSliceHalfLength := Round(FSliceEnd - FSliceStart) div 2;
-end;
-
-procedure TSliceLooper.SetSliceStart(AValue: Single);
-begin
-  FSliceStart := AValue;
-
-  FSliceHalfLength := Round(FSliceEnd - FSliceStart) div 2;
-end;
-
-function TSliceLooper.Process: Single;
-var
-  lSliceLoopModulo: Integer;
-begin
-  // Ran past end of slice so loop a part of the previous section
-  if FSliceHalfLength <> 0 then
-  begin
-    lSliceLoopModulo := Round(FCursor - FSliceEnd) mod FSliceHalfLength;
-    if Odd(Round(FCursor - FSliceEnd) div FSliceHalfLength) then
-    begin
-      Result := Round(FSliceEnd - FSliceHalfLength) + lSliceLoopModulo;
-    end
-    else
-    begin
-      Result := Round(FSliceEnd) - lSliceLoopModulo;
-    end;
-  end;
-  FCursor := FCursor + FPitch;
-end;
-
 { TStretcher }
 
 constructor TStretcher.Create(ASamplerate: Integer);
 begin
   FSamplerate := ASamplerate;
 
-  FSliceLooper := TSliceLooper.Create;
   FCrossCorrelate := TCrossCorrelate.Create(ASamplerate);
 
   FOverlapping := False;
@@ -148,7 +86,6 @@ end;
 
 destructor TStretcher.Destroy;
 begin
-  FSliceLooper.Free;
 
   inherited Destroy;
 end;
@@ -257,10 +194,6 @@ var
   lRightValueMain: Single;
   lLeftValueOverlap: Single;
   lRightValueOverlap: Single;
-  lLeftValueLooper: Single;
-  lRightValueLooper: Single;
-  lCursor: Single;
-  lLoopingCursor: Single;
   lSeekwindowOffset: Integer;
   lOffset: Integer;
   lCalculatedCursor: Single;
@@ -274,20 +207,14 @@ begin
     if (ASampleCursor >= lSliceStart.Location) and (ASampleCursor < lSliceEnd.Location) then
     begin
       // Detect slice synchronize
-      lSequenceWindow := {lSliceStart.Length / 2;}FSequencewindow;
+      lSequenceWindow := {lSliceStart.Length / 2;}FSequencewindow * (1 / FPitch);
 
-      ASliceCounter := fmod(ASampleCursor - lSliceStart.Location, lSequenceWindow);
+      //ASliceCounter := fmod(ASampleCursor - lSliceStart.Location, lSequenceWindow);
 
       // Jumped to next slice
       if FLastSliceIndex <> i then
       begin
-        DBLog(format('FLastSliceIndex %d i %d: ', [FLastSliceIndex, i]));
-
-        // Keep last slice looping
-        FSliceLooper.SliceStart := FSliceStartLocation;
-        FSliceLooper.SliceEnd := FSliceEndLocation;
-        FSliceLooper.Cursor := FSliceMainCursor;
-        FSliceLooper.Pitch := FPitch;
+        ASliceCounter := 0;
 
         // Start of slice
         FSliceStartLocation :=
@@ -300,8 +227,8 @@ begin
 
         FSliceMainCursor := FSliceStartLocation;
 
-        FSliceFadeOut := 1;
-        FSliceFadeIn :=  0;
+        FOverlapFadeIn := 1;
+        FOverlapFadeOut := 0;
       end;
 
       FOverlapping := ASliceCounter > lSequenceWindow - FOverlapLength;
@@ -316,7 +243,7 @@ begin
             lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ASampleCursor - lSliceStart.Location));
 
-          lSeekwindowOffset := Round(lCalculatedCursor - FSeekwindow);
+          lSeekwindowOffset := Round(lCalculatedCursor{ - FSeekwindow});
           if lSeekwindowOffset < 0 then
           begin
             lSeekwindowOffset := 0;
@@ -332,8 +259,6 @@ begin
             @ASourceBuffer[lSeekwindowOffset],
             2);
 
-          DBLog(format('lOffset %d lSeekwindowOffset %d FSequencewindow %d FOverlapLength %d FSeekwindow %d', [lOffset, lSeekwindowOffset, FSequencewindow, FOverlapLength, FSeekwindow]));
-
           // Old cursor
           FSliceOverlapCursor := FSliceMainCursor;
 
@@ -345,7 +270,7 @@ begin
           FOverlapFadeAdder := 1 / FOverlapLength;
         end;
 
-        if FSliceFadeOut > 0 then
+        if FOverlapFadeOut > 0 then
         begin
           FOverlapFadeOut := FOverlapFadeOut - FOverlapFadeAdder
         end
@@ -374,6 +299,12 @@ begin
       FSliceOverlapCursor := FSliceOverlapCursor + Pitch;
 
       FSliceLastCounter := ASliceCounter;
+
+      ASliceCounter := ASliceCounter + 1;
+      if ASliceCounter > lSequenceWindow then
+      begin
+        ASliceCounter := 0;
+      end;
 
       // Get normal stream
       GetSample(FSliceMainCursor, ASourceBuffer, lLeftValueMain, lRightValueMain, AChannelCount);
