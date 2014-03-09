@@ -207,7 +207,11 @@ begin
     if (ASampleCursor >= lSliceStart.Location) and (ASampleCursor < lSliceEnd.Location) then
     begin
       // Detect slice synchronize
-      lSequenceWindow := {lSliceStart.Length / 2;}FSequencewindow * (1 / FPitch);
+      lSequenceWindow := lSliceStart.Length;
+      while lSequenceWindow > FSequencewindow do
+      begin
+        lSequenceWindow := lSequenceWindow * 0.5;
+      end;
 
       //ASliceCounter := fmod(ASampleCursor - lSliceStart.Location, lSequenceWindow);
 
@@ -243,14 +247,14 @@ begin
             lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ASampleCursor - lSliceStart.Location));
 
-          lSeekwindowOffset := Round(lCalculatedCursor{ - FSeekwindow});
+          lSeekwindowOffset := Round(lCalculatedCursor - FSeekwindow);
           if lSeekwindowOffset < 0 then
           begin
             lSeekwindowOffset := 0;
           end
-          else if lSeekwindowOffset + FSeekwindow > TMarker(FSliceList.Last).Location then
+          else if lSeekwindowOffset + FSeekwindow > lSliceEnd.Location then
           begin
-            lSeekwindowOffset := TMarker(FSliceList.Last).Location - FSeekwindow;
+            lSeekwindowOffset := lSliceEnd.Location - FSeekwindow - FOverlapLength;
           end;
 
           // Crosscorrelate last played audio with audio at the real cursor
