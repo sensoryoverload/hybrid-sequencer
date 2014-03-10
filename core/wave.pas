@@ -28,7 +28,7 @@ uses
  jacktypes, StdCtrls, Dialogs, Spin, bpmdetect, beattrigger, Utils,
  globalconst, soundtouch, contnrs, global_command,
  ShellCtrls, global, flqueue, math, ringbuffer, pattern,
- audiostructure, smbPitchShift, audioutils, stretcher;
+ audiostructure, smbPitchShift, audioutils, stretcher, determinetransients;
 
 const
   MAX_LATENCY = 20000;

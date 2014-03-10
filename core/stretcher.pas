@@ -86,6 +86,7 @@ end;
 
 destructor TStretcher.Destroy;
 begin
+  FCrossCorrelate.Free;
 
   inherited Destroy;
 end;
