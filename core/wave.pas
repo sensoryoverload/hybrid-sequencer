@@ -1656,6 +1656,7 @@ var
   WindowLength: Integer;
   lCurrentSlice: TMarker;
   lFirstSlice: Boolean;
+  lDetermineTransients: TDetermineTransients;
 begin
   lFirstSlice := True;
   lCurrentSlice := TMarker(FSliceList[0]);
@@ -1678,7 +1679,8 @@ begin
     AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
   end;
   DBlog(format('slicecount %d', [FSliceList.Count]));}
-  if FWave.ChannelCount > 0 then
+
+  (*if FWave.ChannelCount > 0 then
   begin
     BeatDetect.setThresHold(0.5);
     for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
@@ -1708,6 +1710,23 @@ begin
         Inc(WindowLength);
       end;
     end;
+  end;  *)
+
+  lDetermineTransients := TDetermineTransients.Create(Round(GSettings.SampleRate));
+  try
+    lDetermineTransients.Process(TChannel(Wave.ChannelList[0]).Buffer, FWave.Frames, FWave.ChannelCount);
+    if lDetermineTransients.Transients.Count = 0 then
+    begin
+      DBLog('no transients');
+    end;
+    for i := 0 to Pred(lDetermineTransients.Transients.Count) do
+    begin
+      {dblog(format('transient at %d', [lDetermineTransients.Transients[i]]));
+      sleep(5); }
+//      AddSlice(lDetermineTransients.Transients[i], SLICE_VIRTUAL, True);
+    end;
+  finally
+    lDetermineTransients.Free;
   end;
 end;
 
