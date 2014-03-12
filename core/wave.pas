@@ -1723,7 +1723,7 @@ begin
     begin
       {dblog(format('transient at %d', [lDetermineTransients.Transients[i]]));
       sleep(5); }
-//      AddSlice(lDetermineTransients.Transients[i], SLICE_VIRTUAL, True);
+      AddSlice(lDetermineTransients.Transients[i], SLICE_VIRTUAL, True);
     end;
   finally
     lDetermineTransients.Free;

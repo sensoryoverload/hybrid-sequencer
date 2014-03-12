@@ -152,13 +152,17 @@ begin
       for j := 0 to Pred(BLOCKSIZE) do
       begin
         lValue := lSpectrum[j] - lLastSpectrum[j];
-        lFlux += ifthen(lValue < 0, 0, lValue);
+        if lValue > 0 then
+        begin
+          lFlux += lValue;
+        end;
         lLastSpectrum[j] := lSpectrum[j];
-        lSpectralFlux.Add(lFlux);
       end;
+      lSpectralFlux.Add(lFlux);
+
+      writeln(Format('Spectral Flux %f', [lFlux]));
     end;
 
-    writeln('1');
     for i := 0 to Pred(lSpectralFlux.Count) do
     begin
       lStart := Math.max(0, i - THRESHOLD_WINDOW_SIZE);
@@ -171,7 +175,7 @@ begin
       lMean /= (lEnd - lStart);
       lThreshold.add(lMean * MULTIPLIER);
     end;
-    writeln('2');
+
     for i := 0 to Pred(lThreshold.Count) do
     begin
       if lThreshold[i] <= lSpectralFlux[i] then
@@ -183,7 +187,7 @@ begin
         lPrunnedSpectralFlux.Add(0);
       end;
     end;
-    writeln('3');
+
     for i := 0 to lPrunnedSpectralFlux.Count - 2 do
     begin
       if lPrunnedSpectralFlux[i] > lPrunnedSpectralFlux[i + 1] then
@@ -195,9 +199,7 @@ begin
         lPeaks.Add(0);
       end;
     end;
-    writeln('4');
 
-    writeln(format('peak count %d', [lPeaks.Count]));
   (*
   And that’s it. Any value > 0 in the ArrayList peaks is an onset or beat now.
   To calculate the point in time for each peak in peaks we simply take its index and
@@ -210,12 +212,10 @@ begin
     begin
       if lPeaks[i] > 0 then
       begin
-        //writeln(format('transient at %d', [Round(i * (BLOCKSIZE / 44100))]));
         //FTransients.Add(Round(i * (BLOCKSIZE / 44100)));
-        FTransients.Add(Round(i * (44100 / BLOCKSIZE)));
+        FTransients.Add(Round(i * BLOCKSIZE));
       end;
     end;
-    writeln('5');
   finally
     lSpectralFlux.Free;
     lPrunnedSpectralFlux.Free;
