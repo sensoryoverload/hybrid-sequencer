@@ -174,6 +174,7 @@ type
     { Audio }
     FDecimatedData: PSingle;
     FQuantizeSettings: TQuantizeSettings;
+    FSensitivity: Single;
     FWorkBuffer: PSingle;
     FConvertBuffer: PSingle;
     FBufferFrames: Integer;
@@ -311,6 +312,7 @@ type
     property PitchAlgorithm: TPitchAlgorithm read FPitchAlgorithm write SetPitchAlgorithm;
     property WaveFileName: string read FWaveFileName write SetWaveFileName;
     property QuantizeSetting: TQuantizeSettings read FQuantizeSettings write FQuantizeSettings;
+    property Sensitivity: Single read FSensitivity write FSensitivity;
   end;
 
   { TWaveFormCommand }
@@ -535,7 +537,17 @@ type
     property PitchAlgorithm: TPitchAlgorithm read FPitchAlgorithm write FPitchAlgorithm;
   end;
 
+  { TUpdateThresholdCommand }
 
+  TUpdateThresholdCommand = class(TWaveFormCommand)
+  private
+    FSensitivity: Single;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property Sensitivity: Single read FSensitivity write FSensitivity;
+  end;
 
 var
   BeatDetect: TBeatDetector;
@@ -587,6 +599,20 @@ begin
     Result := 0
   else
     Result := -1;
+end;
+
+{ TUpdateThresholdCommand }
+
+procedure TUpdateThresholdCommand.DoExecute;
+begin
+  FWavePattern.Sensitivity := FSensitivity;
+  FWavePattern.AutoMarkerProcess(True);
+  FWavePattern.Notify;
+end;
+
+procedure TUpdateThresholdCommand.DoRollback;
+begin
+  inherited DoRollback;
 end;
 
 { TSliceLooper }
@@ -767,6 +793,7 @@ begin
   FWave := TWaveFile.Create(AObjectOwner, True);
   FWave.BufferFormat := bfInterleave;
 
+
   // Initalize settings
   FDragSlice := False;
   FZooming := False;
@@ -774,6 +801,8 @@ begin
   FCursorAdder := 0;
   FVolumeDecay := 1;
   FSampleScale := 1;
+
+  FSensitivity := 1.5;
 
   FSliceList := TObjectList.Create(True);
   FCurrentSliceIndex:= 0;
@@ -1657,6 +1686,7 @@ var
   lCurrentSlice: TMarker;
   lFirstSlice: Boolean;
   lDetermineTransients: TDetermineTransients;
+  lDoAddSlice: Boolean;
 begin
   lFirstSlice := True;
   lCurrentSlice := TMarker(FSliceList[0]);
@@ -1714,16 +1744,23 @@ begin
 
   lDetermineTransients := TDetermineTransients.Create(Round(GSettings.SampleRate));
   try
+    lDetermineTransients.Sensitivity := FSensitivity;
     lDetermineTransients.Process(TChannel(Wave.ChannelList[0]).Buffer, FWave.Frames, FWave.ChannelCount);
     if lDetermineTransients.Transients.Count = 0 then
     begin
       DBLog('no transients');
     end;
+    lDoAddSlice := True;
     for i := 0 to Pred(lDetermineTransients.Transients.Count) do
     begin
-      {dblog(format('transient at %d', [lDetermineTransients.Transients[i]]));
-      sleep(5); }
-      AddSlice(lDetermineTransients.Transients[i], SLICE_VIRTUAL, True);
+      if i > 0 then
+      begin
+        lDoAddSlice := lDetermineTransients.Transients[i] - lDetermineTransients.Transients[i - 1] > (GSettings.SampleRate * 0.125);
+      end;
+      if lDoAddSlice then
+      begin
+        AddSlice(lDetermineTransients.Transients[i], SLICE_VIRTUAL, True);
+      end;
     end;
   finally
     lDetermineTransients.Free;

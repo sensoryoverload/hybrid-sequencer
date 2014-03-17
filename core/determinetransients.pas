@@ -8,10 +8,10 @@ uses
   Classes, SysUtils, FFTReal, UComplex, LCLIntf, math, fgl;
 
 const
-  BLOCKSIZE = 1024;
+  BLOCKSIZE = 512;
   HALFBLOCKSIZE = BLOCKSIZE div 2;
   THRESHOLD_WINDOW_SIZE = 10;
-  MULTIPLIER = 1.5;
+  DEFAULT_SENSITIVITY = 1.9;
 
 type
   TIntegerList = specialize TFPGList<Integer>;
@@ -27,7 +27,9 @@ type
     FF_Input: pflt_array;
     FPerformance: Cardinal;
     FSampleRate: Integer;
+    FSensitivity: Single;
     FTransients: TIntegerList;
+    procedure SetSensitivity(AValue: Single);
   public
     constructor Create(ASampleRate: Integer); reintroduce;
     destructor Destroy; override;
@@ -35,16 +37,24 @@ type
 
     property Performance: Cardinal read FPerformance;
     property Transients: TIntegerList read FTransients;
+    property Sensitivity: Single read FSensitivity write SetSensitivity;
   end;
 
 implementation
 
 { TDetermineTransients }
 
+procedure TDetermineTransients.SetSensitivity(AValue: Single);
+begin
+  if FSensitivity=AValue then Exit;
+  FSensitivity:=AValue;
+end;
 
 constructor TDetermineTransients.Create(ASampleRate: Integer);
 begin
   inherited Create;
+
+  FSensitivity := DEFAULT_SENSITIVITY;
 
   FTransients := TIntegerList.Create;
 
@@ -107,7 +117,7 @@ begin
   try
     for lBlockIndex := 0 to Pred(AFrames div BLOCKSIZE) do
     begin
-      lBlockOffset := lBlockIndex * BLOCKSIZE;
+      lBlockOffset := lBlockIndex * BLOCKSIZE * AChannelCount;
 
       if AChannelCount = 2 then
       begin
@@ -148,7 +158,6 @@ begin
       end;
 
       lFlux := 0;
-      lValue := 0;
       for j := 0 to Pred(BLOCKSIZE) do
       begin
         lValue := lSpectrum[j] - lLastSpectrum[j];
@@ -159,8 +168,6 @@ begin
         lLastSpectrum[j] := lSpectrum[j];
       end;
       lSpectralFlux.Add(lFlux);
-
-      writeln(Format('Spectral Flux %f', [lFlux]));
     end;
 
     for i := 0 to Pred(lSpectralFlux.Count) do
@@ -173,7 +180,7 @@ begin
         lMean += lSpectralFlux[j];
       end;
       lMean /= (lEnd - lStart);
-      lThreshold.add(lMean * MULTIPLIER);
+      lThreshold.add(lMean * FSensitivity);
     end;
 
     for i := 0 to Pred(lThreshold.Count) do
@@ -200,19 +207,10 @@ begin
       end;
     end;
 
-  (*
-  And that’s it. Any value > 0 in the ArrayList peaks is an onset or beat now.
-  To calculate the point in time for each peak in peaks we simply take its index and
-  multiply it by the time span that the original sample window takes up.
-  Say we used a sample window of 1024 samples at a sampling rate of 44100Hz then
-  we have the simple forumula time = index * (1024 / 44100). That’s it.
-  Here’s the output:  *)
-
     for i := 0 to Pred(lPeaks.Count) do
     begin
       if lPeaks[i] > 0 then
       begin
-        //FTransients.Add(Round(i * (BLOCKSIZE / 44100)));
         FTransients.Add(Round(i * BLOCKSIZE));
       end;
     end;

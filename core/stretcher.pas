@@ -214,8 +214,6 @@ begin
         lSequenceWindow := lSequenceWindow * 0.5;
       end;
 
-      //ASliceCounter := fmod(ASampleCursor - lSliceStart.Location, lSequenceWindow);
-
       // Jumped to next slice
       if FLastSliceIndex <> i then
       begin
