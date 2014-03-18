@@ -129,6 +129,7 @@ type
     FBarLength: Integer;
     FDragSlice: Boolean;
     FZooming: Boolean;
+    FHighlightMarker: TMarkerGUI;
     FSelectedSlice: TMarkerGUI;
     FSelectedLoopMarkerGUI: TLoopMarkerGUI;
     FSelectedSampleMarkerGUI: TSampleMarkerGUI;
@@ -225,6 +226,7 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState;
                     var Accept: Boolean); override;
+    procedure MouseLeave; override;
     procedure DoOnResize; override;
     procedure CreateMarkerGUI(AObjectID: string);
     procedure DeleteMarkerGUI(AObjectID: string);
@@ -782,12 +784,26 @@ begin
           if TMarkerGUI(SliceListGUI[SliceLoop]).Locked then
           begin
             FBitmap.Canvas.Brush.Color := clYellow;
-            FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+            if FHighlightMarker = SliceListGUI[SliceLoop] then
+            begin
+              FBitmap.Canvas.Rectangle(SliceLeft - 6, 19, SliceLeft + 6, 31);
+            end
+            else
+            begin
+              FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+            end;
           end
           else
           begin
             FBitmap.Canvas.Brush.Color := GRAYSCALE_80;
-            FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+            if FHighlightMarker = SliceListGUI[SliceLoop] then
+            begin
+              FBitmap.Canvas.Rectangle(SliceLeft - 6, 19, SliceLeft + 6, 31);
+            end
+            else
+            begin
+              FBitmap.Canvas.Rectangle(SliceLeft - 5, 20, SliceLeft + 5, 30);
+            end;
           end;
 
           //FBitmap.Canvas.TextOut(SliceLeft + 2, 60, Format('%d', [TMarkerGUI(SliceListGUI[SliceLoop]).Location]));
@@ -1206,6 +1222,7 @@ procedure TWaveGUI.MouseMove(Shift: TShiftState; X, Y: Integer);
 var
   lXRelative: Integer;
   lXLocationInSample: Integer;
+  lMarker: TMarkerGUI;
 begin
   FMouseX := X;
   FMouseY := Y;
@@ -1218,15 +1235,26 @@ begin
     begin
       Screen.Cursor := crSizeWE;
     end
-    else if Assigned(GetSliceAt(Round((lXRelative - SampleStart.Location) * FBpmAdder), FMargin)) then
-    begin
-      Screen.Cursor := crSizeWE;
-    end
     else
     begin
-      Screen.Cursor := crArrow;
-    end;
+      lMarker := GetSliceAt(Round((lXRelative - SampleStart.Location) * FBpmAdder), FMargin);
 
+      FHighlightMarker := nil;
+      Screen.Cursor := crArrow;
+
+      if Assigned(lMarker) then
+      begin
+        if (Y >= 20) and (Y < 30) then
+        begin
+          FHighlightMarker := lMarker;
+
+          if lMarker.Locked then
+          begin
+            Screen.Cursor := crSizeWE;
+          end;
+        end;
+      end;
+    end;
 
     if Assigned(FSelectedLoopMarkerGUI) then
     begin
@@ -1449,6 +1477,13 @@ begin
   inherited DragOver(Source, X, Y, State, Accept);
 
   Accept := True;
+end;
+
+procedure TWaveGUI.MouseLeave;
+begin
+  Screen.Cursor := crArrow;
+
+  inherited MouseLeave;
 end;
 
 procedure TWaveGUI.DoOnResize;
