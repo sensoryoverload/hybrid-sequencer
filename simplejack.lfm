@@ -1,7 +1,7 @@
 object MainApp: TMainApp
-  Left = 94
+  Left = 77
   Height = 574
-  Top = 80
+  Top = 129
   Width = 1183
   AllowDropFiles = True
   Caption = 'Hybrid 2009'
@@ -159,6 +159,17 @@ object MainApp: TMainApp
       OnMouseDown = TreeView1MouseDown
       Options = [tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowRoot, tvoToolTips]
       TreeLinePenStyle = psSolid
+    end
+    object ScrollBar1: TScrollBar
+      Left = 1168
+      Height = 297
+      Top = 43
+      Width = 15
+      Align = alRight
+      Kind = sbVertical
+      PageSize = 0
+      TabOrder = 3
+      OnChange = ScrollBar1Change
     end
   end
   object BottomSplitter: TCollapseSplitter

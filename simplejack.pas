@@ -137,6 +137,7 @@ type
     miEdit: TMenuItem;
     pnlTop: Tpanel;
     ScreenUpdater: TTimer;
+    ScrollBar1: TScrollBar;
     Splitter1: TSplitter;
     ToolBar1: TToolBar;
     tbPlay: TToolButton;
@@ -181,6 +182,7 @@ type
     procedure ScreenUpdaterTimer(Sender: TObject);
     procedure Formdestroy(Sender: Tobject);
     procedure Formcreate(Sender: Tobject);
+    procedure ScrollBar1Change(Sender: TObject);
     procedure TreeView1AdvancedCustomDrawItem(Sender: TCustomTreeView;
       Node: TTreeNode; State: TCustomDrawState; Stage: TCustomDrawStage;
       var PaintImages, DefaultDraw: Boolean);
@@ -1302,6 +1304,11 @@ begin
 
   DBLog('end TMainApp.FormCreate');
 End;
+
+procedure TMainApp.ScrollBar1Change(Sender: TObject);
+begin
+  FSessionGrid.ScrollIndex := ScrollBar1.Position;
+end;
 
 procedure TMainApp.TreeView1AdvancedCustomDrawItem(Sender: TCustomTreeView;
   Node: TTreeNode; State: TCustomDrawState; Stage: TCustomDrawStage;

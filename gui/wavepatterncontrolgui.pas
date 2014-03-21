@@ -34,6 +34,8 @@ type
     procedure cbPitchAlgoChange(Sender: TObject);
     procedure cbQuantizeChange(Sender: TObject);
     procedure LoopEnabledChange(Sender: TObject);
+    procedure lThresholdChange(Sender: TObject);
+    procedure lThresholdStartChange(Sender: TObject);
     procedure pcBPMChange(Sender: TObject);
     procedure pcBPMStartChange(Sender: TObject);
     procedure pcPitchChange(Sender: TObject);
@@ -352,6 +354,27 @@ end;
 procedure TWavePatternControlGUI.LoopEnabledChange(Sender: TObject);
 begin
   // todo
+end;
+
+procedure TWavePatternControlGUI.lThresholdChange(Sender: TObject);
+var
+  lThresholdCommand: TUpdateThresholdCommand;
+begin
+  lThresholdCommand := TUpdateThresholdCommand.Create(FObjectID);
+  try
+//    lThresholdCommand.Sensitivity := lThreshold.Value;
+
+    GCommandQueue.PushCommand(lThresholdCommand);
+  except
+    lThresholdCommand.Free;
+  end;
+
+  FWaveGUI.Invalidate;
+end;
+
+procedure TWavePatternControlGUI.lThresholdStartChange(Sender: TObject);
+begin
+  //
 end;
 
 procedure TWavePatternControlGUI.DoChancheRealBPMCommand(APersist: Boolean);
