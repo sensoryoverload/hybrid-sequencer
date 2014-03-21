@@ -115,7 +115,7 @@ begin
   lThreshold := TSingleList.Create;
   lPeaks := TSingleList.Create;
   try
-    for lBlockIndex := 0 to Pred(AFrames div BLOCKSIZE) do
+    for lBlockIndex := 0 to Pred(AFrames div BLOCKSIZE) - 1 do
     begin
       lBlockOffset := lBlockIndex * BLOCKSIZE * AChannelCount;
 
@@ -199,11 +199,12 @@ begin
     begin
       if lPrunnedSpectralFlux[i] > lPrunnedSpectralFlux[i + 1] then
       begin
-        lPeaks.Add(lPrunnedSpectralFlux[i]);
+//        lPeaks.Add(lPrunnedSpectralFlux[i]);
+        FTransients.Add(Round(i * BLOCKSIZE));
       end
       else
       begin
-        lPeaks.Add(0);
+        //lPeaks.Add(0);
       end;
     end;
 

@@ -23,11 +23,19 @@ type
 
     FSliceMainCursor: Single;
     FSliceOverlapCursor: Single;
+
+    FTransientFadeOut: Single;
+    FTransientFadeIn: Single;
+    FTransient: Boolean;
+    FTransientTriggered: Boolean;
+    FTransientMainCursor: Single;
+    FTransientFadeAdder: Single;
+
     FOverlapFadeOut: Single;
     FOverlapFadeIn: Single;
     FOverlapFadeAdder: Single;
 
-    FOverlapTrigger: Boolean;
+    FOverlapTriggered: Boolean;
     FOverlapping: Boolean;
     FOverlapLengthMs: Integer;
     FOverlapLength: Integer;
@@ -80,7 +88,10 @@ begin
   FCrossCorrelate := TCrossCorrelate.Create(ASamplerate);
 
   FOverlapping := False;
-  FOverlapTrigger := False;
+  FOverlapTriggered := False;
+  FTransient := False;
+  FTransientTriggered := False;
+
   FLastSliceIndex := -1;
 end;
 
@@ -195,6 +206,8 @@ var
   lRightValueMain: Single;
   lLeftValueOverlap: Single;
   lRightValueOverlap: Single;
+  lLeftValueTransient: Single;
+  LRightValueTransient: Single;
   lSeekwindowOffset: Integer;
   lOffset: Integer;
   lCalculatedCursor: Single;
@@ -234,14 +247,15 @@ begin
         FOverlapFadeOut := 0;
       end;
 
+      // Overlapping section
       FOverlapping := ASliceCounter > lSequenceWindow - FOverlapLength;
       if FOverlapping then
       begin
-        if not FOverlapTrigger then
+        if not FOverlapTriggered then
         begin
-          FOverlapTrigger := True;
+          FOverlapTriggered := True;
 
-          // Seek in history (maybe better around or future)
+          // Seek in history
           lCalculatedCursor :=
             lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ASampleCursor - lSliceStart.Location));
@@ -251,9 +265,10 @@ begin
           begin
             lSeekwindowOffset := 0;
           end
-          else if lSeekwindowOffset + FSeekwindow > lSliceEnd.Location then
+          // Make shure the cursor does not run past the end of the slice
+          else if lSeekwindowOffset + lSequenceWindow > lSliceEnd.Location then
           begin
-            lSeekwindowOffset := lSliceEnd.Location - FSeekwindow - FOverlapLength;
+            lSeekwindowOffset := lSliceEnd.Location - Round(lSequenceWindow) - FOverlapLength;
           end;
 
           // Crosscorrelate last played audio with audio at the real cursor
@@ -292,14 +307,55 @@ begin
       end
       else
       begin
-        FOverlapTrigger := False;
+        FOverlapTriggered := False;
         FOverlapFadeIn := 1;
         FOverlapFadeOut := 0;
       end;
 
+      // Slice marker transient section
+      FTransient := lSliceEnd.Location - ASampleCursor < FOverlapLength;
+      if FTransient then
+      begin
+        if not FTransientTriggered then
+        begin
+          FTransientTriggered := True;
+
+          FTransientMainCursor :=
+            lSliceStart.OrigLocation +
+            (lSliceStart.DecayRate * (ASampleCursor - lSliceStart.Location));
+
+          FTransientFadeAdder := 1 / FOverlapLength;
+        end;
+
+        FTransientMainCursor := FTransientMainCursor + FPitch;
+
+        if FTransientFadeOut > 0 then
+        begin
+          FTransientFadeOut := FTransientFadeOut - FTransientFadeAdder
+        end
+        else
+        begin
+          FTransientFadeOut := 0;
+        end;
+        if FTransientFadeIn < 1 then
+        begin
+          FTransientFadeIn := FTransientFadeIn + FTransientFadeAdder
+        end
+        else
+        begin
+          FTransientFadeIn := 1;
+        end;
+      end
+      else
+      begin
+        FTransientTriggered := False;
+        FTransientFadeIn := 0;
+        FTransientFadeOut := 1;
+      end;
+
       // Increate nominal always playing at samplespeed * pitch
-      FSliceMainCursor := FSliceMainCursor + Pitch;
-      FSliceOverlapCursor := FSliceOverlapCursor + Pitch;
+      FSliceMainCursor := FSliceMainCursor + FPitch;
+      FSliceOverlapCursor := FSliceOverlapCursor + FPitch;
 
       FSliceLastCounter := ASliceCounter;
 
@@ -315,16 +371,23 @@ begin
       // Get overlap stream
       GetSample(FSliceOverlapCursor, ASourceBuffer, lLeftValueOverlap, lRightValueOverlap, AChannelCount);
 
+      // Get transient stream
+      GetSample(FTransientMainCursor, ASourceBuffer, lLeftValueTransient, LRightValueTransient, AChannelCount);
+
       // Mix both streams together
       ATargetBuffer[AFrameIndex * 2] :=
-        lLeftValueMain * FOverlapFadeIn
+        (lLeftValueMain * FOverlapFadeIn
         +
-        lLeftValueOverlap * FOverlapFadeOut;
+        lLeftValueOverlap * FOverlapFadeOut) * FTransientFadeOut
+        +
+        lLeftValueTransient * FTransientFadeIn;
 
       ATargetBuffer[AFrameIndex * 2 + 1] :=
-        lRightValueMain * FOverlapFadeIn
+        (lRightValueMain * FOverlapFadeIn
         +
-        lRightValueOverlap * FOverlapFadeOut;
+        lRightValueOverlap * FOverlapFadeOut) * FTransientFadeOut
+        +
+        LRightValueTransient * FTransientFadeIn;
 
       FLastSliceIndex := i;
       break;
