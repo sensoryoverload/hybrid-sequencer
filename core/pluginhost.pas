@@ -255,35 +255,53 @@ end;
 procedure TPluginProcessor.DoCreateInstance(var AObject: TObject; AClassName: string);
 var
   lPluginNode: TPluginNode;
+
+  procedure AddPluginToNodeList(APluginNode: TPluginNode);
+  begin
+    AObject := APluginNode;
+
+    FNodeList.Add(APluginNode);
+
+    APluginNode.OnPopulateAutomationDevices := FPopulateAutomationDevices;
+    APluginNode.ObjectOwnerID := ObjectID;
+    APluginNode.Instantiate;
+    APluginNode.Activate;
+  end;
+
 begin
   DBLog('start TPluginProcessor.DoCreateInstance');
 
   if AClassName = 'TScriptNode' then
   begin
     lPluginNode := TScriptNode.Create(ObjectID, MAPPED);
-    lPluginNode.ObjectOwnerID := ObjectID;
-    NodeList.Add(lPluginNode);
-    AObject := lPluginNode;
   end
-  else if AClassName = 'TLADSPANode' then
+  else if AClassName = 'TPluginLADSPA' then
   begin
     lPluginNode := TPluginLADSPA.Create(ObjectID, MAPPED);
-    lPluginNode.ObjectOwnerID := ObjectID;
-    lPluginNode.Instantiate;
-    lPluginNode.Activate;
-    NodeList.Add(lPluginNode);
-    AObject := lPluginNode;
   end
   else if AClassName = 'TExternalNode' then
   begin
     lPluginNode := TExternalNode.Create(ObjectID);
-    lPluginNode.ObjectOwnerID := ObjectID;
-    NodeList.Add(lPluginNode);
-    AObject := lPluginNode;
+  end
+  else if AClassName = 'TPluginBassline' then
+  begin
+    lPluginNode := TPluginBassline.Create(ObjectID, MAPPED);
+  end
+  else if AClassName = 'TSampleBank' then
+  begin
+    lPluginNode := TPluginBassline.Create(ObjectID, MAPPED);
   end
   else
   begin
-    // Should raise some error/exception or just let go?..
+    raise Exception.CreateFmt(
+      'PluginProcessor: Error loading unknown plugin format',
+      [AClassName]);
+  end;
+
+  if Assigned(lPluginNode) then
+  begin
+    AddPluginToNodeList(lPluginNode);
+    SortPlugins;
   end;
 
   DBLog('end TPluginProcessor.DoCreateInstance');
