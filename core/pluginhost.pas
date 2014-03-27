@@ -264,8 +264,6 @@ var
 
     APluginNode.OnPopulateAutomationDevices := FPopulateAutomationDevices;
     APluginNode.ObjectOwnerID := ObjectID;
-    APluginNode.Instantiate;
-    APluginNode.Activate;
   end;
 
 begin
@@ -350,8 +348,14 @@ begin
 end;
 
 procedure TPluginProcessor.Initialize;
+var
+  lIndex: Integer;
 begin
-  //
+  for lIndex := 0 to Pred(FNodeList.Count) do
+  begin
+    TPluginNode(FNodeList[lIndex]).Instantiate;
+    TPluginNode(FNodeList[lIndex]).Activate;
+  end;
 end;
 
 procedure TPluginProcessor.Finalize;

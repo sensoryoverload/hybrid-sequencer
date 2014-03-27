@@ -549,9 +549,6 @@ type
     property Sensitivity: Single read FSensitivity write FSensitivity;
   end;
 
-var
-  BeatDetect: TBeatDetector;
-
 implementation
 
 function QuantizeLocation(ALocation: Integer; AQuantizeSettings: TQuantizeSettings): Integer;
@@ -757,7 +754,6 @@ end;
 procedure TWavePattern.SetTransientThreshold(const AValue: Integer);
 begin
   FTransientThreshold:= AValue;
-  BeatDetect.setThresHold(FTransientThreshold / 100);
   AutoMarkerProcess(True);
   Notify;
 end;
@@ -991,9 +987,6 @@ begin
     finally
       lBPMDetect.Free;
     end;
-
-    //Detect onsets as default
-    BeatDetect.setThresHold(0.5);
 
     AutoMarkerProcess(True);
 
@@ -1531,6 +1524,7 @@ begin
       if PitchAlgorithm = paSliceStretch then
       begin
         FSliceStretcher.Pitch := Pitch;
+        FSliceStretcher.Tempo := GAudioStruct.BPMScale;
         FSliceStretcher.SampleScale := FSampleScale;
         FSliceStretcher.Process(StartingSliceIndex, FSampleCursor, FSliceCounter, lBuffer, ABuffer, AFrameIndex, FWave.ChannelCount);
       end
@@ -1703,44 +1697,6 @@ begin
   end;
 
   SortSlices;
-
-  {for i := 0 to Pred(32)  do
-  begin
-    AddSlice(Round(i * FWave.Frames / 32), SLICE_VIRTUAL, True);
-  end;
-  DBlog(format('slicecount %d', [FSliceList.Count]));}
-
-  (*if FWave.ChannelCount > 0 then
-  begin
-    BeatDetect.setThresHold(0.5);
-    for i := 0 to Pred(FWave.ReadCount div FWave.ChannelCount) do
-    begin
-      BeatDetect.AudioProcess(TChannel(Wave.ChannelList[0]).Buffer[i * FWave.ChannelCount]);
-      if BeatDetect.BeatPulse then
-      begin
-        if Assigned(lCurrentSlice) and BeatDetect.TriggerOn then
-        begin
-          WindowLength := 0;
-        end;
-
-        lCurrentSlice := AddSlice(i - 250, SLICE_VIRTUAL, True);
-        if lFirstSlice then
-        begin
-          //LoopStart.Value := i;
-          lFirstSlice := False;
-        end;
-      end;
-
-      if BeatDetect.ReleasePulse then
-      begin
-        WindowLength := 0;
-      end
-      else
-      begin
-        Inc(WindowLength);
-      end;
-    end;
-  end;  *)
 
   lDetermineTransients := TDetermineTransients.Create(Round(GSettings.SampleRate));
   try
@@ -2687,10 +2643,6 @@ end;
 
 
 initialization
-
-  BeatDetect := TBeatDetector.Create;
-
 finalization
-  BeatDetect.Free;
 
 end.

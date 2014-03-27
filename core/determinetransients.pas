@@ -1,3 +1,22 @@
+{
+  Copyright (C) 2014 Robbert Latumahina
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation; either version 2.1 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+  determinetransients.pas
+}
 unit determinetransients;
 
 {$mode objfpc}{$H+}
@@ -85,12 +104,10 @@ function TDetermineTransients.Process(
   AChannelCount: Integer = 2): Integer;
 var
   a_real, a_img: double;
-  scale: double;
   i, j: Integer;
   lOffset: Integer;
   a_cmp, b_cmp, f_cmp: complex;
   f_abs: double;
-  lMaximum: double;
   lStartTime, lEndTime: Cardinal;
   lBlockIndex: Integer;
   lBlockOffset: Integer;
@@ -115,7 +132,7 @@ begin
   lThreshold := TSingleList.Create;
   lPeaks := TSingleList.Create;
   try
-    for lBlockIndex := 0 to Pred(AFrames div BLOCKSIZE) - 1 do
+    for lBlockIndex := 0 to Pred(AFrames div BLOCKSIZE) do
     begin
       lBlockOffset := lBlockIndex * BLOCKSIZE * AChannelCount;
 
@@ -145,7 +162,6 @@ begin
 
       FFFT.do_fft(FA_Output, FA_Input);
 
-      scale := 1/(2 * BLOCKSIZE -1);
       for i := 0 to Pred(HALFBLOCKSIZE) do
       begin
         a_cmp.re := FA_Output^[i];
@@ -199,20 +215,7 @@ begin
     begin
       if lPrunnedSpectralFlux[i] > lPrunnedSpectralFlux[i + 1] then
       begin
-//        lPeaks.Add(lPrunnedSpectralFlux[i]);
-        FTransients.Add(Round(i * BLOCKSIZE));
-      end
-      else
-      begin
-        //lPeaks.Add(0);
-      end;
-    end;
-
-    for i := 0 to Pred(lPeaks.Count) do
-    begin
-      if lPeaks[i] > 0 then
-      begin
-        FTransients.Add(Round(i * BLOCKSIZE));
+        FTransients.Add(i * BLOCKSIZE);
       end;
     end;
   finally

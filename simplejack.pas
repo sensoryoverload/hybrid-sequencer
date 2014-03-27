@@ -821,7 +821,7 @@ begin
   try
     lSaveDialog.InitialDir := ExtractFilePath(ParamStr(0));
     lSaveDialog.DefaultExt := '.hls';
-    lSaveDialog.Filter := 'Hybrid Live Set|*.hls';;
+    lSaveDialog.Filter := 'Hybrid Live Set|*.hls';
     if lSaveDialog.Execute then
     begin
       if FileExists(lSaveDialog.FileName) then
@@ -832,6 +832,10 @@ begin
       // save
       if lSave then
       begin
+        if SameText(ExtractFileNameWithoutExt(lSaveDialog.FileName), lSaveDialog.FileName) then
+        begin
+          lSaveDialog.FileName := lSaveDialog.FileName + '.hls';
+        end;
         GAudioStruct.LiveSetName := lSaveDialog.FileName;
 
         SaveGlobalSession(lSaveDialog.FileName);

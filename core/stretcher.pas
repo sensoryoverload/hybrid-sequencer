@@ -1,3 +1,22 @@
+{
+  Copyright (C) 2014 Robbert Latumahina
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation; either version 2.1 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+  stretcher.pas
+}
 unit stretcher;
 
 {$mode objfpc}{$H+}
@@ -24,12 +43,16 @@ type
     FSliceMainCursor: Single;
     FSliceOverlapCursor: Single;
 
+    FLastSampleCursor: Single;
+    FTempo: Single;
+
     FTransientFadeOut: Single;
     FTransientFadeIn: Single;
     FTransient: Boolean;
     FTransientTriggered: Boolean;
     FTransientMainCursor: Single;
     FTransientFadeAdder: Single;
+    FTransientOverlapLength: Single;
 
     FOverlapFadeOut: Single;
     FOverlapFadeIn: Single;
@@ -70,6 +93,7 @@ type
     property InterpolationAlgorithm: TInterpolationAlgorithm read FInterpolationAlgorithm write FInterpolationAlgorithm;
     property SliceList: TObjectList read FSliceList write FSliceList;
     property Pitch: Single read FPitch write FPitch;
+    property Tempo: Single read FTempo write FTempo;
     property SampleScale: Single read FSampleScale write FSampleScale;
     property OverlapLengthMs: Integer write SetOverlapLengthMs;
     property SeekwindowMs: Integer write SetSeekwindowMs;
@@ -313,7 +337,8 @@ begin
       end;
 
       // Slice marker transient section
-      FTransient := lSliceEnd.Location - ASampleCursor < FOverlapLength;
+      FTransientOverlapLength := FOverlapLength * FTempo;
+      FTransient := lSliceEnd.Location - ASampleCursor < FTransientOverlapLength;
       if FTransient then
       begin
         if not FTransientTriggered then
@@ -324,7 +349,7 @@ begin
             lSliceStart.OrigLocation +
             (lSliceStart.DecayRate * (ASampleCursor - lSliceStart.Location));
 
-          FTransientFadeAdder := 1 / FOverlapLength;
+          FTransientFadeAdder := 1 / FTransientOverlapLength;
         end;
 
         FTransientMainCursor := FTransientMainCursor + FPitch;
@@ -390,6 +415,8 @@ begin
         LRightValueTransient * FTransientFadeIn;
 
       FLastSliceIndex := i;
+      FLastSampleCursor := ASampleCursor;
+
       break;
     end;
   end;
