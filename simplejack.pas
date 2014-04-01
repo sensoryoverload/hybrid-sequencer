@@ -1099,7 +1099,10 @@ begin
     end;
 
     // Display cpu usage in percentages
-    pcCPU_Load.Value := jack_cpu_load(client);
+    if not FNoJackMode then
+    begin
+      pcCPU_Load.Value := jack_cpu_load(client);
+    end;
 
     // Update views
     Self.UpdateView;

@@ -287,7 +287,7 @@ begin
   end
   else if AClassName = 'TSampleBank' then
   begin
-    lPluginNode := TPluginBassline.Create(ObjectID, MAPPED);
+    lPluginNode := TSampleBank.Create(ObjectID, MAPPED);
   end
   else
   begin
