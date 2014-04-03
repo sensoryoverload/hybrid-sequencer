@@ -396,19 +396,17 @@ begin
   begin
     Looped := False;
     {
-      Determine window
+      Determine window start
     }
-    FWindowStart := PatternCursor - 5;
-    FWindowEnd := PatternCursor + AFrameCount * GAudioStruct.BPMScale;
+    FWindowStart := PatternCursor - 1;
 
     {
       Look for first midi event in the window if any
     }
-    FStartingMidiDataCursor := nil;
+    FStartingMidiDataCursor := TMidiData(MidiDataList[0]);
     for i := 0 to Pred(MidiDataList.Count) do
     begin
-      if (FWindowStart <= TMidiData(MidiDataList[i]).Location) and
-        (FWindowEnd > TMidiData(MidiDataList[i]).Location) then
+      if (TMidiData(MidiDataList[i]).Location >= FWindowStart) then
       begin
         FStartingMidiDataCursor := TMidiData(MidiDataList[i]);
         break;
@@ -422,12 +420,13 @@ begin
   if Assigned(FStartingMidiDataCursor) then
   begin
     MidiDataCursor := FStartingMidiDataCursor;
-    while PatternCursor >= MidiDataCursor.Location do
+    while (MidiDataCursor.Location <= PatternCursor) and Assigned(MidiDataCursor) do
     begin
       {
         Put event in buffer
       }
       MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
+      DBLog(Format('MidiDataCursor %d Location %d', [AFrameIndex, MidiDataCursor.Location]));
 
       if Assigned(MidiDataCursor.Next) then
       begin
@@ -435,6 +434,7 @@ begin
       end
       else
       begin
+        MidiDataCursor := nil;
         break;
       end;
     end;

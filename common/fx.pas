@@ -130,6 +130,8 @@ type
   function Tanh2_pas2(x:Single):Single;
   function Tanh2(x:Single):Single;  assembler;
   function saturate(x: single; t: single): single;
+  function FastSin(x: Single): Single;
+  function FastCos(x: Single): Single;
 
 implementation
 
@@ -438,6 +440,26 @@ begin
       Result := -(t + (1-t) * sigmoid((-x - t) / ((1 - t) * 1.5)));
   end;
 end;
+
+function FastSin(x: Single): Single;
+const
+  B = 4 / PI;
+  C = -4 / (PI * PI);
+  P = 0.225;
+var
+  y: Single;
+begin
+  y := B * x + C * x * abs(x);
+  Result := P * (y * abs(y) - y) + y;
+end;
+
+function FastCos(x: Single): Single;
+const
+  HALF_PI = PI / 2;
+begin
+  Result := FastSin(x + HALF_PI)
+end;
+
 
 begin
 

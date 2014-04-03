@@ -42,16 +42,6 @@ const
   MONO = 1;
 
 type
-
-  TMidiEvent = record
-    // No function yet as midi-events are processed as fast as possible
-    // all depending on samplerate, midithread priority and rate
-    TimeStamp: single;
-    // Size of 'Data' buffer as these are the packets delivered by Jack
-    Size: Integer;
-    Data: ^Byte;
-  end;
-
   TMainApp = class;
 
   { TMidiMessage }
@@ -594,7 +584,7 @@ begin
 
           if lPlayingPattern.OkToPlay and lPlayingPattern.Playing then
           begin
-            lPlayingPattern.Process(lTrack.OutputBuffer, i, nframes);
+            lPlayingPattern.Process(lTrack.OutputBuffer, i, {nframes}1);
           end;
 
           lPlayingPattern.ProcessAdvance;
@@ -638,6 +628,9 @@ begin
                   lTrack.OutputBuffer,
                   lTrack.OutputBuffer,
                   nframes);
+
+                // Flush midi buffer as this the end of the processing line
+                TMidiPattern(lPlayingPattern).MidiBuffer.Reset;
               end
               else
               begin

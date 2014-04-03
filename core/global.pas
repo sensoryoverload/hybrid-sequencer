@@ -64,7 +64,7 @@ type
     Next: TAutomationData; // Point to next in list
   end;
 
-  TMidiEvent = record
+  TMidiEvent = class
     Location: Integer; // Location in samples
     DataType: Integer;   // Note, CC, NRPN
     DataValue1: byte;

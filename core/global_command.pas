@@ -163,7 +163,7 @@ type
   private
     FLength: Integer;
     FReadIndex: Integer;
-    FBuffer: array of TMidiEvent;
+    FBuffer: array[0..Pred(DEFAULT_MIDIBUFFER_SIZE)] of TMidiEvent;
 
     function GetCount: Integer;
   public
@@ -277,17 +277,28 @@ begin
 end;
 
 constructor TMidiBuffer.Create;
+var
+  lIndex: Integer;
 begin
   inherited Create;
 
-  SetLength(FBuffer, DEFAULT_MIDIBUFFER_SIZE);
+  for lIndex := 0 to Pred(DEFAULT_MIDIBUFFER_SIZE) do
+  begin
+    FBuffer[lIndex] := TMidiEvent.Create;
+  end;
 
   FReadIndex := 0;
   FLength := 0;
 end;
 
 destructor TMidiBuffer.Destroy;
+var
+  lIndex: Integer;
 begin
+  for lIndex := 0 to Pred(DEFAULT_MIDIBUFFER_SIZE) do
+  begin
+    FBuffer[lIndex].Free;
+  end;
 
   inherited Destroy;
 end;
