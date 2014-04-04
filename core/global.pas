@@ -53,6 +53,7 @@ type
     Length: Integer; // Notelength
 
     Next: TMidiData; // Point to next in list
+    constructor Create;
   end;
 
   TAutomationData = class(THybridPersistentModel)
@@ -201,6 +202,13 @@ implementation
 
 uses
   utils, xmlread, xmlwrite, dom;
+
+{ TMidiData }
+
+constructor TMidiData.Create;
+begin
+  DBLog('TMidiData.Create');
+end;
 
 { TObjectMapper }
 
