@@ -252,6 +252,7 @@ type
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure DblClick; override;
+    procedure MouseLeave; override;
     procedure DoOnResize; override;
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
@@ -1785,6 +1786,13 @@ begin
   UpdateView(True);
 
   inherited DblClick;
+end;
+
+procedure TMidiPatternGUI.MouseLeave;
+begin
+  Screen.Cursor := crArrow;
+
+  inherited MouseLeave;
 end;
 
 procedure TMidiPatternGUI.DoOnResize;
