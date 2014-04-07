@@ -243,7 +243,6 @@ type
 
     // Engine
     FMidiDataCursor: TMidiData;
-    FStartingMidiDataCursor: TMidiData;
     FWindowStart: Single;
     FWindowEnd: Single;
     FLooped: Boolean;
@@ -399,6 +398,16 @@ begin
 
     Looped := False;
     DBLog(Format('Looped cursor %f', [PatternCursor]));
+
+    for i := 0 to Pred(MidiDataList.Count) do
+    begin
+      DBLog(Format('%d Location %d Note %d Length %d', [
+        i,
+        TMidiData(MidiDataList[i]).Location,
+        TMidiData(MidiDataList[i]).DataValue1,
+        TMidiData(MidiDataList[i]).Length]));
+    end;
+
     {
       Look for first midi event in the window if any
     }
@@ -423,8 +432,8 @@ begin
     }
     if MidiDataCursor.Location >= LoopStart.Value then
     begin
-          MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
-          DBLog(Format('MidiDataCursor %d Location %d cursor %f buffersize %d ptr %d', [AFrameIndex, MidiDataCursor.Location, PatternCursor, MidiDataList.Count, Integer(MidiDataCursor)]));
+      MidiBuffer.WriteEvent(MidiDataCursor, AFrameIndex);
+      DBLog(Format('MidiDataCursor %d Location %d cursor %f buffersize %d ptr %d', [AFrameIndex, MidiDataCursor.Location, PatternCursor, MidiDataList.Count, Integer(MidiDataCursor)]));
     end;
 
     MidiDataCursor := MidiDataCursor.Next;
@@ -497,9 +506,8 @@ begin
 
   AObject := lMidiNote;
 
-  NoteList.Add(lMidiNote);
-
   FNoteList.Add(lMidiNote);
+
   FMidiDataList.Add(lMidiNote.MidiNoteStart);
   FMidiDataList.Add(lMidiNote.MidiNoteEnd);
 
@@ -559,8 +567,11 @@ begin
 
   FMapped := AMapped;
 
-  FMidiNoteStart := TMidiData.Create;
-  FMidiNoteEnd := TMidiData.Create;
+  if AMapped then
+  begin
+    FMidiNoteStart := TMidiData.Create;
+    FMidiNoteEnd := TMidiData.Create;
+  end;
 
   FSelected:= False;
 end;

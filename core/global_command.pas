@@ -606,15 +606,16 @@ var
 begin
   Sort(@SortOnLocation);
 
-  for i := 0 to Count - 2 do
+  for i := 0 to Pred(Count) do
   begin
-    TMidiData(Items[i]).Next := TMidiData(Items[i + 1]);
-  end;
-
-  // Initialize last one with nil
-  if Count > 0 then
-  begin
-    TMidiData(Items[Count - 1]).Next := nil;
+    if i = Pred(Count) then
+    begin
+      TMidiData(Items[i]).Next := nil;
+    end
+    else
+    begin
+      TMidiData(Items[i]).Next := TMidiData(Items[i + 1]);
+    end;
   end;
 end;
 
