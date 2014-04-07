@@ -356,6 +356,8 @@ begin
 
   Inherited Initialize;
 
+  FMidiDataList.IndexList;
+
   EndUpdate;
 end;
 
@@ -397,17 +399,6 @@ begin
     //MidiBuffer.Reset;
 
     Looped := False;
-    DBLog(Format('Looped cursor %f', [PatternCursor]));
-
-    for i := 0 to Pred(MidiDataList.Count) do
-    begin
-      DBLog(Format('%d Location %d Note %d Length %d', [
-        i,
-        TMidiData(MidiDataList[i]).Location,
-        TMidiData(MidiDataList[i]).DataValue1,
-        TMidiData(MidiDataList[i]).Length]));
-    end;
-
     {
       Look for first midi event in the window if any
     }
@@ -416,7 +407,6 @@ begin
       if (TMidiData(MidiDataList[i]).Location >= LoopStart.Value) then
       begin
         MidiDataCursor := TMidiData(MidiDataList[i]);
-        DBLog(Format('found start %d', [TMidiData(MidiDataList[i]).Location]));
         break;
       end;
     end;
@@ -500,18 +490,23 @@ var
 begin
   DBLog('start TMidiGrid.DoCreateInstance');
 
-  // create model Marker
-  lMidiNote := TMidiNote.Create(ObjectID, MAPPED);
-  lMidiNote.ObjectOwnerID := ObjectID;
+  if AClassName = 'TAutomationDataList' then
+  begin
 
-  AObject := lMidiNote;
+  end
+  else if AClassName = 'TMidiNote' then
+  begin
+    // create model Marker
+    lMidiNote := TMidiNote.Create(ObjectID, MAPPED);
+    lMidiNote.ObjectOwnerID := ObjectID;
 
-  FNoteList.Add(lMidiNote);
+    AObject := lMidiNote;
 
-  FMidiDataList.Add(lMidiNote.MidiNoteStart);
-  FMidiDataList.Add(lMidiNote.MidiNoteEnd);
+    FNoteList.Add(lMidiNote);
 
-  FMidiDataList.IndexList;
+    FMidiDataList.Add(lMidiNote.MidiNoteStart);
+    FMidiDataList.Add(lMidiNote.MidiNoteEnd);
+  end;
 
   DBLog('end TMidiGrid.DoCreateInstance');
 end;
