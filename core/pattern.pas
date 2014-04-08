@@ -87,15 +87,17 @@ type
     procedure SetText(const AValue: string);
     procedure Setpitch(const Avalue: Single);
   protected
-    procedure DoCreateInstance(var AObject: TObject; AClassName: string);
+    procedure DoCreateInstance(var AObject: TObject; AClassName: string); virtual;
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Assign(Source: TPersistent); override;
     procedure Initialize; override;
     procedure Finalize; override;
-    function FindAutomationParameter(APlugin: TPluginNode;
-        APluginParameter: TPortParameter): TAutomationDataList;
+{    function FindAutomationParameter(APlugin: TPluginNode;
+        APluginParameter: TPortParameter): TAutomationDataList;}
+    function FindAutomationParameter(APluginId: string;
+      APluginParameterId: string): TAutomationDataList;
     procedure DoPopulateAutomationDevices(ADeviceId: string; AParameterId: string;
       AAction: TPopulateAutomationAction);
 
@@ -253,7 +255,7 @@ var
 begin
   FPattern.BeginUpdate;
 
-  lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
+  lAutomationDataList := FPattern.FindAutomationParameter(FDeviceId, FParameterId);
   lAutomationDataList.First;
   while not lAutomationDataList.Eof do
   begin
@@ -297,7 +299,7 @@ procedure TEditAutomationDataCommand.DoRollback;
 var
   lAutomationDataList: TAutomationDataList;
 begin
-  lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
+  lAutomationDataList := FPattern.FindAutomationParameter(FDeviceId, FParameterId);
   lAutomationDataList.First;
   while not lAutomationDataList.Eof do
   begin
@@ -322,7 +324,7 @@ begin
   FPattern.BeginUpdate;
 
   // First find if there is already a automation track
-  lAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));
+  lAutomationParameter := FPattern.FindAutomationParameter(FDeviceId, FParameterId);
 
   // if not create one
   if not Assigned(lAutomationParameter) then
@@ -348,7 +350,7 @@ var
 begin
   FPattern.BeginUpdate;
 
-  lAutomationDataList := TAutomationDataList(GObjectMapper.GetModelObject(FParameterId));;
+  lAutomationDataList := FPattern.FindAutomationParameter(FDeviceId, FParameterId);
 
   if Assigned(lAutomationDataList) then
   begin
@@ -498,15 +500,48 @@ begin
 end;
 
 procedure TPattern.DoCreateInstance(var AObject: TObject; AClassName: string);
+var
+  lAutomationDataList: TAutomationDataList;
 begin
   DBLog('start TPattern.DoCreateInstance');
+
+  if AClassName = 'TAutomationDataList' then
+  begin
+    lAutomationDataList := TAutomationDataList.Create(ObjectID);
+    lAutomationDataList.ObjectOwnerID := ObjectID;
+
+    AutomationChannelList.Add(lAutomationDataList);
+
+    AObject := lAutomationDataList;
+  end;
 
   DBLog('end TPattern.DoCreateInstance');
 end;
 
 procedure TPattern.Initialize;
+var
+  lIndex: Integer;
+  lIndex2: Integer;
+  lAutomationDataList: TAutomationDataList;
+  lAutomationData: TAutomationData;
 begin
   OkToPlay := True;
+
+  DBLog(Format('AutomationChannelList Count %d', [AutomationChannelList.Count]));
+
+  for lIndex := 0 to Pred(AutomationChannelList.Count) do
+  begin
+    lAutomationDataList := TAutomationDataList(AutomationChannelList[lIndex]);
+
+    DBLog(Format('AutomationDataList Count %d', [lAutomationDataList.List.Count]));
+
+    for lIndex2 := 0 to Pred(lAutomationDataList.List.Count) do
+    begin
+      DBLog(Format('AutomationData DataValue %f Location %d', [
+        TAutomationData(lAutomationDataList.List[lIndex2]).DataValue,
+        TAutomationData(lAutomationDataList.List[lIndex2]).Location]));
+    end;
+  end;
 
   Notify;
 end;
@@ -519,7 +554,7 @@ begin
   Notify;
 end;
 
-function TPattern.FindAutomationParameter(APlugin: TPluginNode;
+(*function TPattern.FindAutomationParameter(APlugin: TPluginNode;
   APluginParameter: TPortParameter): TAutomationDataList;
 var
   lParameterIndex: Integer;
@@ -529,9 +564,35 @@ begin
   begin
     lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
 
-    if (lAutomationParameter.Plugin = APlugin) and
-      (lAutomationParameter.PluginParameter = APluginParameter) then
+    if (lAutomationParameter.Plugin = APluginId) and
+      (lAutomationParameter.PluginParameter = APluginParameterId) then
     begin
+      Result := lAutomationParameter;
+      break;
+    end;
+  end;
+end;*)
+
+function TPattern.FindAutomationParameter(APluginId: string;
+  APluginParameterId: string): TAutomationDataList;
+var
+  lParameterIndex: Integer;
+  lAutomationParameter: TAutomationDataList;
+begin
+  Result := nil;
+
+  for lParameterIndex := 0 to Pred(FAutomationChannelList.Count) do
+  begin
+    lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
+
+{    if (lAutomationParameter.Plugin = APluginId) and
+      (lAutomationParameter.PluginParameter = APluginParameterId) then}
+    if (lAutomationParameter.DeviceId = APluginId) and
+      (lAutomationParameter.ParameterId = APluginParameterId) then
+    begin
+      DBLog(format('%s = %s, %s = %s?', [
+        lAutomationParameter.DeviceId, APluginId, lAutomationParameter.ParameterId, APluginParameterId]));
+
       Result := lAutomationParameter;
       break;
     end;
@@ -549,26 +610,29 @@ var
   lPlugin: TPluginNode;
   lPluginParameter: TPortParameter;
 begin
-  lPlugin := TPluginNode(GObjectMapper.GetModelObject(ADeviceId));
-  lPluginParameter := TPortParameter(GObjectMapper.GetModelObject(AParameterId));
+  if not Loading then
+  begin;
+    lPlugin := TPluginNode(GObjectMapper.GetModelObject(ADeviceId));
+    lPluginParameter := TPortParameter(GObjectMapper.GetModelObject(AParameterId));
 
-  // Create/delete automationdatalist based on incoming parameters
-  case AAction of
-  paaInsert:
-    begin
-      lAutomationParameter := TAutomationDataList.Create(Self.ObjectID);
-
-      lAutomationParameter.Plugin := lPlugin;
-      lAutomationParameter.PluginParameter := lPluginParameter;
-      FAutomationChannelList.Add(lAutomationParameter);
-    end;
-  paaDelete:
-    begin
-      lAutomationParameter := FindAutomationParameter(lPlugin, lPluginParameter);
-      if Assigned(lAutomationParameter) then
+    // Create/delete automationdatalist based on incoming parameters
+    case AAction of
+    paaInsert:
       begin
-        FAutomationChannelList.Extract(lAutomationParameter);
-        lAutomationParameter.Free;
+        lAutomationParameter := TAutomationDataList.Create(Self.ObjectID);
+
+        lAutomationParameter.Plugin := lPlugin;
+        lAutomationParameter.PluginParameter := lPluginParameter;
+        FAutomationChannelList.Add(lAutomationParameter);
+      end;
+    paaDelete:
+      begin
+        lAutomationParameter := FindAutomationParameter(ADeviceId, AParameterId);
+        if Assigned(lAutomationParameter) then
+        begin
+          FAutomationChannelList.Extract(lAutomationParameter);
+          lAutomationParameter.Free;
+        end;
       end;
     end;
   end;

@@ -25,7 +25,7 @@ uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
  jacktypes, StdCtrls, Dialogs, Spin, bpm, beattrigger, Utils,
  globalconst, contnrs, global_command, ShellCtrls,
- global, math, pattern, sampler, pluginportmapper;
+ global, math, pattern, sampler, pluginportmapper, plugin;
 
 const
   MAX_LATENCY = 20000;
@@ -253,7 +253,7 @@ type
     function NoteByObjectID(AObjectID: string): TMidiNote;
     procedure SetQuantizeSetting(AValue: Integer);
   protected
-    procedure DoCreateInstance(var AObject: TObject; AClassName: string);
+    procedure DoCreateInstance(var AObject: TObject; AClassName: string); override;
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True);
     destructor Destroy; override;
@@ -351,12 +351,32 @@ begin
 end;
 
 procedure TMidiPattern.Initialize;
+var
+  lIndex: Integer;
+  lIndex2: Integer;
+  lAutomationDataList: TAutomationDataList;
 begin
   BeginUpdate;
 
   Inherited Initialize;
 
   FMidiDataList.IndexList;
+
+  (*DBLog(Format('AutomationChannelList Count %d', [AutomationChannelList.Count]));
+
+  for lIndex := 0 to Pred(AutomationChannelList.Count) do
+  begin
+    lAutomationDataList := TAutomationDataList(AutomationChannelList[lIndex]);
+
+    DBLog(Format('AutomationDataList Count %d', [lAutomationDataList.List.Count]));
+
+    for lIndex2 := 0 to Pred(lAutomationDataList.List.Count) do
+    begin
+      DBLog(Format('AutomationData DataValue %f Location %d', [
+        TAutomationData(lAutomationDataList.List[lIndex2]).DataValue,
+        TAutomationData(lAutomationDataList.List[lIndex2]).Location]));
+    end;
+  end;*)
 
   EndUpdate;
 end;
@@ -396,8 +416,6 @@ begin
   }
   if Looped then
   begin
-    //MidiBuffer.Reset;
-
     Looped := False;
     {
       Look for first midi event in the window if any
@@ -490,11 +508,9 @@ var
 begin
   DBLog('start TMidiGrid.DoCreateInstance');
 
-  if AClassName = 'TAutomationDataList' then
-  begin
+  Inherited DoCreateInstance(AObject, AClassName);
 
-  end
-  else if AClassName = 'TMidiNote' then
+  if AClassName = 'TMidiNote' then
   begin
     // create model Marker
     lMidiNote := TMidiNote.Create(ObjectID, MAPPED);

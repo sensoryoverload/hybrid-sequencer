@@ -56,13 +56,19 @@ type
     constructor Create;
   end;
 
-  TAutomationData = class(THybridPersistentModel)
-  public
-    Location: Integer; // Location in samples
-    DataValue: single;
-    RelativeOffset: Integer;
+  { TAutomationData }
 
+  TAutomationData = class(THybridPersistentModel)
+  private
+    FDataValue: single;
+    FLocation: Integer;
+  public
     Next: TAutomationData; // Point to next in list
+    RelativeOffset: Integer;
+    procedure Initialize; override;
+  published
+    property Location: Integer read FLocation write FLocation; // Location in samples
+    property DataValue: single read FDataValue write FDataValue;
   end;
 
   TMidiEvent = class
@@ -202,6 +208,17 @@ implementation
 
 uses
   utils, xmlread, xmlwrite, dom;
+
+{ TAutomationData }
+
+procedure TAutomationData.Initialize;
+begin
+  BeginUpdate;
+
+  Inherited Initialize;
+
+  EndUpdate;
+end;
 
 { TMidiData }
 

@@ -241,17 +241,21 @@ type
 
   TAutomationDataList = class(THybridPersistentModel)
   private
-    FList: TList;
+    FList: TObjectList;
     FLastIndex: Integer;
     FIndex: Integer;
     FDeviceId: string;
     FPlugin: TPluginNode;
     FPluginParameter: TPortParameter;
-    FPortId: string;
+    FParameterId: string;
+    function GetDeviceId: string;
+    function GetParameterId: string;
   protected
+    procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
+    procedure Initialize; override;
     function FrameFirstIndex(ALocation: Integer): Integer;
     function FrameLastIndex(ALocation: Integer): Integer;
     function CurrentAutomationData: TAutomationData;
@@ -267,13 +271,14 @@ type
     procedure DeleteAutomation(AAutomationData :TAutomationData);
 
     property LastIndex: Integer read FLastIndex write FLastIndex;
-    property List: TList read FList write FList;
     property Index: Integer read FIndex write FIndex;
 
-    property DeviceId: string read FDeviceId write FDeviceId;
-    property PortId: string read FPortId write FPortId;
     property Plugin: TPluginNode read FPlugin write FPlugin;
     property PluginParameter: TPortParameter read FPluginParameter write FPluginParameter;
+  published
+    property DeviceId: string read GetDeviceId write FDeviceId;
+    property ParameterId: string read GetParameterId write FParameterId;
+    property List: TObjectList read FList write FList;
   end;
 
   TMenuItemObjectType = (miotNone, miotDevice, miotDeviceParameter);
@@ -813,11 +818,35 @@ begin
   end;
 end;
 
+function TAutomationDataList.GetDeviceId: string;
+begin
+  Result := FPlugin.PluginName;
+end;
+
+function TAutomationDataList.GetParameterId: string;
+begin
+  Result := FPluginParameter.Caption;
+end;
+
+procedure TAutomationDataList.DoCreateInstance(var AObject: TObject; AClassName: string);
+var
+  lAutomationData: TAutomationData;
+begin
+  lAutomationData := TAutomationData.Create(ObjectID);
+  lAutomationData.ObjectOwnerID := ObjectOwnerID;
+
+  AObject := lAutomationData;
+
+  FList.Add(lAutomationData);
+end;
+
 constructor TAutomationDataList.Create(AObjectOwner: string; AMapped: Boolean = True);
 begin
   inherited Create(AObjectOwner, AMapped);
 
-  FList := TList.Create;
+  FOnCreateInstanceCallback := @DoCreateInstance;
+
+  FList := TObjectList.Create(False);
 end;
 
 destructor TAutomationDataList.Destroy;
@@ -825,6 +854,28 @@ begin
   FList.Free;
 
   inherited Destroy;
+end;
+
+procedure TAutomationDataList.Initialize;
+var
+  lPlugin: TPluginNode;
+  lPluginParameter: TPortParameter;
+  lIndex: Integer;
+begin
+  inherited Initialize;
+
+  IndexList;
+
+  //lPlugin := TPluginNode(GObjectMapper.GetModelObject(FDeviceId));
+  //lPluginParameter := TPortParameter(GObjectMapper.GetModelObject(FPortId));
+
+  DBLog('TAutomationDataList.Initialize;');
+  for lIndex := 0 to Pred(FList.Count) do
+  begin
+    dblog(Format('datavalue %f location %d',
+      [TAutomationData(FList[lIndex]).DataValue,
+      TAutomationData(FList[lIndex]).Location]));
+  end;
 end;
 
 {

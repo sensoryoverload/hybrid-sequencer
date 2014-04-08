@@ -271,6 +271,7 @@ begin
       lDeviceParameterItem.Plugin := lPluginNode;
       lDeviceParameterItem.PluginParameter := lPluginNode.InputControls[lParamaterIndex];
       lDeviceParameterItem.ObjectType := miotDeviceParameter;
+      lDeviceParameterItem.ParameterId := lPluginNode.InputControls[lParamaterIndex].Caption;
       lDeviceParameterItem.DeviceId := lPluginNode.ObjectID;
       lDeviceParameterItem.OnClick := @DeviceParameterClick;
       lDeviceItem.Add(lDeviceParameterItem);
@@ -286,15 +287,14 @@ begin
     begin
       FWaveGUI.EditMode := emAutomationEdit;
 
-      FWaveGUI.SelectedAutomationParameterId :=
-        FModel.FindAutomationParameter(
-          TMenuItemObject(Sender).Plugin,
-          TMenuItemObject(Sender).PluginParameter).ObjectID;
-
       FWaveGUI.SelectedAutomationDeviceId := TMenuItemObject(Sender).DeviceId;
+      FWaveGUI.SelectedAutomationParameterId := TMenuItemObject(Sender).ParameterId;
+
       btnAutomationSelect.Caption :=
         TMenuItemObject(Sender).Parent.Caption + ' > ' +
         TMenuItemObject(Sender).Caption;
+
+      FWaveGUI.UpdateView(False);
     end;
   end;
 end;
@@ -307,6 +307,7 @@ begin
     begin
       FWaveGUI.EditMode := emPatternEdit;
       btnAutomationSelect.Caption := 'None';
+      FWaveGUI.UpdateView(False);
     end;
   end;
 end;

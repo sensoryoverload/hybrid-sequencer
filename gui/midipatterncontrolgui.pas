@@ -248,9 +248,12 @@ begin
       lDeviceParameterItem.Plugin := lPluginNode;
       lDeviceParameterItem.PluginParameter := lPluginNode.InputControls[lParamaterIndex];
       lDeviceParameterItem.ObjectType := miotDeviceParameter;
-      lDeviceParameterItem.DeviceId := lPluginNode.ObjectID;
+      lDeviceParameterItem.DeviceId := lPluginNode.PluginName;
+      lDeviceParameterItem.ParameterId := lPluginNode.InputControls[lParamaterIndex].Caption;
       lDeviceParameterItem.OnClick := @DeviceParameterClick;
       lDeviceItem.Add(lDeviceParameterItem);
+
+      writeln('ZZZZZ DeviceId: ' + lDeviceParameterItem.DeviceId + ', PluginParameter: ' + lDeviceParameterItem.ParameterId);
     end;
   end;
 end;
@@ -263,15 +266,14 @@ begin
     begin
       FMidiPatternGUI.EditMode := emAutomationEdit;
 
-      FMidiPatternGUI.SelectedAutomationParameterId :=
-        FModel.FindAutomationParameter(
-          TMenuItemObject(Sender).Plugin,
-          TMenuItemObject(Sender).PluginParameter).ObjectID;
-
       FMidiPatternGUI.SelectedAutomationDeviceId := TMenuItemObject(Sender).DeviceId;
+      FMidiPatternGUI.SelectedAutomationParameterId := TMenuItemObject(Sender).ParameterId;
+
       btnAutomationSelect.Caption :=
         TMenuItemObject(Sender).Parent.Caption + ' > ' +
         TMenuItemObject(Sender).Caption;
+
+      FMidiPatternGUI.UpdateView(False);
     end;
   end;
 end;
@@ -284,6 +286,7 @@ begin
     begin
       FMidiPatternGUI.EditMode := emPatternEdit;
       btnAutomationSelect.Caption := 'None';
+      FMidiPatternGUI.UpdateView(False);
     end;
   end;
 end;

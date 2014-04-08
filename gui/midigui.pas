@@ -1345,8 +1345,6 @@ begin
   FSelectedAutomationDeviceId := AValue;
 
   FModel.SelectedAutomationDeviceId := AValue;
-
-  FSelectedAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FSelectedAutomationDeviceId));
 end;
 
 procedure TMidiPatternGUI.SetSelectedAutomationParameterId(AValue: string);
@@ -1356,7 +1354,16 @@ begin
 
   FModel.SelectedAutomationParameterId := AValue;
 
-  FSelectedAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameterId));
+  DBLog(Format('TMidiPatternGUI.SetSelectedAutomationParameterId %s.%s', [FSelectedAutomationDeviceId, FSelectedAutomationParameterId]));
+
+  FSelectedAutomationParameter := FModel.FindAutomationParameter(
+    FSelectedAutomationDeviceId,
+    FSelectedAutomationParameterId);
+
+  if Assigned(FSelectedAutomationParameter) then
+  begin
+    DBLog('Assigned(FSelectedAutomationParameter) = True');
+  end;
 end;
 
 procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);

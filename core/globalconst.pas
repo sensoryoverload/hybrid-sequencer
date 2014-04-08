@@ -210,6 +210,7 @@ type
     FObservers: TInterfaceList;
     FUpdateCount: Integer;
     FClassType: string;
+    FLoading: Boolean;
     FOnCreateInstanceCallback: TCreateInstanceCallback;
   public
     constructor Create(AObjectOwner: string; AMapped: Boolean = True); virtual;
@@ -229,6 +230,7 @@ type
     procedure LoadFromFile(AXMLFileName: string);
     procedure RecurseNotify(pVisitor: THybridPersistentModel);
     property OnCreateInstanceCallback: TCreateInstanceCallback read FOnCreateInstanceCallback write FOnCreateInstanceCallback;
+    property Loading: Boolean read FLoading;
   published
     property ClassType: string read FClassType;
   end;
@@ -1044,6 +1046,8 @@ var
 begin
   DBLog('start THybridPersistentModel.LoadFromXML ' + ClassName);
 
+  FLoading := True;
+
   if AXMLNode = nil then Exit; // Stops if reached a leaf
 
   lPropCount := GetPropList(Self.ClassInfo, tkAny, @lPropList);
@@ -1158,6 +1162,8 @@ begin
 
   // Initialize after setting all object properties
   Initialize;
+
+  FLoading := False;
 
   DBLog('end THybridPersistentModel.LoadFromXML ' + ClassName);
 end;

@@ -1668,8 +1668,6 @@ begin
   FSelectedAutomationDeviceId := AValue;
 
   FModel.SelectedAutomationDeviceId := AValue;
-
-  FSelectedAutomationDevice := TAutomationDevice(GObjectMapper.GetModelObject(FSelectedAutomationDeviceId));
 end;
 
 procedure TWaveGUI.SetSelectedAutomationParameterId(AValue: string);
@@ -1679,7 +1677,9 @@ begin
 
   FModel.SelectedAutomationParameterId := AValue;
 
-  FSelectedAutomationParameter := TAutomationDataList(GObjectMapper.GetModelObject(FSelectedAutomationParameterId));
+  FSelectedAutomationParameter := FModel.FindAutomationParameter(
+    FModel.SelectedAutomationDeviceId,
+    FModel.SelectedAutomationParameterId);
 end;
 
 procedure TWaveGUI.DeleteMarkerGUI(AObjectID: string);
