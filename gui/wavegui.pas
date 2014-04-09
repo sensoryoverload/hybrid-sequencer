@@ -1654,11 +1654,8 @@ end;
 
 procedure TWaveGUI.SetOffset(AValue: Integer);
 begin
-//  FIsDirty := True;
-
   FOffset := Round(FZoomFactorToScreen * LoopEnd.Location / 100 * AValue);
 
-//  Invalidate;
   UpdateView(True);
 end;
 

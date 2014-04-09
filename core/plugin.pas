@@ -244,12 +244,10 @@ type
     FList: TObjectList;
     FLastIndex: Integer;
     FIndex: Integer;
-    FDeviceId: string;
     FPlugin: TPluginNode;
     FPluginParameter: TPortParameter;
+    FDeviceId: string;
     FParameterId: string;
-    function GetDeviceId: string;
-    function GetParameterId: string;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -276,8 +274,8 @@ type
     property Plugin: TPluginNode read FPlugin write FPlugin;
     property PluginParameter: TPortParameter read FPluginParameter write FPluginParameter;
   published
-    property DeviceId: string read GetDeviceId write FDeviceId;
-    property ParameterId: string read GetParameterId write FParameterId;
+    property DeviceId: string read FDeviceId write FDeviceId;
+    property ParameterId: string read FParameterId write FParameterId;
     property List: TObjectList read FList write FList;
   end;
 
@@ -816,16 +814,6 @@ begin
     else
       result := 0;
   end;
-end;
-
-function TAutomationDataList.GetDeviceId: string;
-begin
-  Result := FPlugin.PluginName;
-end;
-
-function TAutomationDataList.GetParameterId: string;
-begin
-  Result := FPluginParameter.Caption;
 end;
 
 procedure TAutomationDataList.DoCreateInstance(var AObject: TObject; AClassName: string);

@@ -294,7 +294,7 @@ begin
         TMenuItemObject(Sender).Parent.Caption + ' > ' +
         TMenuItemObject(Sender).Caption;
 
-      FWaveGUI.UpdateView(False);
+      FWaveGUI.UpdateView(True);
     end;
   end;
 end;
@@ -307,7 +307,7 @@ begin
     begin
       FWaveGUI.EditMode := emPatternEdit;
       btnAutomationSelect.Caption := 'None';
-      FWaveGUI.UpdateView(False);
+      FWaveGUI.UpdateView(True);
     end;
   end;
 end;

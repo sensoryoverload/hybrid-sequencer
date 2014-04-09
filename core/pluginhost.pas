@@ -66,6 +66,9 @@ type
       AOutputBuffer: PSingle; AFrames: Integer);
     procedure InsertNode(ANode: TPluginNode);
     procedure RemoveNode(ANode: TPluginNode);
+    function FindDeviceById(ADeviceId: string): TPluginNode;
+    function FindParameterByDeviceAndParameterId(ADeviceId, ParameterId: string
+      ): TPortParameter;
     property Buffer: PSingle read FBuffer write FBuffer;
     property OnPopulateAutomationDevices: TPopulateAutomationDevices
       read FPopulateAutomationDevices write FPopulateAutomationDevices;
@@ -433,6 +436,36 @@ begin
   EndUpdate;
 
   DBLog('end TPluginProcessor.RemoveNode');
+end;
+
+function TPluginProcessor.FindDeviceById(ADeviceId: string): TPluginNode;
+var
+  i: Integer;
+  lPluginNode: TPluginNode;
+begin
+  Result := nil;
+  for i := 0 to Pred(FNodeList.Count) do
+  begin
+    lPluginNode := TPluginNode(FNodeList[i]);
+    if lPluginNode.PluginName = ADeviceId then
+    begin
+      Result := lPluginNode;
+      break;
+    end;
+  end;
+end;
+
+function TPluginProcessor.FindParameterByDeviceAndParameterId(ADeviceId, ParameterId: string): TPortParameter;
+var
+  i, j: Integer;
+  lPluginNode: TPluginNode;
+begin
+  Result := nil;
+  lPluginNode := FindDeviceById(ADeviceId);
+  if Assigned(lPluginNode) then
+  begin
+    Result := lPluginNode.PortParameterByName(ParameterId);
+  end;
 end;
 
 { TDeleteNodesCommand }

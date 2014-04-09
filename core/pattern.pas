@@ -533,6 +533,15 @@ begin
   begin
     lAutomationDataList := TAutomationDataList(AutomationChannelList[lIndex]);
 
+    // Reconnect to plugins
+    lAutomationDataList.Plugin :=
+      FPluginProcessor.FindDeviceById(lAutomationDataList.DeviceId);
+
+    lAutomationDataList.PluginParameter :=
+      FPluginProcessor.FindParameterByDeviceAndParameterId(
+        lAutomationDataList.DeviceId,
+        lAutomationDataList.ParameterId);
+
     DBLog(Format('AutomationDataList Count %d', [lAutomationDataList.List.Count]));
 
     for lIndex2 := 0 to Pred(lAutomationDataList.List.Count) do
@@ -554,25 +563,6 @@ begin
   Notify;
 end;
 
-(*function TPattern.FindAutomationParameter(APlugin: TPluginNode;
-  APluginParameter: TPortParameter): TAutomationDataList;
-var
-  lParameterIndex: Integer;
-  lAutomationParameter: TAutomationDataList;
-begin
-  for lParameterIndex := 0 to Pred(FAutomationChannelList.Count) do
-  begin
-    lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
-
-    if (lAutomationParameter.Plugin = APluginId) and
-      (lAutomationParameter.PluginParameter = APluginParameterId) then
-    begin
-      Result := lAutomationParameter;
-      break;
-    end;
-  end;
-end;*)
-
 function TPattern.FindAutomationParameter(APluginId: string;
   APluginParameterId: string): TAutomationDataList;
 var
@@ -585,8 +575,6 @@ begin
   begin
     lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
 
-{    if (lAutomationParameter.Plugin = APluginId) and
-      (lAutomationParameter.PluginParameter = APluginParameterId) then}
     if (lAutomationParameter.DeviceId = APluginId) and
       (lAutomationParameter.ParameterId = APluginParameterId) then
     begin

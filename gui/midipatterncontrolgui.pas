@@ -273,7 +273,7 @@ begin
         TMenuItemObject(Sender).Parent.Caption + ' > ' +
         TMenuItemObject(Sender).Caption;
 
-      FMidiPatternGUI.UpdateView(False);
+      FMidiPatternGUI.UpdateView(True);
     end;
   end;
 end;
@@ -286,7 +286,7 @@ begin
     begin
       FMidiPatternGUI.EditMode := emPatternEdit;
       btnAutomationSelect.Caption := 'None';
-      FMidiPatternGUI.UpdateView(False);
+      FMidiPatternGUI.UpdateView(True);
     end;
   end;
 end;

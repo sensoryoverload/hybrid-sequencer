@@ -958,6 +958,7 @@ begin
     if FZoomFactorX < 0.390625 then
       lTimeSpacing := lTimeSpacing * 2;
 
+    lLastTime := -1;
     repeat
       x := ConvertTimeToScreen(Round(lTime)) + FOffset;
       lNewTime := Round(lTime) div Round(GSettings.HalfSampleRate) + 1;
@@ -1354,16 +1355,9 @@ begin
 
   FModel.SelectedAutomationParameterId := AValue;
 
-  DBLog(Format('TMidiPatternGUI.SetSelectedAutomationParameterId %s.%s', [FSelectedAutomationDeviceId, FSelectedAutomationParameterId]));
-
   FSelectedAutomationParameter := FModel.FindAutomationParameter(
     FSelectedAutomationDeviceId,
     FSelectedAutomationParameterId);
-
-  if Assigned(FSelectedAutomationParameter) then
-  begin
-    DBLog('Assigned(FSelectedAutomationParameter) = True');
-  end;
 end;
 
 procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
