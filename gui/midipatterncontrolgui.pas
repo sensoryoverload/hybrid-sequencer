@@ -252,8 +252,6 @@ begin
       lDeviceParameterItem.ParameterId := lPluginNode.InputControls[lParamaterIndex].Caption;
       lDeviceParameterItem.OnClick := @DeviceParameterClick;
       lDeviceItem.Add(lDeviceParameterItem);
-
-      writeln('ZZZZZ DeviceId: ' + lDeviceParameterItem.DeviceId + ', PluginParameter: ' + lDeviceParameterItem.ParameterId);
     end;
   end;
 end;
