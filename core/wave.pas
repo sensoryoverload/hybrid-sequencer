@@ -911,7 +911,7 @@ begin
   DBLog('Start LoadSample: ' + AFilename);
 
   Result := False;
-
+  DBLog('Loading: ' + AFilename);
   FWave.BufferFormat := bfInterleave;
   FWave.LoadSample(AFilename);
 
@@ -938,6 +938,7 @@ begin
 
     GetMem(FDecimatedData, FBufferDataSize div DECIMATED_CACHE_DISTANCE);
     FBufferFrames := FWave.Frames;
+    DBLog(Format('FramesCount %d', [FBufferFrames]));
 
     AddSlice(0, SLICE_UNDELETABLE, True);
     AddSlice(FWave.Frames, SLICE_UNDELETABLE, True);
@@ -1433,6 +1434,8 @@ procedure TWavePattern.UpdateSampleScale;
 begin
   FSampleScale := FWave.Frames / (FSampleEnd.Value - FSampleStart.Value);
   FSampleScaleInverse := (FSampleEnd.Value - FSampleStart.Value) / FWave.Frames;
+
+  DBLog(Format('FSampleScale %f FSampleScaleInverse %f', [FSampleScale, FSampleScaleInverse]));
 end;
 
 procedure TWavePattern.UpdateBPMScale;
@@ -1655,6 +1658,10 @@ begin
 
   // Determine bars
   BarCount := FWave.Frames div (2 * FWave.SampleRate);
+  if BarCount < 1 then
+  begin
+    BarCount := 1;
+  end;
   BarLength := BarCount * FWave.SampleRate * FWave.ChannelCount * 2;
 
   LoopStart.Value := 0;
@@ -1664,6 +1671,9 @@ begin
 
   SampleStart.Value := 0;
   SampleEnd.Value := LoopEnd.Value;
+
+  DBLog(Format('FWave.Frames %d BarCount %d, BarLength %d, LoopLength.Value %d SampleEnd.Value %d FWave.SampleRate %d FWave.ChannelCount %d',
+    [FWave.Frames, BarCount, BarLength, LoopLength.Value, SampleEnd.Value, FWave.SampleRate, FWave.ChannelCount]));
 
   UpdateSampleScale;
 
