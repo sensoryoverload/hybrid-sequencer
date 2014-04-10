@@ -270,7 +270,7 @@ type
     procedure CalculateLoopMarkers;
     procedure AutoMarkerProcess(ACalculateStatistics: Boolean = True);
     function GetSliceAt(Location: Integer; AMargin: single): TMarker;
-    function WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; var ALoopingFrameData: TFrameData; ABuffer: PSingle): Boolean;
+    function WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
     function StartOfWarpLocation(ALocation: single): Integer;
     procedure Flush;
     function Latency: Integer; reintroduce;
@@ -1351,7 +1351,7 @@ end;
   AFrameData: Structure returned with info about the sampleframe
 
 }
-function TWavePattern.WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; var ALoopingFrameData: TFrameData; ABuffer: PSingle): Boolean;
+function TWavePattern.WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
 var
   i: Integer;
   lSliceStart: TMarker;
@@ -1361,8 +1361,6 @@ begin
 
   AFrameData.Location := ALocation;
   AFrameData.Ramp := 1;
-  ALoopingFrameData.Location := ALocation;
-  ALoopingFrameData.Ramp := 1;
 
   for i := AStartIndex to FSliceList.Count - 2 do
   begin
@@ -1533,7 +1531,7 @@ begin
       end
       else
       begin
-        if WarpedLocation(StartingSliceIndex, FSampleCursor, lFramePacket, lLoopingFramePacket, lBuffer) then
+        if WarpedLocation(StartingSliceIndex, FSampleCursor, lFramePacket, lBuffer) then
         begin
           CursorAdder := lFramePacket.Location;
           CursorRamp := lFramePacket.Ramp;
@@ -1560,7 +1558,7 @@ begin
                 // Frames to process this window
                 lFrames := (psEndLocation - psBeginLocation) + 1;
 
-                DBLog(Format('CalculatedPitch %f', [CalculatedPitch]));
+                DBLog(Format('CalculatedPitch %f lFrames %d', [CalculatedPitch, lFrames]));
 
                 case PitchAlgorithm of
                   paSoundTouch, paSoundTouchEco:
@@ -1658,10 +1656,13 @@ begin
 
   // Determine bars
   BarCount := FWave.Frames div (2 * FWave.SampleRate);
+
+  // BarCount should be at least 1 else it will appear as a blank pattern
   if BarCount < 1 then
   begin
     BarCount := 1;
   end;
+
   BarLength := BarCount * FWave.SampleRate * FWave.ChannelCount * 2;
 
   LoopStart.Value := 0;

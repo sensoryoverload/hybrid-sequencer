@@ -584,7 +584,7 @@ begin
 
           if lPlayingPattern.OkToPlay and lPlayingPattern.Playing then
           begin
-            lPlayingPattern.Process(lTrack.OutputBuffer, i, {nframes}1);
+            lPlayingPattern.Process(lTrack.OutputBuffer, i, nframes);
           end;
 
           lPlayingPattern.ProcessAdvance;
