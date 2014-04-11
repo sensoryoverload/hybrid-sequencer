@@ -30,7 +30,7 @@ lTrack.FXFilter.Frequency:= Random(22050);
 interface
 
 uses
-  Classes, SysUtils, plugin, global_command, math;
+  Classes, SysUtils, plugin, global_command, math, utils;
   
 type
 
@@ -443,14 +443,22 @@ end;
 
 function FastSin(x: Single): Single;
 const
-  B = 4 / PI;
-  C = -4 / (PI * PI);
-  P = 0.225;
+  PI_REPROC = 1 / PI;
+  Q = 3.1;
+  P = 3.6;
 var
+  z: Single;
   y: Single;
 begin
-  y := B * x + C * x * abs(x);
-  Result := P * (y * abs(y) - y) + y;
+  x := x * PI_REPROC;
+
+  z := x + 25165824;
+  x := x - (z - 25165824);
+
+  //Result := 4 * (x - x * abs(x));
+
+  y := x - x * abs(x);
+  Result := y * (Q + P * abs(y));
 end;
 
 function FastCos(x: Single): Single;
@@ -460,8 +468,8 @@ begin
   Result := FastSin(x + HALF_PI)
 end;
 
+initialization
 
-begin
-
+finalization
 end.
 

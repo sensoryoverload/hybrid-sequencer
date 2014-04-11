@@ -46,10 +46,12 @@ unit smbPitchShift;
 interface
 
 uses
-  Math;
+  Math, FFTReal, fx;
 
 const
   M_PI = 3.14159265358979323846;
+  DIV_BY_PI = 1 / M_PI;
+  DIV_BY_2PI = 1 / (2 * M_PI);
   MAX_FRAME_LENGTH = 8192;
 
 type
@@ -58,6 +60,9 @@ type
 
   TSmbPitchShifter = class
   private
+    FFFTReal: TFFTReal;
+    FFFTInput, FFFTOutput: pflt_array;
+
     FInFIFO: array[0..MAX_FRAME_LENGTH - 1] of Single;
     FOutFIFO: array[0..MAX_FRAME_LENGTH - 1] of Single;
     FFFTworksp: array[0..MAX_FRAME_LENGTH - 1] of Single;
@@ -138,22 +143,27 @@ begin
       { do windowing and re,im interleave }
       for k := 0 to fftFrameSize -1 do
       begin
-        window := -0.5 * cos(2.0 * Pi * k/fftFrameSize) + 0.5;
-        FFFTworksp[2 * k] := FInFIFO[k] * window;
-        FFFTworksp[2 * k + 1] := 0.0;
+{        FFFTworksp[2 * k] := FInFIFO[k] * FHanningWindow[k];
+        FFFTworksp[2 * k + 1] := 0.0;}
+
+        FFFTInput^[k] := FInFIFO[k] * FHanningWindow[k];
+        FFFTInput^[k + FFFTFrameSize] := 0;
       end;
 
       { ***************** ANALYSIS ******************* }
       { do transform }
-      smbFft(@FFFTworksp[0], fftFrameSize, -1);
+      //smbFft(@FFFTworksp[0], fftFrameSize, -1);
+      FFFTReal.do_fft(FFFTInput, FFFTOutput);
 
       { this is the analysis step }
       for k := 0 to fftFrameSize2 - 1 do
       begin
 
         { de-interlace FFT buffer }
-        real := FFFTworksp[2 * k];
-        imag := FFFTworksp[2 * k + 1];
+{        real := FFFTworksp[2 * k];
+        imag := FFFTworksp[2 * k + 1];}
+        real := FFFTOutput^[k];
+        imag := FFFTOutput^[k + FFFTFrameSize];
 
         { compute magnitude and phase }
         magn := 2.0 * squareroot_sse_11bits(real * real + imag * imag);
@@ -167,7 +177,7 @@ begin
         tmp := tmp - k * expct;
 
         { map delta phase into +/- Pi interval }
-        qpd := Trunc(tmp / Pi);
+        qpd := Trunc(tmp * DIV_BY_PI);
         if qpd >= 0 then
           Inc(qpd, qpd and 1)
         else
@@ -175,7 +185,7 @@ begin
         tmp := tmp - Pi * qpd;
 
         { get deviation from bin frequency from the +/- Pi interval }
-        tmp := FOverSampling * tmp / (2.0 * Pi);
+        tmp := FOverSampling * tmp * DIV_BY_2PI;
 
         { compute the k-th partials' true frequency }
         tmp := k * freqPerBin + tmp * freqPerBin;
@@ -225,25 +235,33 @@ begin
         phase := FSumPhase[k];
 
         { get real and imag part and re-interleave }
-        FFFTworksp[2 * k] := magn * Cos(phase);
-        FFFTworksp[2 * k + 1] := magn * Sin(phase);
+        {FFFTworksp[2 * k] := magn * FastCos(phase);
+        FFFTworksp[2 * k + 1] := magn * FastSin(phase); }
+
+        FFFTInput^[k] := magn * FastCos(phase);
+        FFFTInput^[k + FFFTFrameSize] := magn * FastSin(phase);
       end;
 
       { zero negative frequencies }
-      for k := fftFrameSize+2 to 2 * fftFrameSize - 1 do
-        FFFTworksp[k] := 0.0;
+{      for k := fftFrameSize+2 to 2 * fftFrameSize - 1 do
+        FFFTworksp[k] := 0.0;       }
 
 
       { do inverse transform }
-      smbFFT(@FFFTworksp[0], fftFrameSize, 1);
+      //smbFFT(@FFFTworksp[0], fftFrameSize, 1);
+      FFFTReal.do_ifft(FFFTInput, FFFTOutput);
 
       { do windowing and add to output accumulator }
       for k :=0 to fftFrameSize - 1 do
       begin
-        window := -0.5 * Cos(2.0 * Pi * k/fftFrameSize) + 0.5;
-        FOutputAccum[k] := FOutputAccum[k] +
-                           2.0 * window * FFFTworksp[2 * k] *
-                           fftFrameSizeMulOverSampling;
+{        FOutputAccum[k] :=
+          FOutputAccum[k] +
+          2.0 * FHanningWindow[k] * FFFTworksp[2 * k] *
+          fftFrameSizeMulOverSampling;}
+        FOutputAccum[k] :=
+          FOutputAccum[k] +
+          2.0 * FHanningWindow[k] * FFFTOutput^[2] *
+          fftFrameSizeMulOverSampling;
       end;
       for k := 0 to stepSize - 1 do
         FOutFIFO[k] := FOutputAccum[k];
@@ -312,7 +330,6 @@ end;
 
 constructor TSmbPitchShifter.Create;
 begin
-  //
 end;
 
 procedure TSmbPitchShifter.Initialize;
@@ -349,6 +366,10 @@ begin
     FHanningWindow[i] := -0.5*cos(2.0*M_PI*i/FFFTFrameSize)+0.5;
   end;
 
+  ReAllocMem(FFFTInput, 2 * FFFTFrameSize * sizeof_flt);
+  ReAllocMem(FFFTOutput, 2 * FFFTFrameSize * sizeof_flt);
+
+  FFFTReal := TFFTReal.Create(FFFTFrameSize);
 end;
 
 procedure TSmbPitchShifter.smbFFT(fftBuffer: PSingle; fftFrameSize, sign: Longint);
@@ -406,8 +427,8 @@ begin
     ur := 1.0;
     ui := 0.0;
     arg := Pi / (le2 shr 1);
-    wr := Cos(arg);
-    wi := sign * Sin(arg);
+    wr := FastCos(arg);
+    wi := sign * FastSin(arg);
     j := 0;
     while j < le2 do
     begin
@@ -496,7 +517,7 @@ end;
 
 destructor TSmbPitchShifter.Destroy;
 begin
-  //
+  FFFTReal.Free;
 
   inherited Destroy;
 end;
