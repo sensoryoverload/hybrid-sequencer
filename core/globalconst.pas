@@ -126,7 +126,7 @@ type
 
   TFileSourceTypes = (fsTrack, fsEmpty, fsWave, fsMIDI, fsPlugin);
 
-  TPitchAlgorithm = (paNone, paSoundTouchEco, paSoundTouch, paFFT, paPitched, paSliceStretch);
+  TPitchAlgorithm = (paNone, paSoundTouchEco, paSoundTouch, paPitched, paSliceStretch);
 
   TSerializeAction = (saRetrieveProperties, saInitilizeObjects);
 

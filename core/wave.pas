@@ -19,7 +19,8 @@
 }
 unit wave;
 
-{$fputype sse}
+//{$fputype sse}
+{$mode objfpc}{$H+}
 
 interface
 
@@ -197,7 +198,6 @@ type
     FVolumeDecay: Single;
     FWaveFileName: string;
     FWSOLAStretcher: TSoundTouch;
-    FFFTStretcher: TSmbPitchShifter;
     FTransientThreshold: Integer;
     FBufferDataSize: PtrUInt;
     FWave: TWaveFile;
@@ -219,7 +219,7 @@ type
     FDiskReaderThread: TDiskReaderThread;
     FPitchAlgorithm: TPitchAlgorithm;
 
-    FSliceStretcher: TStretcher; //TSliceStretcher;
+    FSliceStretcher: TStretcher;
 
     FInterpolationAlgorithm: TInterpolationAlgorithm;
 
@@ -816,16 +816,10 @@ begin
 
   Pitch := 1;
 
-  FFFTStretcher := TSmbPitchShifter.Create;
-  FFFTStretcher.FFTFrameSize := 512;
-  FFFTStretcher.OverSampling := 8;
-  FFFTStretcher.SampleRate := GSettings.SampleRate;
-  FFFTStretcher.Initialize;
-
   PitchAlgorithm := paSliceStretch;
   FInterpolationAlgorithm := {iaNone;//}iaHermite;
 
-  FSliceStretcher := TStretcher.Create(Round(GSettings.SampleRate)); //TSliceStretcher.Create;
+  FSliceStretcher := TStretcher.Create(Round(GSettings.SampleRate));
   FSliceStretcher.InterpolationAlgorithm := FInterpolationAlgorithm;
   FSliceStretcher.SliceList := FSliceList;
   FSliceStretcher.OverlapLengthMs := 8;
@@ -864,8 +858,6 @@ begin
     FSampleStart.Free;
   if Assigned(FSampleEnd) then
     FSampleEnd.Free;
-
-  FFFTStretcher.Free;
 
   FSliceStretcher.Free;
 
@@ -1208,10 +1200,6 @@ begin
     begin
       Result := TimeStretch.latency;
     end;
-    paFFT:
-    begin
-      Result := 0;
-    end;
     paPitched:
     begin
       Result := 0;
@@ -1542,7 +1530,7 @@ begin
 
             // Scale buffer up to now when the scaling-factor has changed or
             // the end of the buffer has been reached.
-            if PitchAlgorithm in [paSoundTouch, paSoundTouchEco, paFFT] then
+            if PitchAlgorithm in [paSoundTouch, paSoundTouchEco] then
             begin
               if (CursorRamp <> psLastScaleValue) or
                 (FBPMscaleOld <> FBPMscale) or
@@ -1566,11 +1554,6 @@ begin
                     TimeStretch.setPitch(CalculatedPitch);
                     TimeStretch.PutSamples(@WorkBuffer[psBeginLocation], lFrames);
                     TimeStretch.ReceiveSamples(@ABuffer[psBeginLocation], lFrames);
-                  end;
-                  paFFT:
-                  begin
-                    FFFTStretcher.Pitch := CalculatedPitch;
-                    FFFTStretcher.Process(@WorkBuffer[psBeginLocation], @ABuffer[psBeginLocation], lFrames);
                   end;
                 end;
 
