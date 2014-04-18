@@ -101,6 +101,7 @@ type
     FTrackControls: TPanel;
     FVolumeFader: TVolumeControl;
     FPanControl: TParameterControl;
+    FTarget: TComboBox;
     FActiveSwitch: TToggleControl;
 
     FTop: Integer;
@@ -642,18 +643,31 @@ begin
 
   FTrackControls := TPanel.Create(FSessionGrid);
   FTrackControls.Width := TRACK_WIDTH;
-  FTrackControls.Height := 150;
+  FTrackControls.Height := 200;
   FTrackControls.Left := 0;
   FTrackControls.Top := FSessionGrid.Height - FTrackControls.Height;
   FTrackControls.BevelOuter := bvRaised;
   FTrackControls.Parent := FSessionGrid;
   FTrackControls.OnClick := @DoOnTrackClick;
 
+  FTarget := TComboBox.Create(FTrackControls);
+  FTarget.Top := 3;
+  FTarget.Left := 4;
+  FTarget.Height := 12;
+  FTarget.ItemHeight := 12;
+  FTarget.Width := FTrackControls.Width - 9;
+  FTarget.Parent := FTrackControls;
+  FTarget.Items.Add('Master');
+  FTarget.Items.Add('Group 1');
+  FTarget.Items.Add('Group 2');
+  FTarget.Style := csDropDownList;
+  FTarget.ItemIndex := 0;
+
   FPanControl := TParameterControl.Create(FTrackControls);
   FPanControl.Orientation := oBalance;
   FPanControl.Height := 10;
   FPanControl.Width := 50;
-  FPanControl.Top := 4;
+  FPanControl.Top := 28;
   FPanControl.Left := 4;
   FPanControl.Caption := 'Balance';
   FPanControl.Min := -1;
@@ -665,17 +679,17 @@ begin
   FPanControl.Parent := FTrackControls;
 
   FVolumeFader := TVolumeControl.Create(FTrackControls);
-  FVolumeFader.Height := 122;
+  FVolumeFader.Height := 140;
   FVolumeFader.Width := 20;
   FVolumeFader.Left := 4;
-  FVolumeFader.Top := 16;
+  FVolumeFader.Top := 50;
   FVolumeFader.OnChange := @LevelChange;
   FVolumeFader.OnStartChange := @LevelStartChange;
   FVolumeFader.Parent := FTrackControls;
 
   FActiveSwitch := TToggleControl.Create(FTrackControls);
   FActiveSwitch.Left := 30;
-  FActiveSwitch.Top := 30;
+  FActiveSwitch.Top := 50;
   FActiveSwitch.Width := 30;
   FActiveSwitch.Height := 30;
   FActiveSwitch.CaptionOff := 'Off';
