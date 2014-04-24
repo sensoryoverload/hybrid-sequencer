@@ -70,12 +70,14 @@ type
     FSourceLocation: string;
     FPatternName: string;
     FPosition: Integer;
+    FTrackType: TTrackType;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
   published
     property SourceType: TFileSourceTypes read FSourceType write FSourceType;
     property SourceLocation: string read FSourceLocation write FSourceLocation;
+    property TrackType: TTrackType read FTrackType write FTrackType;
     property PatternName: string read FPatternName write FPatternName;
     property Position: Integer read FPosition write FPosition;
   end;
@@ -162,8 +164,10 @@ type
     procedure Initialize; override;
     procedure Finalize; override;
     procedure ProcessAdvance;
+    procedure Process;
     function Sync: Boolean;
     function IndexOfTrack(AObjectID: string): Integer;
+    procedure BuildTrackTree;
 
     property Active: Boolean read FActive write FActive;
     //property ModelThread: TModelThread read FModelThread write FModelThread;
@@ -273,6 +277,11 @@ begin
   end;
 end;
 
+procedure TAudioStructure.Process;
+begin
+
+end;
+
 function TAudioStructure.Sync: Boolean;
 begin
   Result := FSync;
@@ -292,6 +301,20 @@ begin
       break;
     end;
   end;
+end;
+
+{
+ This method builds the audio processing tree. It sets up the tracks so
+ they are connected to regular tracks, groups, fx returns and the master output
+ track. Deepest leafs should be processed first with all audio ending up in then
+ master track.
+}
+procedure TAudioStructure.BuildTrackTree;
+begin
+  // First find master track. It has ID 'master'
+
+  // Recursively find all leafs an leafs have a priority id higher than their
+  // parent. Tracks with an equal priority id can be executed in paralel
 end;
 
 procedure TAudioStructure.SetBPM(const AValue: Single);
@@ -446,6 +469,7 @@ begin
   FAudioStructure.BeginUpdate;
 
   lTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
+  lTrack.TrackType:= FTrackType;
   lTrack.Selected:= True;
   lTrack.LeftLevel:= 0;
   lTrack.RightLevel:= 0;
@@ -594,6 +618,8 @@ begin
   finally
     xdoc.Free;
   end;
+
+  GAudioStruct.BuildTrackTree;
 
   FAudioStructure.EndUpdate;
 end;

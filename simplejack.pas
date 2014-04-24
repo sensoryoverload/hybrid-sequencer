@@ -395,7 +395,7 @@ begin
       end
       else
       begin
-        ATrack.DevValue := 'jackmidi buffer allocation failed';
+        DBLog('jackmidi buffer allocation failed');
       end;
 
       AMidiPattern.MidiDataList.Next;
@@ -656,6 +656,8 @@ begin
       output_right[i] := output_right[i] + lTrack.OutputBuffer[i * 2 + 1];
     end;
   end;
+
+  GAudioStruct.Process;
 
   // Move to displaybuffer
   if GAudioStruct.Tracks.Count > 0 then

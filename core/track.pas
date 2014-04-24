@@ -32,7 +32,7 @@ uses
 type
   { TTrack }
 
-  TTrackType = (ttMaster, ttGroup, ttNormal);
+  TTrackType = (ttMaster, ttGroup, ttReturn, ttNormal);
 
   TScheduleType = (stIdle, stStart, stStop, stPause);
 
@@ -53,8 +53,7 @@ type
     FPlayingPattern: TPattern;
     FScheduledPattern: TPattern;
 
-    FToTrackID: Integer;   // Push audio to this track => group/master mix buffer
-    //FFromTrackID: Integer; // Record audio/midi from here
+    FTargetTrackId: string;   // Push audio to this track => group/master mix buffer
 
     // Denotes when the track should generate audio, normal track should have
     // data first, after that groups, after that returns and finally master
@@ -68,10 +67,10 @@ type
     FLeftLevel: Single;
     FRightLevel: Single;
     FLatency: Word;
-    FDevValue: shortstring;
     FBooleanStack: Integer;
     FActive: Boolean;
     FRecording: Boolean;
+    FTrackId: string;
     // Value between 0 and 1
     FVolume: Single;
     // Value between -1 (Left) and 1 (Right), defaults to 0 (Center)
@@ -90,17 +89,18 @@ type
     // This is then used by the mixing and routing function to serve this data to
     // master, groups, monitor
     FOutputBuffer: pjack_default_audio_sample_t;
+    FInputBuffer: pjack_default_audio_sample_t;
     FPreFadeBuffer: pjack_default_audio_sample_t;
+
+    FTargetTrack: TTrack;
 
     FAttack_coef: Single;
     FAttack_in_ms: Single;
     FRelease_coef: Single;
     FRelease_in_ms: Single;
 
-    function GetDevValue: shortstring;
     function GetVolume: single;
     procedure SetPan(AValue: single);
-    procedure SetDevValue(const AValue: shortstring);
     procedure SetLeftLevel(const AValue: Single);
     procedure SetRightLevel(const AValue: Single);
     function GetPlaying: Boolean;
@@ -120,6 +120,7 @@ type
     property PlayingPattern: TPattern read FPlayingPattern write FPlayingPattern;
     property ScheduledPattern: TPattern read FScheduledPattern write FScheduledPattern;
     property OutputBuffer: pjack_default_audio_sample_t read FOutputBuffer write FOutputBuffer;
+    property InputBuffer: pjack_default_audio_sample_t read FInputBuffer write FInputBuffer;
     property PreFadeBuffer: pjack_default_audio_sample_t read FPreFadeBuffer write FPreFadeBuffer;
     property BooleanStack: Integer read FBooleanStack;
     property Recording: Boolean read FRecording write FRecording;
@@ -138,8 +139,9 @@ type
     property Latency: Word read FLatency write FLatency default 0;
     property Playing: Boolean read GetPlaying write SetPlaying;
     property Active: Boolean read FActive write FActive;
-    property ToTrackID: Integer read FToTrackID write FToTrackID;
-    property DevValue: shortstring read GetDevValue write SetDevValue;
+    property TargetTrackId: string read FTargetTrackId write FTargetTrackId;
+    property TargetTrack: TTrack read FTargetTrack write FTargetTrack;
+    property TrackId: string read FTrackId write FTrackId;
     property TrackType: TTrackType read FTrackType write FTrackType;
     property TrackName: string read FTrackName write FTrackName;
     property ScheduledTo: TScheduleType read FScheduledTo write FScheduledTo;
@@ -281,6 +283,20 @@ type
     property Pan: Single read FPan write FPan;
   end;
 
+  { TTrackChangeTargetCommand }
+
+  TTrackChangeTargetCommand = class(TTrackCommand)
+  private
+    FTargetTrackId: string;
+    FOldTargetTrackId: string;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+
+  published
+    property TargetTrackId: string read FTargetTrackId write FTargetTrackId;
+  end;
+
   TTracksRefreshEvent = procedure (TrackObject: TTrack) of object;
 
 var
@@ -291,6 +307,70 @@ implementation
 
 uses
   audiostructure, wave, midi;
+
+{ TTrackChangeTargetCommand }
+
+procedure TTrackChangeTargetCommand.DoExecute;
+var
+  lTrack: TTrack;
+  lIndex: Integer;
+begin
+  DBLog('start Execute TTrackChangeTargetCommand ' + ObjectID);
+
+  FTrack.TargetTrackId := FTargetTrackId;
+
+  if Persist then
+  begin
+    FTrack.BeginUpdate;
+
+    FOldTargetTrackId := FTargetTrackId;
+
+    for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+    begin
+      lTrack := GAudioStruct.Tracks[lIndex];
+      if lTrack.TrackId = FTargetTrackId then
+      begin
+        FTrack.TargetTrack := lTrack;
+
+        break;
+      end;
+    end;
+
+    FTrack.EndUpdate;
+  end;
+
+  DBLog('end Execute TTrackChangeTargetCommand');
+end;
+
+procedure TTrackChangeTargetCommand.DoRollback;
+var
+  lTrack: TTrack;
+  lIndex: Integer;
+begin
+  DBLog('start Rollback TTrackChangeTargetCommand ' + ObjectID);
+
+  if Persist then
+  begin
+    FTrack.BeginUpdate;
+
+    FTrack.TargetTrackId := FOldTargetTrackId;
+
+    for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+    begin
+      lTrack := GAudioStruct.Tracks[lIndex];
+      if lTrack.TrackId = FTargetTrackId then
+      begin
+        FTrack.TargetTrack := lTrack;
+
+        break;
+      end;
+    end;
+
+    FTrack.EndUpdate;
+  end;
+
+  DBLog('end Rollback TTrackChangeTargetCommand');
+end;
 
 { TDeletePatternCommand }
 
@@ -514,12 +594,15 @@ begin
   else
   begin
     // Silence both channels
-    for i := 0 to Pred(AFrameCount * 2) do
+    for i := 0 to Pred(AFrameCount * STEREO) do
     begin
       ABuffer[i] := 0;
     end;
   end;
 
+  // Sum audio to parent track (group, master)
+
+  // Level decay
   FLeftLevel := FLeftLevel * 0.95;
   FRightLevel := FRightLevel * 0.95;
 end;
@@ -532,7 +615,8 @@ begin
 
   FOnCreateInstanceCallback := @DoCreateInstance;
 
-  Getmem(FOutputBuffer, 88200 * 2);
+  Getmem(FOutputBuffer, Round(GSettings.SampleRate * STEREO * SizeOf(Single)));
+  Getmem(FInputBuffer, Round(GSettings.SampleRate * STEREO * SizeOf(Single)));
 
   FLatencyCompensationBuffer := TFIFOAudioBuffer.Create;
   FLatencyCompensationBuffer.Delay := 150;
@@ -542,7 +626,7 @@ begin
   ObjectOwnerID := AObjectOwner;
 
   FBooleanStack:= 1; // Start with off
-  FToTrackID := 0; // 0 = master (default)
+  FTargetTrackId := ''; // 0 = master (default)
   FPitched:= False;
   Volume := 100;
   Pan := 0; // 0 denotes center position
@@ -573,6 +657,11 @@ begin
 
   if Assigned(FOutputBuffer) then
     Freemem(FOutputBuffer);
+
+  if Assigned(FInputBuffer) then
+  begin
+    Freemem(FInputBuffer);
+  end;
 
   if Assigned(FPatternList) then
     FPatternList.Free;
@@ -624,16 +713,6 @@ begin
   FRightPanGain := (1 + FPan) * (0.7 - 0.2 * FPan);
 
   DBLog(Format('L=%f, R=%f', [FLeftPanGain, FRightPanGain]));
-end;
-
-function TTrack.GetDevValue: shortstring;
-begin
-  Result := FDevValue;
-end;
-
-procedure TTrack.SetDevValue(const AValue: shortstring);
-begin
-  FDevValue := AValue;
 end;
 
 function TTrack.GetPlaying: Boolean;

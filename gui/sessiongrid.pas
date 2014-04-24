@@ -29,21 +29,21 @@ type
 
   TBaseFlyWeight = class
   private
-    FHeight: Integer;
-    FLeft: Integer;
-    FTop: Integer;
-    FWidth: Integer;
+    FHeight: integer;
+    FLeft: integer;
+    FTop: integer;
+    FWidth: integer;
   public
-    property Left: Integer read FLeft write FLeft;
-    property Top: Integer read FTop write FTop;
-    property Width: Integer read FWidth write FWidth;
-    property Height: Integer read FHeight write FHeight;
+    property Left: integer read FLeft write FLeft;
+    property Top: integer read FTop write FTop;
+    property Width: integer read FWidth write FWidth;
+    property Height: integer read FHeight write FHeight;
   end;
 
   { TPatternDrawCursor }
 
   TPatternDrawCursor = class
-    class procedure Render(X, Y: Integer; ACanvas: TCanvas; APattern: TPattern);
+    class procedure Render(X, Y: integer; ACanvas: TCanvas; APattern: TPattern);
   end;
 
   {
@@ -51,7 +51,8 @@ type
   }
   TPatternFlyWeight = class(TBaseFlyWeight)
   public
-    class procedure Render(X, Y: Integer; ABGRABitmap: TBGRABitmap; APattern: TPattern); virtual;
+    class procedure Render(X, Y: integer; ABGRABitmap: TBGRABitmap;
+      APattern: TPattern); virtual;
   end;
 
   {
@@ -62,7 +63,8 @@ type
 
   TMidiPatternFlyWeight = class(TPatternFlyWeight)
   public
-    class procedure Render(X, Y: Integer; ABGRABitmap: TBGRABitmap; APattern: TPattern); override;
+    class procedure Render(X, Y: integer; ABGRABitmap: TBGRABitmap;
+      APattern: TPattern); override;
   end;
 
   {
@@ -73,7 +75,8 @@ type
 
   TWavePatternFlyWeight = class(TPatternFlyWeight)
   public
-    class procedure Render(X, Y: Integer; ABGRABitmap: TBGRABitmap; APattern: TPattern); override;
+    class procedure Render(X, Y: integer; ABGRABitmap: TBGRABitmap;
+      APattern: TPattern); override;
   end;
 
   {
@@ -84,7 +87,8 @@ type
 
   TNullPatternFlyWeight = class(TPatternFlyWeight)
   public
-    class procedure Render(X, Y: Integer; ABGRABitmap: TBGRABitmap; APattern: TPattern); override;
+    class procedure Render(X, Y: integer; ABGRABitmap: TBGRABitmap;
+      APattern: TPattern); override;
   end;
 
   {
@@ -96,7 +100,8 @@ type
   TTrackView = class(THybridPersistentView)
   private
     FUpdateSubject: THybridPersistentModel;
-    FIsDirty: Boolean;
+    FIsDirty: boolean;
+    FTrackType: TTrackType;
 
     FTrackControls: TPanel;
     FVolumeFader: TVolumeControl;
@@ -104,10 +109,10 @@ type
     FTarget: TComboBox;
     FActiveSwitch: TToggleControl;
 
-    FTop: Integer;
-    FHeight: Integer;
-    FLeft: Integer;
-    FWidth: Integer;
+    FTop: integer;
+    FHeight: integer;
+    FLeft: integer;
+    FWidth: integer;
 
     FMidiPatternFlyWeight: TMidiPatternFlyWeight;
     FWavePatternFlyWeight: TWavePatternFlyWeight;
@@ -122,28 +127,30 @@ type
     procedure SetSessionGrid(AValue: TSessionGrid);
     procedure DoOnTrackClick(Sender: TObject);
   protected
-    procedure SetHeight(AValue: Integer);
-    procedure SetLeft(AValue: Integer);
-    procedure SetTop(AValue: Integer);
-    procedure SetWidth(AValue: Integer);
+    procedure SetHeight(AValue: integer);
+    procedure SetLeft(AValue: integer);
+    procedure SetTop(AValue: integer);
+    procedure SetWidth(AValue: integer);
   public
     constructor Create(AObjectOwner: string; TheOwner: TComponent); reintroduce;
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); override;
-    procedure UpdateView(AForceRedraw: Boolean = False); override;
-    procedure Render(AX, AY: Integer; ABGRABitmap: TBGRABitmap);
+    procedure UpdateView(AForceRedraw: boolean = False); override;
+    procedure Render(AX, AY: integer; ABGRABitmap: TBGRABitmap);
     procedure RenderCursor(ACanvas: TCanvas);
-    function PatternAtMouseXY(AX, AY: Integer): TPattern;
+    function PatternAtMouseXY(AX, AY: integer): TPattern;
 
     property SessionGrid: TSessionGrid read FSessionGrid write SetSessionGrid;
     property TrackControls: TPanel read FTrackControls;
     property VolumeFader: TVolumeControl read FVolumeFader;
 
-    property Left: Integer read FLeft write SetLeft;
-    property Top: Integer read FTop write SetTop;
-    property Width: Integer read FWidth write SetWidth;
-    property Height: Integer read FHeight write SetHeight;
+    property Left: integer read FLeft write SetLeft;
+    property Top: integer read FTop write SetTop;
+    property Width: integer read FWidth write SetWidth;
+    property Height: integer read FHeight write SetHeight;
+
+    property TrackType: TTrackType read FTrackType write FTrackType;
   end;
 
   {
@@ -152,10 +159,11 @@ type
 
   TTrackViewList = class(TObjectList)
   private
-    function GetTrackView(AIndex: Integer): TTrackView;
-    procedure SetTrackView(AIndex: Integer; const Value: TTrackView);
+    function GetTrackView(AIndex: integer): TTrackView;
+    procedure SetTrackView(AIndex: integer; const Value: TTrackView);
   public
-    property Items[AIndex: Integer] : TTrackView read GetTrackView write SetTrackView; default;
+    property Items[AIndex: integer]: TTrackView read GetTrackView write SetTrackView;
+      default;
     function Add(ATrackView: TTrackView): integer;
   end;
 
@@ -165,9 +173,9 @@ type
   }
   TDragPosition = record
     TrackID: string;
-    Position: Integer;
-    XOffset: Integer;
-    YOffset: Integer;
+    Position: integer;
+    XOffset: integer;
+    YOffset: integer;
   end;
 
 
@@ -176,88 +184,107 @@ type
   TSessionGrid = class({TPersistentPanel}TPersistentCustomControl)
   private
     FUpdateSubject: THybridPersistentModel;
-    FIsDirty: Boolean;
+    FIsDirty: boolean;
     FBGRABitmap: TBGRABitmap;
     FDragStart: TDragPosition;
     FDragDrop: TDragPosition;
     FDraggedPattern: TPatternFlyWeight;
     FOnPatternRefreshGUI: TPatternRefreshGUIEvent;
     FSelectedPattern: TPattern;
-    FScrollIndex: Integer;
+    FScrollIndex: integer;
     FTrackViewList: TTrackViewList;
-    FVisiblePatternCount: Integer;
-    FJustDrawCursors: Boolean;
-    FDragging: Boolean;
-    FMouseDownX: Integer;
-    FMouseDownY: Integer;
-    FLastMouseX: Integer;
-    FLastMouseY: Integer;
+    FTrackMasterCount: integer;
+    FTrackGroupCount: integer;
+    FTrackNormalCount: integer;
+    FTrackReturnCount: integer;
+    FVisiblePatternCount: integer;
+    FJustDrawCursors: boolean;
+    FDragging: boolean;
+    FMouseDownX: integer;
+    FMouseDownY: integer;
+    FLastMouseX: integer;
+    FLastMouseY: integer;
     FPopupMenu: TPopupMenu;
-    FMouseX: Integer;
-    FMouseY: Integer;
-    FMouseDownL: Boolean;
-    FMouseDownR: Boolean;
+    FMouseX: integer;
+    FMouseY: integer;
+    FMouseDownL: boolean;
+    FMouseDownR: boolean;
     FMode: TMode;
     FTempPatternName: string;
-    FRenameCursorPosition: Integer;
+    FRenameCursorPosition: integer;
     FMenuRenamePattern: TMenuItem;
     FMenuCreateMidiPattern: TMenuItem;
     FMenuDeletePattern: TMenuItem;
     FMenuCreateTrack: TMenuItem;
+    FMenuCreateGroupTrack: TMenuItem;
+    FMenuCreateReturnTrack: TMenuItem;
+    FMenuCreateMasterTrack: TMenuItem;
     FMenuDeleteTrack: TMenuItem;
     FActionList: TActionList;
     FActionRenamePattern: TAction;
     FActionCreateMidiPattern: TAction;
     FActionDeletePattern: TAction;
     FActionCreateTrack: TAction;
+    FActionCreateGroupTrack: TAction;
+    FActionCreateReturnTrack: TAction;
+    FActionCreateMasterTrack: TAction;
     FActionDeleteTrack: TAction;
 
+    procedure CalculateTrackOffsets;
+    procedure CreateTrackType(ATrackType: TTrackType);
     procedure DrawCursors(ACanvas: TCanvas);
     procedure DrawTrackList(ABGRABitmap: TBGRABitmap);
-    procedure GetDragPosition(X, Y: Integer; var ADragPosition: TDragPosition);
+    procedure GetDragPosition(X, Y: integer; var ADragPosition: TDragPosition);
     procedure DoRenamePattern(Sender: TObject);
     procedure OnUpdateRenamePattern(Sender: TObject);
     procedure DoCreateMidiPattern(Sender: TObject);
     procedure DoDeletePattern(Sender: TObject);
     procedure DoCreateTrack(Sender: TObject);
+    procedure DoCreateGroupTrack(Sender: TObject);
+    procedure DoCreateReturnTrack(Sender: TObject);
+    procedure DoCreateMasterTrack(Sender: TObject);
     procedure DoDeleteTrack(Sender: TObject);
-    function GetTrack(X, Y: Integer): TTrack;
-    function GetPatternState(ATrack: TTrack; Y: Integer): TPattern;
+    function GetTrack(X, Y: integer): TTrack;
+    function GetPatternState(ATrack: TTrack; Y: integer): TPattern;
     procedure CreateTrackGUI(AObjectID: string);
     procedure DeleteTrackGUI(AObjectID: string);
-    function GetTrackView(AX, AY: Integer): TTrackView;
-    procedure HandleKeyDownRenameMode(var Key: Word; Shift: TShiftState);
-    procedure HandleKeyDownSelectMode(var Key: Word; Shift: TShiftState);
-    procedure SetScrollIndex(AValue: Integer);
+    function GetTrackView(AX, AY: integer): TTrackView;
+    procedure HandleKeyDownRenameMode(var Key: word; Shift: TShiftState);
+    procedure HandleKeyDownSelectMode(var Key: word; Shift: TShiftState);
+    procedure SetScrollIndex(AValue: integer);
   protected
     procedure Paint; override;
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
-    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState;
+      X, Y: integer); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: integer); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: integer); override;
     procedure DblClick; override;
     procedure ReSize; override;
     // Scrolling vertically through the patterns
-    function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
-    function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
-    procedure DragOver(Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean); override;
-//    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
-//    procedure KeyPress(var Key: Char); override;
+    function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): boolean; override;
+    function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): boolean; override;
+    procedure DragOver(Source: TObject; X, Y: integer; State: TDragState;
+      var Accept: boolean); override;
+    //    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
+    //    procedure KeyPress(var Key: Char); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
-    procedure UpdateView(AForceRedraw: Boolean = False); override;
+    procedure UpdateView(AForceRedraw: boolean = False); override;
     procedure EraseBackground(DC: HDC); override;
-    procedure DragDrop(Source: TObject; X, Y: Integer); override;
-    function PatternAtMouseXY(X, Y: Integer): TPattern;
+    procedure DragDrop(Source: TObject; X, Y: integer); override;
+    function PatternAtMouseXY(X, Y: integer): TPattern;
     procedure SelectTrack(ASelected: TTrackView);
 
-    property OnPatternRefreshGUI: TPatternRefreshGUIEvent read FOnPatternRefreshGUI write FOnPatternRefreshGUI;
-    property VisiblePatternCount: Integer read FVisiblePatternCount write FVisiblePatternCount;
-    property ScrollIndex: Integer read FScrollIndex write SetScrollIndex;
+    property OnPatternRefreshGUI: TPatternRefreshGUIEvent
+      read FOnPatternRefreshGUI write FOnPatternRefreshGUI;
+    property VisiblePatternCount: integer read FVisiblePatternCount
+      write FVisiblePatternCount;
+    property ScrollIndex: integer read FScrollIndex write SetScrollIndex;
     property BGRABitmap: TBGRABitmap read FBGRABitmap write FBGRABitmap;
-    property JustDrawCursors: Boolean read FJustDrawCursors write FJustDrawCursors;
+    property JustDrawCursors: boolean read FJustDrawCursors write FJustDrawCursors;
     property TrackViewList: TTrackViewList read FTrackViewList;
   end;
 
@@ -269,10 +296,10 @@ uses
 
 { TPatternDrawCursor }
 
-class procedure TPatternDrawCursor.Render(X, Y: Integer; ACanvas: TCanvas;
+class procedure TPatternDrawCursor.Render(X, Y: integer; ACanvas: TCanvas;
   APattern: TPattern);
 var
-  lCursor: Integer;
+  lCursor: integer;
 begin
   lCursor := Round(APattern.PatternCursor * (TRACK_WIDTH / APattern.LoopEnd.Value));
 
@@ -286,7 +313,7 @@ end;
 
 { TNullPatternFlyWeight }
 
-class procedure TNullPatternFlyWeight.Render(X, Y: Integer;
+class procedure TNullPatternFlyWeight.Render(X, Y: integer;
   ABGRABitmap: TBGRABitmap; APattern: TPattern);
 begin
   ABGRABitmap.Rectangle(
@@ -299,8 +326,8 @@ end;
 
 { TPatternFlyWeight }
 
-class procedure TPatternFlyWeight.Render(X, Y: Integer;
-  ABGRABitmap: TBGRABitmap; APattern: TPattern);
+class procedure TPatternFlyWeight.Render(X, Y: integer; ABGRABitmap: TBGRABitmap;
+  APattern: TPattern);
 var
   pts: array of TPointF;
   lTrimmedPatternName: string;
@@ -326,7 +353,7 @@ begin
     end
     else
     begin
-      SetLength(pts,3);
+      SetLength(pts, 3);
       pts[0] := PointF(X + 12, Y + 7);
       pts[1] := PointF(X + 4, Y + 3);
       pts[2] := PointF(X + 4, Y + 11);
@@ -344,7 +371,7 @@ end;
 
 { TWavePatternFlyWeight }
 
-class procedure TWavePatternFlyWeight.Render(X, Y: Integer;
+class procedure TWavePatternFlyWeight.Render(X, Y: integer;
   ABGRABitmap: TBGRABitmap; APattern: TPattern);
 var
   pts: array of TPointF;
@@ -371,7 +398,7 @@ begin
     end
     else
     begin
-      SetLength(pts,3);
+      SetLength(pts, 3);
       pts[0] := PointF(X + 12, Y + 7);
       pts[1] := PointF(X + 4, Y + 3);
       pts[2] := PointF(X + 4, Y + 11);
@@ -389,7 +416,7 @@ end;
 
 { TMidiPatternFlyWeight }
 
-class procedure TMidiPatternFlyWeight.Render(X, Y: Integer;
+class procedure TMidiPatternFlyWeight.Render(X, Y: integer;
   ABGRABitmap: TBGRABitmap; APattern: TPattern);
 var
   pts: array of TPointF;
@@ -424,7 +451,7 @@ begin
   end
   else
   begin
-    SetLength(pts,3);
+    SetLength(pts, 3);
     pts[0] := PointF(X + 12, Y + 7);
     pts[1] := PointF(X + 4, Y + 3);
     pts[2] := PointF(X + 4, Y + 11);
@@ -446,7 +473,7 @@ end;
 
 function TTrackViewList.GetTrackView(AIndex: integer): TTrackView;
 begin
-  result := inherited Items[AIndex] as TTrackView;
+  Result := inherited Items[AIndex] as TTrackView;
 end;
 
 procedure TTrackViewList.SetTrackView(AIndex: integer; const Value: TTrackView);
@@ -467,7 +494,7 @@ begin
   DBLog('end TTrackView.Update');
 end;
 
-procedure TTrackView.UpdateView(AForceRedraw: Boolean = False);
+procedure TTrackView.UpdateView(AForceRedraw: boolean = False);
 begin
   if (FIsDirty or AForceRedraw) and Assigned(FUpdateSubject) then
   begin
@@ -491,15 +518,17 @@ begin
   end;
 end;
 
-procedure TTrackView.Render(AX, AY: Integer; ABGRABitmap: TBGRABitmap);
+procedure TTrackView.Render(AX, AY: integer; ABGRABitmap: TBGRABitmap);
 var
-  lIndex: Integer;
-  lListIndex: Integer;
+  lIndex: integer;
+  lListIndex: integer;
   lPattern: TPattern;
-  lFound: Boolean;
+  lFound: boolean;
 begin
-  ABGRABitmap.FillRect(Left, Top, Left + TRACK_WIDTH, ABGRABitmap.Height, ColorToBGRA(clLtGray), dmSet);
-  ABGRABitmap.Rectangle(Left, Top, Left + TRACK_WIDTH, ABGRABitmap.Height, ColorToBGRA(clGray), dmSet);
+  ABGRABitmap.FillRect(Left, Top, Left + TRACK_WIDTH, ABGRABitmap.Height,
+    ColorToBGRA(clLtGray), dmSet);
+  ABGRABitmap.Rectangle(Left, Top, Left + TRACK_WIDTH, ABGRABitmap.Height,
+    ColorToBGRA(clGray), dmSet);
 
   { todo sort patternlist on position, better performance when
     able to break out of the loop}
@@ -531,10 +560,10 @@ end;
 
 procedure TTrackView.RenderCursor(ACanvas: TCanvas);
 var
-  lIndex: Integer;
-  lListIndex: Integer;
+  lIndex: integer;
+  lListIndex: integer;
   lPattern: TPattern;
-  lFound: Boolean;
+  lFound: boolean;
 begin
   for lIndex := 0 to Pred(FSessionGrid.VisiblePatternCount) do
   begin
@@ -560,11 +589,11 @@ begin
   end;
 end;
 
-function TTrackView.PatternAtMouseXY(AX, AY: Integer): TPattern;
+function TTrackView.PatternAtMouseXY(AX, AY: integer): TPattern;
 var
-  lPosition: Integer;
+  lPosition: integer;
   lTrack: TTrack;
-  lIndex: Integer;
+  lIndex: integer;
 begin
   Result := nil;
 
@@ -583,33 +612,37 @@ begin
   end;
 end;
 
-procedure TTrackView.SetLeft(AValue: Integer);
+procedure TTrackView.SetLeft(AValue: integer);
 begin
-  if FLeft = AValue then Exit;
+  if FLeft = AValue then
+    Exit;
   FLeft := AValue;
 
   FTrackControls.Left := FLeft;
 end;
 
-procedure TTrackView.SetHeight(AValue: Integer);
+procedure TTrackView.SetHeight(AValue: integer);
 begin
-  if FHeight = AValue then Exit;
+  if FHeight = AValue then
+    Exit;
   FHeight := AValue;
 
   FTrackControls.Top := FTop;
 end;
 
-procedure TTrackView.SetTop(AValue: Integer);
+procedure TTrackView.SetTop(AValue: integer);
 begin
-  if FTop = AValue then Exit;
+  if FTop = AValue then
+    Exit;
   FTop := AValue;
 
   FTrackControls.Top := FSessionGrid.Height - FTrackControls.Height;
 end;
 
-procedure TTrackView.SetWidth(AValue: Integer);
+procedure TTrackView.SetWidth(AValue: integer);
 begin
-  if FWidth = AValue then Exit;
+  if FWidth = AValue then
+    Exit;
   FWidth := AValue;
 
   FTrackControls.Width := FWidth;
@@ -617,7 +650,8 @@ end;
 
 procedure TTrackView.SetSessionGrid(AValue: TSessionGrid);
 begin
-  if FSessionGrid = AValue then Exit;
+  if FSessionGrid = AValue then
+    Exit;
   FSessionGrid := AValue;
 
   FTrackControls.Parent := FSessionGrid;
@@ -635,6 +669,8 @@ end;
 
 constructor TTrackView.Create(AObjectOwner: string; TheOwner: TComponent);
 begin
+  DBLog('start TTrackView.Create');
+
   inherited Create(AObjectOwner);
 
   FIsDirty := False;
@@ -702,6 +738,8 @@ begin
   FMidiPatternFlyWeight := TMidiPatternFlyWeight.Create;
   FWavePatternFlyWeight := TWavePatternFlyWeight.Create;
   FNullPatternFlyWeight := TNullPatternFlyWeight.Create;
+
+  DBLog('end TTrackView.Create');
 end;
 
 destructor TTrackView.Destroy;
@@ -812,6 +850,10 @@ begin
   FSelectedPattern := nil;
 
   FTrackViewList := TTrackViewList.Create(True);
+  FTrackNormalCount := 0;
+  FTrackGroupCount := 0;
+  FTrackReturnCount := 0;
+  FTrackMasterCount := 0;
 
   FVisiblePatternCount := 10;
 
@@ -843,6 +885,24 @@ begin
   FActionCreateTrack.ActionList := FActionList;
   FActionCreateTrack.OnExecute := @DoCreateTrack;
 
+  FActionCreateGroupTrack := TAction.Create(FActionList);
+  FActionCreateGroupTrack.Enabled := True;
+  FActionCreateGroupTrack.Caption := 'Create grouptrack';
+  FActionCreateGroupTrack.ActionList := FActionList;
+  FActionCreateGroupTrack.OnExecute := @DoCreateGroupTrack;
+
+  FActionCreateMasterTrack := TAction.Create(FActionList);
+  FActionCreateMasterTrack.Enabled := True;
+  FActionCreateMasterTrack.Caption := 'Create mastertrack';
+  FActionCreateMasterTrack.ActionList := FActionList;
+  FActionCreateMasterTrack.OnExecute := @DoCreateMasterTrack;
+
+  FActionCreateReturnTrack := TAction.Create(FActionList);
+  FActionCreateReturnTrack.Enabled := True;
+  FActionCreateReturnTrack.Caption := 'Create returntrack';
+  FActionCreateReturnTrack.ActionList := FActionList;
+  FActionCreateReturnTrack.OnExecute := @DoCreateReturnTrack;
+
   FActionDeleteTrack := TAction.Create(FActionList);
   FActionDeleteTrack.Enabled := True;
   FActionDeleteTrack.Caption := 'Delete track';
@@ -854,6 +914,9 @@ begin
   FMenuRenamePattern := TMenuItem.Create(FPopupMenu);
   FMenuCreateMidiPattern := TMenuItem.Create(FPopupMenu);
   FMenuCreateTrack := TMenuItem.Create(FPopupMenu);
+  FMenuCreateGroupTrack := TMenuItem.Create(FPopupMenu);
+  FMenuCreateReturnTrack := TMenuItem.Create(FPopupMenu);
+  FMenuCreateMasterTrack := TMenuItem.Create(FPopupMenu);
   FMenuDeletePattern := TMenuItem.Create(FPopupMenu);
   FMenuDeleteTrack := TMenuItem.Create(FPopupMenu);
 
@@ -868,6 +931,15 @@ begin
 
   FPopupMenu.Items.Add(FMenuCreateTrack);
   FMenuCreateTrack.Action := FActionCreateTrack;
+
+  FPopupMenu.Items.Add(FMenuCreateGroupTrack);
+  FMenuCreateGroupTrack.Action := FActionCreateGroupTrack;
+
+  FPopupMenu.Items.Add(FMenuCreateReturnTrack);
+  FMenuCreateReturnTrack.Action := FActionCreateReturnTrack;
+
+  FPopupMenu.Items.Add(FMenuCreateMasterTrack);
+  FMenuCreateMasterTrack.Action := FActionCreateMasterTrack;
 
   FPopupMenu.Items.Add(FMenuDeleteTrack);
   FMenuDeleteTrack.Action := FActionDeleteTrack;
@@ -895,9 +967,9 @@ begin
   FIsDirty := True;
 end;
 
-procedure TSessionGrid.UpdateView(AForceRedraw: Boolean = False);
+procedure TSessionGrid.UpdateView(AForceRedraw: boolean = False);
 var
-  lIndex: Integer;
+  lIndex: integer;
 begin
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
@@ -908,9 +980,7 @@ begin
       // Add/Remove tracks
       DiffLists(
         TAudioStructure(FUpdateSubject).Tracks,
-        FTrackViewList,
-        @CreateTrackGUI,
-        @DeleteTrackGUI);
+        FTrackViewList, @CreateTrackGUI, @DeleteTrackGUI);
     end
     else if FUpdateSubject is TTrack then
     begin
@@ -964,7 +1034,7 @@ begin
     begin
       FDraggedPattern.Render(
         FMouseX - FDragStart.XOffset,
-        FMouseY - FDragStart.YOffset ,
+        FMouseY - FDragStart.YOffset,
         FBGRABitmap, FSelectedPattern);
     end;
 
@@ -976,9 +1046,10 @@ end;
 
 procedure TSessionGrid.DrawCursors(ACanvas: TCanvas);
 var
-  lIndex: Integer;
+  lIndex: integer;
 begin
-  if not Assigned(Model) then exit;
+  if not Assigned(Model) then
+    exit;
 
   for lIndex := 0 to Pred(FTrackViewList.Count) do
   begin
@@ -988,9 +1059,10 @@ end;
 
 procedure TSessionGrid.DrawTrackList(ABGRABitmap: TBGRABitmap);
 var
-  lIndex: Integer;
+  lIndex: integer;
 begin
-  if not Assigned(Model) then exit;
+  if not Assigned(Model) then
+    exit;
 
   for lIndex := 0 to Pred(FTrackViewList.Count) do
   begin
@@ -1001,10 +1073,10 @@ begin
   end;
 end;
 
-procedure TSessionGrid.GetDragPosition(X, Y: Integer; var ADragPosition: TDragPosition);
+procedure TSessionGrid.GetDragPosition(X, Y: integer; var ADragPosition: TDragPosition);
 var
-  lIndex: Integer;
-  lPosition: Integer;
+  lIndex: integer;
+  lPosition: integer;
 begin
   ADragPosition.TrackID := '';
   ADragPosition.Position := -1;
@@ -1038,7 +1110,7 @@ begin
   lRenamePattern := TFmRenamePattern.Create(nil);
   try
     lRenamePattern.PatternName := FSelectedPattern.PatternName;
-    if lRenamePattern.ShowModal = mrOK then
+    if lRenamePattern.ShowModal = mrOk then
     begin
       FSelectedPattern.PatternName := lRenamePattern.PatternName;
     end;
@@ -1100,13 +1172,14 @@ begin
   end;
 end;
 
-procedure TSessionGrid.DoCreateTrack(Sender: TObject);
+procedure TSessionGrid.CreateTrackType(ATrackType: TTrackType);
 var
   lCreateTrack: TCreateTrackCommand;
 begin
   lCreateTrack := TCreateTrackCommand.Create(GAudioStruct.ObjectID);
   try
     lCreateTrack.SourceType := fsEmpty;
+    lCreateTrack.TrackType := ATrackType;
 
     GCommandQueue.PushCommand(lCreateTrack);
   except
@@ -1118,6 +1191,26 @@ begin
   end;
 
   Invalidate;
+end;
+
+procedure TSessionGrid.DoCreateTrack(Sender: TObject);
+begin
+  CreateTrackType(ttNormal);
+end;
+
+procedure TSessionGrid.DoCreateGroupTrack(Sender: TObject);
+begin
+  CreateTrackType(ttGroup);
+end;
+
+procedure TSessionGrid.DoCreateReturnTrack(Sender: TObject);
+begin
+  CreateTrackType(ttReturn);
+end;
+
+procedure TSessionGrid.DoCreateMasterTrack(Sender: TObject);
+begin
+  CreateTrackType(ttMaster);
 end;
 
 procedure TSessionGrid.DoDeleteTrack(Sender: TObject);
@@ -1143,13 +1236,14 @@ end;
 {
   Get track under mouse if any
 }
-function TSessionGrid.GetTrack(X, Y: Integer): TTrack;
+function TSessionGrid.GetTrack(X, Y: integer): TTrack;
 var
   lTrackView: TTrackView;
 begin
   Result := nil;
 
-  if not Assigned(Model) then exit;
+  if not Assigned(Model) then
+    exit;
 
   lTrackView := GetTrackView(X, Y);
   if Assigned(lTrackView) then
@@ -1161,13 +1255,14 @@ end;
 {
   Get trackview under mouse if any
 }
-function TSessionGrid.GetTrackView(AX, AY: Integer): TTrackView;
+function TSessionGrid.GetTrackView(AX, AY: integer): TTrackView;
 var
-  lIndex: Integer;
+  lIndex: integer;
 begin
   Result := nil;
 
-  if not Assigned(Model) then exit;
+  if not Assigned(Model) then
+    exit;
 
   for lIndex := 0 to Pred(FTrackViewList.Count) do
   begin
@@ -1184,14 +1279,15 @@ end;
 {
   Get pattern under mouse cursor if any
 }
-function TSessionGrid.GetPatternState(ATrack: TTrack; Y: Integer): TPattern;
+function TSessionGrid.GetPatternState(ATrack: TTrack; Y: integer): TPattern;
 var
-  lIndex: Integer;
+  lIndex: integer;
   lPattern: TPattern;
 begin
   Result := nil;
 
-  if not Assigned(Model) then exit;
+  if not Assigned(Model) then
+    exit;
 
   for lIndex := 0 to Pred(ATrack.PatternList.Count) do
   begin
@@ -1206,17 +1302,87 @@ begin
   end;
 end;
 
+procedure TSessionGrid.CalculateTrackOffsets;
+var
+  lIndex: integer;
+  lTrackState: TTrackView;
+  lTrackNormalIndex: Integer;
+  lTrackGroupIndex: Integer;
+  lTrackReturnIndex: Integer;
+  lTrackMasterIndex: Integer;
+begin
+  FTrackNormalCount := 0;
+  FTrackGroupCount := 0;
+  FTrackReturnCount := 0;
+  FTrackMasterCount := 0;
+
+  for lIndex := 0 to Pred(FTrackViewList.Count) do
+  begin
+    lTrackState := FTrackViewList[lIndex];
+    case lTrackState.TrackType of
+      ttNormal: Inc(FTrackNormalCount);
+      ttGroup: Inc(FTrackGroupCount);
+      ttReturn: Inc(FTrackReturnCount);
+      ttMaster: Inc(FTrackMasterCount);
+    end;
+  end;
+
+  lTrackNormalIndex := 0;
+  lTrackGroupIndex := 0;
+  lTrackReturnIndex := 0;
+  lTrackMasterIndex := 0;
+  for lIndex := 0 to Pred(FTrackViewList.Count) do
+  begin
+    lTrackState := FTrackViewList[lIndex];
+    case lTrackState.TrackType of
+      ttNormal:
+      begin
+        lTrackState.Left := lTrackNormalIndex * TRACK_WIDTH;
+        Inc(lTrackNormalIndex);
+      end;
+      ttGroup:
+      begin
+        lTrackState.Left := Self.Width -
+          ((FTrackMasterCount +
+          FTrackReturnCount +
+          FTrackGroupCount) * TRACK_WIDTH +
+          lTrackGroupIndex * TRACK_WIDTH);
+        Inc(lTrackGroupIndex);
+      end;
+      ttReturn:
+      begin
+        lTrackState.Left := Self.Width -
+          ((FTrackMasterCount +
+          FTrackReturnCount) * TRACK_WIDTH) +
+          lTrackReturnIndex * TRACK_WIDTH;
+        Inc(lTrackReturnIndex);
+      end;
+      ttMaster:
+      begin
+        lTrackState.Left := (Self.Width -
+          (FTrackMasterCount * TRACK_WIDTH)) +
+          lTrackMasterIndex * TRACK_WIDTH;
+        Inc(lTrackMasterIndex);
+      end;
+    end;
+  end;
+
+end;
+
 procedure TSessionGrid.CreateTrackGUI(AObjectID: string);
 var
   lTrack: TTrack;
   lTrackState: TTrackView;
 begin
+  DBLog('start TSessionGrid.CreateTrackGUI');
+
   lTrack := TTrack(GObjectMapper.GetModelObject(AObjectID));
 
   if Assigned(lTrack) then
   begin
     lTrackState := TTrackView.Create(AObjectID, Self);
-    lTrackState.Left := FTrackViewList.Count * TRACK_WIDTH;
+    lTrackState.TrackType := lTrack.TrackType;
+    writeln(format('1lTrackState.TrackType %d', [lTrackState.TrackType]));
     lTrackState.Width := TRACK_WIDTH;
 
     FTrackViewList.Add(lTrackState);
@@ -1226,12 +1392,16 @@ begin
     lTrackState.FActiveSwitch.CaptionOn := IntToStr(FTrackViewList.Count + 1);
 
     lTrack.Attach(lTrackState);
+
+    CalculateTrackOffsets;
   end;
+
+  DBLog('end TSessionGrid.CreateTrackGUI');
 end;
 
 procedure TSessionGrid.DeleteTrackGUI(AObjectID: string);
 var
-  lIndex: Integer;
+  lIndex: integer;
 begin
   for lIndex := Pred(FTrackViewList.Count) downto 0 do
   begin
@@ -1240,11 +1410,14 @@ begin
       FTrackViewList.Remove(FTrackViewList[lIndex]);
     end;
   end;
+
+  CalculateTrackOffsets;
 end;
 
-procedure TSessionGrid.SetScrollIndex(AValue: Integer);
+procedure TSessionGrid.SetScrollIndex(AValue: integer);
 begin
-  if FScrollIndex = AValue then Exit;
+  if FScrollIndex = AValue then
+    Exit;
 
   FScrollIndex := AValue;
 
@@ -1255,7 +1428,7 @@ end;
   Detects if a file is dropped from the treeview and gives back
   the filename to the parent control through the DroppedFileEvent
 }
-procedure TSessionGrid.DragDrop(Source: TObject; X, Y: Integer);
+procedure TSessionGrid.DragDrop(Source: TObject; X, Y: integer);
 var
   lTreeView: TTreeView;
   lTrack: TTrack;
@@ -1273,7 +1446,8 @@ begin
       lCreatePattern := TCreatePatternCommand.Create(lTrack.ObjectID);
       try
         lCreatePattern.SourceLocation := TTreeFolderData(lTreeView.Selected.Data).Path;
-        lCreatePattern.PatternName := ExtractFileNameWithoutExt(TTreeFolderData(lTreeView.Selected.Data).Path);
+        lCreatePattern.PatternName :=
+          ExtractFileNameWithoutExt(TTreeFolderData(lTreeView.Selected.Data).Path);
         lCreatePattern.Position := (Y div PATTERN_HEIGHT) + ScrollIndex;
 
         GCommandQueue.PushCommand(lCreatePattern);
@@ -1286,9 +1460,9 @@ begin
   inherited DragDrop(Source, X, Y);
 end;
 
-function TSessionGrid.PatternAtMouseXY(X, Y: Integer): TPattern;
+function TSessionGrid.PatternAtMouseXY(X, Y: integer): TPattern;
 var
-  lIndex: Integer;
+  lIndex: integer;
 begin
   Result := nil;
   for lIndex := 0 to Pred(FTrackViewList.Count) do
@@ -1307,7 +1481,7 @@ end;
 
 procedure TSessionGrid.SelectTrack(ASelected: TTrackView);
 var
-  lTrackIndex: Integer;
+  lTrackIndex: integer;
 begin
   if not Assigned(ASelected) then
   begin
@@ -1338,8 +1512,8 @@ begin
   end;
 end;
 
-procedure TSessionGrid.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
-  Y: Integer);
+procedure TSessionGrid.MouseDown(Button: TMouseButton; Shift: TShiftState;
+  X, Y: integer);
 begin
   SetFocus;
 
@@ -1360,8 +1534,7 @@ begin
   inherited MouseDown(Button, Shift, X, Y);
 end;
 
-procedure TSessionGrid.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
-  Y: Integer);
+procedure TSessionGrid.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: integer);
 var
   lTrack: TTrack;
   lPattern: TPattern;
@@ -1525,7 +1698,7 @@ begin
   inherited MouseUp(Button, Shift, X, Y);
 end;
 
-procedure TSessionGrid.MouseMove(Shift: TShiftState; X, Y: Integer);
+procedure TSessionGrid.MouseMove(Shift: TShiftState; X, Y: integer);
 begin
   FMouseX := X;
   FMouseY := Y;
@@ -1575,6 +1748,7 @@ begin
     lCreateTrack := TCreateTrackCommand.Create(GAudioStruct.ObjectID);
     try
       lCreateTrack.SourceType := fsEmpty;
+      lCreateTrack.TrackType := ttNormal;
 
       GCommandQueue.PushCommand(lCreateTrack);
     except
@@ -1589,7 +1763,7 @@ end;
 
 procedure TSessionGrid.ReSize;
 var
-  lIndex: Integer;
+  lIndex: integer;
 
 begin
   inherited;
@@ -1609,69 +1783,70 @@ begin
       FTrackViewList[lIndex].TrackControls.Top :=
         Height - FTrackViewList[lIndex].TrackControls.Height;
     end;
+
+    CalculateTrackOffsets;
   end;
 end;
 
-function TSessionGrid.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
-  ): Boolean;
+function TSessionGrid.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): boolean;
 begin
   ScrollIndex := ScrollIndex + 1;
 
   Result := inherited DoMouseWheelDown(Shift, MousePos);
 end;
 
-function TSessionGrid.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
-  ): Boolean;
+function TSessionGrid.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): boolean;
 begin
   ScrollIndex := ScrollIndex - 1;
 
   Result := inherited DoMouseWheelUp(Shift, MousePos);
 end;
 
-procedure TSessionGrid.DragOver(Source: TObject; X, Y: Integer;
-  State: TDragState; var Accept: Boolean);
+procedure TSessionGrid.DragOver(Source: TObject; X, Y: integer;
+  State: TDragState; var Accept: boolean);
 begin
   inherited DragOver(Source, X, Y, State, Accept);
 
   Accept := True;
 end;
 
-procedure TSessionGrid.HandleKeyDownSelectMode(var Key: Word; Shift: TShiftState);
+procedure TSessionGrid.HandleKeyDownSelectMode(var Key: word; Shift: TShiftState);
 begin
   // Scroll through grid, changing te selected pattern at the bottom
 end;
 
-procedure TSessionGrid.HandleKeyDownRenameMode(var Key: Word; Shift: TShiftState);
+procedure TSessionGrid.HandleKeyDownRenameMode(var Key: word; Shift: TShiftState);
 begin
   case Key of
     VK_LEFT:
+    begin
+      if FRenameCursorPosition > 0 then
       begin
-        if FRenameCursorPosition > 0 then
-        begin
-          Dec(FRenameCursorPosition);
-        end;
+        Dec(FRenameCursorPosition);
       end;
+    end;
     VK_RIGHT:
+    begin
+      if FRenameCursorPosition < 10 then
       begin
-        if FRenameCursorPosition < 10 then
-        begin
-          Inc(FRenameCursorPosition);
-        end;
+        Inc(FRenameCursorPosition);
       end;
+    end;
     VK_RETURN:
-      begin
-        FMode := mSelect;
-      end;
+    begin
+      FMode := mSelect;
+    end;
     VK_ESCAPE:
-      begin
-        FMode := mSelect;
-        FSelectedPattern.PatternName := FTempPatternName;
-      end
+    begin
+      FMode := mSelect;
+      FSelectedPattern.PatternName := FTempPatternName;
+    end
     else
     begin
     end;
   end;
 end;
+
        (*
 procedure TSessionGrid.KeyDown(var Key: Word; Shift: TShiftState);
 begin
@@ -1705,4 +1880,3 @@ begin
 end; *)
 
 end.
-
