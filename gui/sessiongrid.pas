@@ -495,6 +495,11 @@ begin
 end;
 
 procedure TTrackView.UpdateView(AForceRedraw: boolean = False);
+var
+  lIndex: Integer;
+  lMasterIndex: Integer;
+  lGroupIndex: Integer;
+  lTargetIndex: Integer;
 begin
   if (FIsDirty or AForceRedraw) and Assigned(FUpdateSubject) then
   begin
@@ -513,6 +518,29 @@ begin
     // SetInput
 
     // SetOutput
+    if TrackType <> ttMaster then
+    begin
+      lMasterIndex := 0;
+      lGroupIndex := 0;
+      lTargetIndex := FTarget.ItemIndex;
+      FTarget.Clear;
+      for lIndex := 0 to Pred(FSessionGrid.TrackViewList.Count) do
+      begin
+        case TTrack(FSessionGrid.TrackViewList[lIndex].Model).TrackType of
+          ttMaster:
+          begin
+            Inc(lMasterIndex);
+            FTarget.Items.Add(Format('Master %d', [lMasterIndex]));
+          end;
+          ttGroup:
+          begin
+            Inc(lGroupIndex);
+            FTarget.Items.Add(Format('Group %d', [lGroupIndex]));
+          end;
+        end;
+      end;
+      FTarget.ItemIndex := lTargetIndex;
+    end;
 
     FSessionGrid.Invalidate;
   end;
@@ -693,10 +721,8 @@ begin
   FTarget.ItemHeight := 12;
   FTarget.Width := FTrackControls.Width - 9;
   FTarget.Parent := FTrackControls;
-  FTarget.Items.Add('Master');
-  FTarget.Items.Add('Group 1');
-  FTarget.Items.Add('Group 2');
   FTarget.Style := csDropDownList;
+  FTarget.Sorted := True;
   FTarget.ItemIndex := 0;
 
   FPanControl := TParameterControl.Create(FTrackControls);
@@ -1339,6 +1365,7 @@ begin
 
         lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackNormalIndex);
         lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackNormalIndex);
+        lTrackState.FActiveSwitch.Color := clYellow;
       end;
       ttGroup:
       begin
@@ -1351,6 +1378,7 @@ begin
 
         lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackGroupIndex);
         lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackGroupIndex);
+        lTrackState.FActiveSwitch.Color := clLime;
       end;
       ttReturn:
       begin
@@ -1362,6 +1390,7 @@ begin
 
         lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackReturnIndex);
         lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackReturnIndex);
+        lTrackState.FActiveSwitch.Color := clGreen;
       end;
       ttMaster:
       begin
@@ -1372,6 +1401,7 @@ begin
 
         lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackMasterIndex);
         lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackMasterIndex);
+        lTrackState.FActiveSwitch.Color := clRed;
       end;
     end;
   end;

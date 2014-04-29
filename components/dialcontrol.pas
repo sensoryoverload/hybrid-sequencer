@@ -120,6 +120,7 @@ Type
 
   TToggleControl = class(TCustomControl, IFeedBack)
   private
+    FColor: TColor;
     FFontSize: Integer;
     FFontStyle: TFontStyles;
     FSwitchedOn: Boolean;
@@ -130,6 +131,7 @@ Type
     FOnChange: TNotifyEvent;
     procedure SetCaptionOff(const AValue: string);
     procedure SetCaptionOn(const AValue: string);
+    procedure SetColor(AValue: TColor);
     procedure SetSwitchedOn(const AValue: Boolean);
 
   public
@@ -145,7 +147,7 @@ Type
     property CaptionOn: string read FCaptionOn write SetCaptionOn;
     property CaptionOff: string read FCaptionOff write SetCaptionOff;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
-    property Color;
+    property Color: TColor read FColor write SetColor;
     property Align;
     property Anchors;
     property Constraints;
@@ -1456,6 +1458,12 @@ begin
   FCaptionOn:= AValue;
 end;
 
+procedure TToggleControl.SetColor(AValue: TColor);
+begin
+  if FColor=AValue then Exit;
+  FColor:=AValue;
+end;
+
 procedure TToggleControl.SetSwitchedOn(const AValue: Boolean);
 begin
   FSwitchedOn := AValue;
@@ -1467,6 +1475,8 @@ begin
   inherited Create(AOwner);
 
   ParentColor := True;
+
+  FColor := clYellow;
 
   ControlStyle := ControlStyle + [csDisplayDragImage];
 
@@ -1509,7 +1519,7 @@ begin
     lBGRABitmap.PenStyle := psSolid;
 
     if FSwitchedOn then
-      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clYellow), dmSet)
+      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(FColor), dmSet)
     else
       lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
 
