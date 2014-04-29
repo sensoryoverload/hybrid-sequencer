@@ -1066,9 +1066,6 @@ begin
 
   for lIndex := 0 to Pred(FTrackViewList.Count) do
   begin
-    FTrackViewList[lIndex].FActiveSwitch.CaptionOff := IntToStr(Succ(lIndex));
-    FTrackViewList[lIndex].FActiveSwitch.CaptionOn := IntToStr(Succ(lIndex));
-
     FTrackViewList[lIndex].Render(0, 0, ABGRABitmap);
   end;
 end;
@@ -1339,15 +1336,21 @@ begin
       begin
         lTrackState.Left := lTrackNormalIndex * TRACK_WIDTH;
         Inc(lTrackNormalIndex);
+
+        lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackNormalIndex);
+        lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackNormalIndex);
       end;
       ttGroup:
       begin
         lTrackState.Left := Self.Width -
           ((FTrackMasterCount +
           FTrackReturnCount +
-          FTrackGroupCount) * TRACK_WIDTH +
-          lTrackGroupIndex * TRACK_WIDTH);
+          FTrackGroupCount) * TRACK_WIDTH) +
+          lTrackGroupIndex * TRACK_WIDTH;
         Inc(lTrackGroupIndex);
+
+        lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackGroupIndex);
+        lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackGroupIndex);
       end;
       ttReturn:
       begin
@@ -1356,6 +1359,9 @@ begin
           FTrackReturnCount) * TRACK_WIDTH) +
           lTrackReturnIndex * TRACK_WIDTH;
         Inc(lTrackReturnIndex);
+
+        lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackReturnIndex);
+        lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackReturnIndex);
       end;
       ttMaster:
       begin
@@ -1363,6 +1369,9 @@ begin
           (FTrackMasterCount * TRACK_WIDTH)) +
           lTrackMasterIndex * TRACK_WIDTH;
         Inc(lTrackMasterIndex);
+
+        lTrackState.FActiveSwitch.CaptionOff := IntToStr(lTrackMasterIndex);
+        lTrackState.FActiveSwitch.CaptionOn := IntToStr(lTrackMasterIndex);
       end;
     end;
   end;
@@ -1382,14 +1391,9 @@ begin
   begin
     lTrackState := TTrackView.Create(AObjectID, Self);
     lTrackState.TrackType := lTrack.TrackType;
-    writeln(format('1lTrackState.TrackType %d', [lTrackState.TrackType]));
     lTrackState.Width := TRACK_WIDTH;
 
     FTrackViewList.Add(lTrackState);
-
-    // Default Track numbering
-    lTrackState.FActiveSwitch.CaptionOff := IntToStr(FTrackViewList.Count + 1);
-    lTrackState.FActiveSwitch.CaptionOn := IntToStr(FTrackViewList.Count + 1);
 
     lTrack.Attach(lTrackState);
 
