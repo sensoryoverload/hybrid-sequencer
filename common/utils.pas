@@ -143,6 +143,7 @@ procedure SplitStereoToDualMono(ASource, ATargetLeft, ATargetRight: PSingle; AFr
 procedure CombineDualMonoToStereo(ASourceLeft, ASourceRight, ATarget: PSingle; AFrames: Integer);
 procedure ConvertBufferStereoToMono(ASource, ATarget: PSingle; AFrames: Integer); inline;
 procedure CopyBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer); inline;
+procedure MixToBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer);
 
 var
   FLogging: Boolean;
@@ -705,6 +706,16 @@ begin
   for i := 0 to Pred(AFrames * AChannels) do
   begin
     ATarget[i] := ASource[i];
+  end;
+end;
+
+procedure MixToBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(AFrames * AChannels) do
+  begin
+    ATarget[i] := ATarget[i] + ASource[i];
   end;
 end;
 

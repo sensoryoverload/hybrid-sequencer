@@ -331,6 +331,7 @@ begin
       if lTrack.TrackId = FTargetTrackId then
       begin
         FTrack.TargetTrack := lTrack;
+        FTrack.TargetTrackId := lTrack.ObjectID;
 
         break;
       end;
@@ -614,6 +615,8 @@ begin
   inherited Create(AObjectOwner, AMapped);
 
   FOnCreateInstanceCallback := @DoCreateInstance;
+
+  FTrackId := ObjectID;
 
   Getmem(FOutputBuffer, Round(GSettings.SampleRate * STEREO * SizeOf(Single)));
   Getmem(FInputBuffer, Round(GSettings.SampleRate * STEREO * SizeOf(Single)));

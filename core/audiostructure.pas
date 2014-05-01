@@ -132,7 +132,7 @@ type
   TAudioStructure = class(THybridPersistentModel)
   private
     FLiveSetName: string;
-    FTrack: TTrackList;
+    FTracks: TTrackList;
     FActive: Boolean;
     //FModelThread: TModelThread;
     FMainSyncCounter: Single; // 1 bar loop
@@ -151,6 +151,8 @@ type
     //FMasterTrack: TTrack;
     FSync: Boolean;
 
+    FTrackOrder: TStringList;
+
     procedure SetBPM(const AValue: Single);
     procedure RecalculateSynchronize;
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
@@ -168,13 +170,15 @@ type
     function Sync: Boolean;
     function IndexOfTrack(AObjectID: string): Integer;
     procedure BuildTrackTree;
+    procedure OrderedTrackPriority;
 
+    property TrackOrder: TStringList read FTrackOrder write FTrackOrder;
     property Active: Boolean read FActive write FActive;
     //property ModelThread: TModelThread read FModelThread write FModelThread;
     property SelectedBank: TSampleBank read FSelectedBank write SetSelectedBank;
     property OldSelectedBank: TSampleBank read FOldSelectedBank write FOldSelectedBank;
   published
-    property Tracks: TTrackList read FTrack write FTrack;
+    property Tracks: TTrackList read FTracks write FTracks;
     property MainSyncCounter: Single read FMainSyncCounter write FMainSyncCounter;
     property MainSyncLength: Single read FMainSyncLength write FMainSyncLength;
     property MainSyncSignal: Boolean read FMainSyncSignal write FMainSyncSignal;
@@ -225,7 +229,10 @@ constructor TAudioStructure.Create(AObjectOwner: string; AMapped: Boolean = True
 begin
   inherited;// Create(AObjectOwner, AMapped);
 
-  FTrack := TTrackList.create(True);
+  FTracks := TTrackList.create(True);
+
+  FTrackOrder := TStringList.Create;
+  FTrackOrder.Sorted := False; // Allow duplicates
 
   FSelectedBank := nil;
   FOldSelectedBank := nil;
@@ -243,7 +250,9 @@ end;
 
 destructor TAudioStructure.Destroy;
 begin
-  FTrack.Free;
+  FTracks.Free;
+
+  FTrackOrder.Free;
 
   inherited Destroy;
 end;
@@ -361,6 +370,55 @@ procedure TAudioStructure.SetSelectedBank(const AValue: TSampleBank);
 begin
   FOldSelectedBank := FSelectedBank;
   FSelectedBank := AValue;
+end;
+
+procedure TAudioStructure.OrderedTrackPriority;
+var
+  lIndex: Integer;
+  lPriority: Integer;
+
+  procedure RecurseTrack(ATrack: TTrack; var APriority: Integer);
+  var
+    lIterate: Integer;
+    lTrack: TTrack;
+  begin
+    Inc(APriority);
+
+    for lIterate := 0 to Pred(FTracks.Count) do
+    begin
+      lTrack := FTracks[lIterate];
+
+      if lTrack.TargetTrack = ATrack then
+      begin
+        RecurseTrack(FTracks[lIterate], APriority);
+      end;
+    end;
+
+
+    // Putting this after the recurse will order the list backwards.
+    FTrackOrder.AddObject(IntToStr(APriority), ATrack);
+
+    DBLog(Format('Priority %d Type %d TrackId %s', [APriority, ATrack.TrackType, ATrack.TrackId]));
+
+    Dec(APriority);
+  end;
+
+begin
+  // Just recalculate track routing table
+  FTrackOrder.Clear;
+  lPriority := 0;
+
+  for lIndex := 0 to Pred(FTracks.Count) do
+  begin
+    if FTracks[lIndex].TrackType = ttMaster then
+    begin
+      RecurseTrack(FTracks[lIndex], lPriority);
+    end;
+  end;
+
+  FTrackOrder.Sort;
+
+  DBLog(Format('FTrackOrder %d', [FTrackOrder.Count]));
 end;
 
 { TModelThread }

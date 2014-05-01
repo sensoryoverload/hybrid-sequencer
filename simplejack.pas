@@ -327,6 +327,7 @@ end;
 
 { TMainApp }
 
+
 procedure calc_note_frqs(srate : jack_default_audio_sample_t);
 var
   i : integer;
@@ -427,6 +428,8 @@ var
   buffer_size: Integer;
 begin
   Result := 0;
+
+  GAudioStruct.OrderedTrackPriority;
 
   buffer_size := nframes * SizeOf(Single) * STEREO;
 
@@ -597,12 +600,12 @@ begin
   end;
 
   // Plugin section, runs freely from sequencer timeline
-  for j := 0 to Pred(GAudioStruct.Tracks.Count) do
+  for j := Pred(GAudioStruct.TrackOrder.Count) downto 0 do
   begin
-    lTrack := TTrack(GAudioStruct.Tracks.Items[j]);
+    lTrack := TTrack(GAudioStruct.TrackOrder.Objects[j]);
+
     if Assigned(lTrack) then
     begin
-
       lPlayingPattern := lTrack.PlayingPattern;
       if Assigned(lPlayingPattern) then
       begin
@@ -647,6 +650,17 @@ begin
       end;
 
       lTrack.Process(lTrack.OutputBuffer, nframes);
+
+      if lTrack.TrackType = ttGroup then
+      begin
+        CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
+      end;
+
+      // Mix audio into target audio buffer except master
+      if lTrack.TrackType <> ttMaster then
+      begin
+        MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+      end;
     end;
 
     // Mix into output 1 (left) and 2 (right)
