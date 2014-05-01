@@ -526,6 +526,8 @@ begin
       lGroupIndex := 0;
       lTargetIndex := FTarget.ItemIndex;
       FTarget.Clear;
+      FTarget.Items.AddObject('None', nil);
+
       for lIndex := 0 to Pred(FSessionGrid.TrackViewList.Count) do
       begin
         lTrack := TTrack(FSessionGrid.TrackViewList[lIndex].Model);

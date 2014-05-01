@@ -599,6 +599,20 @@ begin
     GAudioStruct.ProcessAdvance;
   end;
 
+  // Clear summing buffers
+  for j := 0 to Pred(GAudioStruct.TrackOrder.Count) do
+  begin
+    lTrack := TTrack(GAudioStruct.TrackOrder.Objects[j]);
+    if Assigned(lTrack) then
+    begin
+      if lTrack.TrackType in [ttGroup, ttMaster] then
+      begin
+        FillByte(lTrack.InputBuffer[0], buffer_size, 0);
+        FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
+      end;
+    end;
+  end;
+
   // Plugin section, runs freely from sequencer timeline
   for j := Pred(GAudioStruct.TrackOrder.Count) downto 0 do
   begin
@@ -649,7 +663,7 @@ begin
         end;
       end;
 
-      lTrack.Process(lTrack.OutputBuffer, nframes);
+      DBLog(Format('Processing tracktype %d ', [lTrack.TrackType]));
 
       if lTrack.TrackType = ttGroup then
       begin
@@ -660,8 +674,14 @@ begin
       if lTrack.TrackType <> ttMaster then
       begin
         MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+      end
+      else
+      begin
+        CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
       end;
     end;
+
+    lTrack.Process(lTrack.OutputBuffer, nframes);
 
     // Mix into output 1 (left) and 2 (right)
     for i := 0 to Pred(nframes) do
