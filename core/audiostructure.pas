@@ -148,7 +148,6 @@ type
     FPlayState: Integer;
     FSelectedBank: TSampleBank;
     FOldSelectedBank: TSampleBank;
-    //FMasterTrack: TTrack;
     FSync: Boolean;
 
     FTrackOrder: TStringList;
@@ -258,11 +257,40 @@ begin
 end;
 
 procedure TAudioStructure.Initialize;
+var
+  lInnerIndex: Integer;
+  lOuterIndex: Integer;
+  lInnerTrack: TTrack;
+  lOuterTrack: TTrack;
 begin
-  {FMasterTrack := TTrack.Create(GAudioStruct.ObjectID, MAPPED);
-  FMasterTrack.TrackType := ttMaster;
+  // Reinstate track routing
+  for lOuterIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+  begin
+    lOuterTrack := GAudioStruct.Tracks[lOuterIndex];
 
-  GAudioStruct.Tracks.Add(FMasterTrack); }
+    if lOuterTrack.TargetTrackId <> '' then
+    begin
+      for lInnerIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+      begin
+        lInnerTrack := GAudioStruct.Tracks[lInnerIndex];
+
+        if lInnerTrack.TrackId = lOuterTrack.TargetTrackId then
+        begin
+          DBLog('Assigned target track');
+          lOuterTrack.TargetTrack := lInnerTrack;
+          lOuterTrack.TargetTrackId := lInnerTrack.ObjectID;
+
+          break;
+        end;
+      end;
+    end
+    else
+    begin
+      DBLog('Clearing target track');
+      lOuterTrack.TargetTrackId := '';
+      lOuterTrack.TargetTrack := nil;
+    end;
+  end;
 
   Notify;
 end;
@@ -394,11 +422,10 @@ var
       end;
     end;
 
-
     // Putting this after the recurse will order the list backwards.
     FTrackOrder.AddObject(IntToStr(APriority), ATrack);
 
-    DBLog(Format('Priority %d Type %d TrackId %s', [APriority, ATrack.TrackType, ATrack.TrackId]));
+//    DBLog(Format('Priority %d Type %d TrackId %s', [APriority, ATrack.TrackType, ATrack.TrackId]));
 
     Dec(APriority);
   end;
@@ -406,7 +433,7 @@ var
 begin
   // Just recalculate track routing table
   FTrackOrder.Clear;
-  lPriority := 0;
+  lPriority := 1;
 
   for lIndex := 0 to Pred(FTracks.Count) do
   begin
@@ -416,9 +443,16 @@ begin
     end;
   end;
 
-  FTrackOrder.Sort;
+  // Now add unassigned tracks, the vu meter would not work with no target assigned
+  for lIndex := 0 to Pred(FTracks.Count) do
+  begin
+    if FTrackOrder.IndexOfObject(FTracks[lIndex]) = -1 then
+    begin
+      FTrackOrder.AddObject(IntToStr(0), FTracks[lIndex]);
+    end;
+  end;
 
-  DBLog(Format('FTrackOrder %d', [FTrackOrder.Count]));
+  FTrackOrder.Sort;
 end;
 
 { TModelThread }

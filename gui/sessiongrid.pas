@@ -500,7 +500,6 @@ var
   lIndex: Integer;
   lMasterIndex: Integer;
   lGroupIndex: Integer;
-  lTargetIndex: Integer;
   lTrack: TTrack;
 begin
   if (FIsDirty or AForceRedraw) and Assigned(FUpdateSubject) then
@@ -524,7 +523,6 @@ begin
     begin
       lMasterIndex := 0;
       lGroupIndex := 0;
-      lTargetIndex := FTarget.ItemIndex;
       FTarget.Clear;
       FTarget.Items.AddObject('None', nil);
 
@@ -555,7 +553,40 @@ begin
           end;
         end;
       end;
-      FTarget.ItemIndex := lTargetIndex;
+
+      // If not assigned then look for item 'None'
+      if TTrack(FUpdateSubject).TargetTrackId = '' then
+      begin
+        for lIndex := 0 to Pred(FTarget.Items.Count) do
+        begin
+          lTrack := TTrack(FTarget.Items.Objects[lIndex]);
+
+          if not Assigned(lTrack) then
+          begin
+            FTarget.ItemIndex := lIndex;
+
+            break;
+          end;
+        end;
+      end
+      else
+      begin
+        // Look for an item the targettrack points to
+        for lIndex := 0 to Pred(FTarget.Items.Count) do
+        begin
+          lTrack := TTrack(FTarget.Items.Objects[lIndex]);
+
+          if Assigned(lTrack) then
+          begin
+            if lTrack.TrackId = TTrack(FUpdateSubject).TargetTrackId then
+            begin
+              FTarget.ItemIndex := lIndex;
+
+              break;
+            end;
+          end;
+        end;
+      end;
     end
     else
     begin
@@ -727,8 +758,14 @@ begin
       lTrackChangeTargetCommand.Persist := True;
 
       lTrack := TTrack(FTarget.Items.Objects[FTarget.ItemIndex]);
-
-      lTrackChangeTargetCommand.TargetTrackId := lTrack.ObjectID;
+      if Assigned(lTrack) then
+      begin
+        lTrackChangeTargetCommand.TargetTrackId := lTrack.ObjectID;
+      end
+      else
+      begin
+        lTrackChangeTargetCommand.TargetTrackId := '';
+      end;
 
       GCommandQueue.PushCommand(lTrackChangeTargetCommand);
     except

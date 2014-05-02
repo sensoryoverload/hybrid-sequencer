@@ -127,6 +127,7 @@ type
     property LatencyCompensationBuffer: TFIFOAudioBuffer read FLatencyCompensationBuffer write FLatencyCompensationBuffer;
     property LeftPanGain: Single read FLeftPanGain;
     property RightPanGain: Single read FRightPanGain;
+    property TargetTrack: TTrack read FTargetTrack write FTargetTrack;
   published
     property PatternList: TPatternList read FPatternList write FPatternList;
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
@@ -140,7 +141,6 @@ type
     property Playing: Boolean read GetPlaying write SetPlaying;
     property Active: Boolean read FActive write FActive;
     property TargetTrackId: string read FTargetTrackId write FTargetTrackId;
-    property TargetTrack: TTrack read FTargetTrack write FTargetTrack;
     property TrackId: string read FTrackId write FTrackId;
     property TrackType: TTrackType read FTrackType write FTrackType;
     property TrackName: string read FTrackName write FTrackName;
@@ -325,16 +325,26 @@ begin
 
     FOldTargetTrackId := FTargetTrackId;
 
-    for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+    if FTargetTrackId <> '' then
     begin
-      lTrack := GAudioStruct.Tracks[lIndex];
-      if lTrack.TrackId = FTargetTrackId then
+      for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
       begin
-        FTrack.TargetTrack := lTrack;
-        FTrack.TargetTrackId := lTrack.ObjectID;
+        lTrack := GAudioStruct.Tracks[lIndex];
+        if lTrack.TrackId = FTargetTrackId then
+        begin
+          DBLog('Assigned target track');
+          FTrack.TargetTrack := lTrack;
+          FTrack.TargetTrackId := lTrack.TrackId;
 
-        break;
+          break;
+        end;
       end;
+    end
+    else
+    begin
+      DBLog('Clearing target track');
+      FTrack.TargetTrackId := '';
+      FTrack.TargetTrack := nil;
     end;
 
     FTrack.EndUpdate;
@@ -356,15 +366,26 @@ begin
 
     FTrack.TargetTrackId := FOldTargetTrackId;
 
-    for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+    if FTrack.TargetTrackId <> '' then
     begin
-      lTrack := GAudioStruct.Tracks[lIndex];
-      if lTrack.TrackId = FTargetTrackId then
+      for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
       begin
-        FTrack.TargetTrack := lTrack;
+        lTrack := GAudioStruct.Tracks[lIndex];
+        if lTrack.TrackId = FTrack.TargetTrackId then
+        begin
+          DBLog('Assigned target track');
+          FTrack.TargetTrack := lTrack;
+          FTrack.TargetTrackId := lTrack.TrackId;
 
-        break;
+          break;
+        end;
       end;
+    end
+    else
+    begin
+      DBLog('Clearing target track');
+      FTrack.TargetTrackId := '';
+      FTrack.TargetTrack := nil;
     end;
 
     FTrack.EndUpdate;

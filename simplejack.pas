@@ -663,31 +663,37 @@ begin
         end;
       end;
 
-      DBLog(Format('Processing tracktype %d ', [lTrack.TrackType]));
-
       if lTrack.TrackType = ttGroup then
       begin
         CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
       end;
 
-      // Mix audio into target audio buffer except master
+      // Mix audio into target audio buffer
       if lTrack.TrackType <> ttMaster then
       begin
-        MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+        // Track plugin/volume/panning processing
+        lTrack.Process(lTrack.OutputBuffer, nframes);
+
+        // Only mix if there is a target configured
+        if Assigned(lTrack.TargetTrack) then
+        begin
+          MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+        end;
       end
       else
       begin
+        // Master just copies
         CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
+
+        // Track plugin/volume/panning processing
+        lTrack.Process(lTrack.OutputBuffer, nframes);
+
+        // Mix into output 1 (left) and 2 (right)
+        if lTrack.TrackType = ttMaster then
+        begin
+          SplitStereoToDualMono(lTrack.OutputBuffer, output_left, output_right, nframes);
+        end;
       end;
-    end;
-
-    lTrack.Process(lTrack.OutputBuffer, nframes);
-
-    // Mix into output 1 (left) and 2 (right)
-    for i := 0 to Pred(nframes) do
-    begin
-      output_left[i] := output_left[i] + lTrack.OutputBuffer[i * 2];
-      output_right[i] := output_right[i] + lTrack.OutputBuffer[i * 2 + 1];
     end;
   end;
 
