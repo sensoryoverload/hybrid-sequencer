@@ -1209,6 +1209,9 @@ var
 begin
   DBLog('start TMainApp.FormCreate');
 
+  SetExceptionMask([exInvalidOp, exDenormalized, exZeroDivide, exOverflow,
+    exUnderflow, exPrecision]);
+
   Application.OnException := @CustomExceptionHandler;
 
   FIsDirty := False;

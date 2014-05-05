@@ -278,7 +278,6 @@ begin
         begin
           DBLog('Assigned target track');
           lOuterTrack.TargetTrack := lInnerTrack;
-          lOuterTrack.TargetTrackId := lInnerTrack.ObjectID;
 
           break;
         end;

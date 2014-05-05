@@ -491,7 +491,6 @@ begin
   FUpdateSubject := Subject;
   FIsDirty := True;
 
-
   DBLog('end TTrackView.Update');
 end;
 
@@ -751,6 +750,8 @@ var
   lTrackChangeTargetCommand: TTrackChangeTargetCommand;
   lTrack: TTrack;
 begin
+  DBLog('start TTrackView.DoOnChangeTarget');
+
   if FTarget.ItemIndex <> -1 then
   begin
     lTrackChangeTargetCommand := TTrackChangeTargetCommand.Create(ObjectID);
@@ -760,7 +761,7 @@ begin
       lTrack := TTrack(FTarget.Items.Objects[FTarget.ItemIndex]);
       if Assigned(lTrack) then
       begin
-        lTrackChangeTargetCommand.TargetTrackId := lTrack.ObjectID;
+        lTrackChangeTargetCommand.TargetTrackId := lTrack.TrackId;
       end
       else
       begin
@@ -772,6 +773,8 @@ begin
       lTrackChangeTargetCommand.Free;
     end;
   end;
+
+  DBLog('end TTrackView.DoOnChangeTarget');
 end;
 
 constructor TTrackView.Create(AObjectOwner: string; TheOwner: TComponent);
