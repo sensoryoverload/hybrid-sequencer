@@ -107,6 +107,7 @@ type
     FVolumeFader: TVolumeControl;
     FPanControl: TParameterControl;
     FTarget: TComboBox;
+    FTargetChanging: Boolean;
     FActiveSwitch: TToggleControl;
 
     FTop: integer;
@@ -126,7 +127,8 @@ type
     procedure BalanceStartChange(Sender: TObject);
     procedure SetSessionGrid(AValue: TSessionGrid);
     procedure DoOnTrackClick(Sender: TObject);
-    procedure DoOnChangeTarget(Sender: TObject);
+    procedure DoOnDropDown(Sender: TObject);
+    procedure DoOnCloseUp(Sender: TObject);
   protected
     procedure SetHeight(AValue: integer);
     procedure SetLeft(AValue: integer);
@@ -520,68 +522,71 @@ begin
     // SetOutput
     if TrackType <> ttMaster then
     begin
-      lMasterIndex := 0;
-      lGroupIndex := 0;
-      FTarget.Clear;
-      FTarget.Items.AddObject('None', nil);
-
-      for lIndex := 0 to Pred(FSessionGrid.TrackViewList.Count) do
+      if not FTargetChanging then
       begin
-        lTrack := TTrack(FSessionGrid.TrackViewList[lIndex].Model);
+        lMasterIndex := 0;
+        lGroupIndex := 0;
+        FTarget.Clear;
+        FTarget.Items.AddObject('None', nil);
 
-        case lTrack.TrackType of
-          ttMaster:
-          begin
-            Inc(lMasterIndex);
+        for lIndex := 0 to Pred(FSessionGrid.TrackViewList.Count) do
+        begin
+          lTrack := TTrack(FSessionGrid.TrackViewList[lIndex].Model);
 
-            // Do not feedback on own track
-            if Self <> FSessionGrid.TrackViewList[lIndex] then
+          case lTrack.TrackType of
+            ttMaster:
             begin
-              FTarget.Items.AddObject(Format('Master %d', [lMasterIndex]), lTrack);
+              Inc(lMasterIndex);
+
+              // Do not feedback on own track
+              if Self <> FSessionGrid.TrackViewList[lIndex] then
+              begin
+                FTarget.Items.AddObject(Format('Master %d', [lMasterIndex]), lTrack);
+              end;
             end;
-          end;
-          ttGroup:
-          begin
-            Inc(lGroupIndex);
-
-            // Do not feedback on own track
-            if Self <> FSessionGrid.TrackViewList[lIndex] then
+            ttGroup:
             begin
-              FTarget.Items.AddObject(Format('Group %d', [lGroupIndex]), lTrack);
+              Inc(lGroupIndex);
+
+              // Do not feedback on own track
+              if Self <> FSessionGrid.TrackViewList[lIndex] then
+              begin
+                FTarget.Items.AddObject(Format('Group %d', [lGroupIndex]), lTrack);
+              end;
             end;
           end;
         end;
-      end;
 
-      // If not assigned then look for item 'None'
-      if TTrack(FUpdateSubject).TargetTrackId = '' then
-      begin
-        for lIndex := 0 to Pred(FTarget.Items.Count) do
+        // If not assigned then look for item 'None'
+        if TTrack(FUpdateSubject).TargetTrackId = '' then
         begin
-          lTrack := TTrack(FTarget.Items.Objects[lIndex]);
-
-          if not Assigned(lTrack) then
+          for lIndex := 0 to Pred(FTarget.Items.Count) do
           begin
-            FTarget.ItemIndex := lIndex;
+            lTrack := TTrack(FTarget.Items.Objects[lIndex]);
 
-            break;
-          end;
-        end;
-      end
-      else
-      begin
-        // Look for an item the targettrack points to
-        for lIndex := 0 to Pred(FTarget.Items.Count) do
-        begin
-          lTrack := TTrack(FTarget.Items.Objects[lIndex]);
-
-          if Assigned(lTrack) then
-          begin
-            if lTrack.TrackId = TTrack(FUpdateSubject).TargetTrackId then
+            if not Assigned(lTrack) then
             begin
               FTarget.ItemIndex := lIndex;
 
               break;
+            end;
+          end;
+        end
+        else
+        begin
+          // Look for an item the targettrack points to
+          for lIndex := 0 to Pred(FTarget.Items.Count) do
+          begin
+            lTrack := TTrack(FTarget.Items.Objects[lIndex]);
+
+            if Assigned(lTrack) then
+            begin
+              if lTrack.TrackId = TTrack(FUpdateSubject).TargetTrackId then
+              begin
+                FTarget.ItemIndex := lIndex;
+
+                break;
+              end;
             end;
           end;
         end;
@@ -745,7 +750,12 @@ begin
   end;
 end;
 
-procedure TTrackView.DoOnChangeTarget(Sender: TObject);
+procedure TTrackView.DoOnDropDown(Sender: TObject);
+begin
+  FTargetChanging := True;
+end;
+
+procedure TTrackView.DoOnCloseUp(Sender: TObject);
 var
   lTrackChangeTargetCommand: TTrackChangeTargetCommand;
   lTrack: TTrack;
@@ -773,6 +783,8 @@ begin
       lTrackChangeTargetCommand.Free;
     end;
   end;
+
+  FTargetChanging := False;
 
   DBLog('end TTrackView.DoOnChangeTarget');
 end;
@@ -806,7 +818,9 @@ begin
   FTarget.Style := csDropDownList;
   FTarget.Sorted := True;
   FTarget.ItemIndex := 0;
-  FTarget.OnChange := @DoOnChangeTarget;
+  FTarget.OnCloseUp := @DoOnCloseUp;
+  FTarget.OnDropDown := @DoOnDropDown;
+  FTargetChanging := False;
 
   FPanControl := TParameterControl.Create(FTrackControls);
   FPanControl.Orientation := oBalance;

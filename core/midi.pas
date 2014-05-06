@@ -210,6 +210,7 @@ type
     procedure Assign(Source: TPersistent); override;
     property MidiNoteStart: TMidiData read FMidiNoteStart write FMidiNoteStart;
     property MidiNoteEnd: TMidiData read FMidiNoteEnd write FMidiNoteEnd;
+    property Mapped: Boolean read FMapped;
   published
     property Note: Integer read GetNote write SetNote;
     property NoteLocation: Integer read FNoteLocation write SetNoteLocation;
@@ -537,12 +538,16 @@ end;
 procedure TMidiNote.SetNote(const AValue: Integer);
 begin
   FNote := AValue;
-  FMidiNoteStart.DataType := mtNoteOn;
-  FMidiNoteStart.DataValue1 := FNote;
-  FMidiNoteStart.DataValue2 := 127;
-  FMidiNoteEnd.DataType := mtNoteOff;
-  FMidiNoteEnd.DataValue1 := FNote;
-  FMidiNoteEnd.DataValue2 := 0;
+
+  if FMapped then
+  begin
+    FMidiNoteStart.DataType := mtNoteOn;
+    FMidiNoteStart.DataValue1 := FNote;
+    FMidiNoteStart.DataValue2 := 127;
+    FMidiNoteEnd.DataType := mtNoteOff;
+    FMidiNoteEnd.DataValue1 := FNote;
+    FMidiNoteEnd.DataValue2 := 0;
+  end;
 end;
 
 function TMidiNote.GetNote: Integer;
@@ -553,23 +558,35 @@ end;
 procedure TMidiNote.SetNoteLength(const AValue: Integer);
 begin
   FNoteLength:= AValue;
-  FMidiNoteEnd.Location := FNoteLocation + FNoteLength;
-  FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
+
+  if FMapped then
+  begin
+    FMidiNoteEnd.Location := FNoteLocation + FNoteLength;
+    FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
+  end;
 end;
 
 procedure TMidiNote.SetNoteLocation(const AValue: Integer);
 begin
   FNoteLocation:= AValue;
-  FMidiNoteEnd.Location := FNoteLocation + FNoteLength;
 
-  FMidiNoteStart.Location := FNoteLocation;
-  FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
+  if FMapped then
+  begin
+    FMidiNoteEnd.Location := FNoteLocation + FNoteLength;
+
+    FMidiNoteStart.Location := FNoteLocation;
+    FMidiNoteStart.Length := FMidiNoteEnd.Location - FMidiNoteStart.Location;
+  end;
 end;
 
 procedure TMidiNote.SetNoteVelocity(const AValue: Integer);
 begin
   FNoteVelocity:= AValue;
-  FMidiNoteStart.DataValue2 := FNoteVelocity;
+
+  if FMapped then
+  begin
+    FMidiNoteStart.DataValue2 := FNoteVelocity;
+  end;
 end;
 
 constructor TMidiNote.Create(AObjectOwner: string; AMapped: Boolean);
@@ -578,7 +595,7 @@ begin
 
   FMapped := AMapped;
 
-  if AMapped then
+  if FMapped then
   begin
     FMidiNoteStart := TMidiData.Create;
     FMidiNoteEnd := TMidiData.Create;
@@ -589,8 +606,11 @@ end;
 
 destructor TMidiNote.Destroy;
 begin
-  FMidiNoteStart.Free;
-  FMidiNoteEnd.Free;
+  if FMapped then
+  begin
+    FMidiNoteStart.Free;
+    FMidiNoteEnd.Free;
+  end;
 
   inherited Destroy;
 end;
@@ -637,8 +657,12 @@ begin
       lMementoNote.ObjectOwnerID := lMidiNote.ObjectOwnerID;
       Memento.Add(lMementoNote);
 
-      FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteStart);
-      FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteEnd);
+      if lMidinote.Mapped then
+      begin
+        FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteStart);
+        FMidiPattern.MidiDataList.Remove(lMidinote.MidiNoteEnd);
+      end;
+
       FMidiPattern.NoteList.Remove(lMidinote);
     end;
   end;
@@ -673,8 +697,12 @@ begin
       lMidiNote.ObjectOwnerID := lMementoNote.ObjectOwnerID;
 
       FMidiPattern.NoteList.Add(lMidiNote);
-      FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
-      FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);
+
+      if lMidinote.Mapped then
+      begin
+        FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
+        FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);
+      end;
     end;
     FMidiPattern.MidiDataList.IndexList;
   end;
@@ -701,8 +729,11 @@ begin
   lMidiNote.NoteVelocity := DEFAULT_NOTE_VELOCITY;
 
   FMidiPattern.NoteList.Add(lMidiNote);
-  FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
-  FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);
+  if lMidinote.Mapped then
+  begin
+    FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteStart);
+    FMidiPattern.MidiDataList.Add(lMidiNote.MidiNoteEnd);
+  end;
 
   FOldObjectID := lMidiNote.ObjectID;
 
@@ -727,8 +758,11 @@ begin
     lMidiNote := TMidiNote(FMidiPattern.NoteList[lNoteIndex]);
     if FOldObjectID = lMidiNote.ObjectID then
     begin
-      FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteStart);
-      FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteEnd);
+      if lMidinote.Mapped then
+      begin
+        FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteStart);
+        FMidiPattern.MidiDataList.Remove(lMidiNote.MidiNoteEnd);
+      end;
 
       FMidiPattern.NoteList.Remove(lMidiNote);
     end;
