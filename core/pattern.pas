@@ -574,11 +574,13 @@ begin
   for lParameterIndex := 0 to Pred(FAutomationChannelList.Count) do
   begin
     lAutomationParameter := TAutomationDataList(FAutomationChannelList[lParameterIndex]);
+    DBLog(format('Search automation parameter %s = %s, %s = %s?', [
+    lAutomationParameter.DeviceId, APluginId, lAutomationParameter.ParameterId, APluginParameterId]));
 
     if (lAutomationParameter.DeviceId = APluginId) and
       (lAutomationParameter.ParameterId = APluginParameterId) then
     begin
-      DBLog(format('%s = %s, %s = %s?', [
+      DBLog(format('Found automation parameter %s = %s, %s = %s?', [
         lAutomationParameter.DeviceId, APluginId, lAutomationParameter.ParameterId, APluginParameterId]));
 
       Result := lAutomationParameter;
@@ -610,7 +612,9 @@ begin
         lAutomationParameter := TAutomationDataList.Create(Self.ObjectID);
 
         lAutomationParameter.Plugin := lPlugin;
+        lAutomationParameter.DeviceId := lPlugin.PluginName;
         lAutomationParameter.PluginParameter := lPluginParameter;
+        lAutomationParameter.ParameterId := lPluginParameter.Caption;
         FAutomationChannelList.Add(lAutomationParameter);
       end;
     paaDelete:

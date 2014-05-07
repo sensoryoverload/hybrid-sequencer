@@ -230,30 +230,33 @@ begin
   lDeviceItem.OnClick := @DeviceClick;
   pupSelectAutomation.Items.Add(lDeviceItem);
 
-  for lNodeIndex := 0 to Pred(FModel.PluginProcessor.NodeList.Count) do
+  if Assigned(FModel) then
   begin
-    lPluginNode := TPluginNode(FModel.PluginProcessor.NodeList[lNodeIndex]);
-    lDeviceItem := TMenuItemObject.Create(pupSelectAutomation);
-    lDeviceItem.Caption := lPluginNode.PluginName;
-    lDeviceItem.ObjectId := lPluginNode.ObjectID;
-    lDeviceItem.ObjectType := miotDevice;
-    lDeviceItem.DeviceId := '';
-    pupSelectAutomation.Items.Add(lDeviceItem);
-
-    for lParamaterIndex := Low(lPluginNode.InputControls) to High(lPluginNode.InputControls) do
+    for lNodeIndex := 0 to Pred(FModel.PluginProcessor.NodeList.Count) do
     begin
-      lDeviceParameterItem := TMenuItemObject.Create(pupSelectAutomation);
-      lDeviceParameterItem.Caption := lPluginNode.InputControls[lParamaterIndex].Caption;
-      lDeviceParameterItem.ObjectId := lPluginNode.InputControls[lParamaterIndex].ObjectID;
-      lDeviceParameterItem.Plugin := lPluginNode;
-      lDeviceParameterItem.PluginParameter := lPluginNode.InputControls[lParamaterIndex];
-      lDeviceParameterItem.ObjectType := miotDeviceParameter;
-      lDeviceParameterItem.DeviceId := lPluginNode.PluginName;
-      lDeviceParameterItem.ParameterId := lPluginNode.InputControls[lParamaterIndex].Caption;
-      lDeviceParameterItem.OnClick := @DeviceParameterClick;
-      lDeviceItem.Add(lDeviceParameterItem);
+      lPluginNode := TPluginNode(FModel.PluginProcessor.NodeList[lNodeIndex]);
+      lDeviceItem := TMenuItemObject.Create(pupSelectAutomation);
+      lDeviceItem.Caption := lPluginNode.PluginName;
+      lDeviceItem.ObjectId := lPluginNode.ObjectID;
+      lDeviceItem.ObjectType := miotDevice;
+      lDeviceItem.DeviceId := '';
+      pupSelectAutomation.Items.Add(lDeviceItem);
+
+      for lParamaterIndex := Low(lPluginNode.InputControls) to High(lPluginNode.InputControls) do
+      begin
+        lDeviceParameterItem := TMenuItemObject.Create(pupSelectAutomation);
+        lDeviceParameterItem.Caption := lPluginNode.InputControls[lParamaterIndex].Caption;
+        lDeviceParameterItem.ObjectId := lPluginNode.InputControls[lParamaterIndex].ObjectID;
+        lDeviceParameterItem.Plugin := lPluginNode;
+        lDeviceParameterItem.PluginParameter := lPluginNode.InputControls[lParamaterIndex];
+        lDeviceParameterItem.ObjectType := miotDeviceParameter;
+        lDeviceParameterItem.DeviceId := lPluginNode.PluginName;
+        lDeviceParameterItem.ParameterId := lPluginNode.InputControls[lParamaterIndex].Caption;
+        lDeviceParameterItem.OnClick := @DeviceParameterClick;
+        lDeviceItem.Add(lDeviceParameterItem);
+      end;
     end;
-  end;
+ end;
 end;
 
 procedure TMidiPatternControlGUI.DeviceParameterClick(Sender: TObject);

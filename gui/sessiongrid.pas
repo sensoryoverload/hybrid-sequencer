@@ -742,11 +742,14 @@ end;
 
 procedure TTrackView.DoOnTrackClick(Sender: TObject);
 begin
-  if Assigned(SessionGrid.OnPatternRefreshGUI) then
+  if Self.TrackType = ttNormal then
   begin
-    GSettings.SelectedObject := Self.Model;
-    SessionGrid.SelectTrack(Self);
-    SessionGrid.OnPatternRefreshGUI(GSettings.SelectedObject);
+    if Assigned(SessionGrid.OnPatternRefreshGUI) then
+    begin
+      GSettings.SelectedObject := Self.Model;
+      SessionGrid.SelectTrack(Self);
+      SessionGrid.OnPatternRefreshGUI(GSettings.SelectedObject);
+    end;
   end;
 end;
 
