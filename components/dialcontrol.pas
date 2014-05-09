@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, Math, Spin,
-  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources, BGRABitmap, BGRABitmapTypes;
+  StdCtrls, ShellCtrls, ComCtrls, DateUtils, LResources, BGRABitmap, BGRABitmapTypes,
+  Menus;
 
 const
   M_PI = 3.14159265358979323846;
@@ -162,16 +163,14 @@ Type
   private
     FItems: TStringList;
     FItemIndex: Integer;
-    FListOpen: Boolean;
-    FPreSelectedItemIndex: Integer;
+    FPopupMenu: TPopupMenu;
     FOnChange: TNotifyEvent;
     procedure SetItemIndex(AValue: Integer);
   protected
+    procedure DoClick(Sender: TObject);
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
-    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
-//    procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure Paint; override;
   public
     constructor Create(AOwner : TComponent); override;
@@ -553,8 +552,28 @@ begin
   Invalidate;
 end;
 
+procedure TListSelect.DoClick(Sender: TObject);
+var
+  lItemIndex: Integer;
+begin
+  lItemIndex := (Sender as TMenuItem).Tag;
+  if FItemIndex <> lItemIndex then
+  begin
+    FItemIndex := lItemIndex;
+    if Assigned(FOnChange) then
+    begin
+      FOnChange(Self);
+    end;
+  end;
+
+  FPopupMenu.Close;
+end;
+
 procedure TListSelect.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
+var
+  lItemIndex: Integer;
+  lMenuItem: TMenuItem;
 begin
   BringToFront;
 
@@ -563,37 +582,21 @@ begin
     SetFocus;
   end;
 
-  if Y < LISTITEM_HEIGHT then
+  FPopupMenu.Items.Clear;
+  for lItemIndex := 0 to Pred(FItems.Count) do
   begin
-    FListOpen := not FListOpen;
+    lMenuItem := TMenuItem.Create(FPopupMenu);
+    lMenuItem.Tag := lItemIndex;
+    lMenuItem.OnClick := @DoClick;
+    lMenuItem.Caption := FItems[lItemIndex];
+    FPopupMenu.Items.Add(lMenuItem);
   end;
+
+  FPopupMenu.PopUp(
+    ClientToScreen(Point(0, 0)).X,
+    ClientToScreen(Point(0, 0)).Y + LISTITEM_HEIGHT);
 
   inherited MouseDown(Button, Shift, X, Y);
-end;
-
-procedure TListSelect.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
-  Y: Integer);
-var
-  lItemIndex: Integer;
-begin
-  if Y >= LISTITEM_HEIGHT then
-  begin
-    lItemIndex := Pred(Y div LISTITEM_HEIGHT);
-    if FItemIndex <> lItemIndex then
-    begin
-      FItemIndex := lItemIndex;
-      if Assigned(FOnChange) then
-      begin
-        FOnChange(Self);
-      end;
-    end;
-
-    FListOpen := False;
-  end;
-
-  Invalidate;
-
-  inherited MouseUp(Button, Shift, X, Y);
 end;
 
 function TListSelect.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
@@ -628,30 +631,6 @@ begin
   Invalidate;
 end;
 
-{procedure TListSelect.KeyDown(var Key: Word; Shift: TShiftState);
-begin
-  if Key = VK_UP then
-  begin
-    if FPreSelectedItemIndex > 0 then
-    begin
-      Dec(FPreSelectedItemIndex);
-      Invalidate;
-    end;
-  end
-  else if Key = VK_DOWN then
-  begin
-    if FPreSelectedItemIndex < Pred(FItems.Count) then
-    begin
-      Inc(FPreSelectedItemIndex);
-      Invalidate;
-    end;
-  end
-  else if Key = VK_RETURN then
-  begin
-    ItemIndex := FPreSelectedItemIndex;
-  end;
-end;}
-
 procedure TListSelect.EraseBackground(DC: HDC);
 begin
   inherited EraseBackground(DC);
@@ -664,72 +643,24 @@ var
 begin
   lBGRABitmap := TBGRABitmap.Create(Width, Height);
   try
-    if FListOpen then
+    Height := LISTITEM_HEIGHT;
+    lBGRABitmap.Rectangle(
+      0,
+      0,
+      Width,
+      Height,
+      ColorToBGRA(clBlack),
+      ColorToBGRA(clLtGray),
+      dmSet);
+
+    if FItemIndex <> -1 then
     begin
-      Height := (FItems.Count + 1) * LISTITEM_HEIGHT;
-      lBGRABitmap.Rectangle(
-        0,
-        0,
-        Width,
-        Height,
-        ColorToBGRA(clBlack),
-        ColorToBGRA(clLtGray),
-        dmSet);
-
       lBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
-      if FItemIndex <> -1 then
-      begin
-        lBGRABitmap.TextOut(
-          1,
-          1,
-          FItems[FItemIndex],
-          ColorToBGRA(ColorToRGB(clBtnText)));
-      end;
-
-      // Show selectable items
-      lBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
-      for lItemIndex := 0 to Pred(FItems.Count) do
-      begin
-        {if lItemIndex = FPreSelectedItemIndex then
-        begin
-          lBGRABitmap.Rectangle(
-            0,
-            Succ(lItemIndex) * LISTITEM_HEIGHT,
-            Width,
-            LISTITEM_HEIGHT,
-            ColorToBGRA(clBlack),
-            ColorToBGRA(clBlue),
-            dmSet);
-        end;}
-
-        lBGRABitmap.TextOut(
-          1,
-          Succ(lItemIndex) * LISTITEM_HEIGHT + 1,
-          FItems[lItemIndex],
-          ColorToBGRA(ColorToRGB(clBtnText)));
-      end;
-    end
-    else
-    begin
-      Height := LISTITEM_HEIGHT;
-      lBGRABitmap.Rectangle(
-        0,
-        0,
-        Width,
-        Height,
-        ColorToBGRA(clBlack),
-        ColorToBGRA(clLtGray),
-        dmSet);
-
-      if FItemIndex <> -1 then
-      begin
-        lBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
-        lBGRABitmap.TextOut(
-          1,
-          1,
-          FItems[FItemIndex],
-          ColorToBGRA(ColorToRGB(clBtnText)));
-      end;
+      lBGRABitmap.TextOut(
+        1,
+        1,
+        FItems[FItemIndex],
+        ColorToBGRA(ColorToRGB(clBtnText)));
     end;
 
     lBGRABitmap.Draw(Canvas, 0, 0, True);
@@ -743,17 +674,18 @@ begin
   inherited Create(AOwner);
 
   FItems := TStringList.Create;
-  FListOpen := False;
+  FPopupMenu := TPopupMenu.Create(nil);
+
   Width := 50;
   Height := LISTITEM_HEIGHT;
 
   FItemIndex := -1;
-  FPreSelectedItemIndex := FItemIndex;
 end;
 
 destructor TListSelect.Destroy;
 begin
   FItems.Free;
+  FPopupMenu.Free;
 
   inherited Destroy;
 end;
