@@ -145,7 +145,8 @@ uses
   plugin_decimate,
   plugin_moog,
   plugin_freeverb,
-  plugin_bassline;
+  plugin_bassline,
+  plugin_delay;
 
 function SortOnSequenceNr(Item1 : Pointer; Item2 : Pointer) : Integer;
 var
