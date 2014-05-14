@@ -157,9 +157,9 @@ end;
 
 procedure TGenericPluginGUI.DoParameterStartChange(Sender: TObject);
 var
-  lGenericCommand: TLADSPACommand;
+  lGenericCommand: TGenericCommand;
 begin
-  lGenericCommand := TLADSPACommand.Create(Self.ObjectID);
+  lGenericCommand := TGenericCommand.Create(Self.ObjectID);
   try
     lGenericCommand.Parameter := Integer(TParameterControl(Sender).Tag);
     lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
@@ -231,9 +231,9 @@ end;
 
 procedure TGenericPluginGUI.DoParameterChange(Sender: TObject);
 var
-  lGenericCommand: TLADSPACommand;
+  lGenericCommand: TGenericCommand;
 begin
-  lGenericCommand := TLADSPACommand.Create(Self.ObjectID);
+  lGenericCommand := TGenericCommand.Create(Self.ObjectID);
   try
     lGenericCommand.Parameter := Integer(TParameterControl(Sender).Tag);
     lGenericCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;

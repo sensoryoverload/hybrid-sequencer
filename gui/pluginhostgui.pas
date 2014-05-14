@@ -465,7 +465,7 @@ begin
       FNodeListGUI.Add(lPluginDecimateGUI);
       TPluginDecimate(lPluginNode).Attach(lPluginDecimateGUI);
     end;
-    ptLADSPA:
+    ptLADSPA, ptDelay:
     begin
       lPluginNodeGUI := TGenericPluginGUI.Create(nil);
       lPluginNodeGUI.PluginProcessorGui := Self;

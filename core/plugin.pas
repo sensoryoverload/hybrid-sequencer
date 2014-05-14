@@ -197,13 +197,13 @@ type
     property UniqueID: Integer read FUniqueID write FUniqueID;
   end;
 
-  { TLADSPACommand }
+  { TGenericCommand }
 
-  TLADSPACommand = class(TCommand)
+  TGenericCommand = class(TCommand)
   private
     FOldValue: Variant;
     FValue: Variant;
-    FModel: TPluginLADSPA;
+    FModel: TPluginNode;
     FParameter: Integer;
   protected
     procedure DoExecute; override;
@@ -305,9 +305,9 @@ implementation
 uses
   pluginhost;
 
-{ TLADSPACommand }
+{ TGenericCommand }
 
-procedure TLADSPACommand.DoExecute;
+procedure TGenericCommand.DoExecute;
 begin
   if Assigned(FModel) then
   begin
@@ -318,7 +318,7 @@ begin
   end;
 end;
 
-procedure TLADSPACommand.DoRollback;
+procedure TGenericCommand.DoRollback;
 begin
   if Assigned(FModel) then
   begin
@@ -328,9 +328,9 @@ begin
   end;
 end;
 
-procedure TLADSPACommand.Initialize;
+procedure TGenericCommand.Initialize;
 begin
-  FModel := TPluginLADSPA(GObjectMapper.GetModelObject(ObjectID));
+  FModel := TPluginNode(GObjectMapper.GetModelObject(ObjectID));
 end;
 
 { TPluginCatalog }
