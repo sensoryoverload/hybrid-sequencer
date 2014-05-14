@@ -44,14 +44,13 @@ type
     FReadPtr: Integer;
     FBuffer: PSingle;
     FBufferSize: Integer;
-    FChannels: Integer;
     FSampleRate: Integer;
     procedure SetDelayMs(AValue: Integer);
     procedure SetDelaySmp(AValue: Integer);
   public
-    constructor Create(ASampleRate: Integer; AChannels: Integer);
+    constructor Create(ASampleRate: Integer);
     destructor Destroy; override;
-    function Process(input: Single): Single;
+    function Process(input: Single): Single; inline;
     property DelayMs: Integer read FDelayMs write SetDelayMs;
     property DelaySmp: Integer read FDelaySmp write SetDelaySmp;
   end;
@@ -147,6 +146,8 @@ procedure TAudioRingBuffer.SetDelayMs(AValue: Integer);
 begin
   if FDelayMs = AValue then Exit;
   FDelayMs := AValue;
+
+  DelaySmp := Round(AValue * (FSampleRate / 1000));
 end;
 
 procedure TAudioRingBuffer.SetDelaySmp(AValue: Integer);
@@ -154,15 +155,14 @@ begin
   if FDelaySmp = AValue then Exit;
   FDelaySmp := AValue;
 
-  FWritePtr := FDelaySmp * FChannels;
+  FWritePtr := FDelaySmp;
   FReadPtr := 0;
 end;
 
-constructor TAudioRingBuffer.Create(ASampleRate: Integer; AChannels: Integer);
+constructor TAudioRingBuffer.Create(ASampleRate: Integer);
 begin
-  FChannels := AChannels;
   FSampleRate := FSampleRate;
-  FBufferSize := ASampleRate * AChannels;
+  FBufferSize := ASampleRate;
   FBuffer := Getmem(FBufferSize * SizeOf(Single));
 
   // Zero delay by default
@@ -181,12 +181,12 @@ function TAudioRingBuffer.Process(input: Single): Single;
 begin
   FBuffer[FWritePtr] := input;
   Result := FBuffer[FReadPtr];
-  Inc(FWritePtr, FChannels);
+  Inc(FWritePtr);
   if FWritePtr > FBufferSize then
   begin
     Dec(FWritePtr, FBufferSize);
   end;
-  Inc(FReadPtr, FChannels);
+  Inc(FReadPtr);
   if FReadPtr > FBufferSize then
   begin
     Dec(FReadPtr, FBufferSize);

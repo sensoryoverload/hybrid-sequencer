@@ -545,6 +545,7 @@ end;
 procedure TCreateNodesCommand.DoExecute;
 var
   lPluginDistortion: TPluginDistortion;
+  lPluginDelay: TPluginDelay;
   lPluginFreeverb: TPluginFreeverb;
   lPluginBassline: TPluginBassline;
   lPluginDecimate: TPluginDecimate;
@@ -576,6 +577,17 @@ begin
       AddPluginToNodeList(lPluginDistortion);
 
       ObjectIdList.Add(lPluginDistortion.ObjectID);
+    end;
+    ptDelay:
+    begin
+      lPluginDelay := TPluginDelay.Create(FPluginProcessor.ObjectID, MAPPED);
+      lPluginDelay.PluginName := FPluginName;
+      lPluginDelay.PluginType := ptDelay;
+      lPluginDelay.SequenceNr := FPluginProcessor.NodeList.Count;
+
+      AddPluginToNodeList(lPluginDelay);
+
+      ObjectIdList.Add(lPluginDelay.ObjectID);
     end;
     ptSampler:
     begin

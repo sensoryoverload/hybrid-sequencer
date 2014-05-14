@@ -9,33 +9,35 @@ uses
 
 type
   TDelayParameter = (
-    dpLeftDelay,
-    dpRightDelay,
-    dpLeftFeedback,
-    dpRightFeedback,
-    dpLeftPanning,
-    dpRightPanning);
+    dpDelay1,
+    dpDelay2,
+    dpFeedback1,
+    dpFeedback2,
+    dpPanning1,
+    dpPanning2);
 
   { TPluginDelay }
 
   TPluginDelay = class(TPluginNode)
   private
-    FLeftDelay: single;
-    FLeftFeedback: single;
-    FLeftPanning: single;
-    FLeftPanGainL: single;
-    FLeftPanGainR: single;
-    FRightDelay: single;
-    FRightFeedback: single;
-    FRightPanning: single;
-    FRightPanGainL: single;
-    FRightPanGainR: single;
+    FDelay1: single;
+    FFeedback1: single;
+    FPanning1: single;
+    FPanGainL1: single;
+    FPanGainR1: single;
+    FDelay2: single;
+    FFeedback2: single;
+    FPanning2: single;
+    FPanGainL2: single;
+    FPanGainR2: single;
 
-    FLeftDelayBuffer: TAudioRingBuffer;
-    FRightDelayBuffer: TAudioRingBuffer;
-    procedure SetLeftPanning(AValue: single);
+    FDelayBufferL1: TAudioRingBuffer;
+    FDelayBufferR1: TAudioRingBuffer;
+    FDelayBufferL2: TAudioRingBuffer;
+    FDelayBufferR2: TAudioRingBuffer;
+    procedure SetPanning1(AValue: single);
     procedure SetPanning(APanValue: Single; var ALeftPan, ARightPan: single);
-    procedure SetRightPanning(AValue: single);
+    procedure SetPanning2(AValue: single);
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); override;
     destructor Destroy; override;
@@ -44,12 +46,12 @@ type
     procedure Instantiate; override;
     procedure UpdateParameters; override;
   published
-    property LeftDelay: single read FLeftDelay write FLeftDelay;
-    property LeftFeedback: single read FLeftFeedback write FLeftFeedback;
-    property LeftPanning: single read FLeftPanning write SetLeftPanning;
-    property RightDelay: single read FRightDelay write FRightDelay;
-    property RightFeedback: single read FRightFeedback write FRightFeedback;
-    property RightPanning: single read FRightPanning write SetRightPanning;
+    property Delay1: single read FDelay1 write FDelay1;
+    property Feedback1: single read FFeedback1 write FFeedback1;
+    property Panning1: single read FPanning1 write SetPanning1;
+    property Delay2: single read FDelay2 write FDelay2;
+    property Feedback2: single read FFeedback2 write FFeedback2;
+    property Panning2: single read FPanning2 write SetPanning2;
   end;
 
   { TDelayCommand }
@@ -85,10 +87,10 @@ begin
   FPluginDelay.BeginUpdate;
 
   case FParameter of
-    dpLeftDelay:
+    dpDelay1:
     begin;
-      FOldValue := FPluginDelay.LeftDelay;
-      FPluginDelay.LeftDelay := FValue;
+      FOldValue := FPluginDelay.Delay1;
+      FPluginDelay.Delay1 := FValue;
     end;
   end;
 
@@ -100,9 +102,9 @@ begin
   FPluginDelay.BeginUpdate;
 
   case FParameter of
-    dpLeftDelay:
+    dpDelay1:
     begin;
-      FPluginDelay.LeftDelay := FOldValue;
+      FPluginDelay.Delay1 := FOldValue;
     end;
   end;
 
@@ -112,43 +114,49 @@ end;
 
 { TPluginDelay }
 
-procedure TPluginDelay.SetLeftPanning(AValue: single);
+procedure TPluginDelay.SetPanning1(AValue: single);
 begin
-  if FLeftPanning=AValue then Exit;
-  FLeftPanning:=AValue;
+  if FPanning1=AValue then Exit;
+  FPanning1:=AValue;
 
-  SetPanning(FLeftPanning, FLeftPanGainL, FLeftPanGainR);
+  SetPanning(FPanning1, FPanGainL1, FPanGainR1);
 end;
 
-procedure TPluginDelay.SetRightPanning(AValue: single);
+procedure TPluginDelay.SetPanning2(AValue: single);
 begin
-  if FRightPanning=AValue then Exit;
-  FRightPanning:=AValue;
+  if FPanning2=AValue then Exit;
+  FPanning2:=AValue;
 
-  SetPanning(FRightPanning, FRightPanGainL, FRightPanGainR);
+  SetPanning(FPanning2, FPanGainL2, FPanGainR2);
 end;
 
 constructor TPluginDelay.Create(AObjectOwnerID: string; AMapped: Boolean);
 begin
   inherited;
 
-  FLeftDelay := 1000;
-  FLeftFeedback := 0.5;
-  FLeftPanning := 0;
-  FLeftDelayBuffer := TAudioRingBuffer.Create(Round(GSettings.SampleRate), STEREO);
-  FLeftDelayBuffer.DelayMs := Round(FLeftDelay);
+  FDelay1 := 1000;
+  FFeedback1 := 0.5;
+  FPanning1 := 0;
+  FDelayBufferL1 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
+  FDelayBufferL1.DelayMs := Round(FDelay1);
+  FDelayBufferR1 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
+  FDelayBufferR1.DelayMs := Round(FDelay1);
 
-  FRightDelay := 1000;
-  FRightFeedback := 0.5;
-  FRightPanning := 0;
-  FRightDelayBuffer := TAudioRingBuffer.Create(Round(GSettings.SampleRate), STEREO);
-  FRightDelayBuffer.DelayMs := Round(FRightDelay);
+  FDelay2 := 1000;
+  FFeedback2 := 0.5;
+  FPanning2 := 0;
+  FDelayBufferL2 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
+  FDelayBufferL2.DelayMs := Round(FDelay2);
+  FDelayBufferR2 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
+  FDelayBufferR2.DelayMs := Round(FDelay2);
 end;
 
 destructor TPluginDelay.Destroy;
 begin
-  FLeftDelayBuffer.Free;
-  FRightDelayBuffer.Free;
+  FDelayBufferL1.Free;
+  FDelayBufferR1.Free;
+  FDelayBufferL2.Free;
+  FDelayBufferR2.Free;
 
   inherited Destroy;
 end;
@@ -158,51 +166,69 @@ procedure TPluginDelay.Process(AMidiBuffer: TMidiBuffer;
   AFrames: Integer);
 var
   lIndex: Integer;
-  lLeftOffset: Integer;
-  lRightOffset: Integer;
-  lLeftSample: Single;
-  lRightSample: Single;
+  lOffsetL: Integer;
+  lOffsetR: Integer;
+  lSampleL1: Single;
+  lSampleR1: Single;
+  lSampleL2: Single;
+  lSampleR2: Single;
 begin
-  lLeftOffset := 0;
-  lRightOffset := 1;
+  lOffsetL := 0;
+  lOffsetR := 1;
   for lIndex := 0 to Pred(AFrames) do
   begin
-    lLeftSample :=
-      FLeftDelayBuffer.Process(AInputBuffer[lLeftOffset]) +   // Put input into delaybuffer
-      AInputBuffer[lLeftOffset];                              // Mix dry signal
+    // Channel 1 - Left
+    lSampleL1 :=
+      FDelayBufferL1.Process(AInputBuffer[lOffsetL] +   // Put input into delaybuffer
+      lSampleL1 * FFeedback1) +                         // Feed output in input
+      AInputBuffer[lOffsetL];                           // Mix dry signal
 
-    lRightSample :=
-      FRightDelayBuffer.Process(AInputBuffer[lRightOffset]) + // Put input into delaybuffer
-      AInputBuffer[lRightOffset];                             // Mix dry signal
+    // Channel 1 - Right
+    lSampleR1 :=
+      FDelayBufferR2.Process(AInputBuffer[lOffsetR] +   // Put input into delaybuffer
+      lSampleR1 * FFeedback1) +                         // Feed output in input
+      AInputBuffer[lOffsetR];                           // Mix dry signal
 
-    AOutputBuffer[lLeftOffset] := lLeftSample;
-    AOutputBuffer[lRightOffset] := lRightSample;
+    // Channel 2 - Left
+    lSampleL2 :=
+      FDelayBufferL2.Process(AInputBuffer[lOffsetL] +   // Put input into delaybuffer
+      lSampleL2 * FFeedback2) +                         // Feed output in input
+      AInputBuffer[lOffsetL];                           // Mix dry signal
 
-    Inc(lLeftOffset, STEREO);
-    Inc(lRightOffset, STEREO);
+    // Channel 2 - Right
+    lSampleR2 :=
+      FDelayBufferR2.Process(AInputBuffer[lOffsetR] +   // Put input into delaybuffer
+      lSampleR2 * FFeedback2) +                         // Feed output in input
+      AInputBuffer[lOffsetR];                           // Mix dry signal
+
+    AOutputBuffer[lOffsetL] := lSampleL1 + lSampleL2;
+    AOutputBuffer[lOffsetR] := lSampleR1 + lSampleR2;
+
+    Inc(lOffsetL, STEREO);
+    Inc(lOffsetR, STEREO);
   end;
 end;
 
 procedure TPluginDelay.Instantiate;
 begin
-  CreatePortParameter('Left delay', 0, 1, True, True, False, True, False, False, 1, LeftDelay, nil);
-  CreatePortParameter('Left feedback', 0, 1, True, True, False, True, False, False, 1, LeftFeedback, nil);
-  CreatePortParameter('Left panning', 0, 1, True, True, False, True, False, False, 1, LeftPanning, nil);
-  CreatePortParameter('Right delay', 0, 1, True, True, False, True, False, False, 1, RightDelay, nil);
-  CreatePortParameter('Right feedback', 0, 1, True, True, False, True, False, False, 1, RightFeedback, nil);
-  CreatePortParameter('Right panning', 0, 1, True, True, True, True, False, False, 1, RightPanning, nil);
+  CreatePortParameter('Left delay', 0, 1, True, True, False, True, False, False, 1, Delay1, nil);
+  CreatePortParameter('Left feedback', 0, 1, True, True, False, True, False, False, 1, Feedback1, nil);
+  CreatePortParameter('Left panning', 0, 1, True, True, False, True, False, False, 1, Panning1, nil);
+  CreatePortParameter('Right delay', 0, 1, True, True, False, True, False, False, 1, Delay2, nil);
+  CreatePortParameter('Right feedback', 0, 1, True, True, False, True, False, False, 1, Feedback2, nil);
+  CreatePortParameter('Right panning', 0, 1, True, True, True, True, False, False, 1, Panning2, nil);
 
   inherited;
 end;
 
 procedure TPluginDelay.UpdateParameters;
 begin
-  LeftDelay := InputControls[0].Value;
-  LeftFeedback := InputControls[1].Value;
-  LeftPanning := InputControls[2].Value;
-  RightDelay := InputControls[3].Value;
-  RightFeedback := InputControls[4].Value;
-  RightPanning := Round(InputControls[5].Value);
+  Delay1 := InputControls[0].Value;
+  Feedback1 := InputControls[1].Value;
+  Panning1 := InputControls[2].Value;
+  Delay2 := InputControls[3].Value;
+  Feedback2 := InputControls[4].Value;
+  Panning2 := Round(InputControls[5].Value);
 end;
 
 procedure TPluginDelay.SetPanning(APanValue: Single; var ALeftPan, ARightPan: single);

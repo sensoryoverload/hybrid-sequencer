@@ -372,9 +372,9 @@ constructor TReverb.Create;
 begin
   inherited;
 
-  delayL := TAudioRingBuffer.Create(Round(GSettings.SampleRate), 1);
+  delayL := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   delayL.DelaySmp := 0;
-  delayR := TAudioRingBuffer.Create(Round(GSettings.SampleRate), 1);
+  delayR := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   delayR.DelaySmp := 0;
 
   CombL[0] := Tcomb.Create(combtuningL1);

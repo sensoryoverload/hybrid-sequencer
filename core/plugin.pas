@@ -55,7 +55,7 @@ type
   TArrayOfPSingle = Array of PSingle;
 
   TPluginType = (
-    ptIO, ptSampler, ptDistortion, ptFlanger, ptFilter, ptDecimate, ptReverb,
+    ptIO, ptSampler, ptDelay, ptDistortion, ptFlanger, ptFilter, ptDecimate, ptReverb,
     ptBassline, ptLADSPA);
 
   TPluginNodeType = (pntSource, pntSink, pntPlugin);

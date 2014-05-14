@@ -161,6 +161,10 @@ begin
       begin
         lCreateNodesCommand.PluginType := ptDistortion;
       end
+      else if SameText(lTreeView.Selected.Text, 'delay') then
+      begin
+        lCreateNodesCommand.PluginType := ptDelay;
+      end
       else if SameText(lTreeView.Selected.Text, 'reverb') then
       begin
         lCreateNodesCommand.PluginType := ptReverb;

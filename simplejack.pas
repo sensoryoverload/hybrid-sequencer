@@ -1539,6 +1539,7 @@ begin
     lFilterRootNode := TreeView1.Items.Add(RootNode, 'Native Plugins');
     lFilterRootNode.ImageIndex := 17;
     TreeView1.Items.AddChild(lFilterRootNode, 'Reverb');
+    TreeView1.Items.AddChild(lFilterRootNode, 'Delay');
     TreeView1.Items.AddChild(lFilterRootNode, 'Bassline');
     TreeView1.Items.AddChild(lFilterRootNode, 'Sampler');
     TreeView1.Items.AddChild(lFilterRootNode, 'Distortion');
