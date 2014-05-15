@@ -311,6 +311,8 @@ procedure TGenericCommand.DoExecute;
 begin
   if Assigned(FModel) then
   begin
+    DBLog(Format('TGenericCommand: Plugin "%s", Set "%s" to "%s"', [FModel.PluginName, FModel.InputControls[FParameter].Caption, FValue]));
+
     FOldValue := FModel.InputControls[FParameter].Value;
     FModel.InputControls[FParameter].Value := FValue;
 
@@ -704,7 +706,7 @@ end;
 
 procedure TPluginNode.UpdateParameters;
 begin
-  // To be override;
+  // To be overridden;
 end;
 
 function TPluginNode.CreatePortParameter(
@@ -845,25 +847,10 @@ begin
 end;
 
 procedure TAutomationDataList.Initialize;
-var
-  lPlugin: TPluginNode;
-  lPluginParameter: TPortParameter;
-  lIndex: Integer;
 begin
   inherited Initialize;
 
   IndexList;
-
-  //lPlugin := TPluginNode(GObjectMapper.GetModelObject(FDeviceId));
-  //lPluginParameter := TPortParameter(GObjectMapper.GetModelObject(FPortId));
-
-  DBLog('TAutomationDataList.Initialize;');
-  for lIndex := 0 to Pred(FList.Count) do
-  begin
-    dblog(Format('datavalue %f location %d',
-      [TAutomationData(FList[lIndex]).DataValue,
-      TAutomationData(FList[lIndex]).Location]));
-  end;
 end;
 
 {

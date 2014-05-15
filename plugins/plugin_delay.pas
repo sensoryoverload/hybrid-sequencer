@@ -35,6 +35,8 @@ type
     FDelayBufferR1: TAudioRingBuffer;
     FDelayBufferL2: TAudioRingBuffer;
     FDelayBufferR2: TAudioRingBuffer;
+    procedure SetDelay1(AValue: single);
+    procedure SetDelay2(AValue: single);
     procedure SetPanning1(AValue: single);
     procedure SetPanning(APanValue: Single; var ALeftPan, ARightPan: single);
     procedure SetPanning2(AValue: single);
@@ -46,10 +48,10 @@ type
     procedure Instantiate; override;
     procedure UpdateParameters; override;
   published
-    property Delay1: single read FDelay1 write FDelay1;
+    property Delay1: single read FDelay1 write SetDelay1;
     property Feedback1: single read FFeedback1 write FFeedback1;
     property Panning1: single read FPanning1 write SetPanning1;
-    property Delay2: single read FDelay2 write FDelay2;
+    property Delay2: single read FDelay2 write SetDelay2;
     property Feedback2: single read FFeedback2 write FFeedback2;
     property Panning2: single read FPanning2 write SetPanning2;
   end;
@@ -122,6 +124,24 @@ begin
   SetPanning(FPanning1, FPanGainL1, FPanGainR1);
 end;
 
+procedure TPluginDelay.SetDelay1(AValue: single);
+begin
+  if FDelay1=AValue then Exit;
+  FDelay1:=AValue;
+
+  FDelayBufferL1.DelayMs := Round(AValue);
+  FDelayBufferR1.DelayMs := Round(AValue);
+end;
+
+procedure TPluginDelay.SetDelay2(AValue: single);
+begin
+  if FDelay2=AValue then Exit;
+  FDelay2:=AValue;
+
+  FDelayBufferL2.DelayMs := Round(AValue);
+  FDelayBufferR2.DelayMs := Round(AValue);
+end;
+
 procedure TPluginDelay.SetPanning2(AValue: single);
 begin
   if FPanning2=AValue then Exit;
@@ -134,8 +154,10 @@ constructor TPluginDelay.Create(AObjectOwnerID: string; AMapped: Boolean);
 begin
   inherited;
 
+  PluginName := 'Delay';
+
   FDelay1 := 1000;
-  FFeedback1 := 0.5;
+  FFeedback1 := 0.1;
   FPanning1 := 0;
   FDelayBufferL1 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   FDelayBufferL1.DelayMs := Round(FDelay1);
@@ -143,7 +165,7 @@ begin
   FDelayBufferR1.DelayMs := Round(FDelay1);
 
   FDelay2 := 1000;
-  FFeedback2 := 0.5;
+  FFeedback2 := 0.1;
   FPanning2 := 0;
   FDelayBufferL2 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   FDelayBufferL2.DelayMs := Round(FDelay2);
@@ -173,6 +195,13 @@ var
   lSampleL2: Single;
   lSampleR2: Single;
 begin
+  inherited;
+
+  lSampleL1 := 0;
+  lSampleR1 := 0;
+  lSampleL2 := 0;
+  lSampleR2 := 0;
+
   lOffsetL := 0;
   lOffsetR := 1;
   for lIndex := 0 to Pred(AFrames) do
@@ -211,12 +240,26 @@ end;
 
 procedure TPluginDelay.Instantiate;
 begin
-  CreatePortParameter('Left delay', 0, 1, True, True, False, True, False, False, 1, Delay1, nil);
-  CreatePortParameter('Left feedback', 0, 1, True, True, False, True, False, False, 1, Feedback1, nil);
-  CreatePortParameter('Left panning', 0, 1, True, True, False, True, False, False, 1, Panning1, nil);
-  CreatePortParameter('Right delay', 0, 1, True, True, False, True, False, False, 1, Delay2, nil);
-  CreatePortParameter('Right feedback', 0, 1, True, True, False, True, False, False, 1, Feedback2, nil);
-  CreatePortParameter('Right panning', 0, 1, True, True, True, True, False, False, 1, Panning2, nil);
+  {
+    ACaption: string;
+    ALowerBound: Single;
+    AUpperBound: Single;
+    AIsBoundedAbove: Boolean;
+    AIsBoundedBelow: Boolean;
+    AIsInteger: Boolean;
+    AIsLogarithmic: Boolean;
+    AIsSampleRate: Boolean;
+    AIsToggled: Boolean;
+    ADefaultValue: Single;
+    AValue: Single;
+    ASetValue: TSingleParameter
+  }
+  CreatePortParameter('Left delay', 0, 1000, True, True, True, False, False, False, 1000, Delay1, nil);
+  CreatePortParameter('Left feedback', 0, 1, True, True, True, True, False, False, 0.2, Feedback1, nil);
+  CreatePortParameter('Left panning', 0, 1, True, True, True, False, False, False, 0, Panning1, nil);
+  CreatePortParameter('Right delay', 0, 1000, True, True, True, False, False, False, 1000, Delay2, nil);
+  CreatePortParameter('Right feedback', 0, 1, True, True, True, True, False, False, 0.2, Feedback2, nil);
+  CreatePortParameter('Right panning', 0, 1, True, True, True, False, False, False, 0, Panning2, nil);
 
   inherited;
 end;
