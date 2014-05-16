@@ -190,6 +190,8 @@ var
   lIndex: Integer;
   lOffsetL: Integer;
   lOffsetR: Integer;
+  lInputL: Single;
+  lInputR: Single;
   lSampleL1: Single;
   lSampleR1: Single;
   lSampleL2: Single;
@@ -204,31 +206,35 @@ begin
 
   lOffsetL := 0;
   lOffsetR := 1;
+
   for lIndex := 0 to Pred(AFrames) do
   begin
+    lInputL := AInputBuffer[lOffsetL];
+    lInputR := AInputBuffer[lOffsetR];
+
     // Channel 1 - Left
     lSampleL1 :=
-      FDelayBufferL1.Process(AInputBuffer[lOffsetL] +   // Put input into delaybuffer
-      lSampleL1 * FFeedback1) +                         // Feed output in input
-      AInputBuffer[lOffsetL];                           // Mix dry signal
+      FDelayBufferL1.Process(lInputL +   // Put input into delaybuffer
+      lSampleL1 * FFeedback1) +          // Feed output in input
+      lInputL;                           // Mix dry signal
 
     // Channel 1 - Right
     lSampleR1 :=
-      FDelayBufferR2.Process(AInputBuffer[lOffsetR] +   // Put input into delaybuffer
-      lSampleR1 * FFeedback1) +                         // Feed output in input
-      AInputBuffer[lOffsetR];                           // Mix dry signal
+      FDelayBufferR2.Process(lInputR +   // Put input into delaybuffer
+      lSampleR1 * FFeedback1) +          // Feed output in input
+      lInputR;                           // Mix dry signal
 
     // Channel 2 - Left
     lSampleL2 :=
-      FDelayBufferL2.Process(AInputBuffer[lOffsetL] +   // Put input into delaybuffer
-      lSampleL2 * FFeedback2) +                         // Feed output in input
-      AInputBuffer[lOffsetL];                           // Mix dry signal
+      FDelayBufferL2.Process(lInputL +   // Put input into delaybuffer
+      lSampleL2 * FFeedback2) +          // Feed output in input
+      lInputL;                           // Mix dry signal
 
     // Channel 2 - Right
     lSampleR2 :=
-      FDelayBufferR2.Process(AInputBuffer[lOffsetR] +   // Put input into delaybuffer
-      lSampleR2 * FFeedback2) +                         // Feed output in input
-      AInputBuffer[lOffsetR];                           // Mix dry signal
+      FDelayBufferR2.Process(lInputR +   // Put input into delaybuffer
+      lSampleR2 * FFeedback2) +          // Feed output in input
+      lInputR;                           // Mix dry signal
 
     AOutputBuffer[lOffsetL] := lSampleL1 + lSampleL2;
     AOutputBuffer[lOffsetR] := lSampleR1 + lSampleR2;

@@ -144,7 +144,6 @@ const
 
 procedure TAudioRingBuffer.SetDelayMs(AValue: Integer);
 begin
-  if FDelayMs = AValue then Exit;
   FDelayMs := AValue;
 
   DelaySmp := Round(AValue * (FSampleRate / 1000));
@@ -152,7 +151,6 @@ end;
 
 procedure TAudioRingBuffer.SetDelaySmp(AValue: Integer);
 begin
-  if FDelaySmp = AValue then Exit;
   FDelaySmp := AValue;
 
   FWritePtr := FDelaySmp;
@@ -161,7 +159,7 @@ end;
 
 constructor TAudioRingBuffer.Create(ASampleRate: Integer);
 begin
-  FSampleRate := FSampleRate;
+  FSampleRate := ASampleRate;
   FBufferSize := ASampleRate;
   FBuffer := Getmem(FBufferSize * SizeOf(Single));
 
