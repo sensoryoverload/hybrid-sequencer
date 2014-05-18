@@ -8,14 +8,6 @@ uses
   Classes, SysUtils, plugin, global_command, global, globalconst, pluginhost, fx;
 
 type
-  TDelayParameter = (
-    dpDelay1,
-    dpDelay2,
-    dpFeedback1,
-    dpFeedback2,
-    dpPanning1,
-    dpPanning2);
-
   { TPluginDelay }
 
   TPluginDelay = class(TPluginNode)
@@ -30,13 +22,23 @@ type
     FPanning2: single;
     FPanGainL2: single;
     FPanGainR2: single;
+    FDryWet: single;
+    FDry: single;
+    FWet: single;
+
+    FSampleL1: Single;
+    FSampleR1: Single;
+    FSampleL2: Single;
+    FSampleR2: Single;
 
     FDelayBufferL1: TAudioRingBuffer;
     FDelayBufferR1: TAudioRingBuffer;
     FDelayBufferL2: TAudioRingBuffer;
     FDelayBufferR2: TAudioRingBuffer;
+
     procedure SetDelay1(AValue: single);
     procedure SetDelay2(AValue: single);
+    procedure SetDryWet(AValue: single);
     procedure SetPanning1(AValue: single);
     procedure SetPanning(APanValue: Single; var ALeftPan, ARightPan: single);
     procedure SetPanning2(AValue: single);
@@ -54,99 +56,37 @@ type
     property Delay2: single read FDelay2 write SetDelay2;
     property Feedback2: single read FFeedback2 write FFeedback2;
     property Panning2: single read FPanning2 write SetPanning2;
-  end;
-
-  { TDelayCommand }
-
-  TDelayCommand = class(TCommand)
-  private
-    FOldValue: Variant;
-    FValue: Variant;
-    FPluginDelay: TPluginDelay;
-    FParameter: TDelayParameter;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  public
-    procedure Initialize; override;
-    property Value: Variant read FValue write FValue;
-    property Parameter: TDelayParameter read FParameter write FParameter;
+    property DryWet: single read FDryWet write SetDryWet;
   end;
 
 implementation
-
-{ TBasePluginCommand }
-
-procedure TDelayCommand.Initialize;
-begin
-   FPluginDelay := TPluginDelay(GObjectMapper.GetModelObject(ObjectOwner));
-end;
-
-{ TDelayCommand }
-
-procedure TDelayCommand.DoExecute;
-begin
-  FPluginDelay.BeginUpdate;
-
-  case FParameter of
-    dpDelay1:
-    begin;
-      FOldValue := FPluginDelay.Delay1;
-      FPluginDelay.Delay1 := FValue;
-    end;
-  end;
-
-  FPluginDelay.EndUpdate;
-end;
-
-procedure TDelayCommand.DoRollback;
-begin
-  FPluginDelay.BeginUpdate;
-
-  case FParameter of
-    dpDelay1:
-    begin;
-      FPluginDelay.Delay1 := FOldValue;
-    end;
-  end;
-
-  FPluginDelay.EndUpdate;
-end;
-
 
 { TPluginDelay }
 
 procedure TPluginDelay.SetPanning1(AValue: single);
 begin
-  if FPanning1=AValue then Exit;
-  FPanning1:=AValue;
-
   SetPanning(FPanning1, FPanGainL1, FPanGainR1);
 end;
 
 procedure TPluginDelay.SetDelay1(AValue: single);
 begin
-  if FDelay1=AValue then Exit;
-  FDelay1:=AValue;
-
   FDelayBufferL1.DelayMs := Round(AValue);
   FDelayBufferR1.DelayMs := Round(AValue);
 end;
 
 procedure TPluginDelay.SetDelay2(AValue: single);
 begin
-  if FDelay2=AValue then Exit;
-  FDelay2:=AValue;
-
   FDelayBufferL2.DelayMs := Round(AValue);
   FDelayBufferR2.DelayMs := Round(AValue);
 end;
 
+procedure TPluginDelay.SetDryWet(AValue: single);
+begin
+  SetPanning(AValue, FDry, FWet);
+end;
+
 procedure TPluginDelay.SetPanning2(AValue: single);
 begin
-  if FPanning2=AValue then Exit;
-  FPanning2:=AValue;
-
   SetPanning(FPanning2, FPanGainL2, FPanGainR2);
 end;
 
@@ -156,21 +96,28 @@ begin
 
   PluginName := 'Delay';
 
-  FDelay1 := 1000;
-  FFeedback1 := 0.1;
-  FPanning1 := 0;
   FDelayBufferL1 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   FDelayBufferL1.DelayMs := Round(FDelay1);
   FDelayBufferR1 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   FDelayBufferR1.DelayMs := Round(FDelay1);
+  Delay1 := 1000;
+  Feedback1 := 0.1;
+  Panning1 := 0;
 
-  FDelay2 := 1000;
-  FFeedback2 := 0.1;
-  FPanning2 := 0;
   FDelayBufferL2 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   FDelayBufferL2.DelayMs := Round(FDelay2);
   FDelayBufferR2 := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
   FDelayBufferR2.DelayMs := Round(FDelay2);
+  Delay2 := 1000;
+  Feedback2 := 0.1;
+  Panning2 := 0;
+
+  DryWet := 0;
+
+  FSampleL1 := 0;
+  FSampleR1 := 0;
+  FSampleL2 := 0;
+  FSampleR2 := 0;
 end;
 
 destructor TPluginDelay.Destroy;
@@ -192,17 +139,8 @@ var
   lOffsetR: Integer;
   lInputL: Single;
   lInputR: Single;
-  lSampleL1: Single;
-  lSampleR1: Single;
-  lSampleL2: Single;
-  lSampleR2: Single;
 begin
   inherited;
-
-  lSampleL1 := 0;
-  lSampleR1 := 0;
-  lSampleL2 := 0;
-  lSampleR2 := 0;
 
   lOffsetL := 0;
   lOffsetR := 1;
@@ -213,31 +151,31 @@ begin
     lInputR := AInputBuffer[lOffsetR];
 
     // Channel 1 - Left
-    lSampleL1 :=
+    FSampleL1 :=
       FDelayBufferL1.Process(lInputL +   // Put input into delaybuffer
-      lSampleL1 * FFeedback1) +          // Feed output in input
-      lInputL;                           // Mix dry signal
+      FSampleL1 * FFeedback1);           // Feed output in input
 
     // Channel 1 - Right
-    lSampleR1 :=
-      FDelayBufferR2.Process(lInputR +   // Put input into delaybuffer
-      lSampleR1 * FFeedback1) +          // Feed output in input
-      lInputR;                           // Mix dry signal
+    FSampleR1 :=
+      FDelayBufferR1.Process(lInputR +   // Put input into delaybuffer
+      FSampleR1 * FFeedback1);           // Feed output in input
 
     // Channel 2 - Left
-    lSampleL2 :=
+    FSampleL2 :=
       FDelayBufferL2.Process(lInputL +   // Put input into delaybuffer
-      lSampleL2 * FFeedback2) +          // Feed output in input
-      lInputL;                           // Mix dry signal
+      FSampleL2 * FFeedback2);           // Feed output in input
 
     // Channel 2 - Right
-    lSampleR2 :=
+    FSampleR2 :=
       FDelayBufferR2.Process(lInputR +   // Put input into delaybuffer
-      lSampleR2 * FFeedback2) +          // Feed output in input
-      lInputR;                           // Mix dry signal
+      FSampleR2 * FFeedback2);           // Feed output in input
 
-    AOutputBuffer[lOffsetL] := lSampleL1 + lSampleL2;
-    AOutputBuffer[lOffsetR] := lSampleR1 + lSampleR2;
+    AOutputBuffer[lOffsetL] :=
+      lInputL * FDry +
+      (FSampleL1 * FPanGainL1 + FSampleL2 * FPanGainL2) * FWet;
+    AOutputBuffer[lOffsetR] :=
+      lInputR * FDry +
+      (FSampleR1 * FPanGainR1 + FSampleR2 * FPanGainR2) * FWet;
 
     Inc(lOffsetL, STEREO);
     Inc(lOffsetR, STEREO);
@@ -260,14 +198,13 @@ begin
     AValue: Single;
     ASetValue: TSingleParameter
   }
-  CreatePortParameter('Left delay', 0, 1000, True, True, True, False, False, False, 1000, Delay1, nil);
-  CreatePortParameter('Left feedback', 0, 1, True, True, True, True, False, False, 0.2, Feedback1, nil);
-  CreatePortParameter('Left panning', 0, 1, True, True, True, False, False, False, 0, Panning1, nil);
-  CreatePortParameter('Right delay', 0, 1000, True, True, True, False, False, False, 1000, Delay2, nil);
-  CreatePortParameter('Right feedback', 0, 1, True, True, True, True, False, False, 0.2, Feedback2, nil);
-  CreatePortParameter('Right panning', 0, 1, True, True, True, False, False, False, 0, Panning2, nil);
-
-  inherited;
+  CreatePortParameter('Delay 1', 0, 1000, True, True, True, False, False, False, 1000, Delay1, nil);
+  CreatePortParameter('Feedback 1', 0, 1, True, True, False, False, False, False, 0, Feedback1, nil);
+  CreatePortParameter('Panning 1', -1, 1, True, True, True, False, False, False, 0, Panning1, nil);
+  CreatePortParameter('Delay 2', 0, 1000, True, True, True, False, False, False, 1000, Delay2, nil);
+  CreatePortParameter('Feedback 2', 0, 1, True, True, False, False, False, False, 0, Feedback2, nil);
+  CreatePortParameter('Panning 2', -1, 1, True, True, True, False, False, False, 0, Panning2, nil);
+  CreatePortParameter('DryWet ratio', -1, 1, True, True, True, False, False, False, 0, DryWet, nil);
 end;
 
 procedure TPluginDelay.UpdateParameters;
@@ -278,12 +215,18 @@ begin
   Delay2 := InputControls[3].Value;
   Feedback2 := InputControls[4].Value;
   Panning2 := Round(InputControls[5].Value);
+  DryWet := InputControls[6].Value;
 end;
 
 procedure TPluginDelay.SetPanning(APanValue: Single; var ALeftPan, ARightPan: single);
 begin
   ALeftPan := (1 - APanValue) * (0.7 + 0.2 * APanValue);
   ARightPan := (1 + APanValue) * (0.7 - 0.2 * APanValue);
+end;
+
+procedure Register;
+begin
+
 end;
 
 end.

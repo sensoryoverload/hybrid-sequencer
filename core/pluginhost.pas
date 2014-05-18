@@ -458,7 +458,6 @@ end;
 
 function TPluginProcessor.FindParameterByDeviceAndParameterId(ADeviceId, ParameterId: string): TPortParameter;
 var
-  i, j: Integer;
   lPluginNode: TPluginNode;
 begin
   Result := nil;

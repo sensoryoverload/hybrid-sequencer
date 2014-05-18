@@ -129,8 +129,8 @@ type
   function Tanh2_pas2(x:Single):Single;
   function Tanh2(x:Single):Single;  assembler;
   function saturate(x: single; t: single): single;
-  function FastSin(x: Single): Single;
-  function FastCos(x: Single): Single;
+  function FastSin(x: Single): Single; inline;
+  function FastCos(x: Single): Single; inline;
 
 implementation
 
@@ -146,7 +146,7 @@ procedure TAudioRingBuffer.SetDelayMs(AValue: Integer);
 begin
   FDelayMs := AValue;
 
-  DelaySmp := Round(AValue * (FSampleRate / 1000));
+  SetDelaySmp(Round(FSampleRate / (1000 / FDelayMs)));
 end;
 
 procedure TAudioRingBuffer.SetDelaySmp(AValue: Integer);

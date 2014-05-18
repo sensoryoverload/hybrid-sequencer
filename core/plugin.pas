@@ -671,6 +671,8 @@ begin
       OnPopulateAutomationDevices(Self.ObjectID, FInputControls[lIndex].ObjectID, paaInsert);
     end;
   end;
+
+  UpdateParameters;
 end;
 
 procedure TPluginNode.Activate;
