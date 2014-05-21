@@ -791,6 +791,7 @@ var
 begin
   lBGRABitmap := TBGRABitmap.Create(Width, Height);
   try
+    lBGRABitmap.FontStyle := [fsBold];
     if Orientation = oBalance then
     begin
       lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);

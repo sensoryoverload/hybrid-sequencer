@@ -40,7 +40,7 @@ type
     procedure SetDelay2(AValue: single);
     procedure SetDryWet(AValue: single);
     procedure SetPanning1(AValue: single);
-    procedure SetPanning(APanValue: Single; var ALeftPan, ARightPan: single);
+    procedure SetPanning(APanValue: Single; var ALeftPan: single; var ARightPan: single);
     procedure SetPanning2(AValue: single);
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); override;
@@ -171,11 +171,12 @@ begin
       FSampleR2 * FFeedback2);           // Feed output in input
 
     AOutputBuffer[lOffsetL] :=
-      lInputL * FDry +
-      (FSampleL1 * FPanGainL1 + FSampleL2 * FPanGainL2) * FWet;
+      lInputL * FDry +                                          // Dry signal
+      (FSampleL1 * FPanGainL1 + FSampleL2 * FPanGainL2) * FWet; // Wet signal
+
     AOutputBuffer[lOffsetR] :=
-      lInputR * FDry +
-      (FSampleR1 * FPanGainR1 + FSampleR2 * FPanGainR2) * FWet;
+      lInputR * FDry +                                          // Dry signal
+      (FSampleR1 * FPanGainR1 + FSampleR2 * FPanGainR2) * FWet; // Wet signal
 
     Inc(lOffsetL, STEREO);
     Inc(lOffsetR, STEREO);
@@ -185,18 +186,7 @@ end;
 procedure TPluginDelay.Instantiate;
 begin
   {
-    ACaption: string;
-    ALowerBound: Single;
-    AUpperBound: Single;
-    AIsBoundedAbove: Boolean;
-    AIsBoundedBelow: Boolean;
-    AIsInteger: Boolean;
-    AIsLogarithmic: Boolean;
-    AIsSampleRate: Boolean;
-    AIsToggled: Boolean;
-    ADefaultValue: Single;
-    AValue: Single;
-    ASetValue: TSingleParameter
+Caption, LowerBound, UpperBound, IsBoundedAbove, IsBoundedBelow, IsInteger, IsLogarithmic, IsSampleRate, IsToggled, DefaultValue, Value, SetValue
   }
   CreatePortParameter('Delay 1', 0, 1000, True, True, True, False, False, False, 1000, Delay1, nil);
   CreatePortParameter('Feedback 1', 0, 1, True, True, False, False, False, False, 0, Feedback1, nil);
@@ -218,7 +208,7 @@ begin
   DryWet := InputControls[6].Value;
 end;
 
-procedure TPluginDelay.SetPanning(APanValue: Single; var ALeftPan, ARightPan: single);
+procedure TPluginDelay.SetPanning(APanValue: Single; var ALeftPan: single; var ARightPan: single);
 begin
   ALeftPan := (1 - APanValue) * (0.7 + 0.2 * APanValue);
   ARightPan := (1 + APanValue) * (0.7 - 0.2 * APanValue);

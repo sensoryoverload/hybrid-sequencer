@@ -277,6 +277,10 @@ begin
   begin
     lPluginNode := TScriptNode.Create(ObjectID, MAPPED);
   end
+  else if AClassName = 'TPluginDelay' then
+  begin
+    lPluginNode := TPluginDelay.Create(ObjectID, MAPPED);
+  end
   else if AClassName = 'TPluginLADSPA' then
   begin
     lPluginNode := TPluginLADSPA.Create(ObjectID, MAPPED);

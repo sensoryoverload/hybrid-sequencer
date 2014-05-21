@@ -156,26 +156,32 @@ begin
       else if SameText(lTreeView.Selected.Text, 'sampler') then
       begin
         lCreateNodesCommand.PluginType := ptSampler;
+        lCreateNodesCommand.PluginName := 'Sampler';
       end
       else if SameText(lTreeView.Selected.Text, 'distortion') then
       begin
         lCreateNodesCommand.PluginType := ptDistortion;
+        lCreateNodesCommand.PluginName := 'Distortion';
       end
       else if SameText(lTreeView.Selected.Text, 'delay') then
       begin
         lCreateNodesCommand.PluginType := ptDelay;
+        lCreateNodesCommand.PluginName := 'Delay';
       end
       else if SameText(lTreeView.Selected.Text, 'reverb') then
       begin
         lCreateNodesCommand.PluginType := ptReverb;
+        lCreateNodesCommand.PluginName := 'Reverb';
       end
       else if SameText(lTreeView.Selected.Text, 'bassline') then
       begin
         lCreateNodesCommand.PluginType := ptBassline;
+        lCreateNodesCommand.PluginName := 'Bassline';
       end
       else if SameText(lTreeView.Selected.Text, 'bitreducer') then
       begin
         lCreateNodesCommand.PluginType := ptDecimate;
+        lCreateNodesCommand.PluginName := 'Decimate';
       end;
 
       GCommandQueue.PushCommand(lCreateNodesCommand);

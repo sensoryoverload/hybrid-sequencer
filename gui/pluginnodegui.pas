@@ -142,7 +142,7 @@ begin
     lPluginParameter.Max := lPlugin.InputControls[lParameterIndex].UpperBound;
     lPluginParameter.Left := 10 + (lParameterIndex div 10) * 90;
     lPluginParameter.Width := 80;
-    lPluginParameter.Height := 10;
+    lPluginParameter.Height := 12;
     lPluginParameter.Top := (lParameterIndex mod 8) * 20 + 30;
     lPluginParameter.Parent := pnlControls;
 
