@@ -98,6 +98,7 @@ type
       State: TDragState; var Accept: Boolean);
     procedure FrameResize(Sender: TObject);
   private
+    FSelectedController: Integer;
     FUpdateSubject: THybridPersistentModel;
     FIsDirty: Boolean;
     FForceRedraw: Boolean;
@@ -246,6 +247,7 @@ type
     property EditMode: TEditMode read FEditMode write FEditMode;
     property SelectedAutomationDeviceId: string read FSelectedAutomationDeviceId write SetSelectedAutomationDeviceId;
     property SelectedAutomationParameterId: string read FSelectedAutomationParameterId write SetSelectedAutomationParameterId;
+    property SelectedController: Integer read FSelectedController write FSelectedController;
     property IsDirty: Boolean read FIsDirty write FIsDirty;
   protected
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); override;
@@ -852,6 +854,8 @@ var
   lNoteY1: Integer;
   lNoteX2: Integer;
   lNoteY2: Integer;
+  lControllerToScreenRatio: Single;
+  lControllerYLocation: Integer;
 begin
   if not Assigned(FModel) then exit;
 
@@ -1003,6 +1007,8 @@ begin
     FBitmap.Canvas.Pen.Color := lNoteOutline;
     FBitmap.Canvas.Brush.Color := lNoteOutline;
 
+    lControllerToScreenRatio := FBitmap.Height / 128;
+
     for lIndex := 0 to Pred(NoteListGUI.Count) do
     begin
       lNote := TMidiNoteGUI(NoteListGUI[lIndex]);
@@ -1031,6 +1037,29 @@ begin
       end;
 
       FBitmap.Canvas.Rectangle(lNoteX1, lNoteY1, lNoteX2, lNoteY2);
+
+      if FSelectedController = MIDI_VELOCITY then
+      begin
+        FBitmap.Canvas.Pen.Color := clGreen;
+        FBitmap.Canvas.Pen.Width := 3;
+        lControllerYLocation :=
+          Round(FBitmap.Height - lControllerToScreenRatio * lNote.NoteVelocity);
+
+        FBitmap.Canvas.Line(
+          lNoteX1,
+          lControllerYLocation,
+          lNoteX1,
+          FBitmap.Height);
+
+        FBitmap.Canvas.Rectangle(
+          lNoteX1 - 3,
+          lControllerYLocation - 3,
+          lNoteX1 + 3,
+          lControllerYLocation + 3);
+
+        FBitmap.Canvas.Pen.Width := 1;
+
+      end;
 
       { note value debug code
       if FZoomNoteHeight > 8 then

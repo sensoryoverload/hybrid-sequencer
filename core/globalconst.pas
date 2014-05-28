@@ -29,6 +29,9 @@ uses
   ExtCtrls, typinfo, variants, DOM, XMLWrite, XMLRead;
 
 const
+  MIDI_VELOCITY = -1000;
+  MIDI_CC_NONE = 1000;
+
   MONO = 1;
   STEREO = 2;
   THREE_CHANNEL = 3;

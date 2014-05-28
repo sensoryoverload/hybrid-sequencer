@@ -283,9 +283,9 @@ var
   end;
 
 begin
-  CreateControllerItem(-1000, 'None');
+  CreateControllerItem(MIDI_CC_NONE, 'None');
   pupSelectController.Items.AddSeparator;
-  CreateControllerItem(1000, 'Velocity');
+  CreateControllerItem(MIDI_VELOCITY, 'Velocity');
   pupSelectController.Items.AddSeparator;
 
   CreateControllerItem(0, 'Bank Select (coarse)', '0..127');
@@ -445,8 +445,12 @@ begin
   if Sender is TMenuItem then
   begin
     lMenuItem := TMenuItem(Sender);
+
     // Set controller select button to selected controller item caption
     btnControllerSelect.Caption := lMenuItem.Caption;
+
+    FMidiPatternGUI.SelectedController := lMenuItem.Tag;
+    FMidiPatternGUI.UpdateView(True);
   end;
 end;
 
