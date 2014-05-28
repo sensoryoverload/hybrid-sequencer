@@ -14,19 +14,24 @@ type
 
   TMidiPatternControlGUI = class(TFrame, IObserver)
     btnAutomationSelect: TButton;
+    btnControllerSelect: TButton;
     cbMidiChannel: TComboBox;
     cbQuantize: TComboBox;
+    lblControllers: TLabel;
     lblAutomation: TLabel;
     lblMidiChannel: TLabel;
     lblQuantize: TLabel;
+    MenuItem1: TMenuItem;
     PairSplitter1: TPairSplitter;
     PairSplitterSide1: TPairSplitterSide;
     PairSplitterSide2: TPairSplitterSide;
     pnlMidiGrid: TPanel;
     pnlMidiSettings: TPanel;
+    pupSelectController: TPopupMenu;
     pupSelectAutomation: TPopupMenu;
 
     procedure btnAutomationSelectClick(Sender: TObject);
+    procedure btnControllerSelectClick(Sender: TObject);
     procedure cbQuantizeChange(Sender: TObject);
     procedure cbSampleBankSelecterChange(Sender: TObject);
     procedure cbMidiChannelChange(Sender: TObject);
@@ -46,6 +51,7 @@ type
   protected
     procedure DeviceClick(Sender: TObject);
     procedure DeviceParameterClick(Sender: TObject);
+    procedure ControllerClick(Sender: TObject);
     procedure DoMidiZoom(ALeftPercentage, ARightPercentage: single);
   public
     { public declarations }
@@ -57,6 +63,7 @@ type
     procedure UpdateView(AForceRedraw: Boolean = False);
 
     procedure PopulateAutomationControls(Sender: TObject);
+    procedure PopulateControllerSelection;
 
     function GetObjectID: string;
     procedure SetObjectID(AObjectID: string);
@@ -118,6 +125,8 @@ begin
   cbMidiChannel.Items.Add('14');
   cbMidiChannel.Items.Add('15');
   cbMidiChannel.Items.Add('16');
+
+  PopulateControllerSelection;
 
   pnlMidiGrid.Align := alNone;
   pnlMidiGrid.Align := alClient;
@@ -259,6 +268,156 @@ begin
  end;
 end;
 
+procedure TMidiPatternControlGUI.PopulateControllerSelection;
+var
+  lControllerItem: TMenuItem;
+
+  procedure CreateControllerItem(AControllerId: Integer; ACaption: string; AHint: string = '');
+  begin
+    lControllerItem := TMenuItem.Create(pupSelectController);
+    lControllerItem.Caption := ACaption;
+    lControllerItem.Hint := AHint;
+    lControllerItem.Tag := AControllerId;
+    lControllerItem.OnClick := @ControllerClick;
+    pupSelectController.Items.Add(lControllerItem);
+  end;
+
+begin
+  CreateControllerItem(-1000, 'None');
+  pupSelectController.Items.AddSeparator;
+  CreateControllerItem(1000, 'Velocity');
+  pupSelectController.Items.AddSeparator;
+
+  CreateControllerItem(0, 'Bank Select (coarse)', '0..127');
+  CreateControllerItem(1, 'Modulation Wheel (coarse)', '0..127');
+  CreateControllerItem(2, 'Breath Control (coarse)', '0..127');
+  CreateControllerItem(3, 'Continuous controller #3', '0..127');
+  CreateControllerItem(4, 'Foot Controller (coarse)', '0..127');
+  CreateControllerItem(5, 'Portamento Time (coarse)', '0..127');
+  CreateControllerItem(6, 'Data Entry Slider (coarse)', '0..127');
+  CreateControllerItem(7, 'Main Volume (coarse)', '0..127');
+  CreateControllerItem(8, 'Stereo Balance (coarse)', '0..127');
+  CreateControllerItem(9, 'Continuous controller #9', '0..127');
+  CreateControllerItem(10, 'Pan (coarse)', '0=left 64=center 127=right');
+  CreateControllerItem(11, 'Expression (sub-Volume) (coarse)', '0..127');
+  CreateControllerItem(12, 'Effect Control 1 (coarse)', '0..127');
+  CreateControllerItem(13, 'Effect Control 2 (coarse)', '0..127');
+  CreateControllerItem(14, 'Continuous controller #14', '0..127');
+  CreateControllerItem(15, 'Continuous controller #15', '0..127');
+  CreateControllerItem(16, 'General Purpose Slider 1', '0..127');
+  CreateControllerItem(17, 'General Purpose Slider 2', '0..127');
+  CreateControllerItem(18, 'General Purpose Slider 3', '0..127');
+  CreateControllerItem(19, 'General Purpose Slider 4', '0..127');
+  CreateControllerItem(20, 'Continuous controller #20', '0..127');
+  CreateControllerItem(21, 'Continuous controller #21', '0..127');
+  CreateControllerItem(22, 'Continuous controller #22', '0..127');
+  CreateControllerItem(23, 'Continuous controller #23', '0..127');
+  CreateControllerItem(24, 'Continuous controller #24', '0..127');
+  CreateControllerItem(25, 'Continuous controller #25', '0..127');
+  CreateControllerItem(26, 'Continuous controller #26', '0..127');
+  CreateControllerItem(27, 'Continuous controller #27', '0..127');
+  CreateControllerItem(28, 'Continuous controller #28', '0..127');
+  CreateControllerItem(29, 'Continuous controller #29', '0..127');
+  CreateControllerItem(30, 'Continuous controller #30', '0..127');
+  CreateControllerItem(31, 'Continuous controller #31', '0..127');
+  CreateControllerItem(32, 'Bank Select (fine)', '0..127  usually ignored');
+  CreateControllerItem(33, 'Modulation Wheel (fine)', '0..127');
+  CreateControllerItem(34, 'Breath Control (fine)', '0..127');
+  CreateControllerItem(35, 'Continuous controller #3 (fine)', '0..127');
+  CreateControllerItem(36, 'Foot Controller (fine)', '0..127');
+  CreateControllerItem(37, 'Portamento Time (fine)', '0..127');
+  CreateControllerItem(38, 'Data Entry Slider (fine)', '0..127');
+  CreateControllerItem(39, 'Main Volume (fine)', '0..127  usually ignored');
+  CreateControllerItem(40, 'Stereo Balance (fine)', '0..127');
+  CreateControllerItem(41, 'Continuous controller #9 (fine)', '0..127');
+  CreateControllerItem(42, 'Pan (fine)', '0..127  usually ignored');
+  CreateControllerItem(43, 'Expression (sub-Volume) (fine)', '0..127  usually ignored');
+  CreateControllerItem(44, 'Effect Control 1 (fine)', '0..127');
+  CreateControllerItem(45, 'Effect Control 2 (fine)', '0..127');
+  CreateControllerItem(46, 'Continuous controller #14 (fine)', '0..127');
+  CreateControllerItem(47, 'Continuous controller #15 (fine)', '0..127');
+  CreateControllerItem(48, 'Continuous controller #16', '0..127');
+  CreateControllerItem(49, 'Continuous controller #17', '0..127');
+  CreateControllerItem(50, 'Continuous controller #18', '0..127');
+  CreateControllerItem(51, 'Continuous controller #19', '0..127');
+  CreateControllerItem(52, 'Continuous controller #20 (fine)', '0..127');
+  CreateControllerItem(53, 'Continuous controller #21 (fine)', '0..127');
+  CreateControllerItem(54, 'Continuous controller #22 (fine)', '0..127');
+  CreateControllerItem(55, 'Continuous controller #23 (fine)', '0..127');
+  CreateControllerItem(56, 'Continuous controller #24 (fine)', '0..127');
+  CreateControllerItem(57, 'Continuous controller #25 (fine)', '0..127');
+  CreateControllerItem(58, 'Continuous controller #26 (fine)', '0..127');
+  CreateControllerItem(59, 'Continuous controller #27 (fine)', '0..127');
+  CreateControllerItem(60, 'Continuous controller #28 (fine)', '0..127');
+  CreateControllerItem(61, 'Continuous controller #29 (fine)', '0..127');
+  CreateControllerItem(62, 'Continuous controller #30 (fine)', '0..127');
+  CreateControllerItem(63, 'Continuous controller #31 (fine)', '0..127');
+  CreateControllerItem(64, 'Hold pedal (Sustain) on/off', '0..63=off  64..127=on');
+  CreateControllerItem(65, 'Portamento on/off', '0..63=off  64..127=on');
+  CreateControllerItem(66, 'Sustenuto Pedal on/off', '0..63=off  64..127=on');
+  CreateControllerItem(67, 'Soft Pedal on/off', '0..63=off  64..127=on');
+  CreateControllerItem(68, 'Legato Pedal on/off', '0..63=off  64..127=on');
+  CreateControllerItem(69, 'Hold Pedal 2 on/off', '0..63=off  64..127=on');
+  CreateControllerItem(70, 'Sound Variation', '0..127');
+  CreateControllerItem(71, 'Sound Timbre', '0..127');
+  CreateControllerItem(72, 'Sound Release Time', '0..127');
+  CreateControllerItem(73, 'Sound Attack Time', '0..127');
+  CreateControllerItem(74, 'Sound Brighness', '0..127');
+  CreateControllerItem(75, 'Sound Control 6', '0..127');
+  CreateControllerItem(76, 'Sound Control 7', '0..127');
+  CreateControllerItem(77, 'Sound Control 8', '0..127');
+  CreateControllerItem(78, 'Sound Control 9', '0..127');
+  CreateControllerItem(79, 'Sound Control 10', '0..127');
+  CreateControllerItem(80, 'General Purpose Button', '0..63=off  64..127=on');
+  CreateControllerItem(81, 'General Purpose Button', '0..63=off  64..127=on');
+  CreateControllerItem(82, 'General Purpose Button', '0..63=off  64..127=on');
+  CreateControllerItem(83, 'General Purpose Button', '0..63=off  64..127=on');
+  CreateControllerItem(84, 'Undefined on/off', '0..63=off  64..127=on');
+  CreateControllerItem(85, 'Undefined on/off', '0..63=off  64..127=on');
+  CreateControllerItem(86, 'Undefined on/off', '0..63=off  64..127=on');
+  CreateControllerItem(87, 'Undefined on/off', '0..63=off  64..127=on');
+  CreateControllerItem(88, 'Undefined on/off', '0..63=off  64..127=on');
+  CreateControllerItem(89, 'Undefined on/off', '0..63=off  64..127=on');
+  CreateControllerItem(90, 'Undefined on/off', '0..63=off  64..127=on');
+  CreateControllerItem(91, 'Effects Level', '0..127');
+  CreateControllerItem(92, 'Tremulo Level', '0..127');
+  CreateControllerItem(93, 'Chorus Level', '0..127');
+  CreateControllerItem(94, 'Celeste (Detune) Level', '0..127');
+  CreateControllerItem(95, 'Phaser Level', '0..127');
+  CreateControllerItem(96, 'Data entry +1', 'ignored');
+  CreateControllerItem(97, 'Data entry -1', 'ignored');
+  CreateControllerItem(98, 'Non-Registered Parameter Number (coarse)', '0..127');
+  CreateControllerItem(99, 'Non-Registered Parameter Number (fine)', '0..127');
+  CreateControllerItem(100, 'Registered Parameter Number (coarse)', '0..127');
+  CreateControllerItem(101, 'Registered Parameter Number (fine)', '0..127');
+  CreateControllerItem(102, 'Undefined', '?');
+  CreateControllerItem(103, 'Undefined', '?');
+  CreateControllerItem(104, 'Undefined', '?');
+  CreateControllerItem(105, 'Undefined', '?');
+  CreateControllerItem(106, 'Undefined', '?');
+  CreateControllerItem(107, 'Undefined', '?');
+  CreateControllerItem(108, 'Undefined', '?');
+  CreateControllerItem(109, 'Undefined', '?');
+  CreateControllerItem(110, 'Undefined', '?');
+  CreateControllerItem(111, 'Undefined', '?');
+  CreateControllerItem(112, 'Undefined', '?');
+  CreateControllerItem(113, 'Undefined', '?');
+  CreateControllerItem(114, 'Undefined', '?');
+  CreateControllerItem(115, 'Undefined', '?');
+  CreateControllerItem(116, 'Undefined', '?');
+  CreateControllerItem(117, 'Undefined', '?');
+  CreateControllerItem(118, 'Undefined', '?');
+  CreateControllerItem(119, 'Undefined', '?');
+  CreateControllerItem(120, 'All Sound Off', 'ignored');
+  CreateControllerItem(121, 'All Controllers Off', 'ignored');
+  CreateControllerItem(122, 'Local Keyboard On/Off', '0..63=off  64..127=on');
+  CreateControllerItem(123, 'All Notes Off', 'ignored');
+  CreateControllerItem(124, 'Omni Mode Off', 'ignored');
+  CreateControllerItem(125, 'Omni Mode On', 'ignored');
+  CreateControllerItem(126, 'Monophonic Mode On', '**');
+  CreateControllerItem(127, 'Polyphonic Mode On (mono=off)', 'ignored');
+end;
+
 procedure TMidiPatternControlGUI.DeviceParameterClick(Sender: TObject);
 begin
   if Sender is TMenuItemObject then
@@ -276,6 +435,18 @@ begin
 
       FMidiPatternGUI.UpdateView(True);
     end;
+  end;
+end;
+
+procedure TMidiPatternControlGUI.ControllerClick(Sender: TObject);
+var
+  lMenuItem: TMenuItem;
+begin
+  if Sender is TMenuItem then
+  begin
+    lMenuItem := TMenuItem(Sender);
+    // Set controller select button to selected controller item caption
+    btnControllerSelect.Caption := lMenuItem.Caption;
   end;
 end;
 
@@ -392,6 +563,16 @@ begin
   if GetCursorPos(pnt) then
   begin
     pupSelectAutomation.PopUp(pnt.X, pnt.Y);
+  end;
+end;
+
+procedure TMidiPatternControlGUI.btnControllerSelectClick(Sender: TObject);
+var
+  pnt: TPoint;
+begin
+  if GetCursorPos(pnt) then
+  begin
+    pupSelectController.PopUp(pnt.X, pnt.Y);
   end;
 end;
 
