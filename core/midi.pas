@@ -180,6 +180,32 @@ type
     procedure DoRollback; override;
   end;
 
+  { TControllerEvent }
+
+  TControllerEvent = class(THybridPersistentModel)
+  private
+    FLocation: Integer;
+    FValue: Integer;
+    FMapped: Boolean;
+    FMidiData: TMidiData;
+    FSelected: Boolean;
+    function GetValue: Integer;
+    procedure SetLocation(AValue: Integer);
+    procedure SetValue(AValue: Integer);
+  public
+    constructor Create(AObjectOwner: string; AMapped: Boolean); reintroduce;
+    destructor Destroy; override;
+    procedure Initialize; override;
+    procedure Finalize; override;
+    procedure Assign(Source: TPersistent); override;
+    property MidiData: TMidiData read FMidiData write FMidiData;
+    property Mapped: Boolean read FMapped;
+  published
+    property Value: Integer read GetValue write SetValue;
+    property Location: Integer read FLocation write SetLocation;
+    property Selected: Boolean read FSelected write FSelected;
+  end;
+
   { TMidiNote }
 
   TMidiNote = class(THybridPersistentModel)
@@ -237,6 +263,7 @@ type
     // Data
     FMidiDataList: TMidiDataList;
     FNoteList: TObjectList;
+    FControllerList: TObjectList;
     FQuantizeSetting: Integer;
     FQuantizeValue: Single;
     FEnabled: Boolean;
@@ -278,6 +305,7 @@ type
     property MidiBuffer: TMidiBuffer read FMidiBuffer write FMidiBuffer;
   published
     property NoteList: TObjectList read FNoteList write FNoteList;
+    property ControllerList: TObjectList read FControllerList write FControllerList;
     property QuantizeSetting: Integer read FQuantizeSetting write SetQuantizeSetting default 1;
     property QuantizeValue: Single read FQuantizeValue write FQuantizeValue default 1;
   end;
@@ -291,6 +319,72 @@ type
 implementation
 
 uses Fx, audiostructure;
+
+{ TControllerEvent }
+
+function TControllerEvent.GetValue: Integer;
+begin
+  Result := FValue;
+end;
+
+procedure TControllerEvent.SetLocation(AValue: Integer);
+begin
+  FLocation:= AValue;
+
+  if FMapped then
+  begin
+    FMidiData.Location := FLocation;
+  end;
+end;
+
+procedure TControllerEvent.SetValue(AValue: Integer);
+begin
+  FValue := AValue;
+
+  if FMapped then
+  begin
+    FMidiData.DataValue1 := FValue;
+  end;
+end;
+
+constructor TControllerEvent.Create(AObjectOwner: string; AMapped: Boolean);
+begin
+  inherited Create(AObjectOwner, AMapped);
+
+  FMapped := AMapped;
+
+  if FMapped then
+  begin
+    FMidiData := TMidiData.Create;
+  end;
+
+  FSelected := False;
+end;
+
+destructor TControllerEvent.Destroy;
+begin
+  if FMapped then
+  begin
+    FMidiData.Free;
+  end;
+
+  inherited Destroy;
+end;
+
+procedure TControllerEvent.Initialize;
+begin
+  inherited Initialize;
+end;
+
+procedure TControllerEvent.Finalize;
+begin
+  inherited Finalize;
+end;
+
+procedure TControllerEvent.Assign(Source: TPersistent);
+begin
+  inherited Assign(Source);
+end;
 
 { TMuteNotesCommand }
 
@@ -323,6 +417,7 @@ begin
   end;
 
   FNoteList := TObjectList.Create(True);
+  FControllerList := TObjectList.Create(True);
   FMidiDataList := TMidiDataList.Create;
 
   FMidiBuffer := TMidiBuffer.Create;
@@ -347,6 +442,9 @@ begin
 
   if Assigned(FNoteList) then
     FNoteList.Free;
+
+  if Assigned(FControllerList) then
+    FControllerList.Free;
 
   inherited Destroy;
 end;
@@ -512,6 +610,19 @@ begin
   Inherited DoCreateInstance(AObject, AClassName);
 
   if AClassName = 'TMidiNote' then
+  begin
+    // create model Marker
+    lMidiNote := TMidiNote.Create(ObjectID, MAPPED);
+    lMidiNote.ObjectOwnerID := ObjectID;
+
+    AObject := lMidiNote;
+
+    FNoteList.Add(lMidiNote);
+
+    FMidiDataList.Add(lMidiNote.MidiNoteStart);
+    FMidiDataList.Add(lMidiNote.MidiNoteEnd);
+  end
+  else if AClassName = 'TControllerEvent' then
   begin
     // create model Marker
     lMidiNote := TMidiNote.Create(ObjectID, MAPPED);

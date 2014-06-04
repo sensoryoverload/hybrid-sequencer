@@ -197,7 +197,7 @@ type
     property ChannelCount: Integer read FChannelCount write FChannelCount;
   end;
 
-  TEditMode = (emPatternEdit, emAutomationEdit);
+  TEditMode = (emPatternEdit, emAutomationEdit, emControllerEdit);
 
 
 var

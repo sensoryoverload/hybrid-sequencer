@@ -99,6 +99,8 @@ type
     procedure FrameResize(Sender: TObject);
   private
     FSelectedController: Integer;
+    FSelectedControllerEvent: TMidiData;
+
     FUpdateSubject: THybridPersistentModel;
     FIsDirty: Boolean;
     FForceRedraw: Boolean;
@@ -163,7 +165,7 @@ type
 
     FNoteAction: TNoteAction;
 
-      FNoteHighlightLocation: Integer;
+    FNoteHighlightLocation: Integer;
     FNoteHighlightNote: Integer;
 
     { Audio }
@@ -182,21 +184,22 @@ type
     FMidiChannel: Integer;
 
     function GetEnabled: Boolean; reintroduce;
-    procedure HandleLoopMarkerMouseDown(Button: TMouseButton; Shift: TShiftState; X,
-      Y: Integer);
-    procedure HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState;
-      X, Y: Integer);
-    procedure HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X,
-      Y: Integer);
-    procedure HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
+
+    procedure HandleControllerEditMouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure HandleControllerEditMouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure HandleControllerEditMouseMove(Shift: TShiftState; X, Y: Integer);
+
+    procedure HandleLoopMarkerMouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure HandleLoopMarkerMouseMove(Shift: TShiftState; X, Y: Integer);
-    procedure HandleNoteMouseUp(Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure HandleAutomationEditMouseDown(Button: TMouseButton; Shift: TShiftState; X,
-      Y: Integer);
+
+    procedure HandleNoteMouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure HandleNoteMouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure HandleNoteMouseMove(Shift: TShiftState; X, Y: Integer);
+
+    procedure HandleAutomationEditMouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure HandleAutomationEditMouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure HandleAutomationEditMouseMove(Shift: TShiftState; X, Y: Integer);
-    procedure HandleAutomationEditMouseUp(Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
 
     function LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerGUI;
     function QuantizeLocation(ALocation: Integer): Integer;
@@ -584,6 +587,119 @@ begin
 end;
 
 procedure TMidiPatternGUI.HandleAutomationEditMouseUp(Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  lCreateAutomationDataCommand: TCreateAutomationDataCommand;
+  lEditAutomationDataCommand: TEditAutomationDataCommand;
+begin
+  if Assigned(FSelectedAutomationEvent) then
+  begin
+    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
+      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
+      lEditAutomationDataCommand.Persist := True;
+
+      GCommandQueue.PushCommand(lEditAutomationDataCommand);
+    except
+      lEditAutomationDataCommand.Free;
+    end;
+
+    FSelectedAutomationEvent := nil;
+  end
+  else
+  begin
+    // TODO check if there already is an automation event on this location
+    lCreateAutomationDataCommand := TCreateAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lCreateAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lCreateAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lCreateAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
+
+      GCommandQueue.PushCommand(lCreateAutomationDataCommand);
+    except
+      lCreateAutomationDataCommand.Free;
+    end;
+  end;
+end;
+
+procedure TMidiPatternGUI.HandleControllerEditMouseDown(Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+
+  function FindControllerEvent(X, Y: Integer): TMidiData;
+  var
+    lIndex: Integer;
+    lEventX: Integer;
+    lEventY: Integer;
+    lValue: Integer;
+    lMidiData: TMidiData;
+    lMidiDataList: TMidiDataList;
+  begin
+    Result := nil;
+
+    if Assigned(FModel.MidiDataList) then
+    begin
+      lMidiDataList := FModel.MidiDataList;
+      lMidiDataList.First;
+      while not lMidiDataList.Eof do
+      begin
+        lMidiData := FModel.MidiDataList.CurrentMidiData;
+        if Assigned(lMidiData) then
+        begin
+          if lMidiData.DataType = mtNoteOn then
+          begin
+            lValue := lMidiData.DataValue2;
+          end
+          else if lMidiData.DataType = mtCC then
+          begin
+            lValue := lMidiData.DataValue1;
+          end;
+          lEventX := ConvertTimeToScreen(lMidiData.Location) + FOffset;
+          lEventY := Round(Height - lValue * Height);
+          if (Abs(X - lEventX) < 6) and (Abs(Y - lEventY) < 6) then
+          begin
+            Result := lMidiData;
+            break;
+          end;
+        end;
+
+        lMidiDataList.Next;
+      end;
+    end;
+  end;
+
+begin
+  FSelectedControllerEvent := FindControllerEvent(X, Y);
+end;
+
+procedure TMidiPatternGUI.HandleControllerEditMouseMove(Shift: TShiftState; X,
+  Y: Integer);
+var
+  lEditAutomationDataCommand: TEditAutomationDataCommand;
+begin
+  if Assigned(FSelectedAutomationEvent) then
+  begin
+    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
+    try
+      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
+      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
+      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
+      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
+      lEditAutomationDataCommand.Persist := False;
+
+      GCommandQueue.PushCommand(lEditAutomationDataCommand);
+    except
+      lEditAutomationDataCommand.Free;
+    end;
+  end;
+end;
+
+procedure TMidiPatternGUI.HandleControllerEditMouseUp(Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
   lCreateAutomationDataCommand: TCreateAutomationDataCommand;
@@ -1622,6 +1738,10 @@ begin
   else if FEditMode = emAutomationEdit then
   begin
     HandleAutomationEditMouseDown(Button, Shift, X, Y);
+  end
+  else if FEditMode = emControllerEdit then
+  begin
+    HandleControllerEditMouseDown(Button, Shift, X, Y);
   end;
 end;
 
@@ -1654,6 +1774,10 @@ begin
   else if FEditMode = emAutomationEdit then
   begin
     HandleAutomationEditMouseUp(Button, Shift, X, Y);
+  end
+  else if FEditMode = emControllerEdit then
+  begin
+    HandleControllerEditMouseUp(Button, Shift, X, Y);
   end;
 
   UpdateView(True);
@@ -1774,6 +1898,10 @@ begin
   else if FEditMode = emAutomationEdit then
   begin
     HandleAutomationEditMouseMove(Shift, X, Y);
+  end
+  else if FEditMode = emControllerEdit then
+  begin
+    HandleControllerEditMouseMove(Shift, X, Y);
   end;
 
   UpdateView(True);

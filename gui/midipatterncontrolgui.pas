@@ -449,6 +449,15 @@ begin
     // Set controller select button to selected controller item caption
     btnControllerSelect.Caption := lMenuItem.Caption;
 
+    if lMenuItem.Tag = MIDI_CC_NONE then
+    begin
+      FMidiPatternGUI.EditMode := emPatternEdit;
+    end
+    else
+    begin
+      FMidiPatternGUI.EditMode := emControllerEdit;
+    end;
+
     FMidiPatternGUI.SelectedController := lMenuItem.Tag;
     FMidiPatternGUI.UpdateView(True);
   end;
