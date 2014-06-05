@@ -184,6 +184,7 @@ type
 
   TControllerEvent = class(THybridPersistentModel)
   private
+    FControllerId: Integer;
     FLocation: Integer;
     FValue: Integer;
     FMapped: Boolean;
@@ -203,7 +204,52 @@ type
   published
     property Value: Integer read GetValue write SetValue;
     property Location: Integer read FLocation write SetLocation;
+    property ControllerId: Integer read FControllerId write FControllerId;
     property Selected: Boolean read FSelected write FSelected;
+  end;
+
+  TControllerEditState = (cesBefore, cesChanging, cesAfter);
+
+  { TControllerEditCommand }
+
+  TControllerEditCommand = class(TMidiCommand)
+  private
+    FControllerDataId: string;
+    FControllerId: Integer;
+    FLocation: Integer;
+    FOldLocation: Integer;
+    FOldDataValue: Integer;
+    FDataValue: Integer;
+    FState: TControllerEditState;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property Location: Integer read FLocation write FLocation;
+    property ControllerId: Integer read FControllerId write FControllerId;
+    property ControllerDataId: string read FControllerDataId write FControllerDataId;
+    property DataValue: Integer read FDataValue write FDataValue;
+    property State: TControllerEditState read FState write FState;
+  end;
+
+  { TControllerEditCommand }
+
+  { TControllerCreateCommand }
+
+  TControllerCreateCommand = class(TMidiCommand)
+  private
+    FControllerDataId: string;
+    FControllerId: Integer;
+    FLocation: Integer;
+    FDataValue: Integer;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    property Location: Integer read FLocation write FLocation;
+    property ControllerId: Integer read FControllerId write FControllerId;
+    property ControllerDataId: string read FControllerDataId write FControllerDataId;
+    property DataValue: Integer read FDataValue write FDataValue;
   end;
 
   { TMidiNote }
@@ -320,6 +366,28 @@ implementation
 
 uses Fx, audiostructure;
 
+{ TControllerCreateCommand }
+
+procedure TControllerCreateCommand.DoExecute;
+var
+  lControllerDataEvent: TControllerEvent;
+begin
+  FMidiPattern.BeginUpdate;
+
+  lControllerDataEvent := TControllerEvent.Create(FMidiPattern.ObjectID, MAPPED);
+  lControllerDataEvent.Value := FDataValue;
+  lControllerDataEvent.Location := FLocation;
+  lControllerDataEvent.ControllerId := FControllerId;
+  FMidiPattern.ControllerList.Add(lControllerDataEvent);
+
+  FMidiPattern.EndUpdate;
+end;
+
+procedure TControllerCreateCommand.DoRollback;
+begin
+  inherited DoRollback;
+end;
+
 { TControllerEvent }
 
 function TControllerEvent.GetValue: Integer;
@@ -355,7 +423,7 @@ begin
 
   if FMapped then
   begin
-    FMidiData := TMidiData.Create;
+    FMidiData := TMidiData.Create(Self);
   end;
 
   FSelected := False;
@@ -708,8 +776,8 @@ begin
 
   if FMapped then
   begin
-    FMidiNoteStart := TMidiData.Create;
-    FMidiNoteEnd := TMidiData.Create;
+    FMidiNoteStart := TMidiData.Create(Self);
+    FMidiNoteEnd := TMidiData.Create(Self);
   end;
 
   FSelected:= False;
@@ -1392,6 +1460,82 @@ procedure TMidiCommand.Finalize;
 begin
 
   inherited Finalize;
+end;
+
+{ TControllerEditCommand }
+
+procedure TControllerEditCommand.DoExecute;
+var
+  lControllerDataEvent: TControllerEvent;
+  lIndex: Integer;
+  lDiff: Integer;
+begin
+  (*lDiff := FDataValue - FOldDataValue;
+
+  // Apply command to selection
+  for lIndex := 0 to Pred(FMidiPattern.ControllerList.Count) do
+  begin
+    lControllerDataEvent := TControllerEvent(FMidiPattern.ControllerList[lIndex]);
+    if Assigned(lControllerDataEvent) then
+    begin
+      //if lControllerDataEvent.Selected then
+      if lControllerDataEvent.ObjectID = FControllerDataId then
+      begin
+        case FState of
+          cesBefore:
+          begin
+            lControllerDataEvent. FOldDataValue := FDataValue;
+          end;
+          cesChanging:
+          begin
+            FDataValue - FOldDataValue;
+          end;
+          cesAfter:
+          begin
+
+          end;
+        end;
+      end;
+    end;
+  end;*)
+
+  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(FControllerDataId));
+  if Assigned(lControllerDataEvent) then
+  begin
+    FMidiPattern.BeginUpdate;
+
+    case FState of
+      cesBefore:
+      begin
+        FOldDataValue := FDataValue;
+      end;
+      cesChanging:
+      begin
+        lControllerDataEvent.Value := FDataValue - FOldDataValue;
+      end;
+      cesAfter:
+      begin
+        //
+      end;
+    end;
+
+    FMidiPattern.EndUpdate;
+  end;
+end;
+
+procedure TControllerEditCommand.DoRollback;
+var
+  lControllerDataEvent: TControllerEvent;
+begin
+  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(FControllerDataId));
+  if Assigned(lControllerDataEvent) then
+  begin
+    FMidiPattern.BeginUpdate;
+
+    FDataValue := FOldDataValue;
+
+    FMidiPattern.EndUpdate;
+  end;
 end;
 
 initialization

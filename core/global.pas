@@ -43,6 +43,8 @@ type
   // These objects contain more information about the mididata and should be the
   // source of the abstracted mididata.
   TMidiData = class
+  private
+    FParentObject: THybridPersistentModel;
   public
     Location: Integer; // Location in samples
     DataType: Integer;   // Note, CC, NRPN
@@ -53,7 +55,8 @@ type
     Length: Integer; // Notelength
 
     Next: TMidiData; // Point to next in list
-    constructor Create;
+    constructor Create(AParentObject: THybridPersistentModel);
+    property ParentObject: THybridPersistentModel read FParentObject write FParentObject;
   end;
 
   { TAutomationData }
@@ -222,9 +225,11 @@ end;
 
 { TMidiData }
 
-constructor TMidiData.Create;
+constructor TMidiData.Create(AParentObject: THybridPersistentModel);
 begin
   DBLog('TMidiData.Create');
+
+  FParentObject := AParentObject;
 end;
 
 { TObjectMapper }

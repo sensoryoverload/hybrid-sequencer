@@ -629,6 +629,8 @@ end;
 
 procedure TMidiPatternGUI.HandleControllerEditMouseDown(Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
+var
+  lControllerEditCommand: TControllerEditCommand;
 
   function FindControllerEvent(X, Y: Integer): TMidiData;
   var
@@ -674,27 +676,42 @@ procedure TMidiPatternGUI.HandleControllerEditMouseDown(Button: TMouseButton;
 
 begin
   FSelectedControllerEvent := FindControllerEvent(X, Y);
+
+  if Assigned(FSelectedControllerEvent) then
+  begin
+    lControllerEditCommand := TControllerEditCommand.Create(Self.ObjectID);
+    try
+      lControllerEditCommand.ObjectID := FSelectedControllerEvent.ParentObject.ObjectID;
+      lControllerEditCommand.ControllerId := FSelectedController;
+      lControllerEditCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lControllerEditCommand.DataValue := (Height - Y) div Height;
+      lControllerEditCommand.Persist := True;
+
+      GCommandQueue.PushCommand(lControllerEditCommand);
+    except
+      lControllerEditCommand.Free;
+    end;
+  end;
 end;
 
 procedure TMidiPatternGUI.HandleControllerEditMouseMove(Shift: TShiftState; X,
   Y: Integer);
 var
-  lEditAutomationDataCommand: TEditAutomationDataCommand;
+  lControllerEditCommand: TControllerEditCommand;
 begin
-  if Assigned(FSelectedAutomationEvent) then
+  if Assigned(FSelectedControllerEvent) then
   begin
-    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
+    lControllerEditCommand := TControllerEditCommand.Create(Self.ObjectID);
     try
-      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
-      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
-      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
-      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
-      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
-      lEditAutomationDataCommand.Persist := False;
+      lControllerEditCommand.ObjectID := FSelectedControllerEvent.ParentObject.ObjectID;
+      lControllerEditCommand.ControllerId := FSelectedController;
+      lControllerEditCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lControllerEditCommand.DataValue := (Height - Y) div Height;
+      lControllerEditCommand.Persist := False;
 
-      GCommandQueue.PushCommand(lEditAutomationDataCommand);
+      GCommandQueue.PushCommand(lControllerEditCommand);
     except
-      lEditAutomationDataCommand.Free;
+      lControllerEditCommand.Free;
     end;
   end;
 end;
@@ -702,40 +719,21 @@ end;
 procedure TMidiPatternGUI.HandleControllerEditMouseUp(Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
-  lCreateAutomationDataCommand: TCreateAutomationDataCommand;
-  lEditAutomationDataCommand: TEditAutomationDataCommand;
+  lControllerCreateCommand: TControllerCreateCommand;
 begin
-  if Assigned(FSelectedAutomationEvent) then
-  begin
-    lEditAutomationDataCommand := TEditAutomationDataCommand.Create(Self.ObjectID);
-    try
-      lEditAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
-      lEditAutomationDataCommand.DataValue := (Height - Y) / Height;
-      lEditAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
-      lEditAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
-      lEditAutomationDataCommand.ObjectID := FSelectedAutomationEvent.ObjectID;
-      lEditAutomationDataCommand.Persist := True;
-
-      GCommandQueue.PushCommand(lEditAutomationDataCommand);
-    except
-      lEditAutomationDataCommand.Free;
-    end;
-
-    FSelectedAutomationEvent := nil;
-  end
-  else
+  if not Assigned(FSelectedControllerEvent) then
   begin
     // TODO check if there already is an automation event on this location
-    lCreateAutomationDataCommand := TCreateAutomationDataCommand.Create(Self.ObjectID);
+    lControllerCreateCommand := TControllerCreateCommand.Create(Self.ObjectID);
     try
-      lCreateAutomationDataCommand.Location := Round(ConvertScreenToTime(X - FOffset));
-      lCreateAutomationDataCommand.DataValue := (Height - Y) / Height;
-      lCreateAutomationDataCommand.DeviceId := FSelectedAutomationDeviceId;
-      lCreateAutomationDataCommand.ParameterId := FSelectedAutomationParameterId;
+      lControllerCreateCommand.ControllerId := FSelectedController;
+      lControllerCreateCommand.Location := Round(ConvertScreenToTime(X - FOffset));
+      lControllerCreateCommand.DataValue := (Height - Y) div Height;
+      lControllerCreateCommand.Persist := True;
 
-      GCommandQueue.PushCommand(lCreateAutomationDataCommand);
+      GCommandQueue.PushCommand(lControllerCreateCommand);
     except
-      lCreateAutomationDataCommand.Free;
+      lControllerCreateCommand.Free;
     end;
   end;
 end;
@@ -1911,6 +1909,7 @@ procedure TMidiPatternGUI.DblClick;
 var
   lCreateNoteCommand: TCreateNotesCommand;
   lDeleteNoteCommand: TDeleteNotesCommand;
+  lControllerCreateCommand: TControllerCreateCommand;
 begin
   if Assigned(FDraggedNote) then
   begin
@@ -1925,19 +1924,43 @@ begin
   end
   else
   begin
-    lCreateNoteCommand := TCreateNotesCommand.Create(Self.ObjectID);
-    try
-      if FQuantizeValue = 0 then
-        lCreateNoteCommand.NoteLength := Round(GSettings.HalfSampleRate)
-      else
-        lCreateNoteCommand.NoteLength := Round(FQuantizeValue);
+    if FEditMode = emPatternEdit then
+    begin
+      lCreateNoteCommand := TCreateNotesCommand.Create(Self.ObjectID);
+      try
+        if FQuantizeValue = 0 then
+          lCreateNoteCommand.NoteLength := Round(GSettings.HalfSampleRate)
+        else
+          lCreateNoteCommand.NoteLength := Round(FQuantizeValue);
 
-      lCreateNoteCommand.Note := ConvertScreenToNote(FMouseY - FNoteOffset);
-      lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(FMouseX - FOffset));
+        lCreateNoteCommand.Note := ConvertScreenToNote(FMouseY - FNoteOffset);
+        lCreateNoteCommand.Location := QuantizeLocation(ConvertScreenToTime(FMouseX - FOffset));
 
-      GCommandQueue.PushCommand(lCreateNoteCommand);
-    except
-      lCreateNoteCommand.Free;
+        GCommandQueue.PushCommand(lCreateNoteCommand);
+      except
+        lCreateNoteCommand.Free;
+      end;
+    end
+    else if FEditMode = emControllerEdit then
+    begin
+      begin
+        if not Assigned(FSelectedControllerEvent) then
+        begin
+          // TODO check if there already is an automation event on this location
+          lControllerCreateCommand := TControllerCreateCommand.Create(Self.ObjectID);
+          try
+            lControllerCreateCommand.ControllerId := FSelectedController;
+            lControllerCreateCommand.Location := Round(ConvertScreenToTime(FMouseX - FOffset));
+            lControllerCreateCommand.DataValue := (Height - FMouseY) div Height;
+            lControllerCreateCommand.Persist := True;
+
+            GCommandQueue.PushCommand(lControllerCreateCommand);
+          except
+            lControllerCreateCommand.Free;
+          end;
+        end;
+      end;
+
     end;
   end;
 

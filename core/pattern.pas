@@ -188,21 +188,6 @@ type
     property DataValue: Single read FDataValue write FDataValue;
   end;
 
-  { TUpdateLoopMarkerCommand }
-(*
-  TUpdateLoopMarkerCommand = class(TPatternCommand)
-  private
-    FDataType: TLoopMarkerType;
-    FLocation: Integer;
-    FOldLocation: Integer;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  published
-    property Location: Integer read FLocation write FLocation;
-    property DataType: TLoopMarkerType read FDataType write FDataType;
-  end;
-*)
   { TLoadPatternCommand }
 
   TLoadPatternCommand = class(TPatternCommand)
