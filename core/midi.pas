@@ -374,11 +374,19 @@ var
 begin
   FMidiPattern.BeginUpdate;
 
+  DBLog(Format('TControllerCreateCommand.DoExecute Location %d Value %d Controller %d',
+    [FLocation, FDataValue, FControllerId]));
+
   lControllerDataEvent := TControllerEvent.Create(FMidiPattern.ObjectID, MAPPED);
   lControllerDataEvent.Value := FDataValue;
   lControllerDataEvent.Location := FLocation;
   lControllerDataEvent.ControllerId := FControllerId;
   FMidiPattern.ControllerList.Add(lControllerDataEvent);
+
+  if lControllerDataEvent.Mapped then
+  begin
+    FMidiPattern.MidiDataList.Add(lControllerDataEvent.MidiData);
+  end;
 
   FMidiPattern.EndUpdate;
 end;
@@ -424,6 +432,7 @@ begin
   if FMapped then
   begin
     FMidiData := TMidiData.Create(Self);
+    FMidiData.DataType := mtCC;
   end;
 
   FSelected := False;

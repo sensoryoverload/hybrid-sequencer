@@ -728,7 +728,7 @@ begin
     try
       lControllerCreateCommand.ControllerId := FSelectedController;
       lControllerCreateCommand.Location := Round(ConvertScreenToTime(X - FOffset));
-      lControllerCreateCommand.DataValue := (Height - Y) div Height;
+      lControllerCreateCommand.DataValue := Round((Height - Y) * 128 / Height);
       lControllerCreateCommand.Persist := True;
 
       GCommandQueue.PushCommand(lControllerCreateCommand);
@@ -970,6 +970,9 @@ var
   lNoteY2: Integer;
   lControllerToScreenRatio: Single;
   lControllerYLocation: Integer;
+  lEventX: Integer;
+  lMidiData: TMidiData;
+  lMidiDataList: TMidiDataList;
 begin
   if not Assigned(FModel) then exit;
 
@@ -1315,6 +1318,45 @@ begin
           lAutomationScreenY := Height div 2;
           FBitmap.Canvas.MoveTo(Succ(PIANO_WIDTH), lAutomationScreenY);
           FBitmap.Canvas.LineTo(Width, lAutomationScreenY);
+        end;
+      end;
+    end
+    else if FEditMode = emControllerEdit then
+    begin
+      if Assigned(FModel.MidiDataList) then
+      begin
+        lMidiDataList := FModel.MidiDataList;
+        lMidiDataList.First;
+        while not lMidiDataList.Eof do
+        begin
+          lMidiData := FModel.MidiDataList.CurrentMidiData;
+          if Assigned(lMidiData) then
+          begin
+            if (lMidiData.DataType = mtCC) and
+              (lMidiData.DataValue2 = FSelectedController) then
+            begin
+              lEventX := ConvertTimeToScreen(lMidiData.Location) + FOffset;
+
+              FBitmap.Canvas.Pen.Color := clGreen;
+              FBitmap.Canvas.Pen.Width := 3;
+              lControllerYLocation :=
+                Round(FBitmap.Height - lControllerToScreenRatio * lMidiData.DataValue2);
+
+              FBitmap.Canvas.Line(
+                lEventX,
+                lControllerYLocation,
+                lEventX,
+                FBitmap.Height);
+
+              FBitmap.Canvas.Rectangle(
+                lEventX - 3,
+                lControllerYLocation - 3,
+                lEventX + 3,
+                lControllerYLocation + 3);
+            end;
+          end;
+
+          lMidiDataList.Next;
         end;
       end;
     end;
@@ -1951,7 +1993,7 @@ begin
           try
             lControllerCreateCommand.ControllerId := FSelectedController;
             lControllerCreateCommand.Location := Round(ConvertScreenToTime(FMouseX - FOffset));
-            lControllerCreateCommand.DataValue := (Height - FMouseY) div Height;
+            lControllerCreateCommand.DataValue := Round((Height - FMouseX) * 128 / Height);
             lControllerCreateCommand.Persist := True;
 
             GCommandQueue.PushCommand(lControllerCreateCommand);
