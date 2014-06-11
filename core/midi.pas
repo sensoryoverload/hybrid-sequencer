@@ -191,6 +191,7 @@ type
     FMidiData: TMidiData;
     FSelected: Boolean;
     function GetValue: Integer;
+    procedure SetControllerId(AValue: Integer);
     procedure SetLocation(AValue: Integer);
     procedure SetValue(AValue: Integer);
   public
@@ -204,7 +205,7 @@ type
   published
     property Value: Integer read GetValue write SetValue;
     property Location: Integer read FLocation write SetLocation;
-    property ControllerId: Integer read FControllerId write FControllerId;
+    property ControllerId: Integer read FControllerId write SetControllerId;
     property Selected: Boolean read FSelected write FSelected;
   end;
 
@@ -403,6 +404,16 @@ begin
   Result := FValue;
 end;
 
+procedure TControllerEvent.SetControllerId(AValue: Integer);
+begin
+  FControllerId := AValue;
+
+  if FMapped then
+  begin
+    FMidiData.DataValue1 := AValue;
+  end;
+end;
+
 procedure TControllerEvent.SetLocation(AValue: Integer);
 begin
   FLocation:= AValue;
@@ -419,7 +430,7 @@ begin
 
   if FMapped then
   begin
-    FMidiData.DataValue1 := FValue;
+    FMidiData.DataValue2 := FValue;
   end;
 end;
 
@@ -1508,9 +1519,10 @@ begin
     end;
   end;*)
 
-  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(FControllerDataId));
+  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(ObjectID));
   if Assigned(lControllerDataEvent) then
   begin
+    DBLog('Assigned(lControllerDataEvent) ' + ObjectID) ;
     FMidiPattern.BeginUpdate;
 
     case FState of
@@ -1528,7 +1540,13 @@ begin
       end;
     end;
 
+    DBLog(Format('lControllerDataEvent.Value %d', [lControllerDataEvent.Value]));
+
     FMidiPattern.EndUpdate;
+  end
+  else
+  begin
+    DBLog('NOT Assigned(lControllerDataEvent) ' + FControllerDataId);
   end;
 end;
 

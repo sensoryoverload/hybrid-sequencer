@@ -652,18 +652,13 @@ var
         lMidiData := FModel.MidiDataList.CurrentMidiData;
         if Assigned(lMidiData) then
         begin
-          if lMidiData.DataType = mtNoteOn then
-          begin
-            lValue := lMidiData.DataValue2;
-          end
-          else if lMidiData.DataType = mtCC then
-          begin
-            lValue := lMidiData.DataValue1;
-          end;
+          lValue := lMidiData.DataValue2;
           lEventX := ConvertTimeToScreen(lMidiData.Location) + FOffset;
-          lEventY := Round(Height - lValue * Height);
+          lEventY := Round(Height - lValue * (Height / 128));
+          DBLog(Format('lEventY %d Height %d', [lEventY, Height]));
           if (Abs(X - lEventX) < 6) and (Abs(Y - lEventY) < 6) then
           begin
+            DBLog('Found');
             Result := lMidiData;
             break;
           end;
@@ -682,9 +677,10 @@ begin
     lControllerEditCommand := TControllerEditCommand.Create(Self.ObjectID);
     try
       lControllerEditCommand.ObjectID := FSelectedControllerEvent.ParentObject.ObjectID;
+      lControllerEditCommand.State := cesBefore;
       lControllerEditCommand.ControllerId := FSelectedController;
-      lControllerEditCommand.Location := Round(ConvertScreenToTime(X - FOffset));
-      lControllerEditCommand.DataValue := (Height - Y) div Height;
+      lControllerEditCommand.Location := FSelectedControllerEvent.Location;
+      lControllerEditCommand.DataValue := Round((Height - Y) * 128 / Height);
       lControllerEditCommand.Persist := True;
 
       GCommandQueue.PushCommand(lControllerEditCommand);
@@ -704,9 +700,10 @@ begin
     lControllerEditCommand := TControllerEditCommand.Create(Self.ObjectID);
     try
       lControllerEditCommand.ObjectID := FSelectedControllerEvent.ParentObject.ObjectID;
+      lControllerEditCommand.State := cesChanging;
       lControllerEditCommand.ControllerId := FSelectedController;
-      lControllerEditCommand.Location := Round(ConvertScreenToTime(X - FOffset));
-      lControllerEditCommand.DataValue := (Height - Y) div Height;
+      lControllerEditCommand.Location := FSelectedControllerEvent.Location;
+      lControllerEditCommand.DataValue := Round((Height - Y) * 128 / Height);
       lControllerEditCommand.Persist := False;
 
       GCommandQueue.PushCommand(lControllerEditCommand);
@@ -721,7 +718,9 @@ procedure TMidiPatternGUI.HandleControllerEditMouseUp(Button: TMouseButton;
 var
   lControllerCreateCommand: TControllerCreateCommand;
 begin
-  if not Assigned(FSelectedControllerEvent) then
+  FSelectedControllerEvent := nil;
+
+(*  if not Assigned(FSelectedControllerEvent) then
   begin
     // TODO check if there already is an automation event on this location
     lControllerCreateCommand := TControllerCreateCommand.Create(Self.ObjectID);
@@ -735,7 +734,7 @@ begin
     except
       lControllerCreateCommand.Free;
     end;
-  end;
+  end;*)
 end;
 
 procedure TMidiPatternGUI.HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState; X,
@@ -1333,14 +1332,14 @@ begin
           if Assigned(lMidiData) then
           begin
             if (lMidiData.DataType = mtCC) and
-              (lMidiData.DataValue2 = FSelectedController) then
+              (lMidiData.DataValue1 = FSelectedController) then
             begin
               lEventX := ConvertTimeToScreen(lMidiData.Location) + FOffset;
+              lControllerYLocation :=
+                Round(FBitmap.Height - lControllerToScreenRatio * lMidiData.DataValue2);
 
               FBitmap.Canvas.Pen.Color := clGreen;
               FBitmap.Canvas.Pen.Width := 3;
-              lControllerYLocation :=
-                Round(FBitmap.Height - lControllerToScreenRatio * lMidiData.DataValue2);
 
               FBitmap.Canvas.Line(
                 lEventX,
@@ -1348,11 +1347,24 @@ begin
                 lEventX,
                 FBitmap.Height);
 
-              FBitmap.Canvas.Rectangle(
-                lEventX - 3,
-                lControllerYLocation - 3,
-                lEventX + 3,
-                lControllerYLocation + 3);
+              if (Abs(FMouseX - lEventX) < 5) and
+                (Abs(FMouseY - lControllerYLocation) < 5) then
+              begin // Mouse over dataselectionpoint
+                FBitmap.Canvas.Pen.Color := clLime;
+                FBitmap.Canvas.Rectangle(
+                  lEventX - 4,
+                  lControllerYLocation - 4,
+                  lEventX + 4,
+                  lControllerYLocation + 4);
+              end
+              else
+              begin
+                FBitmap.Canvas.Rectangle(
+                  lEventX - 3,
+                  lControllerYLocation - 3,
+                  lEventX + 3,
+                  lControllerYLocation + 3);
+              end;
             end;
           end;
 
@@ -1993,7 +2005,7 @@ begin
           try
             lControllerCreateCommand.ControllerId := FSelectedController;
             lControllerCreateCommand.Location := Round(ConvertScreenToTime(FMouseX - FOffset));
-            lControllerCreateCommand.DataValue := Round((Height - FMouseX) * 128 / Height);
+            lControllerCreateCommand.DataValue := Round((Height - FMouseY) * 128 / Height);
             lControllerCreateCommand.Persist := True;
 
             GCommandQueue.PushCommand(lControllerCreateCommand);
