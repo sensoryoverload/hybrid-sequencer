@@ -118,7 +118,6 @@ type
     FNoteInfoWidth: Integer;
     FEditMode: TEditMode;
     FSelectedAutomationDeviceId: string;
-    FSelectedAutomationDevice: TAutomationDevice;
     FSelectedAutomationParameterId: string;
     FSelectedAutomationParameter: TAutomationDataList;
     FSelectedAutomationEvent: TAutomationData;
@@ -634,7 +633,6 @@ var
 
   function FindControllerEvent(X, Y: Integer): TMidiData;
   var
-    lIndex: Integer;
     lEventX: Integer;
     lEventY: Integer;
     lValue: Integer;

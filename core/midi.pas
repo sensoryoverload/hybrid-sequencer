@@ -233,8 +233,6 @@ type
     property State: TControllerEditState read FState write FState;
   end;
 
-  { TControllerEditCommand }
-
   { TControllerCreateCommand }
 
   TControllerCreateCommand = class(TMidiCommand)
@@ -243,6 +241,7 @@ type
     FControllerId: Integer;
     FLocation: Integer;
     FDataValue: Integer;
+    FOldObjectId: string;
   protected
     procedure DoExecute; override;
     procedure DoRollback; override;
@@ -389,12 +388,39 @@ begin
     FMidiPattern.MidiDataList.Add(lControllerDataEvent.MidiData);
   end;
 
+  FOldObjectId := lControllerDataEvent.ObjectID;
+
   FMidiPattern.EndUpdate;
 end;
 
 procedure TControllerCreateCommand.DoRollback;
+var
+  lControllerDataEvent: TControllerEvent;
+  lIndex: Integer;
 begin
-  inherited DoRollback;
+  FMidiPattern.BeginUpdate;
+
+  for lIndex := Pred(FMidiPattern.ControllerList.Count) downto 0 do
+  begin
+    lControllerDataEvent := TControllerEvent(FMidiPattern.ControllerList[lIndex]);
+    if Assigned(lControllerDataEvent) then
+    begin
+      if lControllerDataEvent.ObjectID = FOldObjectId then
+      begin
+        if lControllerDataEvent.Mapped then
+        begin
+          FMidiPattern.MidiDataList.Remove(lControllerDataEvent.MidiData);
+        end;
+
+        FMidiPattern.ControllerList.Remove(lControllerDataEvent);
+
+        break;
+      end;
+    end;
+  end;
+
+  FMidiPattern.MidiDataList.IndexList;
+  FMidiPattern.EndUpdate;
 end;
 
 { TControllerEvent }
@@ -964,6 +990,8 @@ begin
       end;
 
       FMidiPattern.NoteList.Remove(lMidiNote);
+
+      break;
     end;
   end;
 
@@ -1490,39 +1518,9 @@ var
   lIndex: Integer;
   lDiff: Integer;
 begin
-  (*lDiff := FDataValue - FOldDataValue;
-
-  // Apply command to selection
-  for lIndex := 0 to Pred(FMidiPattern.ControllerList.Count) do
-  begin
-    lControllerDataEvent := TControllerEvent(FMidiPattern.ControllerList[lIndex]);
-    if Assigned(lControllerDataEvent) then
-    begin
-      //if lControllerDataEvent.Selected then
-      if lControllerDataEvent.ObjectID = FControllerDataId then
-      begin
-        case FState of
-          cesBefore:
-          begin
-            lControllerDataEvent. FOldDataValue := FDataValue;
-          end;
-          cesChanging:
-          begin
-            FDataValue - FOldDataValue;
-          end;
-          cesAfter:
-          begin
-
-          end;
-        end;
-      end;
-    end;
-  end;*)
-
   lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(ObjectID));
   if Assigned(lControllerDataEvent) then
   begin
-    DBLog('Assigned(lControllerDataEvent) ' + ObjectID) ;
     FMidiPattern.BeginUpdate;
 
     case FState of
@@ -1540,8 +1538,6 @@ begin
       end;
     end;
 
-    DBLog(Format('lControllerDataEvent.Value %d', [lControllerDataEvent.Value]));
-
     FMidiPattern.EndUpdate;
   end
   else
@@ -1554,12 +1550,13 @@ procedure TControllerEditCommand.DoRollback;
 var
   lControllerDataEvent: TControllerEvent;
 begin
-  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(FControllerDataId));
+  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(ObjectID));
   if Assigned(lControllerDataEvent) then
   begin
     FMidiPattern.BeginUpdate;
 
     FDataValue := FOldDataValue;
+    lControllerDataEvent.Value := FOldDataValue;
 
     FMidiPattern.EndUpdate;
   end;

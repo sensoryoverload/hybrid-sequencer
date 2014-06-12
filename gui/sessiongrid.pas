@@ -1097,6 +1097,11 @@ procedure TSessionGrid.UpdateView(AForceRedraw: boolean = False);
 var
   lIndex: integer;
 begin
+  if AForceRedraw then
+  begin
+    FIsDirty := True;
+  end;
+
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
     FIsDirty := False;

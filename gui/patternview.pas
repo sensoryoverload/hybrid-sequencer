@@ -518,6 +518,11 @@ procedure TPatternView.UpdateView(AForceRedraw: Boolean = False);
 begin
   FObjectID := FUpdateSubject.ObjectID;
 
+  if AForceRedraw then
+  begin
+    FIsDirty := True;
+  end;
+
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
     if FUpdateSubject is TTrack then

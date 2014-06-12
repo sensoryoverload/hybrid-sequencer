@@ -384,13 +384,19 @@ begin
           end;
           mtNoteOff:
           begin
-    				buffer[0] := $80 + AMidiPattern.MidiChannel;;	{ note off }
+    				buffer[0] := $80 + AMidiPattern.MidiChannel;	{ note off }
     				buffer[1] := lMidiData.DataValue1;
     				buffer[2] := 0;		{ velocity }
           end;
           mtBankSelect:
           begin
 
+          end;
+          mtCC:
+          begin
+    				buffer[0] := $B0 + AMidiPattern.MidiChannel;	{ cc }
+    				buffer[1] := lMidiData.DataValue1;
+    				buffer[2] := lMidiData.DataValue2;
           end;
         end;
       end
@@ -782,6 +788,11 @@ begin
         lCommand.Initialize;
         lCommand.Rollback;
         lCommand.Finalize;
+
+        // Update views
+        Self.UpdateView(True);
+        FSessionGrid.UpdateView(True);
+        FPatternView.UpdateView(True);
 
         for lTrimIndex := Pred(GHistoryQueue.Count) downto GHistoryIndex do
         begin
@@ -1689,6 +1700,11 @@ end;
 
 procedure TMainApp.UpdateView(AForceRedraw: Boolean = False);
 begin
+  if AForceRedraw then
+  begin
+    FIsDirty := True;
+  end;
+
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
     FIsDirty := False;
