@@ -218,7 +218,6 @@ type
     FControllerDataId: string;
     FControllerId: Integer;
     FLocation: Integer;
-    FOldLocation: Integer;
     FOldDataValue: Integer;
     FDataValue: Integer;
     FState: TControllerEditState;
@@ -806,10 +805,11 @@ end;
 
 procedure TMidiNote.SetNoteVelocity(const AValue: Integer);
 begin
-  FNoteVelocity:= AValue;
+  FNoteVelocity := AValue;
 
   if FMapped then
   begin
+    DBLog('FMidiNoteStart.DataValue2: ' + IntToStr(FNoteVelocity));
     FMidiNoteStart.DataValue2 := FNoteVelocity;
   end;
 end;
@@ -1515,50 +1515,106 @@ end;
 procedure TControllerEditCommand.DoExecute;
 var
   lControllerDataEvent: TControllerEvent;
+  lMidiNote: TMidiNote;
   lIndex: Integer;
   lDiff: Integer;
 begin
-  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(ObjectID));
-  if Assigned(lControllerDataEvent) then
+  DBLog('start TControllerEditCommand.DoExecute ' + FControllerDataId);
+
+  if FControllerId = MIDI_VELOCITY then
   begin
-    FMidiPattern.BeginUpdate;
+    DBLog('Editing velocity');
 
-    case FState of
-      cesBefore:
-      begin
-        FOldDataValue := FDataValue;
-      end;
-      cesChanging:
-      begin
-        lControllerDataEvent.Value := FDataValue - FOldDataValue;
-      end;
-      cesAfter:
-      begin
-        //
-      end;
-    end;
+    lMidiNote := TMidiNote(GObjectMapper.GetModelObject(ObjectID));
 
-    FMidiPattern.EndUpdate;
+    if Assigned(lMidiNote) then
+    begin
+      FMidiPattern.BeginUpdate;
+
+      case FState of
+        cesBefore:
+        begin
+          FOldDataValue := FDataValue;
+        end;
+        cesChanging:
+        begin
+          lMidiNote.NoteVelocity := FDataValue - FOldDataValue;
+          lMidiNote.Notify;
+        end;
+        cesAfter:
+        begin
+          //
+        end;
+      end;
+
+      FMidiPattern.EndUpdate;
+    end
   end
   else
   begin
-    DBLog('NOT Assigned(lControllerDataEvent) ' + FControllerDataId);
+    DBLog('Editing controller');
+
+    lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(ObjectID));
+
+    if Assigned(lControllerDataEvent) then
+    begin
+      FMidiPattern.BeginUpdate;
+
+      case FState of
+        cesBefore:
+        begin
+          FOldDataValue := FDataValue;
+        end;
+        cesChanging:
+        begin
+          lControllerDataEvent.Value := FDataValue - FOldDataValue;
+          lControllerDataEvent.Notify;
+        end;
+        cesAfter:
+        begin
+          //
+        end;
+      end;
+
+      FMidiPattern.EndUpdate;
+    end;
   end;
+
+  DBLog('end TControllerEditCommand.DoExecute ' + FControllerDataId);
 end;
 
 procedure TControllerEditCommand.DoRollback;
 var
   lControllerDataEvent: TControllerEvent;
+  lMidiNote: TMidiNote;
 begin
-  lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(ObjectID));
-  if Assigned(lControllerDataEvent) then
+  if FControllerId = MIDI_VELOCITY then
   begin
-    FMidiPattern.BeginUpdate;
+    lMidiNote := TMidiNote(GObjectMapper.GetModelObject(ObjectID));
+    if Assigned(lControllerDataEvent) then
+    begin
+      FMidiPattern.BeginUpdate;
 
-    FDataValue := FOldDataValue;
-    lControllerDataEvent.Value := FOldDataValue;
+      FDataValue := FOldDataValue;
+      lMidiNote.NoteVelocity := FOldDataValue;
+      lMidiNote.Notify;
 
-    FMidiPattern.EndUpdate;
+      FMidiPattern.EndUpdate;
+    end;
+  end
+  else
+  begin
+    lControllerDataEvent := TControllerEvent(GObjectMapper.GetModelObject(ObjectID));
+    if Assigned(lControllerDataEvent) then
+    begin
+      FMidiPattern.BeginUpdate;
+
+      FDataValue := FOldDataValue;
+      lControllerDataEvent.Value := FOldDataValue;
+      lControllerDataEvent.Notify;
+
+      FMidiPattern.EndUpdate;
+    end;
   end;
 end;
 

@@ -656,7 +656,7 @@ var
           DBLog(Format('lEventY %d Height %d', [lEventY, Height]));
           if (Abs(X - lEventX) < 6) and (Abs(Y - lEventY) < 6) then
           begin
-            DBLog('Found');
+            DBLog('Found controller event');
             Result := lMidiData;
             break;
           end;
@@ -713,26 +713,8 @@ end;
 
 procedure TMidiPatternGUI.HandleControllerEditMouseUp(Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
-var
-  lControllerCreateCommand: TControllerCreateCommand;
 begin
   FSelectedControllerEvent := nil;
-
-(*  if not Assigned(FSelectedControllerEvent) then
-  begin
-    // TODO check if there already is an automation event on this location
-    lControllerCreateCommand := TControllerCreateCommand.Create(Self.ObjectID);
-    try
-      lControllerCreateCommand.ControllerId := FSelectedController;
-      lControllerCreateCommand.Location := Round(ConvertScreenToTime(X - FOffset));
-      lControllerCreateCommand.DataValue := Round((Height - Y) * 128 / Height);
-      lControllerCreateCommand.Persist := True;
-
-      GCommandQueue.PushCommand(lControllerCreateCommand);
-    except
-      lControllerCreateCommand.Free;
-    end;
-  end;*)
 end;
 
 procedure TMidiPatternGUI.HandleLoopMarkerMouseUp(Button: TMouseButton; Shift: TShiftState; X,
@@ -1172,7 +1154,6 @@ begin
           lControllerYLocation + 3);
 
         FBitmap.Canvas.Pen.Width := 1;
-
       end;
 
       { note value debug code
@@ -1996,23 +1977,25 @@ begin
     else if FEditMode = emControllerEdit then
     begin
       begin
-        if not Assigned(FSelectedControllerEvent) then
+        if FSelectedController <> MIDI_VELOCITY then
         begin
-          // TODO check if there already is an automation event on this location
-          lControllerCreateCommand := TControllerCreateCommand.Create(Self.ObjectID);
-          try
-            lControllerCreateCommand.ControllerId := FSelectedController;
-            lControllerCreateCommand.Location := Round(ConvertScreenToTime(FMouseX - FOffset));
-            lControllerCreateCommand.DataValue := Round((Height - FMouseY) * 128 / Height);
-            lControllerCreateCommand.Persist := True;
+          if not Assigned(FSelectedControllerEvent) then
+          begin
+            // TODO check if there already is an automation event on this location
+            lControllerCreateCommand := TControllerCreateCommand.Create(Self.ObjectID);
+            try
+              lControllerCreateCommand.ControllerId := FSelectedController;
+              lControllerCreateCommand.Location := Round(ConvertScreenToTime(FMouseX - FOffset));
+              lControllerCreateCommand.DataValue := Round((Height - FMouseY) * 128 / Height);
+              lControllerCreateCommand.Persist := True;
 
-            GCommandQueue.PushCommand(lControllerCreateCommand);
-          except
-            lControllerCreateCommand.Free;
+              GCommandQueue.PushCommand(lControllerCreateCommand);
+            except
+              lControllerCreateCommand.Free;
+            end;
           end;
         end;
       end;
-
     end;
   end;
 
