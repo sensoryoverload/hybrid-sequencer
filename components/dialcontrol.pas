@@ -1568,6 +1568,9 @@ begin
 end;
 
 procedure TVolumeControl.Paint;
+const
+  FADER_HEIGHT = 24;
+  FADER_HEIGHT_HALF = FADER_HEIGHT div 2;
 var
   HeightScale: Integer;
   i: Integer;
@@ -1612,10 +1615,10 @@ begin
     Bitmap.Canvas.FillRect(4, 0, 6, Height);
 
     // Draw FaderHandle
-    FY := Round(Bitmap.Height - (FPosition * (Bitmap.Height * DIVBY100)));
+    FY := Round(Bitmap.Height - FADER_HEIGHT_HALF - (FPosition * ((Bitmap.Height - FADER_HEIGHT) * DIVBY100)));
     Bitmap.Canvas.Brush.Color:= RGBToColor(255, 255, 255);
     Bitmap.Canvas.Pen.Color:= RGBToColor(50, 50, 50);
-    Bitmap.Canvas.RoundRect(0, FY - 12, 10, FY + 12, 4, 4);
+    Bitmap.Canvas.RoundRect(0, FY - FADER_HEIGHT_HALF, 10, FY + FADER_HEIGHT_HALF, 4, 4);
 
     Bitmap.Canvas.Brush.Color:= RGBToColor(50, 50, 50);
     Bitmap.Canvas.FillRect(0, FY - 1, 10, FY + 1);

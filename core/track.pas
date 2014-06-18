@@ -942,6 +942,8 @@ begin
 
   FTrack.Volume := FTrackLevel;
 
+  DBLog(Format('Setting track level %f', [FTrackLevel]));
+
   if Persist then
   begin
     FTrack.BeginUpdate;
