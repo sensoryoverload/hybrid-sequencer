@@ -1249,7 +1249,7 @@ begin
 
   if not FNoJackMode then
   begin
-    client := jack_client_open('loopbox', JackNullOption, nil);
+    client := jack_client_open('HybridSequencer', JackNullOption, nil);
 	  if not assigned(client) then
     begin
       writeln('Error creating jack client!');

@@ -15,9 +15,9 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-  SJack.lpr
+  HybridSequencer.lpr
 }
-program SJack;
+program HybridSequencer;
 
 {$mode objfpc}{$H+}
 
@@ -31,12 +31,12 @@ uses
   { add your units here }
   SimpleJack;
 
-{$IFDEF WINDOWS}{$R SJack.rc}{$ENDIF}
+{$IFDEF WINDOWS}{$R HybridSequencer.rc}{$ENDIF}
 
-{$R SJack.res}
+{$R HybridSequencer.res}
 
 begin
-  Application.Title:='SJack.lpi';
+  Application.Title:='HybridSequencer.lpi';
   Application.Initialize;
   Application.CreateForm(TMainApp, MainApp);
   Application.Run;

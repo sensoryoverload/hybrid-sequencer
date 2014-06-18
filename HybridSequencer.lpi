@@ -9,15 +9,92 @@
       </Flags>
       <MainUnit Value="0"/>
       <AutoCreateForms Value="False"/>
-      <Title Value="SJack.lpi"/>
+      <Title Value="HybridSequencer.lpi"/>
       <UseAppBundle Value="False"/>
+      <Icon Value="0"/>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <MinorVersionNr Value="1"/>
+      <MinorVersionNr Value="5"/>
       <StringTable CompanyName="Sensory Overload Records" ProductName="Hybrid Sequencer" ProductVersion="0.0.1.0"/>
     </VersionInfo>
+    <CustomData Count="13">
+      <Item0 Name="lazpackager/copyright" Value="2012 Jane Doe"/>
+      <Item1 Name="lazpackager/deb/ppa" Value="ppa:johndoe/use-your-own"/>
+      <Item2 Name="lazpackager/deb/series" Value="precise"/>
+      <Item3 Name="lazpackager/deb/tpl_changelog" Value="?PACKAGE_NAME? (?FULLVERSION?) ?SERIES?; urgency=low
+
+  * Original version ?VERSION? packaged with lazdebian
+
+ -- ?MAINTAINER? &lt;?MAINTAINER_EMAIL?>  ?DATER?
+"/>
+      <Item4 Name="lazpackager/deb/tpl_control" Value="Source: ?PACKAGE_NAME?
+Maintainer: ?MAINTAINER? &lt;?MAINTAINER_EMAIL?>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.3
+Build-Depends: fpc, lazarus, lcl, lcl-utils, debhelper (>= 8)
+
+Package: ?PACKAGE_NAME?
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Description: ?DESCRIPTION?
+ ?DESCRIPTION_LONG?
+"/>
+      <Item5 Name="lazpackager/deb/tpl_copyright" Value="Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files: *
+Copyright: ?COPYRIGHT?
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, write to the Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ .
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file
+ /usr/share/common-licenses/GPL-2
+"/>
+      <Item6 Name="lazpackager/deb/tpl_rules" Value="#!/usr/bin/make -f
+
+ROOT = $(CURDIR)/debian/?PACKAGE_NAME?
+
+override_dh_auto_clean:
+	$(RM) -r lib
+	$(RM) lib *.res ?EXECUTABLE?
+
+override_dh_auto_build:
+	lazbuild ?PROJECT?
+
+override_dh_auto_install:
+	install -d -m 755 $(ROOT)/usr/bin
+	install -s -m 755 ?EXECUTABLE? $(ROOT)/usr/bin
+
+%:
+	dh $@
+"/>
+      <Item7 Name="lazpackager/description" Value="this is a program"/>
+      <Item8 Name="lazpackager/description_long" Value="long description may not be empty!"/>
+      <Item9 Name="lazpackager/export_cmd" Value="?CP? *.lpi ?TEMPFOLDER?/
+?CP? *.lpr ?TEMPFOLDER?/
+?CP? *.pas ?TEMPFOLDER?/
+?CP? *.lfm ?TEMPFOLDER?/
+?CP? *.ico ?TEMPFOLDER?/
+"/>
+      <Item10 Name="lazpackager/maintainer" Value="John Doe"/>
+      <Item11 Name="lazpackager/maintainer_email" Value="john_doe@example.invalid"/>
+      <Item12 Name="lazpackager/package_name" Value="debian-package-name"/>
+    </CustomData>
     <MacroValues Count="1">
       <Macro1 Name="LCLWidgetType" Value="gtk2"/>
     </MacroValues>
@@ -54,15 +131,16 @@
         <MinVersion Major="1" Valid="True"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="107">
+    <Units Count="95">
       <Unit0>
-        <Filename Value="SJack.lpr"/>
+        <Filename Value="HybridSequencer.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="SJack"/>
-        <EditorIndex Value="0"/>
+        <UnitName Value="HybridSequencer"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="22"/>
-        <CursorPos X="1" Y="32"/>
+        <TopLine Value="5"/>
+        <CursorPos X="24" Y="20"/>
         <UsageCount Value="218"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -75,9 +153,12 @@
         <UnitName Value="simplejack"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="571"/>
-        <CursorPos X="1" Y="582"/>
+        <TopLine Value="1233"/>
+        <CursorPos X="13" Y="1243"/>
         <UsageCount Value="218"/>
+        <Bookmarks Count="1">
+          <Item0 X="1" Y="1157" ID="4"/>
+        </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -125,10 +206,10 @@
         <Filename Value="common/utils.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="utils"/>
-        <EditorIndex Value="21"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="228"/>
-        <CursorPos X="31" Y="239"/>
+        <TopLine Value="689"/>
+        <CursorPos X="3" Y="706"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit6>
@@ -136,10 +217,10 @@
         <Filename Value="core/audiostructure.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="audiostructure"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="17"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="219"/>
-        <CursorPos X="37" Y="231"/>
+        <TopLine Value="736"/>
+        <CursorPos X="1" Y="777"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit7>
@@ -156,7 +237,7 @@
         <Filename Value="core/bpm.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="bpm"/>
-        <EditorIndex Value="48"/>
+        <EditorIndex Value="55"/>
         <WindowIndex Value="0"/>
         <TopLine Value="822"/>
         <CursorPos X="8" Y="833"/>
@@ -167,10 +248,10 @@
         <Filename Value="core/global.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global"/>
-        <EditorIndex Value="45"/>
+        <EditorIndex Value="50"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="318"/>
-        <CursorPos X="30" Y="327"/>
+        <TopLine Value="182"/>
+        <CursorPos X="81" Y="203"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit10>
@@ -178,10 +259,10 @@
         <Filename Value="core/global_command.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global_command"/>
-        <EditorIndex Value="23"/>
+        <EditorIndex Value="32"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="382"/>
-        <CursorPos X="1" Y="394"/>
+        <TopLine Value="99"/>
+        <CursorPos X="3" Y="119"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit11>
@@ -189,10 +270,10 @@
         <Filename Value="core/globalconst.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="globalconst"/>
-        <EditorIndex Value="47"/>
+        <EditorIndex Value="52"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="116"/>
-        <CursorPos X="1" Y="135"/>
+        <TopLine Value="197"/>
+        <CursorPos X="17" Y="219"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit12>
@@ -209,7 +290,7 @@
         <Filename Value="core/ladspa.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ladspa"/>
-        <EditorIndex Value="15"/>
+        <EditorIndex Value="21"/>
         <WindowIndex Value="0"/>
         <TopLine Value="162"/>
         <CursorPos X="60" Y="177"/>
@@ -220,66 +301,62 @@
         <Filename Value="core/midi.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="midi"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="16"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="444"/>
-        <CursorPos X="3" Y="447"/>
+        <TopLine Value="199"/>
+        <CursorPos X="1" Y="221"/>
         <UsageCount Value="212"/>
+        <Bookmarks Count="2">
+          <Item0 X="1" Y="311" ID="5"/>
+          <Item1 X="23" Y="732" ID="6"/>
+        </Bookmarks>
         <Loaded Value="True"/>
       </Unit15>
       <Unit16>
-        <Filename Value="core/multiband_wsola.pas"/>
-        <UnitName Value="multiband_wsola"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="31"/>
-        <CursorPos X="12" Y="58"/>
-        <UsageCount Value="17"/>
-      </Unit16>
-      <Unit17>
         <Filename Value="core/pattern.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="pattern"/>
-        <EditorIndex Value="41"/>
+        <EditorIndex Value="46"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="644"/>
-        <CursorPos X="1" Y="662"/>
+        <TopLine Value="90"/>
+        <CursorPos X="1" Y="110"/>
+        <UsageCount Value="212"/>
+        <Loaded Value="True"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="core/plugin.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="plugin"/>
+        <EditorIndex Value="20"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="271"/>
+        <CursorPos X="3" Y="286"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit17>
       <Unit18>
-        <Filename Value="core/plugin.pas"/>
+        <Filename Value="core/pluginhost.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="plugin"/>
-        <EditorIndex Value="14"/>
+        <UnitName Value="pluginhost"/>
+        <EditorIndex Value="30"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="701"/>
-        <CursorPos X="1" Y="704"/>
+        <TopLine Value="572"/>
+        <CursorPos X="40" Y="587"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit18>
       <Unit19>
-        <Filename Value="core/pluginhost.pas"/>
+        <Filename Value="core/sampler.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="pluginhost"/>
-        <EditorIndex Value="22"/>
+        <UnitName Value="sampler"/>
+        <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="558"/>
-        <CursorPos X="79" Y="569"/>
+        <TopLine Value="2326"/>
+        <CursorPos X="1" Y="2336"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit19>
       <Unit20>
-        <Filename Value="core/sampler.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="sampler"/>
-        <EditorIndex Value="1"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="125"/>
-        <CursorPos X="84" Y="136"/>
-        <UsageCount Value="212"/>
-        <Loaded Value="True"/>
-      </Unit20>
-      <Unit21>
         <Filename Value="core/samplestreamprovider.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="samplestreamprovider"/>
@@ -287,19 +364,19 @@
         <TopLine Value="60"/>
         <CursorPos X="1" Y="68"/>
         <UsageCount Value="212"/>
-      </Unit21>
-      <Unit22>
+      </Unit20>
+      <Unit21>
         <Filename Value="core/track.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="track"/>
-        <EditorIndex Value="44"/>
+        <EditorIndex Value="49"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="663"/>
-        <CursorPos X="36" Y="679"/>
+        <TopLine Value="350"/>
+        <CursorPos X="20" Y="371"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
-      </Unit22>
-      <Unit23>
+      </Unit21>
+      <Unit22>
         <Filename Value="gui/aboutgui.pas"/>
         <IsPartOfProject Value="True"/>
         <HasResources Value="True"/>
@@ -308,112 +385,93 @@
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
         <UsageCount Value="212"/>
-      </Unit23>
-      <Unit24>
+      </Unit22>
+      <Unit23>
         <Filename Value="gui/bankgui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="BankView"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="bankgui"/>
+        <EditorIndex Value="31"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="361"/>
-        <CursorPos X="36" Y="370"/>
+        <TopLine Value="56"/>
+        <CursorPos X="7" Y="80"/>
         <ComponentState Value="1"/>
         <UsageCount Value="212"/>
-      </Unit24>
-      <Unit25>
+        <Loaded Value="True"/>
+      </Unit23>
+      <Unit24>
         <Filename Value="gui/midigui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="MidiPatternGUI"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="midigui"/>
-        <EditorIndex Value="24"/>
+        <EditorIndex Value="33"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1513"/>
-        <CursorPos X="1" Y="1524"/>
+        <TopLine Value="1959"/>
+        <CursorPos X="32" Y="1980"/>
         <UsageCount Value="212"/>
-        <Bookmarks Count="1">
-          <Item0 X="1" Y="1524" ID="5"/>
+        <Bookmarks Count="2">
+          <Item0 X="21" Y="699" ID="1"/>
+          <Item1 X="9" Y="1980" ID="3"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
-      </Unit25>
-      <Unit26>
-        <Filename Value="gui/patterngui.pas"/>
-        <ComponentName Value="Frame1"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <UnitName Value="patterngui"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="80"/>
-        <CursorPos X="28" Y="102"/>
-        <UsageCount Value="71"/>
-      </Unit26>
-      <Unit27>
+      </Unit24>
+      <Unit25>
         <Filename Value="gui/plugingui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugingui"/>
-        <EditorIndex Value="27"/>
+        <EditorIndex Value="37"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="210"/>
-        <CursorPos X="1" Y="232"/>
+        <TopLine Value="62"/>
+        <CursorPos X="1" Y="77"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
-      </Unit27>
-      <Unit28>
+      </Unit25>
+      <Unit26>
         <Filename Value="gui/pluginhostgui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="PluginProcessorGUI"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="pluginhostgui"/>
-        <EditorIndex Value="26"/>
+        <EditorIndex Value="35"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="547"/>
-        <CursorPos X="1" Y="555"/>
+        <TopLine Value="149"/>
+        <CursorPos X="1" Y="160"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
-      </Unit28>
-      <Unit29>
+      </Unit26>
+      <Unit27>
         <Filename Value="gui/samplegui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="SampleView"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="samplegui"/>
-        <EditorIndex Value="18"/>
+        <EditorIndex Value="26"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="588"/>
-        <CursorPos X="8" Y="609"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
-      </Unit29>
-      <Unit30>
-        <Filename Value="gui/samplergui.pas"/>
-        <ComponentName Value="SamplerGUI"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="samplergui"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="380"/>
-        <CursorPos X="45" Y="406"/>
-        <UsageCount Value="7"/>
-      </Unit30>
-      <Unit31>
+      </Unit27>
+      <Unit28>
         <Filename Value="common/fx.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fx"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="11"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="31"/>
-        <CursorPos X="22" Y="42"/>
+        <TopLine Value="145"/>
+        <CursorPos X="1" Y="154"/>
         <UsageCount Value="211"/>
         <Loaded Value="True"/>
-      </Unit31>
-      <Unit32>
+      </Unit28>
+      <Unit29>
         <Filename Value="gui/optionsgui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fmOptions"/>
@@ -424,8 +482,8 @@
         <TopLine Value="1"/>
         <CursorPos X="13" Y="15"/>
         <UsageCount Value="204"/>
-      </Unit32>
-      <Unit33>
+      </Unit29>
+      <Unit30>
         <Filename Value="bindings/libjack/jack.pp"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="jack"/>
@@ -433,8 +491,8 @@
         <TopLine Value="728"/>
         <CursorPos X="25" Y="743"/>
         <UsageCount Value="205"/>
-      </Unit33>
-      <Unit34>
+      </Unit30>
+      <Unit31>
         <Filename Value="bindings/libjack/jacktypes.pp"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="jacktypes"/>
@@ -442,8 +500,8 @@
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
         <UsageCount Value="205"/>
-      </Unit34>
-      <Unit35>
+      </Unit31>
+      <Unit32>
         <Filename Value="bindings/libjack/midiport.pp"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="midiport"/>
@@ -451,8 +509,8 @@
         <TopLine Value="68"/>
         <CursorPos X="12" Y="83"/>
         <UsageCount Value="205"/>
-      </Unit35>
-      <Unit36>
+      </Unit32>
+      <Unit33>
         <Filename Value="bindings/libjack/ringbuffer.pp"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ringbuffer"/>
@@ -460,8 +518,8 @@
         <TopLine Value="156"/>
         <CursorPos X="12" Y="156"/>
         <UsageCount Value="205"/>
-      </Unit36>
-      <Unit37>
+      </Unit33>
+      <Unit34>
         <Filename Value="bindings/libsndfile/sndfile.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sndfile"/>
@@ -469,8 +527,8 @@
         <TopLine Value="554"/>
         <CursorPos X="12" Y="567"/>
         <UsageCount Value="205"/>
-      </Unit37>
-      <Unit38>
+      </Unit34>
+      <Unit35>
         <Filename Value="common/palfo.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="PALFO"/>
@@ -478,19 +536,19 @@
         <TopLine Value="44"/>
         <CursorPos X="18" Y="52"/>
         <UsageCount Value="200"/>
-      </Unit38>
-      <Unit39>
+      </Unit35>
+      <Unit36>
         <Filename Value="core/filters.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="filters"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="15"/>
         <WindowIndex Value="0"/>
         <TopLine Value="69"/>
         <CursorPos X="84" Y="79"/>
         <UsageCount Value="202"/>
         <Loaded Value="True"/>
-      </Unit39>
-      <Unit40>
+      </Unit36>
+      <Unit37>
         <Filename Value="core/baseengine.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="baseengine"/>
@@ -498,18 +556,19 @@
         <TopLine Value="26"/>
         <CursorPos X="3" Y="41"/>
         <UsageCount Value="201"/>
-      </Unit40>
-      <Unit41>
+      </Unit37>
+      <Unit38>
         <Filename Value="components/dialcontrol.pas"/>
         <UnitName Value="dialcontrol"/>
-        <EditorIndex Value="29"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="602"/>
-        <CursorPos X="22" Y="612"/>
+        <TopLine Value="1600"/>
+        <CursorPos X="1" Y="1618"/>
         <UsageCount Value="103"/>
-        <Loaded Value="True"/>
-      </Unit41>
-      <Unit42>
+        <Bookmarks Count="1">
+          <Item0 X="1" Y="1618" ID="2"/>
+        </Bookmarks>
+      </Unit38>
+      <Unit39>
         <Filename Value="common/audioutils.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="audioutils"/>
@@ -520,8 +579,8 @@
         <Bookmarks Count="1">
           <Item0 X="3" Y="198" ID="4"/>
         </Bookmarks>
-      </Unit42>
-      <Unit43>
+      </Unit39>
+      <Unit40>
         <Filename Value="engine/waveformengine.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="waveformengine"/>
@@ -529,8 +588,8 @@
         <TopLine Value="1"/>
         <CursorPos X="1" Y="13"/>
         <UsageCount Value="207"/>
-      </Unit43>
-      <Unit44>
+      </Unit40>
+      <Unit41>
         <Filename Value="engine/trackengine.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="trackengine"/>
@@ -538,8 +597,8 @@
         <TopLine Value="1"/>
         <CursorPos X="67" Y="2"/>
         <UsageCount Value="207"/>
-      </Unit44>
-      <Unit45>
+      </Unit41>
+      <Unit42>
         <Filename Value="core/ladspaloader.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ladspaloader"/>
@@ -547,90 +606,85 @@
         <TopLine Value="219"/>
         <CursorPos X="1" Y="238"/>
         <UsageCount Value="214"/>
-      </Unit45>
-      <Unit46>
+      </Unit42>
+      <Unit43>
         <Filename Value="gui/midipatterncontrolgui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="MidiPatternControlGUI"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="midipatterncontrolgui"/>
-        <EditorIndex Value="20"/>
+        <EditorIndex Value="28"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="166"/>
-        <CursorPos X="1" Y="187"/>
+        <TopLine Value="406"/>
+        <CursorPos X="22" Y="427"/>
         <UsageCount Value="207"/>
         <Bookmarks Count="1">
-          <Item0 X="65" Y="247" ID="7"/>
+          <Item0 X="65" Y="256" ID="7"/>
         </Bookmarks>
         <Loaded Value="True"/>
-      </Unit46>
-      <Unit47>
+        <LoadedDesigner Value="True"/>
+      </Unit43>
+      <Unit44>
         <Filename Value="gui/wavepatterncontrolgui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="WavePatternControlGUI"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="wavepatterncontrolgui"/>
-        <EditorIndex Value="36"/>
+        <EditorIndex Value="41"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="54"/>
-        <CursorPos X="47" Y="63"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
         <UsageCount Value="207"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
-      </Unit47>
-      <Unit48>
+      </Unit44>
+      <Unit45>
         <Filename Value="gui/midipatterngui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="midipatterngui"/>
-        <EditorIndex Value="38"/>
+        <EditorIndex Value="43"/>
         <WindowIndex Value="0"/>
         <TopLine Value="261"/>
         <CursorPos X="24" Y="273"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
-      </Unit48>
-      <Unit49>
+      </Unit45>
+      <Unit46>
         <Filename Value="gui/wavegui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wavegui"/>
-        <EditorIndex Value="33"/>
+        <EditorIndex Value="40"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="937"/>
-        <CursorPos X="1" Y="952"/>
+        <TopLine Value="1428"/>
+        <CursorPos X="1" Y="1450"/>
         <UsageCount Value="204"/>
         <Loaded Value="True"/>
-      </Unit49>
-      <Unit50>
+      </Unit46>
+      <Unit47>
         <Filename Value="gui/wavepatterngui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wavepatterngui"/>
-        <EditorIndex Value="39"/>
+        <EditorIndex Value="44"/>
         <WindowIndex Value="0"/>
         <TopLine Value="229"/>
         <CursorPos X="3" Y="235"/>
         <UsageCount Value="202"/>
         <Loaded Value="True"/>
-      </Unit50>
-      <Unit51>
+      </Unit47>
+      <Unit48>
         <Filename Value="core/wave.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wave"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="793"/>
-        <CursorPos X="1" Y="808"/>
+        <TopLine Value="1182"/>
+        <CursorPos X="1" Y="1203"/>
         <UsageCount Value="204"/>
-        <Bookmarks Count="4">
-          <Item0 X="1" Y="1" ID="6"/>
-          <Item1 X="46" Y="787" ID="3"/>
-          <Item2 X="72" Y="1506" ID="1"/>
-          <Item3 X="1" Y="2526" ID="2"/>
-        </Bookmarks>
         <Loaded Value="True"/>
-      </Unit51>
-      <Unit52>
+      </Unit48>
+      <Unit49>
         <Filename Value="core/pluginportmapper.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="pluginportmapper"/>
@@ -638,8 +692,8 @@
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
         <UsageCount Value="208"/>
-      </Unit52>
-      <Unit53>
+      </Unit49>
+      <Unit50>
         <Filename Value="core/midicontrolmap.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="midicontrolmap"/>
@@ -647,19 +701,8 @@
         <TopLine Value="1"/>
         <CursorPos X="25" Y="13"/>
         <UsageCount Value="200"/>
-      </Unit53>
-      <Unit54>
-        <Filename Value="gui/trackgui.pas"/>
-        <ComponentName Value="TrackGUI"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="trackgui"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="320"/>
-        <CursorPos X="1" Y="334"/>
-        <UsageCount Value="92"/>
-      </Unit54>
-      <Unit55>
+      </Unit50>
+      <Unit51>
         <Filename Value="core/wsola.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wsola"/>
@@ -667,69 +710,69 @@
         <TopLine Value="94"/>
         <CursorPos X="6" Y="119"/>
         <UsageCount Value="208"/>
-      </Unit55>
-      <Unit56>
+      </Unit51>
+      <Unit52>
         <Filename Value="externals/soundtouch/soundtouch.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="soundtouch"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="441"/>
-        <CursorPos X="1" Y="461"/>
+        <TopLine Value="282"/>
+        <CursorPos X="1" Y="297"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
-      </Unit56>
-      <Unit57>
+      </Unit52>
+      <Unit53>
         <Filename Value="externals/soundtouch/tdstretch.pas"/>
         <UnitName Value="tdstretch"/>
-        <EditorIndex Value="46"/>
+        <EditorIndex Value="51"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="739"/>
-        <CursorPos X="1" Y="761"/>
+        <TopLine Value="742"/>
+        <CursorPos X="22" Y="748"/>
         <UsageCount Value="100"/>
         <Loaded Value="True"/>
-      </Unit57>
-      <Unit58>
+      </Unit53>
+      <Unit54>
         <Filename Value="externals/soundtouch/fifosamplebuffer.pas"/>
         <UnitName Value="fifosamplebuffer"/>
-        <EditorIndex Value="30"/>
         <WindowIndex Value="0"/>
         <TopLine Value="255"/>
         <CursorPos X="13" Y="266"/>
         <UsageCount Value="100"/>
-        <Loaded Value="True"/>
-      </Unit58>
-      <Unit59>
+      </Unit54>
+      <Unit55>
         <Filename Value="externals/soundtouch/ratetransposer.pas"/>
         <UnitName Value="ratetransposer"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
         <TopLine Value="195"/>
         <CursorPos X="3" Y="200"/>
         <UsageCount Value="104"/>
         <Loaded Value="True"/>
-      </Unit59>
-      <Unit60>
+      </Unit55>
+      <Unit56>
         <Filename Value="bindings/librubberband/librubberband.pp"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="librubberband"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="53"/>
-        <CursorPos X="34" Y="63"/>
+        <TopLine Value="67"/>
+        <CursorPos X="29" Y="102"/>
         <UsageCount Value="201"/>
-      </Unit60>
-      <Unit61>
+      </Unit56>
+      <Unit57>
         <Filename Value="core/smbpitchshift.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="smbPitchShift"/>
-        <EditorIndex Value="9"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="478"/>
-        <CursorPos X="1" Y="490"/>
+        <TopLine Value="249"/>
+        <CursorPos X="30" Y="254"/>
         <UsageCount Value="257"/>
-        <Loaded Value="True"/>
-      </Unit61>
-      <Unit62>
+        <Bookmarks Count="2">
+          <Item0 X="28" Y="366" ID="3"/>
+          <Item1 X="1" Y="149" ID="2"/>
+        </Bookmarks>
+      </Unit57>
+      <Unit58>
         <Filename Value="gui/patternlistgui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="patternlistgui"/>
@@ -737,8 +780,8 @@
         <TopLine Value="111"/>
         <CursorPos X="7" Y="102"/>
         <UsageCount Value="210"/>
-      </Unit62>
-      <Unit63>
+      </Unit58>
+      <Unit59>
         <Filename Value="core/transistor_ladder.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="transistor_ladder"/>
@@ -746,42 +789,34 @@
         <TopLine Value="1"/>
         <CursorPos X="3" Y="27"/>
         <UsageCount Value="204"/>
-      </Unit63>
-      <Unit64>
+      </Unit59>
+      <Unit60>
         <Filename Value="gui/sessiongrid.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sessiongrid"/>
-        <EditorIndex Value="28"/>
+        <EditorIndex Value="38"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="92"/>
-        <CursorPos X="19" Y="104"/>
+        <TopLine Value="934"/>
+        <CursorPos X="37" Y="955"/>
         <UsageCount Value="207"/>
         <Loaded Value="True"/>
-      </Unit64>
-      <Unit65>
+      </Unit60>
+      <Unit61>
         <Filename Value="gui/patternview.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="PatternView"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="patternview"/>
-        <EditorIndex Value="25"/>
+        <EditorIndex Value="34"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="11"/>
-        <CursorPos X="81" Y="22"/>
+        <TopLine Value="516"/>
+        <CursorPos X="1" Y="523"/>
         <UsageCount Value="242"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
-      </Unit65>
-      <Unit66>
-        <Filename Value="/usr/share/fpcsrc/2.6.0/rtl/objpas/math.pp"/>
-        <UnitName Value="math"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="1263"/>
-        <CursorPos X="23" Y="1319"/>
-        <UsageCount Value="33"/>
-      </Unit66>
-      <Unit67>
+      </Unit61>
+      <Unit62>
         <Filename Value="core/basetimestretch.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="basetimestretch"/>
@@ -792,37 +827,23 @@
         <Bookmarks Count="1">
           <Item0 X="1" Y="17" ID="9"/>
         </Bookmarks>
-      </Unit67>
-      <Unit68>
-        <Filename Value="/usr/share/fpcsrc/2.6.0/rtl/inc/objpash.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="174"/>
-        <CursorPos X="23" Y="192"/>
-        <UsageCount Value="26"/>
-      </Unit68>
-      <Unit69>
+      </Unit62>
+      <Unit63>
         <Filename Value="gui/pluginnodegui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="GenericPluginGUI"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="pluginnodegui"/>
-        <EditorIndex Value="13"/>
+        <EditorIndex Value="18"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="80"/>
-        <CursorPos X="1" Y="83"/>
+        <TopLine Value="106"/>
+        <CursorPos X="19" Y="115"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
-      </Unit69>
-      <Unit70>
-        <Filename Value="../../lazarus/lcl/include/control.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="3954"/>
-        <CursorPos X="3" Y="3973"/>
-        <UsageCount Value="21"/>
-      </Unit70>
-      <Unit71>
+      </Unit63>
+      <Unit64>
         <Filename Value="gui/plugindistortion.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="PluginDistortionGUI"/>
@@ -832,68 +853,74 @@
         <TopLine Value="1"/>
         <CursorPos X="22" Y="1"/>
         <UsageCount Value="201"/>
-      </Unit71>
-      <Unit72>
+      </Unit64>
+      <Unit65>
         <Filename Value="plugins/plugin_moog.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_moog"/>
-        <EditorIndex Value="43"/>
+        <EditorIndex Value="48"/>
         <WindowIndex Value="0"/>
         <TopLine Value="63"/>
         <CursorPos X="1" Y="75"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
-      </Unit72>
-      <Unit73>
+      </Unit65>
+      <Unit66>
         <Filename Value="plugins/plugin_decimate.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_decimate"/>
-        <EditorIndex Value="16"/>
+        <EditorIndex Value="22"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="160"/>
-        <CursorPos X="32" Y="178"/>
+        <TopLine Value="61"/>
+        <CursorPos X="1" Y="152"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
-      </Unit73>
-      <Unit74>
+      </Unit66>
+      <Unit67>
         <Filename Value="plugins/plugin_distortion.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_distortion"/>
+        <EditorIndex Value="24"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="19"/>
-        <CursorPos X="1" Y="42"/>
+        <TopLine Value="6"/>
+        <CursorPos X="1" Y="69"/>
         <UsageCount Value="201"/>
-      </Unit74>
-      <Unit75>
+        <Loaded Value="True"/>
+      </Unit67>
+      <Unit68>
         <Filename Value="plugins/plugin_distortion_gui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_distortion_gui"/>
+        <EditorIndex Value="19"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="49" Y="15"/>
+        <CursorPos X="15" Y="22"/>
         <UsageCount Value="201"/>
-      </Unit75>
-      <Unit76>
+        <Loaded Value="True"/>
+      </Unit68>
+      <Unit69>
         <Filename Value="core/freereverb.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="freereverb"/>
+        <EditorIndex Value="12"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="1" Y="1"/>
+        <TopLine Value="361"/>
+        <CursorPos X="1" Y="377"/>
         <UsageCount Value="200"/>
-      </Unit76>
-      <Unit77>
+        <Loaded Value="True"/>
+      </Unit69>
+      <Unit70>
         <Filename Value="plugins/plugin_freeverb.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_freeverb"/>
-        <EditorIndex Value="42"/>
+        <EditorIndex Value="47"/>
         <WindowIndex Value="0"/>
         <TopLine Value="22"/>
         <CursorPos X="86" Y="33"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
-      </Unit77>
-      <Unit78>
+      </Unit70>
+      <Unit71>
         <Filename Value="plugins/plugin_freeverb_gui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_freeverb_gui"/>
@@ -901,378 +928,349 @@
         <TopLine Value="45"/>
         <CursorPos X="19" Y="75"/>
         <UsageCount Value="201"/>
-      </Unit78>
-      <Unit79>
+      </Unit71>
+      <Unit72>
         <Filename Value="plugins/plugin_decimate_gui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_decimate_gui"/>
+        <EditorIndex Value="36"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="21" Y="15"/>
+        <CursorPos X="26" Y="1"/>
         <UsageCount Value="201"/>
-      </Unit79>
-      <Unit80>
-        <Filename Value="core/teebeefilter.pas"/>
-        <UnitName Value="teebeefilter"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="137"/>
-        <CursorPos X="1" Y="372"/>
-        <UsageCount Value="28"/>
-      </Unit80>
-      <Unit81>
+        <Loaded Value="True"/>
+      </Unit72>
+      <Unit73>
         <Filename Value="plugins/plugin_bassline_gui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_bassline_gui"/>
-        <EditorIndex Value="40"/>
+        <EditorIndex Value="45"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="10"/>
-        <CursorPos X="36" Y="22"/>
+        <TopLine Value="11"/>
+        <CursorPos X="12" Y="17"/>
         <UsageCount Value="214"/>
         <Loaded Value="True"/>
-      </Unit81>
-      <Unit82>
+      </Unit73>
+      <Unit74>
         <Filename Value="plugins/plugin_bassline.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_bassline"/>
-        <EditorIndex Value="17"/>
+        <EditorIndex Value="23"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="34"/>
-        <CursorPos X="86" Y="44"/>
+        <TopLine Value="218"/>
+        <CursorPos X="3" Y="367"/>
         <UsageCount Value="214"/>
         <Loaded Value="True"/>
-      </Unit82>
-      <Unit83>
+      </Unit74>
+      <Unit75>
         <Filename Value="plugins/tb303.pas"/>
         <UnitName Value="tb303"/>
-        <EditorIndex Value="19"/>
+        <EditorIndex Value="27"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="63"/>
+        <TopLine Value="72"/>
         <CursorPos X="14" Y="84"/>
         <UsageCount Value="100"/>
         <Loaded Value="True"/>
-      </Unit83>
-      <Unit84>
-        <Filename Value="../../lazarus/lcl/grids.pas"/>
-        <UnitName Value="Grids"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="8661"/>
-        <CursorPos X="29" Y="8677"/>
-        <UsageCount Value="5"/>
-      </Unit84>
-      <Unit85>
-        <Filename Value="../../lazarus/lcl/controls.pp"/>
-        <UnitName Value="Controls"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="1342"/>
-        <CursorPos X="14" Y="1355"/>
-        <UsageCount Value="47"/>
-      </Unit85>
-      <Unit86>
-        <Filename Value="/usr/share/fpcsrc/2.6.0/packages/fcl-base/src/contnrs.pp"/>
-        <UnitName Value="contnrs"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="830"/>
-        <CursorPos X="3" Y="833"/>
-        <UsageCount Value="24"/>
-      </Unit86>
-      <Unit87>
-        <Filename Value="/usr/share/fpcsrc/2.6.0/rtl/objpas/classes/classesh.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="272"/>
-        <CursorPos X="14" Y="285"/>
-        <UsageCount Value="24"/>
-      </Unit87>
-      <Unit88>
-        <Filename Value="/usr/share/fpcsrc/2.6.0/rtl/objpas/classes/lists.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="643"/>
-        <CursorPos X="3" Y="644"/>
-        <UsageCount Value="24"/>
-      </Unit88>
-      <Unit89>
+      </Unit75>
+      <Unit76>
         <Filename Value="gui/patternoverview.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="patternoverview"/>
-        <EditorIndex Value="37"/>
+        <EditorIndex Value="42"/>
         <WindowIndex Value="0"/>
         <TopLine Value="45"/>
         <CursorPos X="1" Y="51"/>
         <UsageCount Value="203"/>
         <Loaded Value="True"/>
-      </Unit89>
-      <Unit90>
-        <Filename Value="../../lazarus/lcl/include/containedaction.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="73"/>
-        <CursorPos X="1" Y="104"/>
-        <UsageCount Value="1"/>
-      </Unit90>
-      <Unit91>
-        <Filename Value="../../lazarus/lcl/menus.pp"/>
-        <UnitName Value="Menus"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="405"/>
-        <CursorPos X="10" Y="419"/>
-        <UsageCount Value="15"/>
-      </Unit91>
-      <Unit92>
-        <Filename Value="../../lazarus/lcl/include/wincontrol.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="5960"/>
-        <CursorPos X="3" Y="5965"/>
-        <UsageCount Value="44"/>
-      </Unit92>
-      <Unit93>
-        <Filename Value="../../lazarus/lcl/widgetset/wscontrols.pp"/>
-        <UnitName Value="WSControls"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="326"/>
-        <CursorPos X="1" Y="330"/>
-        <UsageCount Value="44"/>
-      </Unit93>
-      <Unit94>
-        <Filename Value="/usr/share/fpcsrc/2.6.0/rtl/objpas/objpas.pp"/>
-        <UnitName Value="objpas"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="13"/>
-        <CursorPos X="8" Y="28"/>
-        <UsageCount Value="14"/>
-      </Unit94>
-      <Unit95>
+      </Unit76>
+      <Unit77>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/inc/heaptrc.pp"/>
         <UnitName Value="heaptrc"/>
-        <EditorIndex Value="49"/>
+        <EditorIndex Value="56"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="54" Y="1"/>
         <UsageCount Value="160"/>
         <Loaded Value="True"/>
-      </Unit95>
-      <Unit96>
+      </Unit77>
+      <Unit78>
         <Filename Value="gui/renamepatterngui.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FmRenamePattern"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="renamepatterngui"/>
-        <EditorIndex Value="32"/>
+        <EditorIndex Value="39"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="22"/>
+        <TopLine Value="9"/>
         <CursorPos X="12" Y="38"/>
         <UsageCount Value="318"/>
         <Loaded Value="True"/>
-      </Unit96>
-      <Unit97>
-        <Filename Value="../lazarus/lcl/include/containedaction.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="92"/>
-        <CursorPos X="1" Y="106"/>
-        <UsageCount Value="21"/>
-      </Unit97>
-      <Unit98>
-        <Filename Value="../lazarus/lcl/include/customaction.inc"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="241"/>
-        <CursorPos X="1" Y="253"/>
-        <UsageCount Value="21"/>
-      </Unit98>
-      <Unit99>
+      </Unit78>
+      <Unit79>
         <Filename Value="../lazarus/lcl/include/control.inc"/>
-        <EditorIndex Value="35"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1206"/>
         <CursorPos X="3" Y="1213"/>
-        <UsageCount Value="104"/>
-        <Loaded Value="True"/>
-      </Unit99>
-      <Unit100>
+        <UsageCount Value="18"/>
+      </Unit79>
+      <Unit80>
         <Filename Value="../lazarus/lcl/controls.pp"/>
         <UnitName Value="Controls"/>
-        <EditorIndex Value="34"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2150"/>
         <CursorPos X="15" Y="2161"/>
-        <UsageCount Value="104"/>
-        <Loaded Value="True"/>
-      </Unit100>
-      <Unit101>
+        <UsageCount Value="18"/>
+      </Unit80>
+      <Unit81>
         <Filename Value="externals/soundtouch/peakfinder.pas"/>
         <UnitName Value="peakfinder"/>
-        <EditorIndex Value="31"/>
         <WindowIndex Value="0"/>
         <TopLine Value="300"/>
         <CursorPos X="1" Y="321"/>
-        <UsageCount Value="80"/>
-        <Loaded Value="True"/>
-      </Unit101>
-      <Unit102>
-        <Filename Value="externals/soundtouch/ucrosscorrelatefft.pas"/>
-        <UnitName Value="uCrossCorrelateFFT"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="66"/>
-        <CursorPos X="1" Y="86"/>
-        <UsageCount Value="27"/>
-      </Unit102>
-      <Unit103>
+        <UsageCount Value="413"/>
+      </Unit81>
+      <Unit82>
         <Filename Value="core/stretcher.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="stretcher"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="267"/>
-        <CursorPos X="1" Y="277"/>
-        <UsageCount Value="42"/>
+        <TopLine Value="28"/>
+        <CursorPos X="14" Y="39"/>
+        <UsageCount Value="709"/>
         <Loaded Value="True"/>
-      </Unit103>
-      <Unit104>
+      </Unit82>
+      <Unit83>
         <Filename Value="core/ucrosscorrelatefft.pas"/>
         <UnitName Value="uCrossCorrelateFFT"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="205"/>
-        <CursorPos X="3" Y="216"/>
-        <UsageCount Value="21"/>
+        <TopLine Value="143"/>
+        <CursorPos X="18" Y="167"/>
+        <UsageCount Value="354"/>
         <Loaded Value="True"/>
-      </Unit104>
-      <Unit105>
-        <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-base/src/contnrs.pp"/>
-        <UnitName Value="contnrs"/>
+      </Unit83>
+      <Unit84>
+        <Filename Value="core/fftreal.pas"/>
+        <UnitName Value="FFTReal"/>
+        <EditorIndex Value="14"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="60"/>
-        <CursorPos X="3" Y="72"/>
-        <UsageCount Value="9"/>
-      </Unit105>
-      <Unit106>
+        <TopLine Value="35"/>
+        <CursorPos X="5" Y="50"/>
+        <UsageCount Value="111"/>
+        <Loaded Value="True"/>
+      </Unit84>
+      <Unit85>
+        <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-json/src/fpjsonrtti.pp"/>
+        <UnitName Value="fpjsonrtti"/>
+        <EditorIndex Value="53"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="54"/>
+        <CursorPos X="1" Y="98"/>
+        <UsageCount Value="232"/>
+        <Loaded Value="True"/>
+      </Unit85>
+      <Unit86>
+        <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-json/src/fpjson.pp"/>
+        <UnitName Value="fpjson"/>
+        <EditorIndex Value="54"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="10"/>
+        <CursorPos X="3" Y="31"/>
+        <UsageCount Value="232"/>
+        <Loaded Value="True"/>
+      </Unit86>
+      <Unit87>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/objpas/math.pp"/>
         <UnitName Value="math"/>
+        <EditorIndex Value="13"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="511"/>
-        <CursorPos X="10" Y="524"/>
-        <UsageCount Value="8"/>
-      </Unit106>
+        <TopLine Value="652"/>
+        <CursorPos X="6" Y="655"/>
+        <UsageCount Value="185"/>
+        <Loaded Value="True"/>
+      </Unit87>
+      <Unit88>
+        <Filename Value="bindings/librubberband/urubberbandtest.pas"/>
+        <UnitName Value="urubberbandtest"/>
+        <EditorIndex Value="6"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="3"/>
+        <UsageCount Value="174"/>
+        <Loaded Value="True"/>
+      </Unit88>
+      <Unit89>
+        <Filename Value="core/sincfir.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="SincFIR"/>
+        <EditorIndex Value="5"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="31" Y="5"/>
+        <UsageCount Value="349"/>
+        <Loaded Value="True"/>
+      </Unit89>
+      <Unit90>
+        <Filename Value="../lazarus/lcl/stdctrls.pp"/>
+        <UnitName Value="StdCtrls"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="452"/>
+        <CursorPos X="14" Y="470"/>
+        <UsageCount Value="105"/>
+      </Unit90>
+      <Unit91>
+        <Filename Value="plugins/plugin_delay.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="plugin_delay"/>
+        <EditorIndex Value="25"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="121"/>
+        <CursorPos X="23" Y="133"/>
+        <UsageCount Value="217"/>
+        <Loaded Value="True"/>
+      </Unit91>
+      <Unit92>
+        <Filename Value="library/bgrabitmaptypes.pas"/>
+        <UnitName Value="BGRABitmapTypes"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="271"/>
+        <CursorPos X="6" Y="284"/>
+        <UsageCount Value="64"/>
+      </Unit92>
+      <Unit93>
+        <Filename Value="../lazarus/lcl/graphics.pp"/>
+        <UnitName Value="Graphics"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="48"/>
+        <CursorPos X="3" Y="62"/>
+        <UsageCount Value="64"/>
+      </Unit93>
+      <Unit94>
+        <Filename Value="../lazarus/lcl/menus.pp"/>
+        <UnitName Value="Menus"/>
+        <EditorIndex Value="29"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="103"/>
+        <CursorPos X="3" Y="118"/>
+        <UsageCount Value="64"/>
+        <Loaded Value="True"/>
+      </Unit94>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="28" HistoryIndex="27">
       <Position1>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="264" Column="20" TopLine="259"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="827" Column="41" TopLine="791"/>
       </Position1>
       <Position2>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="296" Column="1" TopLine="286"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="1252" Column="45" TopLine="1217"/>
       </Position2>
       <Position3>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="143" Column="1" TopLine="143"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="1257" Column="79" TopLine="1222"/>
       </Position3>
       <Position4>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1505" Column="72" TopLine="1485"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="703" Column="21" TopLine="681"/>
       </Position4>
       <Position5>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1599" Column="18" TopLine="1578"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="1518" Column="1" TopLine="1478"/>
       </Position5>
       <Position6>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="1513" Column="13" TopLine="1486"/>
       </Position6>
       <Position7>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="212" Column="18" TopLine="192"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="696" Column="55" TopLine="669"/>
       </Position7>
       <Position8>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="293" Column="73" TopLine="273"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="703" Column="29" TopLine="669"/>
       </Position8>
       <Position9>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1505" Column="81" TopLine="1485"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="1531" Column="33" TopLine="1515"/>
       </Position9>
       <Position10>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1599" Column="18" TopLine="1578"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="289" Column="14" TopLine="268"/>
       </Position10>
       <Position11>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="324" Column="22" TopLine="300"/>
       </Position11>
       <Position12>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="214" Column="18" TopLine="194"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="289" Column="14" TopLine="268"/>
       </Position12>
       <Position13>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="293" Column="73" TopLine="273"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="813" Column="13" TopLine="791"/>
       </Position13>
       <Position14>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1505" Column="81" TopLine="1485"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="1156" Column="20" TopLine="1143"/>
       </Position14>
       <Position15>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="257" Column="3" TopLine="232"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="701" Column="21" TopLine="679"/>
       </Position15>
       <Position16>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="270" Column="1" TopLine="261"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="1438" Column="1" TopLine="1402"/>
       </Position16>
       <Position17>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="271" Column="30" TopLine="259"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="702" Column="34" TopLine="679"/>
       </Position17>
       <Position18>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1395" Column="1" TopLine="1383"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="669" Column="1" TopLine="655"/>
       </Position18>
       <Position19>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="2522" Column="10" TopLine="2514"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="1570" Column="16" TopLine="1554"/>
       </Position19>
       <Position20>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="2525" Column="23" TopLine="2514"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="692" Column="35" TopLine="677"/>
       </Position20>
       <Position21>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="283" Column="22" TopLine="260"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position21>
       <Position22>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="288" Column="30" TopLine="268"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="1137" Column="51" TopLine="1121"/>
       </Position22>
       <Position23>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="286" Column="26" TopLine="271"/>
+        <Filename Value="gui/midigui.pas"/>
+        <Caret Line="1980" Column="32" TopLine="1959"/>
       </Position23>
       <Position24>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="287" Column="26" TopLine="271"/>
+        <Filename Value="core/midi.pas"/>
+        <Caret Line="1618" Column="1" TopLine="1575"/>
       </Position24>
       <Position25>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="395" Column="15" TopLine="372"/>
       </Position25>
       <Position26>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="40" Column="22" TopLine="19"/>
+        <Filename Value="gui/samplegui.pas"/>
+        <Caret Line="605" Column="30" TopLine="588"/>
       </Position26>
       <Position27>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="278" Column="51" TopLine="258"/>
+        <Filename Value="gui/samplegui.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position27>
       <Position28>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="976" Column="26" TopLine="962"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="650" Column="47" TopLine="627"/>
       </Position28>
-      <Position29>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="304" Column="1" TopLine="289"/>
-      </Position29>
-      <Position30>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="91" Column="66" TopLine="70"/>
-      </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
       <Item0 Name="SVN active" Value="-1"/>
@@ -1287,12 +1285,18 @@
     </SearchPaths>
     <Parsing>
       <Style Value="1"/>
+      <SyntaxOptions>
+        <IncludeAssertionCode Value="True"/>
+      </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
       <SmartLinkUnit Value="True"/>
       <TargetProcessor Value="pentium4"/>
       <TargetCPU Value="i386"/>
       <TargetOS Value="linux"/>
+      <Optimizations>
+        <OptimizationLevel Value="0"/>
+      </Optimizations>
     </CodeGeneration>
     <Linking>
       <Debugging>
@@ -1314,21 +1318,49 @@
     <LCLWidgetType Value="gtk2"/>
   </CompilerOptions>
   <Debugging>
-    <BreakPoints Count="2">
+    <BreakPoints Count="6">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
-        <Source Value="core/wave.pas"/>
-        <Line Value="785"/>
+        <Source Value="core/globalconst.pas"/>
+        <Line Value="1275"/>
       </Item1>
       <Item2>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
-        <Source Value="externals/soundtouch/soundtouch.pas"/>
-        <Line Value="295"/>
+        <Source Value="core/audiostructure.pas"/>
+        <Line Value="743"/>
       </Item2>
+      <Item3>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="core/pattern.pas"/>
+        <Line Value="559"/>
+      </Item3>
+      <Item4>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="core/plugin.pas"/>
+        <Line Value="821"/>
+      </Item4>
+      <Item5>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="core/pluginhost.pas"/>
+        <Line Value="568"/>
+      </Item5>
+      <Item6>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="core/pluginhost.pas"/>
+        <Line Value="570"/>
+      </Item6>
     </BreakPoints>
     <Watches Count="1">
       <Item1>
