@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Hybrid Sequencer 
+Categories=Application;
+Exec=HybridSequencer
+Hidden=false
+Icon=HybridSequencer.png
+Terminal=false
+Type=Application

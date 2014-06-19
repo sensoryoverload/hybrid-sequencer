@@ -1,0 +1,114 @@
+Recursively build md5sums
+
+md5deep -r * > md5sums
+
+Build Deb Package
+
+fakeroot dpkg --build debian HybridSequencer-0.5-i386.deb
+
+
+
+
+<howto>
+
+The explanation below is based on my experience in making my first debian package. I use the name of my package, you should change it appropriately. You need a terminal window open and your favourite file manager, I used Nautilus. When I say "current folder", that means the current folder in the terminal.
+
+1. make a folder with any name you like, for example as your intended package will have, say
+gpfind-0.1
+
+2. create a folder tree inside this folder, representing the part of Linux directory structure, like
+usr
+usr/bin - here is place of the executable file(s) (recommended) or it might be usr/local/bin
+usr/share
+usr/share/applications - the gpfind.desktop file is here (or usr/local/share/applications - see below how to make it)
+usr/share/doc
+usr/share/doc/gpfind - the place for your documentation, like README, LICENCE, copyright, changelog.gz and help files
+usr/share/pixmaps - your program's icon
+usr/share/gpfind - other files,if any, used internally by gpfind (the program cannot modify them while working)
+
+Debian Policy Manual also requires a man file for every executable, but so far I have no idea, how to create man pages
+
+3. put all necessary files to the appropriate folders in the above tree
+
+4. make a text file, called gpfind.desktop inside usr/share/applications
+Its contents should be like this:
+
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Gnome Package Finder
+Categories=Application;Utility;
+Exec=gpfind
+Hidden=false
+Icon=gpfind.png
+Terminal=false
+Type=Application
+
+This file is necessary, if you want your program appeared in the Application menu under Accessories category, you may change the category, obviously. Note: Version=1.0 is NOT your program's version.
+
+5. create a folder called DEBIAN inside the package folder (gpfind-0.1)
+
+6. create a text file, called "control" (without quotes) inside the above folder and fill it in with the following information (my comments are in [square brackets]) :
+
+Package: gpfind [without version number]
+Version: 0.1.1  [put your version here]
+Section: utils  [put the appropriate section here]
+Priority: optional [most likely]
+Architecture: i386
+Depends: libgtk2.0-0 (>= 2.0), libgtk2.0-bin (>= 2.0), apt, apt-file
+Installed-Size: 832 [in kilobytes, see below how to get it]
+Maintainer: Victor Rull <victorrull@gmail.com>
+Description: Debian Package finder for Gnome [Short description in one line]
+ A GUI wrapper for apt-cache and apt-file commands, [Long description, may contain many lines]
+ allowing quick search for debian packages and files inside packages.
+ .
+ gpfind is pretty fast and does not require root privileges.
+ It shows common package information, its dependencies and list of files.
+
+[more fields can be added, if you know their meanings]
+
+See Debian Policy Manual for details:
+http://www.debian.org/doc/debian-policy/ch-binary.html
+
+7. to calculate the size of installed files use the following command, assuming that the package folder is your current directory:
+du -ac --apparent-size --block-size=1024 usr
+
+The last line of its output looks like this
+832   total
+and this is what you need - write it down to the "control" file, the field Installed-Size.
+
+8. Calculate md5 sums of all files and save them into the file, called "md5sums" (without quotes) and located in DEBIAN folder.
+I struggled to find the appropriate command for this and eventually found an excellent Nautilus script, which makes the trick (thanks to ofir):
+http://www.gnome-look.org/content/show.php/show.php?content=69749&vote=good&tan=7008025
+
+md5sums should look like this:
+
+cba62c9c10d006d8d9123de47bb11b0d  usr/local/bin/gpfind
+93bfdba24a19f2f7836e8b6ef17d82bb  usr/share/doc/gpfind/copyright
+6215b995598a1b77094f1f8d5984d2ed  usr/share/doc/gpfind/gpfind.html
+6b743ba6c790f3814d29d3e04ce0b400  usr/share/doc/gpfind/changelog.gz
+377bffff1eee0a330e8cbdf8e629f186  usr/share/pixmaps/gpfind.png
+
+9. make sure you removed all backup files (they may be hidden) from your working folders.
+
+10. change the current folder to its parent (cd ..), right above your package folder.
+
+11. type the command:
+
+fakeroot dpkg --build gpfind-0.1 gpfind-0.1.1-i386.deb
+
+If all the above steps were correct, this creates a new package, called gpfind-0.1.1-i386.deb in your current folder.
+
+12. check, what you've got:
+
+linda gpfind-0.1.1-i386.deb
+
+"Linda is a Debian package checker, much like lintian, that runs some rudimentary checks over source and binary packages to see, if they comply to Policy" (extracted from linda's package long description).
+
+13. TODO
+  a. removing configuration files, when your package is being uninstalled
+
+Sources:
+http://tldp.org/HOWTO/html_single/Debian-Binary-Package-Building-HOWTO/
+http://www.debian.org/doc/debian-policy/index.html#contents
+the above post

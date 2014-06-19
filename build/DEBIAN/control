@@ -1,0 +1,10 @@
+Package: HybridSequencer
+Version: 0.5
+Section: audio
+Priority: optional
+Architecture: i386
+Depends: libgtk2.0-0 (>= 2.0), libgtk2.0-bin (>= 2.0)
+Installed-Size: 5725
+Maintainer: Robbert Latumahina <robbert.latumahina@gmail.com>
+Description: MIDI Audio Sequencer
+
