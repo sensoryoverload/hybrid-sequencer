@@ -263,7 +263,7 @@ type
     procedure CreateNoteGUI(AObjectID: string);
     procedure DeleteNoteGUI(AObjectID: string);
     function NoteByObjectID(AObjectID: string): TMidiNoteGUI;
-    procedure NoteListByRect(AObjectIDList: TStringList; ARect: TRect);
+    procedure NoteListByRect(ARect: TRect);
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
   end;
@@ -1404,6 +1404,11 @@ procedure TMidiPatternGUI.UpdateView(AForceRedraw: Boolean = False);
 begin
   FForceRedraw := AForceRedraw;
 
+  if AForceRedraw then
+  begin
+    FIsDirty := True;
+  end;
+
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
     DiffLists(
@@ -1575,7 +1580,7 @@ begin
   end;
 end;
 
-procedure TMidiPatternGUI.NoteListByRect(AObjectIDList: TStringList; ARect: TRect);
+procedure TMidiPatternGUI.NoteListByRect(ARect: TRect);
 var
   lIndex: Integer;
   lMidiNoteGUI: TMidiNoteGUI;
@@ -1616,7 +1621,11 @@ begin
          (lTop < ConvertNoteToScreen(lMidiNoteGUI.Note) + FNoteOffset) and
          (lBottom > ConvertNoteToScreen(lMidiNoteGUI.Note) + FZoomNoteHeight + FNoteOffset) then
       begin
-        AObjectIDList.Add(lMidiNoteGUI.ObjectID);
+        lMidiNoteGUI.Selected := True;
+      end
+      else
+      begin
+        lMidiNoteGUI.Selected := False;
       end;
     end;
   end;
@@ -1778,6 +1787,10 @@ end;
 
 procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
+var
+  lSelectObjectListCommand: TSelectObjectListCommand;
+  lIndex: Integer;
+  lMidiNoteGUI: TMidiNoteGUI;
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
@@ -1794,7 +1807,28 @@ begin
     else
     begin
       if FZoomingMode then
-        FZoomingMode:= False;
+        FZoomingMode := False;
+
+      if FRubberBandMode then
+      begin
+        lSelectObjectListCommand := TSelectObjectListCommand.Create(Self.ObjectID);
+        try
+          lSelectObjectListCommand.AddMode := (ssShift in GSettings.Modifier);
+          lSelectObjectListCommand.Persist := False;
+          for lIndex := 0 to Pred(FNoteListGUI.Count) do
+          begin
+            lMidiNoteGUI := TMidiNoteGUI(FNoteListGUI[lIndex]);
+            if lMidiNoteGUI.Selected then
+            begin
+              lSelectObjectListCommand.ObjectIdList.Add(lMidiNoteGUI.ObjectID);
+            end;
+          end;
+
+          GCommandQueue.PushCommand(lSelectObjectListCommand);
+        except
+          lSelectObjectListCommand.Free;
+        end;
+      end;
 
       if FRubberBandMode then
         FRubberBandMode := False;
@@ -1886,30 +1920,20 @@ begin
     end
     else
     begin
-  {   hmmm....why is this code f**king up pattern switching/ lost notes, etc...??
-
-
       if FRubberBandMode then
       begin
+        // If rubberband changed
         if (FRubberBandSelect.BottomRight.X <> X) or
           (FRubberBandSelect.BottomRight.Y <> Y) then
         begin
           FRubberBandSelect.BottomRight.X := X;
           FRubberBandSelect.BottomRight.Y := Y;
 
-          lSelectObjectListCommand := TSelectObjectListCommand.Create(Self.ObjectID);
-          try
-            lSelectObjectListCommand.AddMode := (ssShift in GSettings.Modifier);
-            lSelectObjectListCommand.Persist := False;
-            NoteListByRect(lSelectObjectListCommand.ObjectIdList, FRubberBandSelect);
-
-            GCommandQueue.PushCommand(lSelectObjectListCommand);
-          except
-            lSelectObjectListCommand.Free;
-          end;
+          // Select midinotes in rubberband
+          NoteListByRect(FRubberBandSelect);
         end;
       end;
-      }
+
       if FZoomingMode then
       begin
         FOffset:= FOldLocationOffset + (X - FOldX);

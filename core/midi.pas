@@ -1355,10 +1355,12 @@ begin
 
   for lIndex := 0 to Pred(ObjectIdList.Count) do
   begin
-    lMidinote := FMidiPattern.NoteByObjectID(ObjectIdList[lIndex]);
+    lMidinote := TMidiNote(GObjectMapper.GetModelObject(ObjectIdList[lIndex]));
 
     if Assigned(lMidinote) then
     begin
+      DBLog(Format('Selecting Location %d Note %d', [lMidinote.NoteLocation, lMidinote.Note]));
+
       lMidinote.Selected := True;
       lMidinote.Notify;
     end;
