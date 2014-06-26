@@ -203,9 +203,10 @@ var
   lMidiBufferIndex: Integer;
 begin
   Inherited;
+
   if AMidiBuffer.Count > 0 then
   begin
-       DBLog(Format('AMidiBuffer.Count %d', [AMidiBuffer.Count]));
+    DBLog(Format('AMidiBuffer.Count %d', [AMidiBuffer.Count]));
   end;
   lOffsetL := 0;
   lOffsetR := 1;
