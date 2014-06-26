@@ -178,6 +178,11 @@ begin
         lCreateNodesCommand.PluginType := ptBassline;
         lCreateNodesCommand.PluginName := 'Bassline';
       end
+      else if SameText(lTreeView.Selected.Text, 'bassline') then
+      begin
+        lCreateNodesCommand.PluginType := ptExternal;
+        lCreateNodesCommand.PluginName := 'External';
+      end
       else if SameText(lTreeView.Selected.Text, 'bitreducer') then
       begin
         lCreateNodesCommand.PluginType := ptDecimate;

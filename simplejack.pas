@@ -236,13 +236,6 @@ type
 var
   MainApp: TMainApp;
 
-  midi_input_port : ^jack_port_t;
-  midi_output_port : ^jack_port_t;
-  audio_input_port : ^jack_port_t;
-  audio_output_port_left : ^jack_port_t;
-  audio_output_port_right : ^jack_port_t;
-	client : ^jack_client_t;
-  note_frqs : array[0..127] of jack_default_audio_sample_t;
   note : byte;
   last_note:byte;
   ramp : longint;
@@ -328,21 +321,6 @@ end;
 { TMainApp }
 
 
-procedure calc_note_frqs(srate : jack_default_audio_sample_t);
-var
-  i : integer;
-begin
-	for i := 0 to 127 do
-	begin
-		note_frqs[i] := 440 * power(2, ((jack_default_audio_sample_t(i) - 69.0) / 12.0));// / srate;
-  end;
-end;
-
-function srate(nframes : jack_nframes_t ; arg : pointer): longint; cdecl;
-begin
-	calc_note_frqs(jack_default_audio_sample_t(nframes));
-end;
-
 function process_midi_buffer(AMidiPattern: TMidiPattern; AMidiOutBuf: pointer; AFrames: Integer; ATrack: TTrack): Integer;
 var
   buffer: ^byte;
@@ -412,11 +390,6 @@ begin
   Result := 0
 end;
 
-procedure jack_shutdown(arg: pointer); cdecl;
-begin
-  exit;
-end;
-
 function process(nframes: jack_nframes_t; arg:pointer): longint; cdecl;
 var
   i, j : integer;
@@ -439,11 +412,11 @@ begin
 
   buffer_size := nframes * SizeOf(Single) * STEREO;
 
-  midi_in_buf := jack_port_get_buffer(midi_input_port, nframes);
-  midi_out_buf := jack_port_get_buffer(midi_output_port, nframes);
-	output_left := jack_port_get_buffer(audio_output_port_left, nframes);
-	output_right := jack_port_get_buffer(audio_output_port_right, nframes);
-	input := jack_port_get_buffer(audio_input_port, nframes);
+  midi_in_buf := jack_port_get_buffer(GJackAudio.midi_input_port, nframes);
+  midi_out_buf := jack_port_get_buffer(GJackAudio.midi_output_port, nframes);
+	output_left := jack_port_get_buffer(GJackAudio.audio_output_port_left, nframes);
+	output_right := jack_port_get_buffer(GJackAudio.audio_output_port_right, nframes);
+	input := jack_port_get_buffer(GJackAudio.audio_input_port, nframes);
 
   // Silence when not active
   if not GAudioStruct.Active then
@@ -460,7 +433,7 @@ begin
   jack_midi_clear_buffer(midi_out_buf);
 
   // Query BPM from transport
-  transport_state := jack_transport_query(client, @transport_pos);
+  transport_state := jack_transport_query(GJackAudio.client, @transport_pos);
 
   // Get number of pending pgPattern-events
 	event_count := jack_midi_get_event_count(midi_in_buf, nframes);
@@ -1147,7 +1120,7 @@ begin
     // Display cpu usage in percentages
     if not FNoJackMode then
     begin
-      pcCPU_Load.Value := jack_cpu_load(client);
+      pcCPU_Load.Value := jack_cpu_load(GJackAudio.client);
     end;
 
     // Update views
@@ -1179,19 +1152,6 @@ var
 begin
   ScreenUpdater.Enabled := False;
 
-  if not FNoJackMode then
-  begin
-    sleep(100);
-    jack_transport_stop(client);
-
-    sleep(100);
-    jack_deactivate(client);
-
-    sleep(100);
-	  jack_client_close(client);
-
-    sleep(100);
-  end;
   if Assigned(GAudioStruct) then
   begin
     GAudioStruct.Detach(MainApp);
@@ -1217,6 +1177,7 @@ procedure TMainApp.Formcreate(Sender: Tobject);
 var
   input_ports: ppchar;
   output_ports: ppchar;
+  lIndex: Integer;
 begin
   DBLog('start TMainApp.FormCreate');
 
@@ -1249,70 +1210,12 @@ begin
 
   if not FNoJackMode then
   begin
-    client := jack_client_open('HybridSequencer', JackNullOption, nil);
-	  if not assigned(client) then
-    begin
-      writeln('Error creating jack client!');
-      Halt(1);
-    end;
+    samplerate:= GJackAudio.Samplerate;
 
-	  midi_input_port := jack_port_register (client, 'midi_in', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsInput), 0);
-	  midi_output_port := jack_port_register (client, 'midi_out', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
-	  audio_input_port := jack_port_register (client, 'audio_in', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
-	  audio_output_port_left := jack_port_register (client, 'audio_out_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
-	  audio_output_port_right := jack_port_register (client, 'audio_out_right', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
-
-	  calc_note_frqs(jack_get_sample_rate (client));
-
-    DBLog('Samplerate: ' + IntToStr(Round(jack_get_sample_rate (client))));
-
-    samplerate:= jack_get_sample_rate (client);
-    jack_on_shutdown(client, @jack_shutdown, nil);
-	  jack_set_sample_rate_callback(client, @srate, nil);
-	  DBLog(format('jack_set_process_callback %d', [jack_set_process_callback(client, @process, nil)]));
-
-	  if jack_activate(client) = 1 then
-    begin
-		  DBLog('cannot activate client');
-      halt(1);
-    end;
-
-    DBLog('start autoconnect');
-    input_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsOutput)));
-    if not Assigned(input_ports) then
-    begin
-      writeln('no physical capture ports.');
-    end
-    else
-    begin
-      {if jack_connect(client, input_ports[0], jack_port_name(audio_input_port)) <> 0 then
-      begin
-        writeln('cannot connect input ports');
-      end;}
-    end;
-
-    output_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsInput)));
-    if not Assigned(output_ports) then
-    begin
-      DBLog('no physical playback ports.');
-    end
-    else
-    begin
-      if jack_connect(client, jack_port_name(audio_output_port_left), output_ports[0]) <> 0 then
-      begin
-        DBLog('cannot connect output ports');
-      end;
-      if jack_connect(client, jack_port_name(audio_output_port_right), output_ports[1]) <> 0 then
-      begin
-        DBLog('cannot connect output ports');
-      end;
-    end;
-    DBLog('end autoconnect');
-
-    jack_transport_start(client);
-
-    GSettings.SampleRate := samplerate;
-    GSettings.Frames := jack_get_buffer_size(client);
+    GJackAudio.Process := @process;
+    GJackAudio.Initialize;
+    GSettings.SampleRate := GJackAudio.Samplerate;;
+    GSettings.Frames := GJackAudio.Frames;
   end
   else
   begin
@@ -1550,6 +1453,7 @@ begin
     lFilterRootNode := TreeView1.Items.Add(RootNode, 'Native Plugins');
     lFilterRootNode.ImageIndex := 17;
     TreeView1.Items.AddChild(lFilterRootNode, 'Reverb');
+    TreeView1.Items.AddChild(lFilterRootNode, 'External');
     TreeView1.Items.AddChild(lFilterRootNode, 'Delay');
     TreeView1.Items.AddChild(lFilterRootNode, 'Bassline');
     TreeView1.Items.AddChild(lFilterRootNode, 'Sampler');

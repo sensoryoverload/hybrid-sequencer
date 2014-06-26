@@ -25,7 +25,7 @@ interface
 
 uses
   Classes, SysUtils, ContNrs, globalconst, jacktypes, sndfile,
-  XMLConf, Menus;
+  XMLConf, Menus, jack, transport;
 
 type
   TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
@@ -202,15 +202,161 @@ type
 
   TEditMode = (emPatternEdit, emAutomationEdit, emControllerEdit, emVelocityEdit);
 
+  { TJackAudio }
+
+  TJackAudio = class
+  private
+    FProcess: JackProcessCallback;
+    function GetFrames: Integer;
+    function GetSamplerate: Integer;
+  public
+    midi_input_port : ^jack_port_t;
+    midi_output_port : ^jack_port_t;
+    audio_input_port : ^jack_port_t;
+    audio_output_port_left : ^jack_port_t;
+    audio_output_port_right : ^jack_port_t;
+    client: ^jack_client_t;
+
+    constructor Create;
+    destructor Destroy; override;
+    procedure Initialize;
+
+    property Process: JackProcessCallback read FProcess write FProcess;
+    property Samplerate: Integer read GetSamplerate;
+    property Frames: Integer read GetFrames;
+  end;
+
 
 var
   GObjectMapper: TObjectMapper;
   GSettings: TSettings;
+  GJackAudio: TJackAudio;
 
 implementation
 
 uses
   utils, xmlread, xmlwrite, dom;
+
+{ TJackAudio }
+
+
+function srate(nframes : jack_nframes_t ; arg : pointer): longint; cdecl;
+begin
+	//
+end;
+
+procedure jack_shutdown(arg: pointer); cdecl;
+begin
+  exit;
+end;
+
+function TJackAudio.GetFrames: Integer;
+begin
+  Result := jack_get_buffer_size(client);
+end;
+
+function TJackAudio.GetSamplerate: Integer;
+begin
+  Result := jack_get_sample_rate(client);
+end;
+
+constructor TJackAudio.Create;
+begin
+  client := jack_client_open('HybridSequencer', JackNullOption, nil);
+  if not assigned(client) then
+  begin
+    writeln('Error creating jack client!');
+    Halt(1);
+  end;
+
+end;
+
+destructor TJackAudio.Destroy;
+begin
+  sleep(100);
+  jack_transport_stop(client);
+
+  sleep(100);
+  jack_deactivate(client);
+
+  sleep(100);
+  jack_client_close(client);
+
+  sleep(100);
+
+  inherited Destroy;
+end;
+
+procedure TJackAudio.Initialize;
+var
+  input_ports: ppchar;
+  output_ports: ppchar;
+  lIndex: Integer;
+begin
+  midi_input_port := jack_port_register (client, 'midi_in', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsInput), 0);
+  midi_output_port := jack_port_register (client, 'midi_out', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
+  audio_input_port := jack_port_register (client, 'audio_in', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
+  audio_output_port_left := jack_port_register (client, 'audio_out_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
+  audio_output_port_right := jack_port_register (client, 'audio_out_right', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);
+
+  jack_on_shutdown(client, @jack_shutdown, nil);
+  jack_set_sample_rate_callback(client, @srate, nil);
+  writeln(format('jack_set_process_callback %d', [jack_set_process_callback(client, FProcess, nil)]));
+
+  if jack_activate(client) = 1 then
+  begin
+	  writeln('cannot activate client');
+    halt(1);
+  end;
+
+  input_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsOutput)));
+  if not Assigned(input_ports) then
+  begin
+    writeln('no physical capture ports.');
+  end
+  else
+  begin
+    lIndex := 0;
+    while Assigned(input_ports[lIndex]) do
+    begin
+      writeln(Format('Input port: "%s"', [input_ports[lIndex]]));
+
+      Inc(lIndex);
+    end;
+
+    {if jack_connect(client, input_ports[0], jack_port_name(audio_input_port)) <> 0 then
+    begin
+      writeln('cannot connect input ports');
+    end;}
+  end;
+
+  output_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsPhysical) or Longword(JackPortIsInput)));
+  if not Assigned(output_ports) then
+  begin
+    writeln('no physical playback ports.');
+  end
+  else
+  begin
+    lIndex := 0;
+    while Assigned(output_ports[lIndex]) do
+    begin
+      writeln(Format('Output port: "%s"', [output_ports[lIndex]]));
+
+      Inc(lIndex);
+    end;
+
+    if jack_connect(client, jack_port_name(audio_output_port_left), output_ports[0]) <> 0 then
+    begin
+      writeln('cannot connect output port left');
+    end;
+    if jack_connect(client, jack_port_name(audio_output_port_right), output_ports[1]) <> 0 then
+    begin
+      writeln('cannot connect output port right');
+    end;
+  end;
+
+  jack_transport_start(client);
+end;
 
 { TAutomationData }
 
@@ -536,11 +682,13 @@ begin
 end;
 
 initialization
+  GJackAudio := TJackAudio.Create;
   GObjectMapper := TObjectMapper.Create;
   GSettings := TSettings.Create;
   GSettings.Load('config.xml');
 
 finalization
+  GJackAudio.Free;
   GObjectMapper.Free;
   GSettings.Save('config.xml');
   GSettings.Free;

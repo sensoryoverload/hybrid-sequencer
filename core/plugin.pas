@@ -56,7 +56,7 @@ type
 
   TPluginType = (
     ptIO, ptSampler, ptDelay, ptDistortion, ptFlanger, ptFilter, ptDecimate, ptReverb,
-    ptBassline, ptLADSPA);
+    ptBassline, ptLADSPA, ptExternal);
 
   TPluginNodeType = (pntSource, pntSink, pntPlugin);
 

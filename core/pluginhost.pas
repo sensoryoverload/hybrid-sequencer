@@ -146,7 +146,8 @@ uses
   plugin_moog,
   plugin_freeverb,
   plugin_bassline,
-  plugin_delay;
+  plugin_delay,
+  plugin_external;
 
 function SortOnSequenceNr(Item1 : Pointer; Item2 : Pointer) : Integer;
 var
@@ -276,6 +277,10 @@ begin
   if AClassName = 'TScriptNode' then
   begin
     lPluginNode := TScriptNode.Create(ObjectID, MAPPED);
+  end
+  else if AClassName = 'TPluginExternal' then
+  begin
+    lPluginNode := TPluginExternal.Create(ObjectID, MAPPED);
   end
   else if AClassName = 'TPluginDelay' then
   begin
@@ -548,6 +553,7 @@ end;
 procedure TCreateNodesCommand.DoExecute;
 var
   lPluginDistortion: TPluginDistortion;
+  lPluginExternal: TPluginExternal;
   lPluginDelay: TPluginDelay;
   lPluginFreeverb: TPluginFreeverb;
   lPluginBassline: TPluginBassline;
@@ -580,6 +586,17 @@ begin
       AddPluginToNodeList(lPluginDistortion);
 
       ObjectIdList.Add(lPluginDistortion.ObjectID);
+    end;
+    ptExternal:
+    begin
+      lPluginExternal := TPluginExternal.Create(FPluginProcessor.ObjectID, MAPPED);
+      lPluginExternal.PluginName := FPluginName;
+      lPluginExternal.PluginType := ptExternal;
+      lPluginExternal.SequenceNr := FPluginProcessor.NodeList.Count;
+
+      AddPluginToNodeList(lPluginExternal);
+
+      ObjectIdList.Add(lPluginExternal.ObjectID);
     end;
     ptDelay:
     begin

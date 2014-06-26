@@ -469,6 +469,7 @@ begin
   begin
     FMidiData := TMidiData.Create(Self);
     FMidiData.DataType := mtCC;
+    FMidiData.MidiChannel := 1;
   end;
 
   FSelected := False;
@@ -823,7 +824,9 @@ begin
   if FMapped then
   begin
     FMidiNoteStart := TMidiData.Create(Self);
+    FMidiNoteStart.MidiChannel := 1;
     FMidiNoteEnd := TMidiData.Create(Self);
+    FMidiNoteEnd.MidiChannel := 1;
   end;
 
   FSelected:= False;
