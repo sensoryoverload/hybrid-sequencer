@@ -803,6 +803,7 @@ begin
   FSessionGrid := TSessionGrid(TheOwner);
 
   FTrackControls := TPanel.Create(FSessionGrid);
+  FTrackControls.ParentFont := True;
   FTrackControls.Width := TRACK_WIDTH;
   FTrackControls.Height := 200;
   FTrackControls.Left := 0;
@@ -812,6 +813,7 @@ begin
   FTrackControls.OnClick := @DoOnTrackClick;
 
   FTarget := TComboBox.Create(FTrackControls);
+  FTarget.ParentFont := True;
   FTarget.Top := 3;
   FTarget.Left := 4;
   FTarget.Height := 12;
@@ -959,6 +961,8 @@ end;
 constructor TSessionGrid.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+
+  ParentFont := True;
 
   FIsDirty := False;
 

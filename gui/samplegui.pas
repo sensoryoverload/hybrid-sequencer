@@ -385,6 +385,27 @@ constructor TSampleView.Create(AOwner: TComponent);
     AToggleControl.SwitchedOn := ADefaultValue;
   end;
 
+  procedure SetControlColor(AColor: TColor);
+  var
+    lIndex: Integer;
+  begin
+    for lIndex := 0 to Pred(ComponentCount) do
+    begin
+      if Components[lIndex] is TDialControl then
+      begin
+        ((Components[lIndex]) as TDialControl).Color := AColor;
+      end
+      else if Components[lIndex] is TLabel then
+      begin
+        ((Components[lIndex]) as TLabel).Color := AColor;
+      end
+      else if Components[lIndex] is TGroupBox then
+      begin
+        ((Components[lIndex]) as TGroupBox).Color := AColor;
+      end;
+    end;
+  end;
+
 begin
   inherited Create(AOwner);
 
@@ -464,6 +485,8 @@ begin
   FillNoteComboBox(lsBaseNote, spBase_Note);
 
   SetEnableControls(False);
+
+  //SetControlColor(clGreen);
 end;
 
 destructor TSampleView.Destroy;

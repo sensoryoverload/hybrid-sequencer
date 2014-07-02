@@ -10,22 +10,22 @@ LazarusResources.Add('TMidiPatternControlGUI','FORMDATA',[
   +'nlMidiSettings'#4'Left'#2#0#6'Height'#2#27#3'Top'#2#0#5'Width'#3'p'#3#5'Ali'
   +'gn'#7#5'alTop'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#2#27#11'ClientWi'
   +'dth'#3'p'#3#21'Constraints.MaxHeight'#2#27#21'Constraints.MinHeight'#2#27#8
-  +'TabOrder'#2#0#0#6'TLabel'#11'lblQuantize'#4'Left'#3#161#0#6'Height'#2#18#3
+  +'TabOrder'#2#0#0#6'TLabel'#11'lblQuantize'#4'Left'#3#136#0#6'Height'#2#18#3
   +'Top'#2#6#5'Width'#2'7'#7'Caption'#6#8'Quantize'#11'ParentColor'#8#0#0#9'TCo'
-  +'mboBox'#10'cbQuantize'#4'Left'#3#212#0#6'Height'#2#22#3'Top'#2#2#5'Width'#2
+  +'mboBox'#10'cbQuantize'#4'Left'#3#200#0#6'Height'#2#22#3'Top'#2#2#5'Width'#2
   +'C'#8'AutoSize'#8#10'ItemHeight'#2#0#8'OnChange'#7#16'cbQuantizeChange'#5'St'
   +'yle'#7#14'csDropDownList'#8'TabOrder'#2#0#0#0#6'TLabel'#14'lblMidiChannel'#4
-  +'Left'#3#27#1#6'Height'#2#18#3'Top'#2#6#5'Width'#2'L'#7'Caption'#6#11'MidiCh'
+  +'Left'#3#16#1#6'Height'#2#18#3'Top'#2#6#5'Width'#2'L'#7'Caption'#6#11'MidiCh'
   +'annel'#11'ParentColor'#8#0#0#9'TComboBox'#13'cbMidiChannel'#4'Left'#3'`'#1#6
-  +'Height'#2#22#3'Top'#2#2#5'Width'#2'A'#8'AutoSize'#8#10'ItemHeight'#2#0#8'On'
+  +'Height'#2#22#3'Top'#2#5#5'Width'#2'A'#8'AutoSize'#8#10'ItemHeight'#2#0#8'On'
   +'Change'#7#19'cbMidiChannelChange'#5'Style'#7#14'csDropDownList'#8'TabOrder'
-  +#2#1#0#0#7'TButton'#19'btnAutomationSelect'#4'Left'#3#241#1#6'Height'#2#25#3
-  +'Top'#2#0#5'Width'#2'|'#7'Caption'#6#4'None'#7'OnClick'#7#24'btnAutomationSe'
-  +'lectClick'#8'TabOrder'#2#2#0#0#6'TLabel'#13'lblAutomation'#4'Left'#3#173#1#6
-  +'Height'#2#18#3'Top'#2#7#5'Width'#2'I'#7'Caption'#6#10'Automation'#11'Parent'
+  +#2#1#0#0#7'TButton'#19'btnAutomationSelect'#4'Left'#3#248#1#6'Height'#2#25#3
+  +'Top'#2#2#5'Width'#2'|'#7'Caption'#6#4'None'#7'OnClick'#7#24'btnAutomationSe'
+  +'lectClick'#8'TabOrder'#2#2#0#0#6'TLabel'#13'lblAutomation'#4'Left'#3#168#1#6
+  +'Height'#2#18#3'Top'#2#6#5'Width'#2'I'#7'Caption'#6#10'Automation'#11'Parent'
   +'Color'#8#0#0#6'TLabel'#14'lblControllers'#4'Left'#3'x'#2#6'Height'#2#18#3'T'
   +'op'#2#6#5'Width'#2'C'#7'Caption'#6#11'Controllers'#11'ParentColor'#8#0#0#7
-  +'TButton'#19'btnControllerSelect'#4'Left'#3#208#2#6'Height'#2#25#3'Top'#2#0#5
+  +'TButton'#19'btnControllerSelect'#4'Left'#3#192#2#6'Height'#2#25#3'Top'#2#2#5
   +'Width'#2'x'#7'Caption'#6#4'None'#7'OnClick'#7#24'btnControllerSelectClick'#8
   +'TabOrder'#2#3#0#0#0#0#10'TPopupMenu'#19'pupSelectAutomation'#4'left'#3#14#2
   +#3'top'#2'e'#0#9'TMenuItem'#9'MenuItem1'#7'Caption'#6#9'New Item1'#0#0#0#10

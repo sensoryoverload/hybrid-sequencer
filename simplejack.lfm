@@ -7,7 +7,8 @@ object MainApp: TMainApp
   Caption = 'Hybrid 2009'
   ClientHeight = 553
   ClientWidth = 1183
-  Font.Height = 7
+  Font.Height = 12
+  Font.Pitch = fpFixed
   KeyPreview = True
   Menu = MainMenu1
   OnCreate = FormCreate
@@ -141,10 +142,8 @@ object MainApp: TMainApp
       Anchors = []
       BorderStyle = bsNone
       ExpandSignType = tvestPlusMinus
-      Font.Height = 9
       Images = ilGlobalImages
       ParentColor = True
-      ParentFont = False
       ReadOnly = True
       ShowLines = False
       SortType = stText

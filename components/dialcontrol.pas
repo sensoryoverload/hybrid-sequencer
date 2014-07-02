@@ -1033,7 +1033,7 @@ begin
 
   ControlStyle := ControlStyle + [csDisplayDragImage];
 
-  //ParentColor := True;
+  ParentColor := True;
 
   Constraints.MinHeight := 40;
   Constraints.MaxHeight := 40;

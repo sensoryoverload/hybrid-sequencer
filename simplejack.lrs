@@ -3,54 +3,54 @@
 LazarusResources.Add('TMainApp','FORMDATA',[
   'TPF0'#8'TMainApp'#7'MainApp'#4'Left'#2'M'#6'Height'#3'>'#2#3'Top'#3#129#0#5
   +'Width'#3#159#4#14'AllowDropFiles'#9#7'Caption'#6#11'Hybrid 2009'#12'ClientH'
-  +'eight'#3')'#2#11'ClientWidth'#3#159#4#11'Font.Height'#2#7#10'KeyPreview'#9#4
-  +'Menu'#7#9'MainMenu1'#8'OnCreate'#7#10'FormCreate'#9'OnDestroy'#7#11'FormDes'
-  +'troy'#11'OnDropFiles'#7#13'FormDropFiles'#9'OnKeyDown'#7#11'FormKeyDown'#10
-  +'OnKeyPress'#7#12'FormKeyPress'#7'OnKeyUp'#7#9'FormKeyUp'#6'OnShow'#7#8'Form'
-  +'Show'#10'LCLVersion'#6#8'1.0.14.0'#0#6'TPanel'#6'pnlTop'#4'Left'#2#0#6'Heig'
-  +'ht'#3'T'#1#3'Top'#2#0#5'Width'#3#159#4#5'Align'#7#5'alTop'#10'BevelOuter'#7
-  +#6'bvNone'#7'Caption'#6#6'pnlTop'#12'ClientHeight'#3'T'#1#11'ClientWidth'#3
-  +#159#4#8'TabOrder'#2#0#0#17'TCollapseSplitter'#12'LeftSplitter'#4'Left'#3#216
-  +#0#6'Height'#3')'#1#3'Top'#2'+'#5'Width'#2#3#10'OnDblClick'#7#20'LeftSplitte'
-  +'rDblClick'#0#0#6'TPanel'#10'pnlToolbar'#4'Left'#2#0#6'Height'#2'+'#3'Top'#2
-  +#0#5'Width'#3#159#4#5'Align'#7#5'alTop'#12'ClientHeight'#2'+'#11'ClientWidth'
-  +#3#159#4#8'TabOrder'#2#1#0#8'TToolBar'#8'ToolBar1'#4'Left'#2#1#6'Height'#2'('
-  +#3'Top'#2#1#5'Width'#3#135#0#5'Align'#7#6'alNone'#11'EdgeBorders'#11#0#9'Edg'
-  +'eInner'#7#6'esNone'#9'EdgeOuter'#7#6'esNone'#6'Images'#7#14'ilGlobalImages'
-  +#8'TabOrder'#2#0#0#11'TToolButton'#6'tbPlay'#4'Left'#2#24#4'Hint'#6#4'Play'#3
-  +'Top'#2#0#6'Action'#7#6'acPlay'#14'ParentShowHint'#8#8'ShowHint'#9#0#0#11'TT'
-  +'oolButton'#6'tbStop'#4'Left'#2#1#4'Hint'#6#4'Stop'#3'Top'#2#0#6'Action'#7#6
-  +'acStop'#14'ParentShowHint'#8#8'ShowHint'#9#0#0#11'TToolButton'#7'tbPause'#4
-  +'Left'#2'F'#4'Hint'#6#5'Pause'#3'Top'#2#0#6'Action'#7#7'acPause'#14'ParentSh'
-  +'owHint'#8#8'ShowHint'#9#0#0#11'TToolButton'#6'tbUndo'#4'Left'#2'/'#4'Hint'#6
-  +#4'Undo'#3'Top'#2#0#6'Action'#7#6'acUndo'#8'AutoSize'#9#14'ParentShowHint'#8
-  +#8'ShowHint'#9#0#0#11'TToolButton'#6'tbRedo'#4'Left'#2']'#4'Hint'#6#4'Redo'#3
-  +'Top'#2#0#6'Action'#7#6'acRedo'#14'ParentShowHint'#8#8'ShowHint'#9#0#0#0#12
-  +'TDialControl'#12'DialControl1'#4'Left'#3#136#0#6'Height'#2'('#4'Hint'#6#8'B'
-  +'PM Rate'#3'Top'#2#0#5'Width'#2'$'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#7'Caption'
-  +#6#3'BPM'#6'Lowest'#5#0#0#0#0#0#0#0#160#3'@'#7'Highest'#5#0#0#0#0#0#0#0#150#7
-  +'@'#8'OnChange'#7#18'DialControl1Change'#13'OnStartChange'#7#23'DialControl1'
-  +'StartChange'#7'Enabled'#9#12'ValueVisible'#9#21'Constraints.MaxHeight'#2'('
-  +#20'Constraints.MaxWidth'#2'$'#21'Constraints.MinHeight'#2'('#20'Constraints'
-  +'.MinWidth'#2'$'#0#0#17'TParameterControl'#10'pcCPU_Load'#4'Left'#3'('#4#6'H'
-  +'eight'#2#13#3'Top'#2#7#5'Width'#2'd'#5'Value'#5#0#0#0#0#0#0#0#0#0#0#3'Min'#5
-  +#0#0#0#0#0#0#0#0#0#0#3'Max'#5#0#0#0#0#0#0#0#200#5'@'#7'Caption'#6#8'CPU Load'
-  +#9'ShowValue'#9#11'Orientation'#7#11'oHorizontal'#4'Size'#2'd'#7'Anchors'#11
-  +#5'akTop'#7'akRight'#0#0#0#0#9'TTreeView'#9'TreeView1'#4'Left'#2#0#6'Height'
-  +#3')'#1#3'Top'#2'+'#5'Width'#3#216#0#5'Align'#7#6'alLeft'#7'Anchors'#11#0#11
-  +'BorderStyle'#7#6'bsNone'#14'ExpandSignType'#7#14'tvestPlusMinus'#11'Font.He'
-  +'ight'#2#9#6'Images'#7#14'ilGlobalImages'#11'ParentColor'#9#10'ParentFont'#8
-  +#8'ReadOnly'#9#9'ShowLines'#8#8'SortType'#7#6'stText'#8'TabOrder'#2#2#24'OnA'
-  +'dvancedCustomDrawItem'#7#31'TreeView1AdvancedCustomDrawItem'#8'OnChange'#7
-  +#15'TreeView1Change'#11'OnCollapsed'#7#18'TreeView1Collapsed'#10'OnDeletion'
-  +#7#17'TreeView1Deletion'#10'OnDragDrop'#7#17'TreeView1DragDrop'#10'OnDragOve'
-  +'r'#7#17'TreeView1DragOver'#11'OnExpanding'#7#18'TreeView1Expanding'#11'OnMo'
-  +'useDown'#7#18'TreeView1MouseDown'#7'Options'#11#16'tvoHideSelection'#21'tvo'
-  +'KeepCollapsedNodes'#11'tvoReadOnly'#14'tvoShowButtons'#11'tvoShowRoot'#11't'
-  +'voToolTips'#0#16'TreeLinePenStyle'#7#7'psSolid'#0#0#10'TScrollBar'#10'Scrol'
-  +'lBar1'#4'Left'#3#144#4#6'Height'#3')'#1#3'Top'#2'+'#5'Width'#2#15#5'Align'#7
-  +#7'alRight'#4'Kind'#7#10'sbVertical'#8'PageSize'#2#0#8'TabOrder'#2#3#8'OnCha'
-  +'nge'#7#16'ScrollBar1Change'#0#0#0#17'TCollapseSplitter'#14'BottomSplitter'#6
+  +'eight'#3')'#2#11'ClientWidth'#3#159#4#11'Font.Height'#2#12#10'Font.Pitch'#7
+  +#7'fpFixed'#10'KeyPreview'#9#4'Menu'#7#9'MainMenu1'#8'OnCreate'#7#10'FormCre'
+  +'ate'#9'OnDestroy'#7#11'FormDestroy'#11'OnDropFiles'#7#13'FormDropFiles'#9'O'
+  +'nKeyDown'#7#11'FormKeyDown'#10'OnKeyPress'#7#12'FormKeyPress'#7'OnKeyUp'#7#9
+  +'FormKeyUp'#6'OnShow'#7#8'FormShow'#10'LCLVersion'#6#8'1.0.14.0'#0#6'TPanel'
+  +#6'pnlTop'#4'Left'#2#0#6'Height'#3'T'#1#3'Top'#2#0#5'Width'#3#159#4#5'Align'
+  +#7#5'alTop'#10'BevelOuter'#7#6'bvNone'#7'Caption'#6#6'pnlTop'#12'ClientHeigh'
+  +'t'#3'T'#1#11'ClientWidth'#3#159#4#8'TabOrder'#2#0#0#17'TCollapseSplitter'#12
+  +'LeftSplitter'#4'Left'#3#216#0#6'Height'#3')'#1#3'Top'#2'+'#5'Width'#2#3#10
+  +'OnDblClick'#7#20'LeftSplitterDblClick'#0#0#6'TPanel'#10'pnlToolbar'#4'Left'
+  +#2#0#6'Height'#2'+'#3'Top'#2#0#5'Width'#3#159#4#5'Align'#7#5'alTop'#12'Clien'
+  +'tHeight'#2'+'#11'ClientWidth'#3#159#4#8'TabOrder'#2#1#0#8'TToolBar'#8'ToolB'
+  +'ar1'#4'Left'#2#1#6'Height'#2'('#3'Top'#2#1#5'Width'#3#135#0#5'Align'#7#6'al'
+  +'None'#11'EdgeBorders'#11#0#9'EdgeInner'#7#6'esNone'#9'EdgeOuter'#7#6'esNone'
+  +#6'Images'#7#14'ilGlobalImages'#8'TabOrder'#2#0#0#11'TToolButton'#6'tbPlay'#4
+  +'Left'#2#24#4'Hint'#6#4'Play'#3'Top'#2#0#6'Action'#7#6'acPlay'#14'ParentShow'
+  +'Hint'#8#8'ShowHint'#9#0#0#11'TToolButton'#6'tbStop'#4'Left'#2#1#4'Hint'#6#4
+  +'Stop'#3'Top'#2#0#6'Action'#7#6'acStop'#14'ParentShowHint'#8#8'ShowHint'#9#0
+  +#0#11'TToolButton'#7'tbPause'#4'Left'#2'F'#4'Hint'#6#5'Pause'#3'Top'#2#0#6'A'
+  +'ction'#7#7'acPause'#14'ParentShowHint'#8#8'ShowHint'#9#0#0#11'TToolButton'#6
+  +'tbUndo'#4'Left'#2'/'#4'Hint'#6#4'Undo'#3'Top'#2#0#6'Action'#7#6'acUndo'#8'A'
+  +'utoSize'#9#14'ParentShowHint'#8#8'ShowHint'#9#0#0#11'TToolButton'#6'tbRedo'
+  +#4'Left'#2']'#4'Hint'#6#4'Redo'#3'Top'#2#0#6'Action'#7#6'acRedo'#14'ParentSh'
+  +'owHint'#8#8'ShowHint'#9#0#0#0#12'TDialControl'#12'DialControl1'#4'Left'#3
+  +#136#0#6'Height'#2'('#4'Hint'#6#8'BPM Rate'#3'Top'#2#0#5'Width'#2'$'#5'Value'
+  +#5#0#0#0#0#0#0#0#0#0#0#7'Caption'#6#3'BPM'#6'Lowest'#5#0#0#0#0#0#0#0#160#3'@'
+  +#7'Highest'#5#0#0#0#0#0#0#0#150#7'@'#8'OnChange'#7#18'DialControl1Change'#13
+  +'OnStartChange'#7#23'DialControl1StartChange'#7'Enabled'#9#12'ValueVisible'#9
+  +#21'Constraints.MaxHeight'#2'('#20'Constraints.MaxWidth'#2'$'#21'Constraints'
+  +'.MinHeight'#2'('#20'Constraints.MinWidth'#2'$'#0#0#17'TParameterControl'#10
+  +'pcCPU_Load'#4'Left'#3'('#4#6'Height'#2#13#3'Top'#2#7#5'Width'#2'd'#5'Value'
+  +#5#0#0#0#0#0#0#0#0#0#0#3'Min'#5#0#0#0#0#0#0#0#0#0#0#3'Max'#5#0#0#0#0#0#0#0
+  +#200#5'@'#7'Caption'#6#8'CPU Load'#9'ShowValue'#9#11'Orientation'#7#11'oHori'
+  +'zontal'#4'Size'#2'd'#7'Anchors'#11#5'akTop'#7'akRight'#0#0#0#0#9'TTreeView'
+  +#9'TreeView1'#4'Left'#2#0#6'Height'#3')'#1#3'Top'#2'+'#5'Width'#3#216#0#5'Al'
+  +'ign'#7#6'alLeft'#7'Anchors'#11#0#11'BorderStyle'#7#6'bsNone'#14'ExpandSignT'
+  +'ype'#7#14'tvestPlusMinus'#6'Images'#7#14'ilGlobalImages'#11'ParentColor'#9#8
+  +'ReadOnly'#9#9'ShowLines'#8#8'SortType'#7#6'stText'#8'TabOrder'#2#2#24'OnAdv'
+  +'ancedCustomDrawItem'#7#31'TreeView1AdvancedCustomDrawItem'#8'OnChange'#7#15
+  +'TreeView1Change'#11'OnCollapsed'#7#18'TreeView1Collapsed'#10'OnDeletion'#7
+  +#17'TreeView1Deletion'#10'OnDragDrop'#7#17'TreeView1DragDrop'#10'OnDragOver'
+  +#7#17'TreeView1DragOver'#11'OnExpanding'#7#18'TreeView1Expanding'#11'OnMouse'
+  +'Down'#7#18'TreeView1MouseDown'#7'Options'#11#16'tvoHideSelection'#21'tvoKee'
+  +'pCollapsedNodes'#11'tvoReadOnly'#14'tvoShowButtons'#11'tvoShowRoot'#11'tvoT'
+  +'oolTips'#0#16'TreeLinePenStyle'#7#7'psSolid'#0#0#10'TScrollBar'#10'ScrollBa'
+  +'r1'#4'Left'#3#144#4#6'Height'#3')'#1#3'Top'#2'+'#5'Width'#2#15#5'Align'#7#7
+  +'alRight'#4'Kind'#7#10'sbVertical'#8'PageSize'#2#0#8'TabOrder'#2#3#8'OnChang'
+  +'e'#7#16'ScrollBar1Change'#0#0#0#17'TCollapseSplitter'#14'BottomSplitter'#6
   +'Cursor'#7#8'crVSplit'#4'Left'#2#0#6'Height'#2#4#3'Top'#3'T'#1#5'Width'#3#159
   +#4#5'Align'#7#5'alTop'#12'ResizeAnchor'#7#5'akTop'#0#0#6'TPanel'#9'pnlBottom'
   +#4'Left'#2#0#6'Height'#3#209#0#3'Top'#3'X'#1#5'Width'#3#159#4#5'Align'#7#8'a'

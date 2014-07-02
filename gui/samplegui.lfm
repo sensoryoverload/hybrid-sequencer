@@ -20,8 +20,10 @@ object SampleView: TSampleView
     Caption = 'pnlControls'
     ClientHeight = 140
     ClientWidth = 855
+    Color = clBtnFace
     Constraints.MaxHeight = 140
     Constraints.MinHeight = 140
+    ParentColor = False
     TabOrder = 0
     object gbGlobal: TGroupBox
       Left = 702
@@ -32,6 +34,8 @@ object SampleView: TSampleView
       Caption = 'Global'
       ClientHeight = 121
       ClientWidth = 149
+      Color = clForm
+      ParentColor = False
       TabOrder = 0
       object dcGlobalLevel: TDialControl
         Left = 5
@@ -105,6 +109,8 @@ object SampleView: TSampleView
       Caption = 'LFO'
       ClientHeight = 121
       ClientWidth = 107
+      Color = clForm
+      ParentColor = False
       TabOrder = 1
       object dcLFO1Rate: TDialControl
         Left = 2
@@ -117,7 +123,7 @@ object SampleView: TSampleView
         Highest = 1000
         Enabled = True
         ValueVisible = True
-        Color = clBtnFace
+        Color = clForm
         Constraints.MaxHeight = 40
         Constraints.MaxWidth = 36
         Constraints.MinHeight = 40
@@ -134,7 +140,7 @@ object SampleView: TSampleView
         Highest = 4000
         Enabled = True
         ValueVisible = True
-        Color = clBtnFace
+        Color = clForm
         Constraints.MaxHeight = 40
         Constraints.MaxWidth = 36
         Constraints.MinHeight = 40
@@ -151,7 +157,7 @@ object SampleView: TSampleView
         Highest = 4000
         Enabled = True
         ValueVisible = True
-        Color = clBtnFace
+        Color = clForm
         Constraints.MaxHeight = 40
         Constraints.MaxWidth = 36
         Constraints.MinHeight = 40
@@ -218,6 +224,8 @@ object SampleView: TSampleView
       Caption = 'Envelopes'
       ClientHeight = 121
       ClientWidth = 181
+      Color = clForm
+      ParentColor = False
       TabOrder = 2
       object dcFilterEnvelopeAttack: TDialControl
         Left = 34
@@ -463,6 +471,8 @@ object SampleView: TSampleView
       Caption = 'Filter'
       ClientHeight = 121
       ClientWidth = 129
+      Color = clForm
+      ParentColor = False
       TabOrder = 3
       object dcLpCutoff: TDialControl
         Left = -2
@@ -574,7 +584,7 @@ object SampleView: TSampleView
         Top = 43
         Width = 68
         Caption = 'Filter type'
-        Color = clDefault
+        Color = clForm
         Font.Style = [fsBold]
         ParentColor = False
         ParentFont = False
@@ -590,6 +600,8 @@ object SampleView: TSampleView
       Caption = 'Oscillators'
       ClientHeight = 121
       ClientWidth = 269
+      Color = clForm
+      ParentColor = False
       TabOrder = 4
       object dcOsc1Pitch: TDialControl
         Left = 64

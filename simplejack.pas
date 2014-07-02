@@ -397,7 +397,8 @@ var
   midi_out_buf : pointer;
   output_left : ^jack_default_audio_sample_t;
   output_right : ^jack_default_audio_sample_t;
-  input : ^jack_default_audio_sample_t;
+  input_left : ^jack_default_audio_sample_t;
+  input_right : ^jack_default_audio_sample_t;
 	in_event : jack_midi_event_t;
   event_index : jack_nframes_t;
   event_count : jack_nframes_t;
@@ -416,7 +417,8 @@ begin
   midi_out_buf := jack_port_get_buffer(GJackAudio.midi_output_port, nframes);
 	output_left := jack_port_get_buffer(GJackAudio.audio_output_port_left, nframes);
 	output_right := jack_port_get_buffer(GJackAudio.audio_output_port_right, nframes);
-	input := jack_port_get_buffer(GJackAudio.audio_input_port, nframes);
+	input_left := jack_port_get_buffer(GJackAudio.audio_input_port_left, nframes);
+	input_right := jack_port_get_buffer(GJackAudio.audio_input_port_right, nframes);
 
   // Silence when not active
   if not GAudioStruct.Active then
@@ -610,7 +612,7 @@ begin
             if lTrack.Active then
             begin
               { TODO Not switched on
-                lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input[0], nframes);
+                lPlayingPattern.WavePattern.DiskWriterThread.RingbufferWrite(input_left[0], nframes);
               }
               lPlayingPattern.ProcessAutomation;
 

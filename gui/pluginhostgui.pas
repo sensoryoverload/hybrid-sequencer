@@ -178,7 +178,7 @@ begin
         lCreateNodesCommand.PluginType := ptBassline;
         lCreateNodesCommand.PluginName := 'Bassline';
       end
-      else if SameText(lTreeView.Selected.Text, 'bassline') then
+      else if SameText(lTreeView.Selected.Text, 'External') then
       begin
         lCreateNodesCommand.PluginType := ptExternal;
         lCreateNodesCommand.PluginName := 'External';
@@ -367,10 +367,10 @@ var
   lPluginNode: TPluginNode;
   lPluginNodeGUI: TGenericPluginGUI;
   lSampleBankGUI: TBankView;
-  lPluginDistortionGUI: TPluginDistortionGUI;
-  lPluginFreeverbGUI: TPluginFreeverbGUI;
-  lPluginBasslineGUI: TPluginBasslineGUI;
-  lPluginDecimateGUI: TPluginDecimateGUI;
+  lPluginDistortionGUI: TGenericPluginGUI;
+  lPluginFreeverbGUI: TGenericPluginGUI;
+  lPluginBasslineGUI: TGenericPluginGUI;
+  lPluginDecimateGUI: TGenericPluginGUI;
 begin
   DBLog('start TPluginProcessorGUI.CreateNodeGUI ' + AObjectID);
 
@@ -414,7 +414,7 @@ begin
     end;
     ptDistortion:
     begin
-      lPluginDistortionGUI := TPluginDistortionGUI.Create(nil);
+      lPluginDistortionGUI := TGenericPluginGUI.Create(nil);
       lPluginDistortionGUI.PluginProcessorGui := Self;
       lPluginDistortionGUI.ObjectID := AObjectID;
       lPluginDistortionGUI.ObjectOwnerID := Self.ObjectID;
@@ -430,7 +430,7 @@ begin
     end;
     ptReverb:
     begin
-      lPluginFreeverbGUI := TPluginFreeverbGUI.Create(nil);
+      lPluginFreeverbGUI := TGenericPluginGUI.Create(nil);
       lPluginFreeverbGUI.PluginProcessorGui := Self;
       lPluginFreeverbGUI.ObjectID := AObjectID;
       lPluginFreeverbGUI.ObjectOwnerID := Self.ObjectID;
@@ -446,7 +446,7 @@ begin
     end;
     ptBassline:
     begin
-      lPluginBasslineGUI := TPluginBasslineGUI.Create(nil);
+      lPluginBasslineGUI := TGenericPluginGUI.Create(nil);
       lPluginBasslineGUI.PluginProcessorGui := Self;
       lPluginBasslineGUI.ObjectID := AObjectID;
       lPluginBasslineGUI.ObjectOwnerID := Self.ObjectID;
@@ -462,7 +462,7 @@ begin
     end;
     ptDecimate:
     begin
-      lPluginDecimateGUI := TPluginDecimateGUI.Create(nil);
+      lPluginDecimateGUI := TGenericPluginGUI.Create(nil);
       lPluginDecimateGUI.PluginProcessorGui := Self;
       lPluginDecimateGUI.ObjectID := AObjectID;
       lPluginDecimateGUI.ObjectOwnerID := Self.ObjectID;
@@ -476,7 +476,7 @@ begin
       FNodeListGUI.Add(lPluginDecimateGUI);
       TPluginDecimate(lPluginNode).Attach(lPluginDecimateGUI);
     end;
-    ptLADSPA, ptDelay:
+    ptLADSPA, ptDelay, ptExternal:
     begin
       lPluginNodeGUI := TGenericPluginGUI.Create(nil);
       lPluginNodeGUI.PluginProcessorGui := Self;

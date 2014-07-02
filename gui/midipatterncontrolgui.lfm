@@ -32,7 +32,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
       Constraints.MinHeight = 27
       TabOrder = 0
       object lblQuantize: TLabel
-        Left = 161
+        Left = 136
         Height = 18
         Top = 6
         Width = 55
@@ -40,7 +40,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         ParentColor = False
       end
       object cbQuantize: TComboBox
-        Left = 212
+        Left = 200
         Height = 22
         Top = 2
         Width = 67
@@ -51,7 +51,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         TabOrder = 0
       end
       object lblMidiChannel: TLabel
-        Left = 283
+        Left = 272
         Height = 18
         Top = 6
         Width = 76
@@ -61,7 +61,7 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
       object cbMidiChannel: TComboBox
         Left = 352
         Height = 22
-        Top = 2
+        Top = 5
         Width = 65
         AutoSize = False
         ItemHeight = 0
@@ -70,18 +70,18 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         TabOrder = 1
       end
       object btnAutomationSelect: TButton
-        Left = 497
+        Left = 504
         Height = 25
-        Top = 0
+        Top = 2
         Width = 124
         Caption = 'None'
         OnClick = btnAutomationSelectClick
         TabOrder = 2
       end
       object lblAutomation: TLabel
-        Left = 429
+        Left = 424
         Height = 18
-        Top = 7
+        Top = 6
         Width = 73
         Caption = 'Automation'
         ParentColor = False
@@ -95,9 +95,9 @@ object MidiPatternControlGUI: TMidiPatternControlGUI
         ParentColor = False
       end
       object btnControllerSelect: TButton
-        Left = 720
+        Left = 704
         Height = 25
-        Top = 0
+        Top = 2
         Width = 120
         Caption = 'None'
         OnClick = btnControllerSelectClick

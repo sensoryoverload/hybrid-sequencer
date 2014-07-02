@@ -19,7 +19,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
     ClientWidth = 1083
     TabOrder = 0
     object LoopEnabled: TToggleControl
-      Left = 488
+      Left = 472
       Height = 14
       Top = 7
       Width = 48
@@ -27,11 +27,12 @@ object WavePatternControlGUI: TWavePatternControlGUI
       CaptionOn = 'Loop'
       CaptionOff = 'Loop'
       OnChange = LoopEnabledChange
+      Color = clYellow
       Constraints.MaxHeight = 14
       Constraints.MinHeight = 14
     end
     object btnDouble: TButton
-      Left = 544
+      Left = 528
       Height = 25
       Top = 1
       Width = 25
@@ -40,7 +41,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 1
     end
     object btnHalf: TButton
-      Left = 566
+      Left = 560
       Height = 25
       Top = 1
       Width = 25
@@ -49,7 +50,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 2
     end
     object cbPitchAlgo: TComboBox
-      Left = 384
+      Left = 368
       Height = 29
       Top = 1
       Width = 100
@@ -59,7 +60,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 3
     end
     object cbQuantize: TComboBox
-      Left = 593
+      Left = 592
       Height = 29
       Top = 1
       Width = 100
@@ -99,7 +100,7 @@ object WavePatternControlGUI: TWavePatternControlGUI
       OnStartChange = pcPitchStartChange
     end
     object btnAutomationSelect: TButton
-      Left = 766
+      Left = 768
       Height = 25
       Top = 0
       Width = 117
@@ -108,9 +109,9 @@ object WavePatternControlGUI: TWavePatternControlGUI
       TabOrder = 7
     end
     object lblAutomation: TLabel
-      Left = 703
+      Left = 696
       Height = 18
-      Top = 5
+      Top = 3
       Width = 73
       Caption = 'Automation'
       ParentColor = False
