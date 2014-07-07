@@ -531,6 +531,7 @@ begin
         lWavePattern.LoadSample(lWavePattern.WaveFileName);
         lWavePattern.Initialize;
         lWavePattern.OkToPlay := True;
+        lWavePattern.Enabled := True;
         FSelectedPattern := lWavePattern;
 
         lWavePattern.Notify;
@@ -544,6 +545,7 @@ begin
       begin
         lMidiPattern.Initialize;
         lMidiPattern.OkToPlay := True;
+        lMidiPattern.Enabled := True;
         FSelectedPattern := lMidiPattern;
 
         lMidiPattern.Notify;
@@ -816,6 +818,7 @@ var
 
     APattern.BeginUpdate;
     APattern.Initialize;
+    APattern.Enabled := True;
     APattern.EndUpdate;
   end;
 

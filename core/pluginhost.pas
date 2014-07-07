@@ -54,6 +54,7 @@ type
     FFrames: Integer;
     FChannels: Integer;
     FPopulateAutomationDevices: TPopulateAutomationDevices;
+    procedure SetEnabled(AValue: Boolean);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
     procedure SortPlugins;
@@ -73,7 +74,7 @@ type
     property OnPopulateAutomationDevices: TPopulateAutomationDevices
       read FPopulateAutomationDevices write FPopulateAutomationDevices;
   published
-    property Enabled: Boolean read FEnabled write FEnabled;
+    property Enabled: Boolean read FEnabled write SetEnabled;
     property NodeList: TObjectList read FNodeList write FNodeList;
     property Frames: Integer read FFrames write FFrames;
   end;
@@ -255,6 +256,26 @@ end;
 procedure TInsertNodeCommand.DoRollback;
 begin
   //
+end;
+
+procedure TPluginProcessor.SetEnabled(AValue: Boolean);
+var
+  lIndex: Integer;
+begin
+  if FEnabled=AValue then Exit;
+  FEnabled:=AValue;
+
+  for lIndex := 0 to Pred(FNodeList.Count) do
+  begin
+    if FEnabled then
+    begin
+      TPluginNode(FNodeList[lIndex]).Activate;
+    end
+    else
+    begin
+      TPluginNode(FNodeList[lIndex]).Deactivate;
+    end;
+  end;
 end;
 
 procedure TPluginProcessor.DoCreateInstance(var AObject: TObject; AClassName: string);

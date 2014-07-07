@@ -78,6 +78,7 @@ type
     FLoopLength: TLoopMarker;
     FLooped: Boolean;
 
+    procedure SetEnabled(AValue: Boolean);
     procedure SetLoopEnd(AValue: TLoopMarker);
     procedure SetLoopLength(AValue: TLoopMarker);
     procedure SetLoopStart(AValue: TLoopMarker);
@@ -134,7 +135,7 @@ type
     property LoopEnd: TLoopMarker read FLoopEnd write SetLoopEnd;
     property LoopLength: TLoopMarker read FLoopLength write SetLoopLength;
     property Looped: Boolean read FLooped write FLooped;
-    property Enabled: Boolean read FEnabled write FEnabled;
+    property Enabled: Boolean read FEnabled write SetEnabled;
     property SelectedAutomationDeviceId: string read FSelectedAutomationDeviceId write FSelectedAutomationDeviceId;
     property SelectedAutomationParameterId: string read FSelectedAutomationParameterId write FSelectedAutomationParameterId;
   end;
@@ -448,6 +449,14 @@ procedure TPattern.SetLoopEnd(AValue: TLoopMarker);
 begin
   if FLoopEnd = AValue then Exit;
   FLoopEnd := AValue;
+end;
+
+procedure TPattern.SetEnabled(AValue: Boolean);
+begin
+  if FEnabled=AValue then Exit;
+  FEnabled:=AValue;
+
+  FPluginProcessor.Enabled := FEnabled;
 end;
 
 procedure TPattern.SetLoopLength(AValue: TLoopMarker);

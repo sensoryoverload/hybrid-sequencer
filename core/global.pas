@@ -212,7 +212,6 @@ type
   public
     midi_input_port : ^jack_port_t;
     midi_output_port : ^jack_port_t;
-    midi_output_port2 : ^jack_port_t;
     audio_input_port_left : ^jack_port_t;
     audio_input_port_right : ^jack_port_t;
     audio_output_port_left : ^jack_port_t;
@@ -297,7 +296,6 @@ var
 begin
   midi_input_port := jack_port_register (client, 'midi_in', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsInput), 0);
   midi_output_port := jack_port_register (client, 'midi_out', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
-  midi_output_port2 := jack_port_register (client, 'midi_out2', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
   audio_input_port_left := jack_port_register (client, 'audio_in_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
   audio_input_port_right := jack_port_register (client, 'audio_in_right', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
   audio_output_port_left := jack_port_register (client, 'audio_out_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsOutput), 0);

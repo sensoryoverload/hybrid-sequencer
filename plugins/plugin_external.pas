@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, plugin, global_command, global, globalconst, pluginhost, fx,
-  jack, jacktypes, midiport, utils;
+  jack, jacktypes, midiport, utils, math;
 
 type
   { TPluginExternal }
@@ -16,7 +16,6 @@ type
     input_ports: ppchar;
     output_ports: ppchar;
 
-    midi_input_port : ^jack_port_t;
     midi_output_port : ^jack_port_t;
     audio_input_port_left : ^jack_port_t;
     audio_input_port_right : ^jack_port_t;
@@ -45,6 +44,7 @@ end;
 
 destructor TPluginExternal.Destroy;
 begin
+  //
 
   inherited Destroy;
 end;
@@ -138,15 +138,12 @@ end;
 
 procedure TPluginExternal.Instantiate;
 begin
-  (* This would only be needed when other jack clients are also running
-     Connecting to other clients should be done by other utilities
+  //
+end;
 
-  // discover inputs
-  input_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsInput)));
-
-  // discover outputs
-  output_ports := jack_get_ports(client, nil, nil, (Longword(JackPortIsOutput)));
-  *)
+procedure TPluginExternal.Activate;
+begin
+  inherited Activate;
 
   // create input
   audio_input_port_left := jack_port_register(GJackAudio.client, 'external_audio_in_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
@@ -169,31 +166,37 @@ begin
   end;
 end;
 
-procedure TPluginExternal.Activate;
-begin
-  inherited Activate;
-
-  (* This would only be needed when other jack clients are also running
-     Connecting to other clients should be done by other utilities
-
-  // Connect to selected outputs
-  if jack_connect(client, jack_port_name(audio_output_port_left), output_ports[0]) <> 0 then
-  begin
-    DBLog('cannot connect output ports');
-  end;
-
-  // Connect to selected inputs
-  if jack_connect(client, jack_port_name(audio_output_port_left), input_ports[0]) <> 0 then
-  begin
-    DBLog('cannot connect input ports');
-  end;
-  *)
-end;
-
 procedure TPluginExternal.Deactivate;
+var
+  lError: Integer;
 begin
-  // Disconnect from selected outputs
-  // Disconnect from selected inputs
+  lError := jack_port_unregister(GJackAudio.client, audio_input_port_left);
+  if lError <> 0 then
+  begin
+    DBLog('unregister audio_input_port_left failed');
+  end
+  else
+  begin
+    DBLog('unregister audio_input_port_left succes');
+  end;
+  lError := jack_port_unregister(GJackAudio.client, audio_input_port_right);
+  if lError <> 0 then
+  begin
+    DBLog('unregister audio_input_port_right failed');
+  end
+  else
+  begin
+    DBLog('unregister audio_input_port_right succes');
+  end;
+  lError := jack_port_unregister(GJackAudio.client, midi_output_port);
+  if lError <> 0 then
+  begin
+    DBLog('unregister midi_output_port failed');
+  end
+  else
+  begin
+    DBLog('unregister midi_output_port succes');
+  end;
 
   inherited Deactivate;
 end;
