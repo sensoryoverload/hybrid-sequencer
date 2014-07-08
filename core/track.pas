@@ -113,7 +113,7 @@ type
     destructor Destroy; override;
     procedure Initialize; override;
     procedure Finalize; override;
-    procedure Process(ABuffer: PSingle; AFrameCount: Integer);
+    procedure Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrameCount: Integer);
     function ClearSample: Boolean;
     procedure Assign(Source: TPersistent); override;
     property SelectedPattern: TPattern read FSelectedPattern write FSelectedPattern;
@@ -568,7 +568,7 @@ end;
   2. ..
   3. ..
 }
-procedure TTrack.Process(ABuffer: PSingle; AFrameCount: Integer);
+procedure TTrack.Process(AMidiBuffer: TMidiBuffer; ABuffer: PSingle; AFrameCount: Integer);
 var
   i: Integer;
   lLeftOffset: Integer;
@@ -587,7 +587,7 @@ begin
 
   if Active then
   begin
-    FPluginProcessor.Process(nil, ABuffer, ABuffer, AFrameCount);
+    FPluginProcessor.Process(AMidiBuffer, ABuffer, ABuffer, AFrameCount);
 
     lLeftOffset := 0;
     lRightOffset := 1;

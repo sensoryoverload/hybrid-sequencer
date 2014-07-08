@@ -339,6 +339,7 @@ type
     procedure ProcessAdvance; override;
 
     function Latency: Integer; reintroduce;
+    procedure Flush; override;
 
     property Enabled: Boolean read GetEnabled write FEnabled default True;
     property MidiDataCursor: TMidiData read FMidiDataCursor write FMidiDataCursor;
@@ -669,6 +670,11 @@ end;
 function TMidiPattern.Latency: Integer;
 begin
   Result := 0;
+end;
+
+procedure TMidiPattern.Flush;
+begin
+  FMidiBuffer.Reset;
 end;
 
 function TMidiPattern.NoteByObjectID(AObjectID: string): TMidiNote;

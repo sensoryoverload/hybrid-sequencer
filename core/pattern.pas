@@ -111,6 +111,7 @@ type
     procedure ProcessAdvance; virtual;
     procedure ProcessAutomation; virtual;
     function Latency: Integer; virtual;
+    procedure Flush; virtual;
 
     property ChannelCount: Integer read FChannelCount write FChannelCount;
     property PitchInv: Single read FPitchInv write FPitchInv;
@@ -853,6 +854,11 @@ end;
 function TPattern.Latency: Integer;
 begin
   Result := 0;
+end;
+
+procedure TPattern.Flush;
+begin
+  // Do nothing by default
 end;
 
 { TPatternCommand }

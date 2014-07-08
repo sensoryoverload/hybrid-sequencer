@@ -65,6 +65,20 @@ var
 begin
   inherited;
 
+  if not Assigned(AMidiBuffer) then
+  begin
+    lOffsetL := 0;
+    lOffsetR := 1;
+    for i := 0 to Pred(AFrames) do
+    begin
+      AOutputBuffer[lOffsetL] := 0;
+      AOutputBuffer[lOffsetR] := 0;
+      Inc(lOffsetL, 2);
+      Inc(lOffsetR, 2);
+    end;
+    exit;
+  end;
+
   lInputLeft := jack_port_get_buffer(audio_input_port_left, AFrames);
   lInputRight := jack_port_get_buffer(audio_input_port_right, AFrames);
   lMidiOutBuf := jack_port_get_buffer(midi_output_port, AFrames);

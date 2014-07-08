@@ -406,6 +406,7 @@ var
   lTrack: TTrack;
   lPlayingPattern: TPattern;
   buffer_size: Integer;
+  lMidiBuffer: TMidiBuffer;
 begin
   Result := 0;
 
@@ -601,6 +602,8 @@ begin
 
     if Assigned(lTrack) then
     begin
+      lMidiBuffer := nil;
+
       lPlayingPattern := lTrack.PlayingPattern;
       if Assigned(lPlayingPattern) then
       begin
@@ -620,15 +623,14 @@ begin
               begin
                 FillByte(lTrack.OutputBuffer[0], buffer_size, 0);
 
+                lMidiBuffer := TMidiPattern(lPlayingPattern).MidiBuffer;
+
                 // Effects chain
                 lPlayingPattern.PluginProcessor.Process(
-                  TMidiPattern(lPlayingPattern).MidiBuffer,
+                  lMidiBuffer,
                   lTrack.OutputBuffer,
                   lTrack.OutputBuffer,
                   nframes);
-
-                // Flush midi buffer as this the end of the processing line
-                TMidiPattern(lPlayingPattern).MidiBuffer.Reset;
               end
               else
               begin
@@ -653,7 +655,7 @@ begin
       if lTrack.TrackType <> ttMaster then
       begin
         // Track plugin/volume/panning processing
-        lTrack.Process(lTrack.OutputBuffer, nframes);
+        lTrack.Process(lMidiBuffer, lTrack.OutputBuffer, nframes);
 
         // Only mix if there is a target configured
         if Assigned(lTrack.TargetTrack) then
@@ -667,13 +669,19 @@ begin
         CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
 
         // Track plugin/volume/panning processing
-        lTrack.Process(lTrack.OutputBuffer, nframes);
+        lTrack.Process(lMidiBuffer, lTrack.OutputBuffer, nframes);
 
         // Mix into output 1 (left) and 2 (right)
         if lTrack.TrackType = ttMaster then
         begin
           SplitStereoToDualMono(lTrack.OutputBuffer, output_left, output_right, nframes);
         end;
+      end;
+
+      // Flush midi buffer as this the end of the processing line
+      if Assigned(lMidiBuffer) then
+      begin
+        lMidiBuffer.Reset;
       end;
     end;
   end;
