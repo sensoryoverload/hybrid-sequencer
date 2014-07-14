@@ -43,42 +43,6 @@ type
 
   TMidiPatternGUI = class;
 
-  { TMidiNoteGUI }
-
-  TMidiNoteGUI = class(THybridPersistentView)
-  private
-    { GUI }
-    FOriginalNoteLength: Integer;
-    FOriginalNoteLocation: Integer;
-    FOriginalNote: Integer;
-
-    FMidiPattern: TMidiPatternGUI;
-
-    { Audio }
-    FNoteLocation: Integer; // Which time format ? in samples ??
-    FNote: Integer; // 0..127
-    FNoteVelocity: Integer; // 0..127
-    FNoteLength: Integer;
-    FSelected: Boolean;
-    function QuantizeLocation(ALocation: Integer): Integer;
-  public
-    constructor Create(AObjectOwner: string); reintroduce;
-    destructor Destroy; override;
-    procedure Connect; override;
-    procedure Disconnect; override;
-    procedure Update(Subject: THybridPersistentModel); override;
-    property Note: Integer read FNote write FNote;
-    property NoteLocation: Integer read FNoteLocation write FNoteLocation;
-    property OriginalNoteLocation: Integer read FOriginalNoteLocation write FOriginalNoteLocation;
-    property OriginalNote: Integer read FOriginalNote write FOriginalNote;
-    property NoteVelocity: Integer read FNoteVelocity write FNoteVelocity;
-    property NoteLength: Integer read FNoteLength write FNoteLength;
-    property OriginalNoteLength: Integer read FOriginalNoteLength write FOriginalNoteLength;
-    property MidiGridGUI: TMidiPatternGUI read FMidiPattern write FMidiPattern;
-  published
-    property Selected: Boolean read FSelected write FSelected;
-  end;
-
   { TMidiPatternGUI }
 
   TMidiPatternGUI = class(TFrame, IObserver)
@@ -155,7 +119,7 @@ type
     FOptionsView: TMidiGridOptions;
 
     FDragging: Boolean;
-    FDraggedNote: TMidiNoteGUI;
+    FDraggedNote: TMidiNote;
     FDragMode: Short;
 
     FDraggingLoopMarker: Boolean;
@@ -173,7 +137,6 @@ type
     FLoopStart: TLoopMarkerGUI;
     FLoopEnd: TLoopMarkerGUI;
     FLoopLength: TLoopMarkerGUI;
-    FNoteListGUI: TObjectList;
     FQuantizeSetting: Integer;
     FQuantizeValue: Single;
 
@@ -202,12 +165,11 @@ type
 
     function LoopMarkerAt(X: Integer; AMargin: Single): TLoopMarkerGUI;
     function QuantizeLocation(ALocation: Integer): Integer;
-    function NoteUnderCursor(AX, AY: Integer; var ANoteAction: TNoteAction): TMidiNoteGUI;
+    function NoteUnderCursor(AX, AY: Integer; var ANoteAction: TNoteAction): TMidiNote;
     function ConvertTimeToScreen(ATime: Integer): Integer;
     function ConvertScreenToTime(AX: Integer): Integer;
     function ConvertNoteToScreen(ANote: Integer): Integer;
     function ConvertScreenToNote(AY: Integer): Integer;
-    procedure ReleaseNote(Data: PtrInt);
     procedure SetOffset(AValue: Integer);
     procedure SetQuantizeSetting(AValue: Integer);
     procedure SetSelectedAutomationDeviceId(AValue: string);
@@ -233,7 +195,6 @@ type
     property ObjectOwnerID: string read GetObjectOwnerID write SetObjectOwnerID;
     property Offset: Integer read FOffset write SetOffset;
     property NoteOffset: Integer read FNoteOffset write FNoteOffset;
-    property NoteListGUI: TObjectList read FNoteListGUI write FNoteListGUI;
     property ZoomFactorX: Single read FZoomFactorX write SetZoomFactorX;
     property ZoomFactorY: Single read FZoomFactorY write SetZoomFactorY;
     property RealCursorPosition: Integer read FRealCursorPosition write FRealCursorPosition;
@@ -260,9 +221,7 @@ type
     procedure DoOnResize; override;
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
-    procedure CreateNoteGUI(AObjectID: string);
-    procedure DeleteNoteGUI(AObjectID: string);
-    function NoteByObjectID(AObjectID: string): TMidiNoteGUI;
+    function NoteByObjectID(AObjectID: string): TMidiNote;
     procedure NoteListByRect(ARect: TRect);
     function GetModel: THybridPersistentModel;
     procedure SetModel(AModel: THybridPersistentModel);
@@ -272,51 +231,6 @@ implementation
 
 uses
   utils, appcolors, sampler, ComCtrls;
-
-{ TMidiNoteGUI }
-
-constructor TMidiNoteGUI.Create(AObjectOwner: string);
-begin
-  inherited Create(AObjectOwner);
-
-  FOriginalNoteLength:= 0;
-  FSelected:= False;
-end;
-
-destructor TMidiNoteGUI.Destroy;
-begin
-  inherited Destroy;
-end;
-
-procedure TMidiNoteGUI.Connect;
-begin
-  inherited Connect;
-end;
-
-procedure TMidiNoteGUI.Disconnect;
-begin
-  inherited Disconnect;
-end;
-
-procedure TMidiNoteGUI.Update(Subject: THybridPersistentModel);
-var
-  lNote: TMidiNote;
-begin
-  DBLog('start TMidiNoteGUI.Update');
-
-  lNote := TMidiNote(Subject);
-
-  if Assigned(lNote) then
-  begin
-    Selected := lNote.Selected;
-    NoteLocation := lNote.NoteLocation;
-    Note := lNote.Note;
-    NoteVelocity := lNote.NoteVelocity;
-    NoteLength := lNote.NoteLength;
-  end;
-
-  DBLog('end TMidiNoteGUI.Update');
-end;
 
 procedure TMidiPatternGUI.acDeleteNoteExecute(Sender: TObject);
 var
@@ -820,18 +734,6 @@ begin
   end;
 end;
 
-function TMidiNoteGUI.QuantizeLocation(ALocation: Integer): Integer;
-begin
-  if MidiGridGUI.QuantizeSetting = 0 then
-  begin
-    Result := ALocation;
-  end
-  else
-  begin
-    Result := Round(Trunc(ALocation / MidiGridGUI.QuantizeValue) * MidiGridGUI.QuantizeValue);
-  end;
-end;
-
 procedure TMidiPatternGUI.SetZoomFactorX(const AValue: Single);
 var
   lFramesPerScreenWidth: Single;
@@ -894,7 +796,6 @@ begin
   FRealCursorPosition:= FLoopStart.Location;
   FRubberBandMode := False;
 
-  FNoteListGUI := TObjectList.Create(True);
   ZoomFactorX := 1000;
   ZoomFactorY := 1000;
 
@@ -905,9 +806,6 @@ end;
 
 destructor TMidiPatternGUI.Destroy;
 begin
-  if Assigned(FNoteListGUI) then
-    FNoteListGUI.Free;
-
   FBitmap.Free;
 
   FLoopStart.Free;
@@ -933,7 +831,7 @@ var
   lHighlightNote: Integer;
   lHighlightWidth: Integer;
   lIndex: Integer;
-  lNote: TMidiNoteGUI;
+  lNote: TMidiNote;
   lNoteIndex: Integer;
   lMidiNoteModula: Integer;
   lMidiNoteKey: TKey;
@@ -1105,9 +1003,9 @@ begin
 
     lControllerToScreenRatio := FBitmap.Height / 128;
 
-    for lIndex := 0 to Pred(NoteListGUI.Count) do
+    for lIndex := 0 to Pred(FModel.NoteList.Count) do
     begin
-      lNote := TMidiNoteGUI(NoteListGUI[lIndex]);
+      lNote := TMidiNote(FModel.NoteList[lIndex]);
 
       lNoteX1 := ConvertTimeToScreen(lNote.NoteLocation) + FOffset;
       lNoteY1 := ConvertNoteToScreen(lNote.Note) + FNoteOffset;
@@ -1411,12 +1309,6 @@ begin
 
   if FIsDirty and Assigned(FUpdateSubject) then
   begin
-    DiffLists(
-      TMidiPattern(FUpdateSubject).NoteList,
-      FNoteListGUI,
-      @Self.CreateNoteGUI,
-      @Self.DeleteNoteGUI);
-
     FLoopStart.Update(TMidiPattern(FUpdateSubject).LoopStart);
     FLoopEnd.Update(TMidiPattern(FUpdateSubject).LoopEnd);
     FLoopLength.Update(TMidiPattern(FUpdateSubject).LoopLength);
@@ -1438,61 +1330,12 @@ end;
 
 procedure TMidiPatternGUI.Disconnect;
 var
-  lMidiNoteGUI: TMidiNoteGUI;
   lMidiNote: TMidiNote;
   lIndex: Integer;
 begin
-  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
-  begin
-    lMidiNoteGUI := TMidiNoteGUI(FNoteListGUI[lIndex]);
-
-    if Assigned(lMidiNoteGUI) then
-    begin
-      lMidiNote := TMidiNote(GObjectMapper.GetModelObject(lMidiNoteGUI.ObjectID));
-      if Assigned(lMidiNote) then
-      begin
-        lMidiNote.Detach(lMidiNoteGUI);
-        FNoteListGUI.Remove(lMidiNoteGUI);
-      end;
-    end;
-  end;
-
   FModel.LoopStart.Detach(FLoopStart);
   FModel.LoopEnd.Detach(FLoopEnd);
   FModel.LoopLength.Detach(FLoopLength);
-end;
-
-procedure TMidiPatternGUI.CreateNoteGUI(AObjectID: string);
-var
-  lMidiNote: TMidiNote;
-  lMidiNoteGUI: TMidiNoteGUI;
-begin
-  DBLog('start TMidiGridGUI.CreateNoteGUI');
-
-  lMidiNote := TMidiNote(GObjectMapper.GetModelObject(AObjectID));
-  if Assigned(lMidiNote) then
-  begin
-    lMidiNoteGUI := TMidiNoteGUI.Create(Self.ObjectID);
-    lMidiNoteGUI.Note := lMidiNote.Note;
-    lMidiNoteGUI.NoteLocation := lMidiNote.NoteLocation;
-    lMidiNoteGUI.NoteLength := lMidiNote.NoteLength;
-    lMidiNoteGUI.MidiGridGUI := Self;
-
-    FNoteListGUI.Add(lMidiNoteGUI);
-    lMidiNote.Attach(lMidiNoteGUI);
-  end;
-
-  DBLog('end TMidiGridGUI.CreateNoteGUI');
-end;
-
-procedure TMidiPatternGUI.ReleaseNote(Data: PtrInt);
-var
-  lMidiNoteGUI: TMidiNoteGUI;
-begin
-  lMidiNoteGUI := TMidiNoteGUI(Data);
-  NoteListGUI.Remove(lMidiNoteGUI);
-
-  Invalidate;
 end;
 
 procedure TMidiPatternGUI.SetOffset(AValue: Integer);
@@ -1541,41 +1384,17 @@ begin
     FSelectedAutomationParameterId);
 end;
 
-procedure TMidiPatternGUI.DeleteNoteGUI(AObjectID: string);
-var
-  lMidiNoteGUI: TMidiNoteGUI;
-  lIndex: Integer;
-begin
-  DBLog('start TMidiGridGUI.DeleteNoteGUI');
-
-  for lIndex := Pred(FNoteListGUI.Count) downto 0 do
-  begin
-    lMidiNoteGUI := TMidiNoteGUI(FNoteListGUI[lIndex]);
-
-    if Assigned(lMidiNoteGUI) then
-    begin
-      if lMidiNoteGUI.ObjectID = AObjectID then
-      begin
-        Application.QueueAsyncCall(@ReleaseNote, PtrInt(TMidiNoteGUI(lMidiNoteGUI)));
-        break;
-      end;
-    end;
-  end;
-
-  DBLog('end TMidiGridGUI.DeleteNoteGUI');
-end;
-
-function TMidiPatternGUI.NoteByObjectID(AObjectID: string): TMidiNoteGUI;
+function TMidiPatternGUI.NoteByObjectID(AObjectID: string): TMidiNote;
 var
   lIndex: Integer;
 begin
   Result := nil;
 
-  for lIndex := 0 to Pred(NoteListGUI.Count) do
+  for lIndex := 0 to Pred(FModel.NoteList.Count) do
   begin
-    if TMidiNoteGUI(NoteListGUI[lIndex]).ObjectID = AObjectID then
+    if TMidiNote(FModel.NoteList[lIndex]).ObjectID = AObjectID then
     begin
-      Result := TMidiNoteGUI(NoteListGUI[lIndex]);
+      Result := TMidiNote(FModel.NoteList[lIndex]);
     end;
   end;
 end;
@@ -1583,7 +1402,7 @@ end;
 procedure TMidiPatternGUI.NoteListByRect(ARect: TRect);
 var
   lIndex: Integer;
-  lMidiNoteGUI: TMidiNoteGUI;
+  lMidiNote: TMidiNote;
   lLeft: Integer;
   lRight: Integer;
   lTop: Integer;
@@ -1610,22 +1429,22 @@ begin
     lBottom := FRubberBandSelect.Bottom;
   end;
 
-  for lIndex := 0 to Pred(NoteListGUI.Count) do
+  for lIndex := 0 to Pred(FModel.NoteList.Count) do
   begin
-    lMidiNoteGUI := TMidiNoteGUI(NoteListGUI[lIndex]);
+    lMidiNote := TMidiNote(FModel.NoteList[lIndex]);
 
-    if Assigned(lMidiNoteGUI) then
+    if Assigned(lMidiNote) then
     begin
-      if (lLeft < (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation) + FOffset)) and
-         (lRight > (ConvertTimeToScreen(lMidiNoteGUI.NoteLocation + lMidiNoteGUI.NoteLength) + FOffset)) and
-         (lTop < ConvertNoteToScreen(lMidiNoteGUI.Note) + FNoteOffset) and
-         (lBottom > ConvertNoteToScreen(lMidiNoteGUI.Note) + FZoomNoteHeight + FNoteOffset) then
+      if (lLeft < (ConvertTimeToScreen(lMidiNote.NoteLocation) + FOffset)) and
+         (lRight > (ConvertTimeToScreen(lMidiNote.NoteLocation + lMidiNote.NoteLength) + FOffset)) and
+         (lTop < ConvertNoteToScreen(lMidiNote.Note) + FNoteOffset) and
+         (lBottom > ConvertNoteToScreen(lMidiNote.Note) + FZoomNoteHeight + FNoteOffset) then
       begin
-        lMidiNoteGUI.Selected := True;
+        lMidiNote.Selected := True;
       end
       else
       begin
-        lMidiNoteGUI.Selected := False;
+        lMidiNote.Selected := False;
       end;
     end;
   end;
@@ -1681,10 +1500,10 @@ begin
   Result := Round((Height - AY) * lScale);
 end;
 
-function TMidiPatternGUI.NoteUnderCursor(AX, AY: Integer; var ANoteAction: TNoteAction): TMidiNoteGUI;
+function TMidiPatternGUI.NoteUnderCursor(AX, AY: Integer; var ANoteAction: TNoteAction): TMidiNote;
 var
   lIndex: Integer;
-  lNote: TMidiNoteGUI;
+  lNote: TMidiNote;
   lLeft: Integer;
   lTop: Integer;
   lRight: Integer;
@@ -1693,9 +1512,9 @@ begin
   Result := nil;
   FNoteAction := naNone;
 
-  for lIndex := 0 to Pred(FNoteListGUI.Count) do
+  for lIndex := 0 to Pred(FModel.NoteList.Count) do
   begin
-    lNote := TMidiNoteGUI(FNoteListGUI[lIndex]);
+    lNote := TMidiNote(FModel.NoteList[lIndex]);
 
     lLeft := ConvertTimeToScreen(lNote.NoteLocation) + FOffset;
     lTop :=  ConvertNoteToScreen(lNote.Note) + FNoteOffset;
@@ -1790,7 +1609,7 @@ procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
 var
   lSelectObjectListCommand: TSelectObjectListCommand;
   lIndex: Integer;
-  lMidiNoteGUI: TMidiNoteGUI;
+  lMidiNote: TMidiNote;
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
@@ -1815,12 +1634,12 @@ begin
         try
           lSelectObjectListCommand.AddMode := (ssShift in GSettings.Modifier);
           lSelectObjectListCommand.Persist := False;
-          for lIndex := 0 to Pred(FNoteListGUI.Count) do
+          for lIndex := 0 to Pred(FModel.NoteList.Count) do
           begin
-            lMidiNoteGUI := TMidiNoteGUI(FNoteListGUI[lIndex]);
-            if lMidiNoteGUI.Selected then
+            lMidiNote := TMidiNote(FModel.NoteList[lIndex]);
+            if lMidiNote.Selected then
             begin
-              lSelectObjectListCommand.ObjectIdList.Add(lMidiNoteGUI.ObjectID);
+              lSelectObjectListCommand.ObjectIdList.Add(lMidiNote.ObjectID);
             end;
           end;
 
@@ -2066,6 +1885,5 @@ end;
 
 initialization
   RegisterClass(TMidiPatternGUI);
-  RegisterClass(TMidiNoteGUI);
 end.
 
