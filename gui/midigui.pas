@@ -1329,9 +1329,6 @@ begin
 end;
 
 procedure TMidiPatternGUI.Disconnect;
-var
-  lMidiNote: TMidiNote;
-  lIndex: Integer;
 begin
   FModel.LoopStart.Detach(FLoopStart);
   FModel.LoopEnd.Detach(FLoopEnd);
@@ -1444,7 +1441,10 @@ begin
       end
       else
       begin
-        lMidiNote.Selected := False;
+        if not (ssShift in GSettings.Modifier) then
+        begin
+          lMidiNote.Selected := False;
+        end;
       end;
     end;
   end;
@@ -1606,10 +1606,6 @@ end;
 
 procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
-var
-  lSelectObjectListCommand: TSelectObjectListCommand;
-  lIndex: Integer;
-  lMidiNote: TMidiNote;
 begin
   inherited MouseUp(Button, Shift, X, Y);
 
@@ -1627,27 +1623,6 @@ begin
     begin
       if FZoomingMode then
         FZoomingMode := False;
-
-      if FRubberBandMode then
-      begin
-        lSelectObjectListCommand := TSelectObjectListCommand.Create(Self.ObjectID);
-        try
-          lSelectObjectListCommand.AddMode := (ssShift in GSettings.Modifier);
-          lSelectObjectListCommand.Persist := False;
-          for lIndex := 0 to Pred(FModel.NoteList.Count) do
-          begin
-            lMidiNote := TMidiNote(FModel.NoteList[lIndex]);
-            if lMidiNote.Selected then
-            begin
-              lSelectObjectListCommand.ObjectIdList.Add(lMidiNote.ObjectID);
-            end;
-          end;
-
-          GCommandQueue.PushCommand(lSelectObjectListCommand);
-        except
-          lSelectObjectListCommand.Free;
-        end;
-      end;
 
       if FRubberBandMode then
         FRubberBandMode := False;

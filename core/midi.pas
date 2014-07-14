@@ -125,18 +125,6 @@ type
     property AddMode: Boolean read FAddMode write FAddMode;
   end;
 
-  { TSelectObjectListCommand }
-
-  TSelectObjectListCommand = class(TMidiCommand)
-  private
-    FAddMode: Boolean;
-  protected
-    procedure DoExecute; override;
-    procedure DoRollback; override;
-  published
-    property AddMode: Boolean read FAddMode write FAddMode;
-  end;
-
   { TQuantizeSettingCommand }
 
   TQuantizeSettingCommand = class(TMidiCommand)
@@ -1333,66 +1321,6 @@ begin
     end;
   end;
   FMidiPattern.MidiDataList.IndexList;
-end;
-
-{ TSelectObjectListCommand }
-
-procedure TSelectObjectListCommand.DoExecute;
-var
-  lIndex: Integer;
-  lMidinote: TMidiNote;
-  lMementoNote: TMidiNote;
-begin
-  if not FAddMode then
-  begin
-    for lIndex := 0 to Pred(FMidiPattern.NoteList.Count) do
-    begin
-      lMidinote := TMidiNote(FMidiPattern.NoteList[lIndex]);
-
-      if Assigned(lMidinote) then
-      begin
-        lMementoNote := TMidiNote.Create(ObjectOwner, NOT_MAPPED);
-        lMementoNote.ObjectID := lMidinote.ObjectID;
-        lMementoNote.Selected := lMidinote.Selected;
-        Memento.Add(lMementoNote);
-
-        lMidinote.Selected := False;
-        lMidinote.Notify;
-      end;
-    end;
-  end;
-
-  for lIndex := 0 to Pred(ObjectIdList.Count) do
-  begin
-    lMidinote := TMidiNote(GObjectMapper.GetModelObject(ObjectIdList[lIndex]));
-
-    if Assigned(lMidinote) then
-    begin
-      DBLog(Format('Selecting Location %d Note %d', [lMidinote.NoteLocation, lMidinote.Note]));
-
-      lMidinote.Selected := True;
-      lMidinote.Notify;
-    end;
-  end;
-end;
-
-procedure TSelectObjectListCommand.DoRollback;
-var
-  lMementoNote: TMidiNote;
-  lMidinote: TMidiNote;
-  lIndex: Integer;
-begin
-  for lIndex := 0 to Pred(Memento.Count) do
-  begin
-    lMementoNote := TMidiNote(Memento[lIndex]);
-    lMidinote := FMidiPattern.NoteByObjectID(lMementoNote.ObjectID);
-
-    if Assigned(lMidinote) then
-    begin
-      lMidinote.Selected := lMementoNote.Selected;
-      lMidinote.Notify;
-    end;
-  end;
 end;
 
 { TChangeMidiChannelCommand }
