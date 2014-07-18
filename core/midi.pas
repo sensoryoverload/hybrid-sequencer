@@ -553,10 +553,10 @@ begin
 end;
 
 procedure TMidiPattern.Initialize;
-var
+{var
   lIndex: Integer;
   lIndex2: Integer;
-  lAutomationDataList: TAutomationDataList;
+  lAutomationDataList: TAutomationDataList; }
 begin
   BeginUpdate;
 
@@ -1455,8 +1455,8 @@ procedure TControllerEditCommand.DoExecute;
 var
   lControllerDataEvent: TControllerEvent;
   lMidiNote: TMidiNote;
-  lIndex: Integer;
-  lDiff: Integer;
+  {lIndex: Integer;
+  lDiff: Integer;   }
 begin
   DBLog('start TControllerEditCommand.DoExecute ' + FControllerDataId);
 

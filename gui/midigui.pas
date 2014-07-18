@@ -570,7 +570,7 @@ var
           DBLog(Format('lEventY %d Height %d', [lEventY, Height]));
           if (Abs(X - lEventX) < 6) and (Abs(Y - lEventY) < 6) then
           begin
-            DBLog('Found controller event');
+            DBLog(Format('Found controller event: value %d location %d', [lMidiData.DataValue1, lMidiData.Location]));
             Result := lMidiData;
             break;
           end;
@@ -1694,16 +1694,17 @@ begin
   begin
     NoteUnderCursor(X, Y, lNoteAction);
   end;
-  case lNoteAction of
-    naAdjustRight: Screen.Cursor := crSizeWE;
-    naAdjustLeft: Screen.Cursor := crSizeWE;
-    naDrag: Screen.Cursor := crSize;
-  else
-    Screen.Cursor := crArrow;
-  end;
 
   if FEditMode = emPatternEdit then
   begin
+    case lNoteAction of
+      naAdjustRight: Screen.Cursor := crSizeWE;
+      naAdjustLeft: Screen.Cursor := crSizeWE;
+      naDrag: Screen.Cursor := crSize;
+    else
+      Screen.Cursor := crArrow;
+    end;
+
     if Assigned(FDraggedLoopMarker) then
     begin
       HandleLoopMarkerMouseMove(Shift, X, Y);
@@ -1730,14 +1731,22 @@ begin
 
       if FZoomingMode then
       begin
-        FOffset:= FOldLocationOffset + (X - FOldX);
-
-        if FOffset > 0 then
+        if ssCtrl in Shift then
         begin
-          FOffset := 0;
-        end;
+          ZoomFactorY := FOldZoomFactorY + (X - FOldX) * 2;
+          FNoteOffset := FOldNoteOffset + Round((X - FOldX) / 5) + (Y - FOldY);
+        end
+        else
+        begin
+          FOffset := FOldLocationOffset + (X - FOldX);
 
-        FNoteOffset := FOldNoteOffset + (Y - FOldY);
+          if FOffset > 0 then
+          begin
+            FOffset := 0;
+          end;
+
+          FNoteOffset := FOldNoteOffset + (Y - FOldY);
+        end;
       end;
 
       FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
