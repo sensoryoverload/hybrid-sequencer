@@ -207,6 +207,7 @@ type
   TJackAudio = class
   private
     FProcess: JackProcessCallback;
+    FPordId: Integer;
     function GetFrames: Integer;
     function GetSamplerate: Integer;
   public
@@ -221,6 +222,7 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure Initialize;
+    function GeneratePordId: Integer;
 
     property Process: JackProcessCallback read FProcess write FProcess;
     property Samplerate: Integer read GetSamplerate;
@@ -270,6 +272,7 @@ begin
     Halt(1);
   end;
 
+  FPordId := 0;
 end;
 
 destructor TJackAudio.Destroy;
@@ -358,6 +361,13 @@ begin
   end;
 
   jack_transport_start(client);
+end;
+
+function TJackAudio.GeneratePordId: Integer;
+begin
+  Inc(FPordId);
+
+  Result := FPordId;
 end;
 
 { TAutomationData }

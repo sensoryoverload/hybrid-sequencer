@@ -15,6 +15,9 @@ type
   private
     input_ports: ppchar;
     output_ports: ppchar;
+    external_midi_out_portname: PChar;
+    external_audio_in_left_portname: PChar;
+    external_audio_in_right_portname: PChar;
 
     midi_output_port : ^jack_port_t;
     audio_input_port_left : ^jack_port_t;
@@ -36,10 +39,17 @@ implementation
 { TPluginExternal }
 
 constructor TPluginExternal.Create(AObjectOwnerID: string; AMapped: Boolean);
+var
+  lPortId: Integer;
 begin
   inherited;
 
   PluginName := 'External';
+
+  lPortId := GJackAudio.GeneratePordId;
+  external_midi_out_portname := PChar(Format('external_midi_out_%d', [lPortId]));
+  external_audio_in_left_portname := PChar(Format('external_audio_in_%d_L', [lPortId]));
+  external_audio_in_right_portname := PChar(Format('external_audio_in_%d_R', [lPortId]));
 end;
 
 destructor TPluginExternal.Destroy;
@@ -160,20 +170,20 @@ begin
   inherited Activate;
 
   // create input
-  audio_input_port_left := jack_port_register(GJackAudio.client, 'external_audio_in_left', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
+  audio_input_port_left := jack_port_register(GJackAudio.client, external_audio_in_left_portname, JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
   if not Assigned(audio_input_port_left) then
   begin
     DBLog('audio_input_port_left not registered');
   end;
 
-  audio_input_port_right := jack_port_register(GJackAudio.client, 'external_audio_in_right', JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
+  audio_input_port_right := jack_port_register(GJackAudio.client, external_audio_in_right_portname, JACK_DEFAULT_AUDIO_TYPE, Longword(JackPortIsInput), 0);
   if not Assigned(audio_input_port_right) then
   begin
     DBLog('audio_input_port_right not registered');
   end;
 
   // create output
-  midi_output_port := jack_port_register(GJackAudio.client, 'external_midi_out', JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
+  midi_output_port := jack_port_register(GJackAudio.client, external_midi_out_portname, JACK_DEFAULT_MIDI_TYPE, Longword(JackPortIsOutput), 0);
   if not Assigned(midi_output_port) then
   begin
     DBLog('midi_output_port not registered');

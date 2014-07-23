@@ -92,6 +92,18 @@ type
   end;
 
   {
+    TMasterPatternFlyWeight
+
+      Renders scene
+  }
+
+  TMasterPatternFlyWeight = class(TPatternFlyWeight)
+  public
+    class procedure Render(X, Y: integer; ABGRABitmap: TBGRABitmap;
+      APattern: TPattern); override;
+  end;
+
+  {
     TTrackView
 
       Gets synchronized by the model
@@ -118,6 +130,7 @@ type
     FMidiPatternFlyWeight: TMidiPatternFlyWeight;
     FWavePatternFlyWeight: TWavePatternFlyWeight;
     FNullPatternFlyWeight: TNullPatternFlyWeight;
+    FMasterPatternFlyWeight: TMasterPatternFlyWeight;
 
     FSessionGrid: TSessionGrid;
     procedure ActiveSwitchChange(Sender: TObject);
@@ -296,6 +309,58 @@ implementation
 uses
   ComCtrls, Utils, audiostructure, midi, wave, global_command,
   global, FileUtil, renamepatterngui;
+
+{ TMasterPatternFlyWeight }
+
+class procedure TMasterPatternFlyWeight.Render(X, Y: integer;
+  ABGRABitmap: TBGRABitmap; APattern: TPattern);
+var
+  pts: array of TPointF;
+  lTrimmedPatternName: string;
+  lColor: TColor;
+begin
+  // Give selected pattern a white color
+  if Assigned(APattern) and (APattern = GSettings.SelectedObject) then
+  begin
+    lColor := clWhite;
+  end
+  else
+  begin
+    lColor := clYellow;
+  end;
+  ABGRABitmap.Rectangle(
+    X,
+    Y,
+    X + TRACK_WIDTH,
+    Y + PATTERN_HEIGHT,
+    ColorToBGRA(clBlue), ColorToBGRA(lColor), dmset);
+
+  ABGRABitmap.DrawVertLine(X + 15, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clBlue));
+
+  if APattern.Playing then
+  begin
+    ABGRABitmap.FillRectAntialias(
+      X + 4,
+      Y + 4,
+      X + 11,
+      Y + 11, ColorToBGRA(clBlue));
+  end
+  else
+  begin
+    SetLength(pts, 3);
+    pts[0] := PointF(X + 12, Y + 7);
+    pts[1] := PointF(X + 4, Y + 3);
+    pts[2] := PointF(X + 4, Y + 11);
+    ABGRABitmap.FillPolyAntialias(pts, ColorToBGRA(clBlue));
+  end;
+
+  lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
+  ABGRABitmap.FontHeight := 12;
+  ABGRABitmap.TextOut(
+    X + 24, Y + 1,
+    Format('%s', [lTrimmedPatternName]),
+    ColorToBGRA(clBtnText));
+end;
 
 { TPatternDrawCursor }
 
@@ -632,7 +697,21 @@ begin
 
     if lFound then
     begin
-      FMidiPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+      if TTrack(Model).TrackType <> ttMaster then
+      begin
+        if lPattern is TMidiPattern then
+        begin
+          FMidiPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+        end
+        else if lPattern is TWavePattern then
+        begin
+          FWavePatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+        end;
+      end
+      else
+      begin
+        FMasterPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+      end;
     end
     else
     begin
@@ -866,6 +945,7 @@ begin
   FMidiPatternFlyWeight := TMidiPatternFlyWeight.Create;
   FWavePatternFlyWeight := TWavePatternFlyWeight.Create;
   FNullPatternFlyWeight := TNullPatternFlyWeight.Create;
+  FMasterPatternFlyWeight := TMasterPatternFlyWeight.Create;
 
   DBLog('end TTrackView.Create');
 end;
@@ -875,6 +955,7 @@ begin
   FMidiPatternFlyWeight.Free;
   FWavePatternFlyWeight.Free;
   FNullPatternFlyWeight.Free;
+  FMasterPatternFlyWeight.Free;
 
   FTrackControls.Free;
 
@@ -1267,7 +1348,14 @@ begin
   begin
     lCreateMidiPattern := TCreatePatternCommand.Create(lTrack.ObjectID);
     try
-      lCreateMidiPattern.PatternName := '- midi -';
+      if lTrack.TrackType = ttMaster then
+      begin
+        lCreateMidiPattern.PatternName := Format('Scene %d', [Succ(lTrack.PatternList.Count)]);
+      end
+      else
+      begin
+        lCreateMidiPattern.PatternName := Format('MIDI %d', [Succ(lTrack.PatternList.Count)]);
+      end;
       lCreateMidiPattern.Position := (FMouseY div PATTERN_HEIGHT) + ScrollIndex;
       lCreateMidiPattern.SourceType := fsMidi;
 
@@ -1877,7 +1965,14 @@ begin
   begin
     lCreateMidiPattern := TCreatePatternCommand.Create(lTrack.ObjectID);
     try
-      lCreateMidiPattern.PatternName := '- midi -';
+      if lTrack.TrackType = ttMaster then
+      begin
+        lCreateMidiPattern.PatternName := Format('Scene %d', [Succ(lTrack.PatternList.Count)]);
+      end
+      else
+      begin
+        lCreateMidiPattern.PatternName := Format('MIDI %d', [Succ(lTrack.PatternList.Count)]);
+      end;
       lCreateMidiPattern.Position := (FMouseY div PATTERN_HEIGHT) + ScrollIndex;
       lCreateMidiPattern.SourceType := fsMidi;
 
