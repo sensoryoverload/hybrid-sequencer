@@ -595,6 +595,9 @@ begin
     end;
   end;
 
+  // Calculate ALC (Automatic Latency Compensation)
+  GAudioStruct.AutomaticLatencyCompensation;
+
   // Plugin section, runs freely from sequencer timeline
   for j := Pred(GAudioStruct.TrackOrder.Count) downto 0 do
   begin

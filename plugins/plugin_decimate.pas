@@ -5,7 +5,7 @@ unit plugin_decimate;
 interface
 
 uses
-  Classes, SysUtils, plugin, global_command;
+  Classes, SysUtils, plugin, global_command, globalconst;
 
 type
   TDecimateParameter = (dpSampleRate, dpBits);
@@ -21,6 +21,7 @@ type
     y,
     FRateSkip,
     FSampleRate: single;
+    FLatency: Integer;
     procedure SetBits(AValue: Integer);
     procedure SetBitsFloat(AValue: single);
     procedure SetSampleRate(AValue: Single);
@@ -30,6 +31,8 @@ type
     procedure Init(ABits: integer; ASampleRate: single);
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer;
+    procedure SetLatency(AValue: Integer);
     procedure Instantiate; override;
   published
     property Bits: Integer read FBits write SetBits;
@@ -141,6 +144,16 @@ begin
   begin
     AOutputBuffer[i] := Decimate(AInputBuffer[i]);
   end;
+end;
+
+function TPluginDecimate.GetLatency: Integer;
+begin
+  Result := FLatency;
+end;
+
+procedure TPluginDecimate.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
 end;
 
 procedure TPluginDecimate.Instantiate;

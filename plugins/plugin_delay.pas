@@ -26,6 +26,8 @@ type
     FDry: single;
     FWet: single;
 
+    FLatency: Integer;
+
     FSampleL1: Single;
     FSampleR1: Single;
     FSampleL2: Single;
@@ -49,6 +51,8 @@ type
       AOutputBuffer: PSingle; AFrames: Integer); override;
     procedure Instantiate; override;
     procedure UpdateParameters; override;
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
   published
     property Delay1: single read FDelay1 write SetDelay1;
     property Feedback1: single read FFeedback1 write FFeedback1;
@@ -206,6 +210,16 @@ begin
   Feedback2 := InputControls[4].Value;
   Panning2 := Round(InputControls[5].Value);
   DryWet := InputControls[6].Value;
+end;
+
+function TPluginDelay.GetLatency: Integer;
+begin
+  Result := FLatency;
+end;
+
+procedure TPluginDelay.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
 end;
 
 procedure TPluginDelay.SetPanning(APanValue: Single; var ALeftPan: single; var ARightPan: single);

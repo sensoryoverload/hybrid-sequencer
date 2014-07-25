@@ -82,6 +82,7 @@ type
 
     // Set the delay in
     property Delay: Integer read FDelay write SetDelay;
+    property DelaySamples: Integer read FDelaySamples write FDelaySamples;
     property SampleRate: Integer read FSampleRate write SetSampleRate;
     property ChannelCount: Integer read FChannelCount write SetChannelCount;
   end;

@@ -99,6 +99,7 @@ type
     FRelease_coef: Single;
     FRelease_in_ms: Single;
 
+    function GetLatency: Word;
     function GetVolume: single;
     procedure SetPan(AValue: single);
     procedure SetLeftLevel(const AValue: Single);
@@ -128,6 +129,7 @@ type
     property LeftPanGain: Single read FLeftPanGain;
     property RightPanGain: Single read FRightPanGain;
     property TargetTrack: TTrack read FTargetTrack write FTargetTrack;
+    property Latency: Word read GetLatency write FLatency default 0;
   published
     property PatternList: TPatternList read FPatternList write FPatternList;
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
@@ -137,7 +139,6 @@ type
     property Volume: single read GetVolume write SetVolume;
     property Pan: single read FPan write SetPan;
     property VolumeMultiplier: Single read FVolumeMultiplier write FVolumeMultiplier;
-    property Latency: Word read FLatency write FLatency default 0;
     property Playing: Boolean read GetPlaying write SetPlaying;
     property Active: Boolean read FActive write FActive;
     property TargetTrackId: string read FTargetTrackId write FTargetTrackId;
@@ -578,11 +579,7 @@ var
 begin
   if Assigned(FPlayingPattern) then
   begin
-    if FPlayingPattern.Latency <> 0 then
-    begin
-      FLatencyCompensationBuffer.Delay := FPlayingPattern.Latency;
-      FLatencyCompensationBuffer.Process(ABuffer, AFrameCount);
-    end;
+    FLatencyCompensationBuffer.Process(ABuffer, AFrameCount);
   end;
 
   if Active then
@@ -729,6 +726,18 @@ end;
 function TTrack.GetVolume: single;
 begin
   Result := FVolume;
+end;
+
+function TTrack.GetLatency: Word;
+begin
+  if Assigned(FPlayingPattern) then
+  begin
+    Result := FPlayingPattern.Latency;
+  end
+  else
+  begin
+    Result := 0;
+  end;
 end;
 
 procedure TTrack.SetPan(AValue: single);

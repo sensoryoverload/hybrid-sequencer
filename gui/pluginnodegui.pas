@@ -40,8 +40,11 @@ type
     FSequenceNr: Integer;
     FDragging: Boolean;
     FOldDragPosition: Integer;
+    FLatencyParameter: TParameterControl;
     procedure DoParameterChange(Sender: TObject);
     procedure DoParameterStartChange(Sender: TObject);
+    procedure DoLatencyChange(Sender: TObject);
+    procedure DoLatencyStartChange(Sender: TObject);
     procedure DoMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure DoMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure DoMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -114,6 +117,8 @@ begin
         lPlugin.InputControls[lParameterIndex].Value;
     end;
 
+    FLatencyParameter.Value := lPlugin.GetLatency;
+
     Width := (lPlugin.InputControlCount div 8) * 100 + 100;
     SequenceNr := lPlugin.SequenceNr;
     pnlTop.Caption := lPlugin.PluginName;
@@ -148,6 +153,21 @@ begin
 
     FParameterList.AddObject(IntToStr(lParameterIndex), lPluginParameter);
   end;
+
+  FLatencyParameter := TParameterControl.Create(Self);
+  FLatencyParameter.Tag := Integer(lPlugin.InputControlCount);
+  FLatencyParameter.OnChange := @DoLatencyChange;
+  FLatencyParameter.OnStartChange := @DoLatencyStartChange;
+  FLatencyParameter.Caption := 'Latency';
+  FLatencyParameter.Min := 0;
+  FLatencyParameter.Max := Round(GSettings.SampleRate / 4);
+  FLatencyParameter.Left := 10 + (Succ(lPlugin.InputControlCount) div 10) * 90;
+  FLatencyParameter.Width := 80;
+  FLatencyParameter.Height := 12;
+  FLatencyParameter.Top := (Succ(lPlugin.InputControlCount) mod 8) * 20 + 30;
+  FLatencyParameter.Parent := pnlControls;
+
+  FParameterList.AddObject(IntToStr(Succ(lPlugin.InputControlCount)), FLatencyParameter);
 end;
 
 procedure TGenericPluginGUI.Disconnect;
@@ -170,6 +190,40 @@ begin
     GCommandQueue.PushCommand(lGenericCommand);
   except
     lGenericCommand.Free;
+  end;
+end;
+
+procedure TGenericPluginGUI.DoLatencyChange(Sender: TObject);
+var
+  lPluginLatencyCommand: TPluginLatencyCommand;
+begin
+  lPluginLatencyCommand := TPluginLatencyCommand.Create(Self.ObjectID);
+  try
+    lPluginLatencyCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lPluginLatencyCommand.ObjectID := Self.ObjectID;
+    lPluginLatencyCommand.Latency := Round(TParameterControl(Sender).Value);
+    lPluginLatencyCommand.Persist := False;
+
+    GCommandQueue.PushCommand(lPluginLatencyCommand);
+  except
+    lPluginLatencyCommand.Free;
+  end;
+end;
+
+procedure TGenericPluginGUI.DoLatencyStartChange(Sender: TObject);
+var
+  lPluginLatencyCommand: TPluginLatencyCommand;
+begin
+  lPluginLatencyCommand := TPluginLatencyCommand.Create(Self.ObjectID);
+  try
+    lPluginLatencyCommand.MidiLearn := TParameterControl(Sender).MidiMappingMode;
+    lPluginLatencyCommand.ObjectID := Self.ObjectID;
+    lPluginLatencyCommand.Latency := Round(TParameterControl(Sender).Value);
+    lPluginLatencyCommand.Persist := True;
+
+    GCommandQueue.PushCommand(lPluginLatencyCommand);
+  except
+    lPluginLatencyCommand.Free;
   end;
 end;
 

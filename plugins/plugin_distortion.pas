@@ -5,7 +5,7 @@ unit plugin_distortion;
 interface
 
 uses
-  Classes, SysUtils, plugin, global_command, global, pluginhost;
+  Classes, SysUtils, plugin, global_command, global, pluginhost, globalconst;
 
 type
   TDistortionParameter = (dpDrive);
@@ -15,10 +15,13 @@ type
   TPluginDistortion = class(TPluginNode)
   private
     FDrive: single;
+    FLatency: Integer;
   public
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
   published
     property Drive: single read FDrive write FDrive;
   end;
@@ -103,6 +106,18 @@ begin
   begin
     AOutputBuffer[lIndex] := tanh2(AInputBuffer[lIndex] * FDrive);
   end;
+end;
+
+function TPluginDistortion.GetLatency: Integer;
+begin
+  Result := FLatency;
+  writeln(Format('getting TPluginDistortion: %d', [FLatency]));
+end;
+
+procedure TPluginDistortion.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
+  writeln(Format('setting TPluginDistortion: %d', [FLatency]));
 end;
 
 

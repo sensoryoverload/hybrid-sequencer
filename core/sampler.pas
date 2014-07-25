@@ -391,6 +391,8 @@ type
     procedure Finalize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer;
+    procedure SetLatency(AValue: Integer);
     procedure Assign(Source:TPersistent); override;
     property Selected: Boolean read FSelected write FSelected;
     property SelectedSample: TSample read FSelectedSample write FSelectedSample;
@@ -1858,6 +1860,16 @@ begin
     TSampleEngine(FSampleEngineList[lSampleEngineIndex]).Process(AMidiBuffer,
       AInputBuffer, AOutputBuffer, AFrames);
   end;
+end;
+
+function TSampleBank.GetLatency: Integer;
+begin
+  Result := 0;
+end;
+
+procedure TSampleBank.SetLatency(AValue: Integer);
+begin
+
 end;
 
 procedure TSampleBank.Assign(Source: TPersistent);

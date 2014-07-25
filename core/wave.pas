@@ -273,7 +273,7 @@ type
     function WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
     function StartOfWarpLocation(ALocation: single): Integer;
     procedure Flush;
-    function Latency: Integer; reintroduce;
+    function Latency: Integer; override;
 
     procedure ProcessInit; override;
     procedure Process(ABuffer: PSingle; AFrameIndex: Integer; AFrameCount: Integer); override;
@@ -1200,11 +1200,13 @@ begin
     begin
       Result := TimeStretch.latency;
     end;
-    paPitched:
+    paPitched, paSliceStretch:
     begin
       Result := 0;
     end;
   end;
+
+  Result := Result + PluginProcessor.Latency;
 end;
 
 function TWavePattern.NextSlice: TMarker;

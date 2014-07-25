@@ -657,7 +657,7 @@ end;
 
 function TMidiPattern.Latency: Integer;
 begin
-  Result := 0;
+  Result := PluginProcessor.Latency;
 end;
 
 procedure TMidiPattern.Flush;

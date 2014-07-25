@@ -13,6 +13,7 @@ type
 
   TPluginExternal = class(TPluginNode)
   private
+    FLatency: Integer;
     input_ports: ppchar;
     output_ports: ppchar;
     external_midi_out_portname: PChar;
@@ -27,6 +28,8 @@ type
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
     procedure Instantiate; override;
     procedure Activate; override;
     procedure Deactivate; override;
@@ -158,6 +161,16 @@ begin
     Inc(lOffsetL, 2);
     Inc(lOffsetR, 2);
   end;
+end;
+
+function TPluginExternal.GetLatency: Integer;
+begin
+  Result := FLatency;
+end;
+
+procedure TPluginExternal.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
 end;
 
 procedure TPluginExternal.Instantiate;

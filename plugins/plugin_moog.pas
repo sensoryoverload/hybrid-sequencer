@@ -5,13 +5,14 @@ unit plugin_moog;
 interface
 
 uses
-  Classes, SysUtils, plugin, global_command, fx;
+  Classes, SysUtils, plugin, global_command, fx, globalconst;
 
 type
   { TMoogFilter }
 
   TMoogFilter = class(TPluginNode)
   private
+    FLatency: Integer;
     fA   : array[1..5] of single;
     fOld : single;
     fQ   : single;
@@ -28,6 +29,8 @@ type
     function Process(const I : Single):Single;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
   published
     property Frequency: single read fF write SetFrequency;
     property SampleRate: single read fFS write SetFS;
@@ -135,6 +138,16 @@ begin
   begin
     AOutputBuffer[i] := Process(AInputBuffer[i]);
   end;
+end;
+
+function TMoogFilter.GetLatency: Integer;
+begin
+  Result := FLatency;
+end;
+
+procedure TMoogFilter.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
 end;
 
 

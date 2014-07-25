@@ -5,7 +5,7 @@ unit plugin_freeverb;
 interface
 
 uses
-  Classes, SysUtils, plugin, global_command, freereverb, global;
+  Classes, SysUtils, plugin, global_command, freereverb, global, globalconst;
 
 type
   TReverbParameter = (rpRoomSize, rpDamp, rpWidth, rpDry, rpWet, rpMode, rpPreDelay);
@@ -15,6 +15,7 @@ type
   TPluginFreeverb = class(TPluginNode)
   private
     FReverb: TReverb;
+    FLatency: Integer;
     function GetDamp: Single;
     function GetDry: Single;
     function GetMode: Single;
@@ -34,6 +35,8 @@ type
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
         AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer;
+    procedure SetLatency(AValue: Integer);
   published
     property RoomSize: Single read GetRoomSize write SetRoomSize;
     property Damp: Single read GetDamp write SetDamp;
@@ -170,6 +173,16 @@ procedure TPluginFreeverb.Process(AMidiBuffer: TMidiBuffer;
   AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer);
 begin
   FReverb.process(AInputBuffer, AOutputBuffer, AFrames);
+end;
+
+function TPluginFreeverb.GetLatency: Integer;
+begin
+  Result := FLatency;
+end;
+
+procedure TPluginFreeverb.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
 end;
 
 function TPluginFreeverb.GetDamp: Single;

@@ -124,6 +124,8 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); virtual;
     procedure Clear;
     procedure UpdateParameters; virtual;
+    function GetLatency: Integer; virtual; abstract;
+    procedure SetLatency(AValue: Integer); virtual; abstract;
 
     function CreatePortParameter(
       ACaption: string;
@@ -161,6 +163,7 @@ type
     property OutputChannels: TArrayOfPSingle read FOutputChannels write FOutputChannels;
 
     property Active: Boolean read FActive write FActive;
+    property Latency: Integer read GetLatency;
   published
     property PluginName: string read FPluginName write FPluginName;
     property PluginType: TPluginType read FPluginType write FPluginType;
@@ -176,6 +179,8 @@ type
     constructor Create(AObjectOwnerID: string; AMapped: Boolean = True); reintroduce;
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
   end;
 
   { TPluginLADSPA }
@@ -193,6 +198,8 @@ type
     procedure Clean; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer);
   published
     property UniqueID: Integer read FUniqueID write FUniqueID;
   end;
@@ -214,17 +221,35 @@ type
     property Parameter: Integer read FParameter write FParameter;
   end;
 
+  { TPluginLatencyCommand }
+
+  TPluginLatencyCommand = class(TCommand)
+  private
+    FOldLatency: Integer;
+    FLatency: Integer;
+    FModel: TPluginNode;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    procedure Initialize; override;
+    property Latency: Integer read FLatency write FLatency;
+  end;
+
   { TMementoNode }
 
   TMementoNode = class(TPluginNode)
   public
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer;
+    procedure SetLatency(AValue: Integer);
   end;
 
   { TInternalNode }
 
   TInternalNode = class(TPluginNode)
+    function GetLatency: Integer; override;
   end;
 
   { TExternalNode }
@@ -235,6 +260,8 @@ type
     constructor Create(AObjectOwnerID: string); reintroduce;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer;
+    procedure SetLatency(AValue: Integer);
   end;
 
   { TAutomationDataList }
@@ -304,6 +331,43 @@ implementation
 
 uses
   pluginhost;
+
+{ TPluginLatencyCommand }
+
+procedure TPluginLatencyCommand.DoExecute;
+begin
+  if Assigned(FModel) then
+  begin
+    DBLog(Format('TPluginLatencyCommand: Plugin "%s", Seting latency "%d"', [FModel.PluginName, FLatency]));
+
+    FOldLatency := FModel.GetLatency;
+    FModel.SetLatency(FLatency);
+
+    FModel.Notify;
+  end;
+end;
+
+procedure TPluginLatencyCommand.DoRollback;
+begin
+  if Assigned(FModel) then
+  begin
+    FModel.SetLatency(FOldLatency);
+
+    FModel.Notify;
+  end;
+end;
+
+procedure TPluginLatencyCommand.Initialize;
+begin
+  FModel := TPluginNode(GObjectMapper.GetModelObject(ObjectID));
+end;
+
+{ TInternalNode }
+
+function TInternalNode.GetLatency: Integer;
+begin
+  Result := 0;
+end;
 
 { TGenericCommand }
 
@@ -601,6 +665,16 @@ begin
   end;
 end;
 
+function TPluginLADSPA.GetLatency: Integer;
+begin
+  Result := 0;
+end;
+
+procedure TPluginLADSPA.SetLatency(AValue: Integer);
+begin
+
+end;
+
 { TPluginNode }
 
 constructor TPluginNode.Create(AObjectOwnerID: string; AMapped: Boolean = True);
@@ -775,12 +849,32 @@ begin
   //
 end;
 
+function TExternalNode.GetLatency: Integer;
+begin
+  Result := 0;
+end;
+
+procedure TExternalNode.SetLatency(AValue: Integer);
+begin
+
+end;
+
 { TMementoNode }
 
 procedure TMementoNode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
   AOutputBuffer: PSingle; AFrames: Integer);
 begin
   // Virtual base method
+end;
+
+function TMementoNode.GetLatency: Integer;
+begin
+  Result := 0;
+end;
+
+procedure TMementoNode.SetLatency(AValue: Integer);
+begin
+
 end;
 
 { TScriptNode }
@@ -801,6 +895,16 @@ procedure TScriptNode.Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
   AOutputBuffer: PSingle; AFrames: Integer);
 begin
   //
+end;
+
+function TScriptNode.GetLatency: Integer;
+begin
+  Result := 0;
+end;
+
+procedure TScriptNode.SetLatency(AValue: Integer);
+begin
+
 end;
 
 { TAutomationDataList }

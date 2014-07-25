@@ -24,6 +24,7 @@ type
     FLength: Single;
     FPlaying: Boolean;
     FOverDrive: Single;
+    FLatency: Integer;
     function GetPitch: Single;
     function GetCutoff: Single;
     function GetReso: Single;
@@ -45,6 +46,8 @@ type
     destructor Destroy; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
     procedure Instantiate; override;
     procedure UpdateParameters; override;
   published
@@ -253,6 +256,16 @@ begin
     Inc(lOffsetL, 2);
     Inc(lOffsetR, 2);
   end;
+end;
+
+function TPluginBassline.GetLatency: Integer;
+begin
+  Result := FLatency;
+end;
+
+procedure TPluginBassline.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
 end;
 
 procedure TPluginBassline.Instantiate;

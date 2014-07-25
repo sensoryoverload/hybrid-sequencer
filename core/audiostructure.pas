@@ -170,6 +170,7 @@ type
     function IndexOfTrack(AObjectID: string): Integer;
     procedure BuildTrackTree;
     procedure OrderedTrackPriority;
+    procedure AutomaticLatencyCompensation;
 
     property TrackOrder: TStringList read FTrackOrder write FTrackOrder;
     property Active: Boolean read FActive write FActive;
@@ -452,6 +453,42 @@ begin
   end;
 
   FTrackOrder.Sort;
+end;
+
+procedure TAudioStructure.AutomaticLatencyCompensation;
+var
+  lIndex: Integer;
+  lTrack: TTrack;
+  lMaxLatency: Integer;
+  lLogLatency: string;
+begin
+  // Determine maximum latency
+  lMaxLatency := 0;
+  for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+  begin
+    lTrack := TTrack(GAudioStruct.Tracks[lIndex]);
+    if Assigned(lTrack) then
+    begin
+      if lTrack.Latency > lMaxLatency then
+      begin
+        lMaxLatency := lTrack.Latency;
+      end;
+    end;
+  end;
+
+  // Delay each track to synchronize to track with more latency
+  lLogLatency := '';
+  for lIndex := 0 to Pred(GAudioStruct.Tracks.Count) do
+  begin
+    lTrack := TTrack(GAudioStruct.Tracks[lIndex]);
+    if Assigned(lTrack) then
+    begin
+      lTrack.LatencyCompensationBuffer.DelaySamples := lMaxLatency - lTrack.Latency;
+      lLogLatency := lLogLatency + Format('Track %d: %d, ', [lIndex, lTrack.LatencyCompensationBuffer.DelaySamples]);
+    end;
+  end;
+
+  writeln(lLogLatency);
 end;
 
 { TModelThread }

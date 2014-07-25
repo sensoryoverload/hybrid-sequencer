@@ -54,6 +54,7 @@ type
     FFrames: Integer;
     FChannels: Integer;
     FPopulateAutomationDevices: TPopulateAutomationDevices;
+    function GetLatency: Integer;
     procedure SetEnabled(AValue: Boolean);
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
@@ -73,6 +74,7 @@ type
     property Buffer: PSingle read FBuffer write FBuffer;
     property OnPopulateAutomationDevices: TPopulateAutomationDevices
       read FPopulateAutomationDevices write FPopulateAutomationDevices;
+    property Latency: Integer read GetLatency;
   published
     property Enabled: Boolean read FEnabled write SetEnabled;
     property NodeList: TObjectList read FNodeList write FNodeList;
@@ -274,6 +276,21 @@ begin
     else
     begin
       TPluginNode(FNodeList[lIndex]).Deactivate;
+    end;
+  end;
+end;
+
+function TPluginProcessor.GetLatency: Integer;
+var
+  lIndex: Integer;
+begin
+  Result := 0;
+
+  for lIndex := 0 to Pred(FNodeList.Count) do
+  begin
+    if TPluginNode(FNodeList[lIndex]).Active then
+    begin
+      Result += TPluginNode(FNodeList[lIndex]).GetLatency;
     end;
   end;
 end;
