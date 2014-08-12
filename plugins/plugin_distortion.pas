@@ -111,13 +111,11 @@ end;
 function TPluginDistortion.GetLatency: Integer;
 begin
   Result := FLatency;
-  writeln(Format('getting TPluginDistortion: %d', [FLatency]));
 end;
 
 procedure TPluginDistortion.SetLatency(AValue: Integer);
 begin
   FLatency := AValue;
-  writeln(Format('setting TPluginDistortion: %d', [FLatency]));
 end;
 
 

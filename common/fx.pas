@@ -55,6 +55,29 @@ type
     property DelaySmp: Integer read FDelaySmp write SetDelaySmp;
   end;
 
+  { TAudioRingBufferStream }
+
+  TAudioRingBufferStream = class
+  private
+    FAudioRingBufferL: TAudioRingBuffer;
+    FAudioRingBufferR: TAudioRingBuffer;
+    FBufferL: PSingle;
+    FBufferR: PSingle;
+    FChannelCount: Integer;
+    FDelayMs: Integer;
+    FDelaySmp: Integer;
+    procedure SetChannelCount(AValue: Integer);
+    procedure SetDelayMs(AValue: Integer);
+    procedure SetDelaySmp(AValue: Integer);
+  public
+    constructor Create(ASampleRate: Integer);
+    destructor Destroy; override;
+    function Process(ABuffer: PSingle; ANumCount: Integer): Single; inline;
+    property DelayMs: Integer read FDelayMs write SetDelayMs;
+    property DelaySmp: Integer read FDelaySmp write SetDelaySmp;
+    property ChannelCount: Integer read FChannelCount write SetChannelCount;
+  end;
+
 
   { TFIFOAudioBuffer }
 
@@ -141,17 +164,114 @@ const
   c12     : Single = 12;
   c24     : Single = 24;
 
+{ TAudioRingBufferStream }
+
+procedure TAudioRingBufferStream.SetDelayMs(AValue: Integer);
+begin
+  if FDelayMs = AValue then exit;
+  FDelayMs := AValue;
+
+  FAudioRingBufferL.DelayMs := FDelayMs;
+  FAudioRingBufferR.DelayMs := FDelayMs;
+end;
+
+procedure TAudioRingBufferStream.SetChannelCount(AValue: Integer);
+begin
+  if FChannelCount=AValue then Exit;
+  FChannelCount:=AValue;
+end;
+
+procedure TAudioRingBufferStream.SetDelaySmp(AValue: Integer);
+begin
+  if FDelaySmp = AValue then exit;
+  FDelaySmp := AValue;
+
+  FAudioRingBufferL.DelaySmp := FDelaySmp;
+  FAudioRingBufferR.DelaySmp := FDelaySmp;
+end;
+
+constructor TAudioRingBufferStream.Create(ASampleRate: Integer);
+begin
+  FAudioRingBufferL := TAudioRingBuffer.Create(ASampleRate);
+  FAudioRingBufferR := TAudioRingBuffer.Create(ASampleRate);
+  FBufferL := Getmem(ASampleRate * 2 * SizeOf(Single));
+  FBufferR := Getmem(ASampleRate * 2 * SizeOf(Single));
+end;
+
+destructor TAudioRingBufferStream.Destroy;
+begin
+  FAudioRingBufferL.Free;
+  FAudioRingBufferR.Free;
+  Freemem(FBufferL);
+  Freemem(FBufferR);
+
+  inherited Destroy;
+end;
+
+function TAudioRingBufferStream.Process(ABuffer: PSingle; ANumCount: Integer): Single;
+var
+  lIndex: Integer;
+  lOffsetL: Integer;
+  lOffsetR: Integer;
+begin
+  if FChannelCount = 0 then
+  begin
+    raise Exception.Create(Self.ClassName + ': ChannelCount = 0');
+  end
+  else if FChannelCount = 1 then
+  begin
+    WriteLn('1 channels');
+    for lIndex := 0 to Pred(ANumCount) do
+    begin
+      ABuffer[lIndex] := FAudioRingBufferL.Process(ABuffer[lIndex]);
+    end;
+  end
+  else if FChannelCount = 2 then
+  begin
+    WriteLn(Format('2 channels, %d', [FAudioRingBufferL.DelaySmp]));
+    lOffsetL := 0;
+    lOffsetR := 1;
+    for lIndex := 0 to Pred(ANumCount) do
+    begin
+      FBufferL[lIndex] := FAudioRingBufferL.Process(ABuffer[lOffsetL]);
+      FBufferR[lIndex] := FAudioRingBufferR.Process(ABuffer[lOffsetR]);
+      Inc(lOffsetL, 2);
+      Inc(lOffsetR, 2);
+    end;
+    lOffsetL := 0;
+    lOffsetR := 1;
+    for lIndex := 0 to Pred(ANumCount) do
+    begin
+      ABuffer[lOffsetL] := FBufferL[lIndex];
+      ABuffer[lOffsetR] := FBufferR[lIndex];
+      Inc(lOffsetL, 2);
+      Inc(lOffsetR, 2);
+    end;
+  end;
+end;
+
 { TAudioRingBuffer }
 
 procedure TAudioRingBuffer.SetDelayMs(AValue: Integer);
 begin
+  if FDelayMs = AValue then exit;
+
   FDelayMs := AValue;
 
-  SetDelaySmp(Round(FSampleRate / (1000 / FDelayMs)));
+  if FDelayMs > 0 then
+  begin
+    SetDelaySmp(Round(FSampleRate / (1000 / FDelayMs)));
+  end
+  else
+  begin
+    SetDelaySmp(Round(FSampleRate / (1000 / 0.001)));
+  end;
 end;
 
 procedure TAudioRingBuffer.SetDelaySmp(AValue: Integer);
 begin
+  if FDelaySmp = AValue then exit;
+
   FDelaySmp := AValue;
 
   FWritePtr := FDelaySmp;
@@ -162,7 +282,7 @@ constructor TAudioRingBuffer.Create(ASampleRate: Integer);
 begin
   FSampleRate := ASampleRate;
   FBufferSize := ASampleRate;
-  FBuffer := Getmem(FBufferSize * SizeOf(Single));
+  FBuffer := Getmem(FBufferSize * 2 * SizeOf(Single));
 
   // Zero delay by default
   FWritePtr := 0;

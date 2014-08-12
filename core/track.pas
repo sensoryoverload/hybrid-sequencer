@@ -59,14 +59,11 @@ type
     // data first, after that groups, after that returns and finally master
     // One exception is when recording, track which is recording is processed last
     //FProcessPriority: Integer;
-
-    FLatencyCompensationBuffer: TFIFOAudioBuffer;
-
     FSelected: Boolean;
     FPitched: Boolean;
     FLeftLevel: Single;
     FRightLevel: Single;
-    FLatency: Word;
+    FLatency: Integer;
     FBooleanStack: Integer;
     FActive: Boolean;
     FRecording: Boolean;
@@ -92,6 +89,9 @@ type
     FInputBuffer: pjack_default_audio_sample_t;
     FPreFadeBuffer: pjack_default_audio_sample_t;
 
+    FALCBufferL: TAudioRingBuffer;
+    FALCBufferR: TAudioRingBuffer;
+
     FTargetTrack: TTrack;
 
     FAttack_coef: Single;
@@ -99,8 +99,10 @@ type
     FRelease_coef: Single;
     FRelease_in_ms: Single;
 
-    function GetLatency: Word;
+    function GetDelaySmp: Integer;
+    function GetLatency: Integer;
     function GetVolume: single;
+    procedure SetDelaySmp(AValue: Integer);
     procedure SetPan(AValue: single);
     procedure SetLeftLevel(const AValue: Single);
     procedure SetRightLevel(const AValue: Single);
@@ -125,11 +127,11 @@ type
     property PreFadeBuffer: pjack_default_audio_sample_t read FPreFadeBuffer write FPreFadeBuffer;
     property BooleanStack: Integer read FBooleanStack;
     property Recording: Boolean read FRecording write FRecording;
-    property LatencyCompensationBuffer: TFIFOAudioBuffer read FLatencyCompensationBuffer write FLatencyCompensationBuffer;
     property LeftPanGain: Single read FLeftPanGain;
     property RightPanGain: Single read FRightPanGain;
     property TargetTrack: TTrack read FTargetTrack write FTargetTrack;
-    property Latency: Word read GetLatency write FLatency default 0;
+    property Latency: Integer read GetLatency write FLatency;
+    property DelaySmp: Integer read GetDelaySmp write SetDelaySmp;
   published
     property PatternList: TPatternList read FPatternList write FPatternList;
     property PluginProcessor: TPluginProcessor read FPluginProcessor write FPluginProcessor;
@@ -577,11 +579,6 @@ var
   TempLeftLevel: Single;
   TempRightLevel: Single;
 begin
-  if Assigned(FPlayingPattern) then
-  begin
-    FLatencyCompensationBuffer.Process(ABuffer, AFrameCount);
-  end;
-
   if Active then
   begin
     FPluginProcessor.Process(AMidiBuffer, ABuffer, ABuffer, AFrameCount);
@@ -591,6 +588,9 @@ begin
 
     for i := 0 to Pred(AFrameCount) do
     begin
+      ABuffer[lLeftOffset] := FALCBufferL.Process(ABuffer[lLeftOffset]);
+      ABuffer[lRightOffset] := FALCBufferR.Process(ABuffer[lRightOffset]);
+
       ABuffer[lLeftOffset] := ABuffer[lLeftOffset] * FVolumeMultiplier * FLeftPanGain;
       ABuffer[lRightOffset] := ABuffer[lRightOffset] * FVolumeMultiplier * FRightPanGain;
 
@@ -641,9 +641,10 @@ begin
   Getmem(FOutputBuffer, Round(GSettings.SampleRate * STEREO * SizeOf(Single)));
   Getmem(FInputBuffer, Round(GSettings.SampleRate * STEREO * SizeOf(Single)));
 
-  FLatencyCompensationBuffer := TFIFOAudioBuffer.Create;
-  FLatencyCompensationBuffer.Delay := 150;
-  FLatencyCompensationBuffer.SampleRate := Round(GSettings.SampleRate);
+  FALCBufferL := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
+  FALCBufferL.DelaySmp := 0;
+  FALCBufferR := TAudioRingBuffer.Create(Round(GSettings.SampleRate));
+  FALCBufferR.Delaysmp := 0;
 
   FPatternList := TPatternList.create(True);
   ObjectOwnerID := AObjectOwner;
@@ -689,8 +690,10 @@ begin
   if Assigned(FPatternList) then
     FPatternList.Free;
 
-  if Assigned(FLatencyCompensationBuffer) then
-    FLatencyCompensationBuffer.Free;
+  if Assigned(FALCBufferL) then
+    FALCBufferL.Free;
+  if Assigned(FALCBufferR) then
+    FALCBufferR.Free;
 
   inherited Destroy;
 
@@ -728,16 +731,31 @@ begin
   Result := FVolume;
 end;
 
-function TTrack.GetLatency: Word;
+procedure TTrack.SetDelaySmp(AValue: Integer);
+begin
+  FALCBufferL.DelaySmp := AValue;
+  FALCBufferR.DelaySmp := AValue;
+end;
+
+function TTrack.GetLatency: Integer;
 begin
   if Assigned(FPlayingPattern) then
   begin
+    writeln('TTrack.GetLatency');
     Result := FPlayingPattern.Latency;
   end
   else
   begin
+    writeln('TTrack.GetLatency, FPlayingPattern not assigned!');
     Result := 0;
   end;
+
+  Result += FPluginProcessor.Latency;
+end;
+
+function TTrack.GetDelaySmp: Integer;
+begin
+  Result := FALCBufferL.DelaySmp;
 end;
 
 procedure TTrack.SetPan(AValue: single);

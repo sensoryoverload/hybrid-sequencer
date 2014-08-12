@@ -483,8 +483,8 @@ begin
     lTrack := TTrack(GAudioStruct.Tracks[lIndex]);
     if Assigned(lTrack) then
     begin
-      lTrack.LatencyCompensationBuffer.DelaySamples := lMaxLatency - lTrack.Latency;
-      lLogLatency := lLogLatency + Format('Track %d: %d, ', [lIndex, lTrack.LatencyCompensationBuffer.DelaySamples]);
+      lTrack.DelaySmp := lMaxLatency - lTrack.Latency;
+      lLogLatency := lLogLatency + Format('Track %d: %d, ', [lIndex, lTrack.DelaySmp]);
     end;
   end;
 
