@@ -1903,7 +1903,7 @@ begin
     // Toggle
     lMarker.Locked := not lMarker.Locked;
 
-    DBLog('Setting locked = %s', BoolToStr(lMarker.Locked, True));
+    DBLog(Format('Setting locked = %s', [BoolToStr(lMarker.Locked, True)]));
 
     // Update observers
     lMarker.EndUpdate;
@@ -1929,7 +1929,7 @@ begin
     // Retrieve state
     lMarker.Locked := FLocked;
 
-    DBLog('Setting locked = %s', BoolToStr(lMarker.Locked, True));
+    DBLog(Format('Setting locked = %s', [BoolToStr(lMarker.Locked, True)]));
 
     // Update observers
     lMarker.EndUpdate;

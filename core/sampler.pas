@@ -2033,7 +2033,7 @@ begin
 
     FSampleBank.RefreshEngine;
 
-    DBLog('Add sample to samplelist: %s', lSample.ObjectID);
+    DBLog(Format('Add sample to samplelist: %s', [lSample.ObjectID]));
 
     DBLog(Format('lBank.SampleList.Count %d', [FSampleBank.SampleList.Count]));
 

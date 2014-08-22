@@ -770,7 +770,7 @@ begin
     if Assigned(lCommand) then
     begin
       try
-        DBLog('Rolling back command class: %s', lCommand.ClassName);
+        DBLog(Format('Rolling back command class: %s', [lCommand.ClassName]));
         lCommand.Initialize;
         lCommand.Rollback;
         lCommand.Finalize;

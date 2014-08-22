@@ -122,11 +122,8 @@ function TransparencyColor(BGColor, FRColor : TColor; TranspValue : byte): TColo
 
 function NoDivByZero(AValue: Single): Single;
 
-procedure DBLog(AMessage: string);
-procedure DBLog(AValue: integer);
-procedure DBLog(AFormat: string; AMessage: string);
-procedure DBLog(AFormat: string; AMessage: single);
-procedure DBLog(AFormat: string; AMessage: integer);
+procedure DBLog(AMessage: string; ALogLevel: Integer = 0);
+procedure DBLog(AValue: integer; ALogLevel: Integer = 0);
 
 procedure StartTimer;
 procedure StopTimer(ALogMessage: string);
@@ -401,7 +398,7 @@ begin
     Result:= AValue;
 end;
 
-procedure DBLog(AMessage: string); inline;
+procedure DBLog(AMessage: string; ALogLevel: Integer = 0); inline;
 begin
   if FLogging then
   begin
@@ -409,28 +406,10 @@ begin
   end;
 end;
 
-procedure DBLog(AValue: integer); inline;
+procedure DBLog(AValue: integer; ALogLevel: Integer = 0); inline;
 begin
   if FLogging then
     DBLog(IntToStr(AValue));
-end;
-
-procedure DBLog(AFormat: string; AMessage: string);
-begin
-  if FLogging then
-    DBLog(Format(AFormat, [AMessage]));
-end;
-
-procedure DBLog(AFormat: string; AMessage: single); inline;
-begin
-  if FLogging then
-    DBLog(Format(AFormat, [AMessage]));
-end;
-
-procedure DBLog(AFormat: string; AMessage: integer); inline;
-begin
-  if FLogging then
-    DBLog(Format(AFormat, [AMessage]));
 end;
 
 function CreateObjectID: string;

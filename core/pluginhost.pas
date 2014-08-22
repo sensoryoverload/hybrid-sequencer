@@ -293,7 +293,6 @@ begin
       Result += TPluginNode(FNodeList[lIndex]).GetLatency;
     end;
   end;
-  writeln(format('latency from tpluginprocessor %d', [Result]))
 end;
 
 procedure TPluginProcessor.DoCreateInstance(var AObject: TObject; AClassName: string);

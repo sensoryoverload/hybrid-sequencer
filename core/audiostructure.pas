@@ -488,7 +488,7 @@ begin
     end;
   end;
 
-  writeln(lLogLatency);
+  DBLog(lLogLatency, 1);
 end;
 
 { TModelThread }

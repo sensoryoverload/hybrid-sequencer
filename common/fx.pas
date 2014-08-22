@@ -220,7 +220,6 @@ begin
   end
   else if FChannelCount = 1 then
   begin
-    WriteLn('1 channels');
     for lIndex := 0 to Pred(ANumCount) do
     begin
       ABuffer[lIndex] := FAudioRingBufferL.Process(ABuffer[lIndex]);
@@ -228,7 +227,6 @@ begin
   end
   else if FChannelCount = 2 then
   begin
-    WriteLn(Format('2 channels, %d', [FAudioRingBufferL.DelaySmp]));
     lOffsetL := 0;
     lOffsetR := 1;
     for lIndex := 0 to Pred(ANumCount) do

@@ -587,7 +587,7 @@ begin
         // Create observer by callback
         if not lViewFound then
         begin
-          DBLog('start ACreateProc %s', THybridPersistent(AModelList[lModelIndex]).ObjectID);
+          DBLog(Format('start ACreateProc %s', [THybridPersistent(AModelList[lModelIndex]).ObjectID]));
           ACreateProc(THybridPersistent(AModelList[lModelIndex]).ObjectID);
           DBLog('end ACreateProc');
         end;
@@ -612,7 +612,7 @@ begin
         // Delete observer by callback
         if not lModelFound then
         begin
-          DBLog('start ADestroyProc %s', lViewIntf.ObjectID);
+          DBLog(Format('start ADestroyProc %s', [lViewIntf.ObjectID]));
           ADestroyProc(lViewIntf.ObjectID);
           DBLog('end ADestroyProc');
         end;
@@ -1337,7 +1337,7 @@ begin
           begin
             if (lVisitObjectList[j] is THybridPersistentModel) then
             begin
-              DBLog('Initialize: %s', THybridPersistentModel(lVisitObjectList[j]).ClassName);
+              DBLog(Format('Initialize: %s', [THybridPersistentModel(lVisitObjectList[j]).ClassName]));
               THybridPersistentModel(lVisitObjectList[j]).Notify;
               THybridPersistentModel(lVisitObjectList[j]).RecurseNotify(pVisitor);
             end;
@@ -1345,7 +1345,7 @@ begin
         end
         else if (lVisit is THybridPersistentModel) then
         begin
-          DBLog('Initialize: %s', THybridPersistentModel(lVisit).ClassName);
+          DBLog(Format('Initialize: %s', [THybridPersistentModel(lVisit).ClassName]));
           THybridPersistentModel(lVisit).Notify;
           THybridPersistentModel(lVisit).RecurseNotify(pVisitor);
         end;

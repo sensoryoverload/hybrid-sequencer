@@ -741,12 +741,10 @@ function TTrack.GetLatency: Integer;
 begin
   if Assigned(FPlayingPattern) then
   begin
-    writeln('TTrack.GetLatency');
     Result := FPlayingPattern.Latency;
   end
   else
   begin
-    writeln('TTrack.GetLatency, FPlayingPattern not assigned!');
     Result := 0;
   end;
 
