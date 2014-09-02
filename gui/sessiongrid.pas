@@ -118,6 +118,7 @@ type
     FTrackControls: TPanel;
     FVolumeFader: TVolumeControl;
     FPanControl: TParameterControl;
+    FLatencyControl: TParameterControl;
     FTarget: TComboBox;
     FTargetChanging: Boolean;
     FActiveSwitch: TToggleControl;
@@ -138,6 +139,8 @@ type
     procedure LevelStartChange(Sender: TObject);
     procedure BalanceChange(Sender: TObject);
     procedure BalanceStartChange(Sender: TObject);
+    procedure LatencyChange(Sender: TObject);
+    procedure LatencyStartChange(Sender: TObject);
     procedure SetSessionGrid(AValue: TSessionGrid);
     procedure DoOnTrackClick(Sender: TObject);
     procedure DoOnDropDown(Sender: TObject);
@@ -884,7 +887,7 @@ begin
   FTrackControls := TPanel.Create(FSessionGrid);
   FTrackControls.ParentFont := True;
   FTrackControls.Width := TRACK_WIDTH;
-  FTrackControls.Height := 200;
+  FTrackControls.Height := 220;
   FTrackControls.Left := 0;
   FTrackControls.Top := FSessionGrid.Height - FTrackControls.Height;
   FTrackControls.BevelOuter := bvRaised;
@@ -941,6 +944,21 @@ begin
   FActiveSwitch.FontStyle := [fsBold];
   FActiveSwitch.OnChange := @ActiveSwitchChange;
   FActiveSwitch.Parent := FTrackControls;
+
+  FLatencyControl := TParameterControl.Create(FTrackControls);
+  FLatencyControl.Orientation := oHorizontal;
+  FLatencyControl.Height := 10;
+  FLatencyControl.Width := 50;
+  FLatencyControl.Top := 200;
+  FLatencyControl.Left := 4;
+  FLatencyControl.Caption := 'Latency';
+  FLatencyControl.Min := 0;
+  FLatencyControl.Max := Round(GSettings.SampleRate);
+  FLatencyControl.Value := 0;
+  FLatencyControl.ShowValue := False;
+  FLatencyControl.OnStartChange := @LatencyStartChange;
+  FLatencyControl.OnChange := @LatencyChange;
+  FLatencyControl.Parent := FTrackControls;
 
   FMidiPatternFlyWeight := TMidiPatternFlyWeight.Create;
   FWavePatternFlyWeight := TWavePatternFlyWeight.Create;
@@ -1019,6 +1037,36 @@ begin
     GCommandQueue.PushCommand(lTrackBalanceCommand);
   except
     lTrackBalanceCommand.Free;
+  end;
+end;
+
+procedure TTrackView.LatencyChange(Sender: TObject);
+  var
+  lTrackLatencyCommand: TTrackLatencyCommand;
+begin
+  lTrackLatencyCommand := TTrackLatencyCommand.Create(ObjectID);
+  try
+    lTrackLatencyCommand.Persist := False;
+    lTrackLatencyCommand.Latency := Round(FLatencyControl.Value);
+
+    GCommandQueue.PushCommand(lTrackLatencyCommand);
+  except
+    lTrackLatencyCommand.Free;
+  end;
+end;
+
+procedure TTrackView.LatencyStartChange(Sender: TObject);
+var
+  lTrackLatencyCommand: TTrackLatencyCommand;
+begin
+  lTrackLatencyCommand := TTrackLatencyCommand.Create(ObjectID);
+  try
+    lTrackLatencyCommand.Persist := True;
+    lTrackLatencyCommand.Latency := Round(FLatencyControl.Value);
+
+    GCommandQueue.PushCommand(lTrackLatencyCommand);
+  except
+    lTrackLatencyCommand.Free;
   end;
 end;
 

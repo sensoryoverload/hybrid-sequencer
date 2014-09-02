@@ -63,7 +63,7 @@ type
     FPitched: Boolean;
     FLeftLevel: Single;
     FRightLevel: Single;
-    FLatency: Integer;
+    FInternalLatency: Integer;
     FBooleanStack: Integer;
     FActive: Boolean;
     FRecording: Boolean;
@@ -130,7 +130,7 @@ type
     property LeftPanGain: Single read FLeftPanGain;
     property RightPanGain: Single read FRightPanGain;
     property TargetTrack: TTrack read FTargetTrack write FTargetTrack;
-    property Latency: Integer read GetLatency write FLatency;
+    property Latency: Integer read GetLatency;
     property DelaySmp: Integer read GetDelaySmp write SetDelaySmp;
   published
     property PatternList: TPatternList read FPatternList write FPatternList;
@@ -148,6 +148,7 @@ type
     property TrackType: TTrackType read FTrackType write FTrackType;
     property TrackName: string read FTrackName write FTrackName;
     property ScheduledTo: TScheduleType read FScheduledTo write FScheduledTo;
+    property InternalLatency: Integer read FInternalLatency write FInternalLatency;
   end;
 
   TTrackList = class(TObjectList)
@@ -286,6 +287,19 @@ type
     property Pan: Single read FPan write FPan;
   end;
 
+  { TTrackLatencyCommand }
+
+  TTrackLatencyCommand = class(TTrackCommand)
+  private
+    FLatency: Integer;
+    FOldLatency: Integer;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  published
+    property Latency: Integer read FLatency write FLatency;
+  end;
+
   { TTrackChangeTargetCommand }
 
   TTrackChangeTargetCommand = class(TTrackCommand)
@@ -310,6 +324,42 @@ implementation
 
 uses
   audiostructure, wave, midi;
+
+{ TTrackLatencyCommand }
+
+procedure TTrackLatencyCommand.DoExecute;
+begin
+  DBLog('start Execute TTrackLatencyCommand ' + ObjectID);
+
+  FTrack.InternalLatency := FLatency;
+
+  if Persist then
+  begin
+    FTrack.BeginUpdate;
+
+    FOldLatency := FLatency;
+
+    FTrack.EndUpdate;
+  end;
+
+  DBLog('end Execute TTrackPanCommand');
+end;
+
+procedure TTrackLatencyCommand.DoRollback;
+begin
+  DBLog('start Rollback TTrackLatencyCommand ' + ObjectID);
+
+  if Persist then
+  begin
+    FTrack.BeginUpdate;
+
+    FTrack.InternalLatency := FOldLatency;
+
+    FTrack.EndUpdate;
+  end;
+
+  DBLog('end Rollback TTrackLatencyCommand');
+end;
 
 { TTrackChangeTargetCommand }
 
@@ -748,7 +798,7 @@ begin
     Result := 0;
   end;
 
-  Result += FPluginProcessor.Latency;
+  Result += FInternalLatency + FPluginProcessor.Latency;
 end;
 
 function TTrack.GetDelaySmp: Integer;
