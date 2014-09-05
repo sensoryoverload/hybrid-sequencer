@@ -911,7 +911,7 @@ begin
 
   FPanControl := TParameterControl.Create(FTrackControls);
   FPanControl.Orientation := oBalance;
-  FPanControl.Height := 10;
+  FPanControl.Height := 12;
   FPanControl.Width := 50;
   FPanControl.Top := 28;
   FPanControl.Left := 4;
@@ -947,7 +947,7 @@ begin
 
   FLatencyControl := TParameterControl.Create(FTrackControls);
   FLatencyControl.Orientation := oHorizontal;
-  FLatencyControl.Height := 10;
+  FLatencyControl.Height := 12;
   FLatencyControl.Width := 50;
   FLatencyControl.Top := 200;
   FLatencyControl.Left := 4;
