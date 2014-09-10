@@ -811,7 +811,7 @@ begin
     else if Orientation = oHorizontal then
     begin
       lBGRABitmap.Rectangle(0, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
-      lBGRABitmap.Rectangle(FScreenValue - 1, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+      lBGRABitmap.Rectangle(FScreenValue, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
       lBGRABitmap.FontHeight := Height - 1;
       if ShowValue then
       begin
@@ -884,9 +884,9 @@ begin
       begin
         FScreenValue := Pred(FWidth);
       end
-      else if X < 1 then
+      else if X < 0 then
       begin
-        FScreenValue := 1;
+        FScreenValue := 0;
       end
       else
       begin

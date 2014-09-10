@@ -147,7 +147,7 @@ begin
     lPluginParameter.Max := lPlugin.InputControls[lParameterIndex].UpperBound;
     lPluginParameter.Left := 10 + (lParameterIndex div 10) * 90;
     lPluginParameter.Width := 80;
-    lPluginParameter.Height := 12;
+    lPluginParameter.Height := 13;
     lPluginParameter.Top := (lParameterIndex mod 8) * 20 + 30;
     lPluginParameter.Parent := pnlControls;
 
@@ -163,7 +163,7 @@ begin
   FLatencyParameter.Max := Round(GSettings.SampleRate / 4);
   FLatencyParameter.Left := 10 + (Succ(lPlugin.InputControlCount) div 10) * 90;
   FLatencyParameter.Width := 80;
-  FLatencyParameter.Height := 12;
+  FLatencyParameter.Height := 13;
   FLatencyParameter.Top := (Succ(lPlugin.InputControlCount) mod 8) * 20 + 30;
   FLatencyParameter.Parent := pnlControls;
 

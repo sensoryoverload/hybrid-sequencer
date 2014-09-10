@@ -911,10 +911,10 @@ begin
 
   FPanControl := TParameterControl.Create(FTrackControls);
   FPanControl.Orientation := oBalance;
-  FPanControl.Height := 12;
+  FPanControl.Height := 13;
   FPanControl.Width := 50;
-  FPanControl.Top := 28;
-  FPanControl.Left := 4;
+  FPanControl.Top := 30;
+  FPanControl.Left := 8;
   FPanControl.Caption := 'Balance';
   FPanControl.Min := -1;
   FPanControl.Max := 1;
@@ -947,13 +947,13 @@ begin
 
   FLatencyControl := TParameterControl.Create(FTrackControls);
   FLatencyControl.Orientation := oHorizontal;
-  FLatencyControl.Height := 12;
+  FLatencyControl.Height := 13;
   FLatencyControl.Width := 50;
-  FLatencyControl.Top := 200;
-  FLatencyControl.Left := 4;
+  FLatencyControl.Top := 202;
+  FLatencyControl.Left := 8;
   FLatencyControl.Caption := 'Latency';
   FLatencyControl.Min := 0;
-  FLatencyControl.Max := Round(GSettings.SampleRate);
+  FLatencyControl.Max := Round(GSettings.SampleRate / 4);
   FLatencyControl.Value := 0;
   FLatencyControl.ShowValue := False;
   FLatencyControl.OnStartChange := @LatencyStartChange;

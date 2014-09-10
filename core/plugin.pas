@@ -110,6 +110,7 @@ type
     FPluginType: TPluginType;
     FChannels: Integer;
     FSequenceNr: Integer;
+    FLatency: Integer;
   protected
     procedure DoCreateInstance(var AObject: TObject; AClassName: string);
   public
@@ -124,8 +125,8 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle; AOutputBuffer: PSingle; AFrames: Integer); virtual;
     procedure Clear;
     procedure UpdateParameters; virtual;
-    function GetLatency: Integer; virtual; abstract;
-    procedure SetLatency(AValue: Integer); virtual; abstract;
+    function GetLatency: Integer; virtual;
+    procedure SetLatency(AValue: Integer); virtual;
 
     function CreatePortParameter(
       ACaption: string;
@@ -783,6 +784,16 @@ end;
 procedure TPluginNode.UpdateParameters;
 begin
   // To be overridden;
+end;
+
+function TPluginNode.GetLatency: Integer;
+begin
+  Result := FLatency;
+end;
+
+procedure TPluginNode.SetLatency(AValue: Integer);
+begin
+  FLatency := AValue;
 end;
 
 function TPluginNode.CreatePortParameter(
