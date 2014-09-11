@@ -367,7 +367,7 @@ end;
 
 function TInternalNode.GetLatency: Integer;
 begin
-  Result := 0;
+  Result := inherited GetLatency;
 end;
 
 { TGenericCommand }
@@ -668,12 +668,12 @@ end;
 
 function TPluginLADSPA.GetLatency: Integer;
 begin
-  Result := 0;
+  Result := inherited GetLatency;
 end;
 
 procedure TPluginLADSPA.SetLatency(AValue: Integer);
 begin
-
+  inherited SetLatency(AValue);
 end;
 
 { TPluginNode }
@@ -862,12 +862,12 @@ end;
 
 function TExternalNode.GetLatency: Integer;
 begin
-  Result := 0;
+  Result := inherited GetLatency;
 end;
 
 procedure TExternalNode.SetLatency(AValue: Integer);
 begin
-
+  inherited SetLatency(AValue);
 end;
 
 { TMementoNode }
@@ -910,12 +910,12 @@ end;
 
 function TScriptNode.GetLatency: Integer;
 begin
-  Result := 0;
+  Result := inherited GetLatency;
 end;
 
 procedure TScriptNode.SetLatency(AValue: Integer);
 begin
-
+  inherited SetLatency(AValue);
 end;
 
 { TAutomationDataList }
