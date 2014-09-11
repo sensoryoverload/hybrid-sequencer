@@ -200,7 +200,7 @@ type
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
     function GetLatency: Integer; override;
-    procedure SetLatency(AValue: Integer);
+    procedure SetLatency(AValue: Integer); override;
   published
     property UniqueID: Integer read FUniqueID write FUniqueID;
   end;
@@ -243,8 +243,8 @@ type
   public
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
-    function GetLatency: Integer;
-    procedure SetLatency(AValue: Integer);
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
   end;
 
   { TInternalNode }
@@ -261,8 +261,8 @@ type
     constructor Create(AObjectOwnerID: string); reintroduce;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
-    function GetLatency: Integer;
-    procedure SetLatency(AValue: Integer);
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
   end;
 
   { TAutomationDataList }

@@ -322,11 +322,10 @@ override_dh_auto_install:
         <Filename Value="core/plugin.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="23"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="793"/>
-        <CursorPos X="3" Y="796"/>
+        <TopLine Value="260"/>
+        <CursorPos X="15" Y="265"/>
         <UsageCount Value="212"/>
         <Bookmarks Count="1">
           <Item0 X="1" Y="386" ID="4"/>
@@ -353,8 +352,8 @@ override_dh_auto_install:
         <UnitName Value="sampler"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="362"/>
-        <CursorPos X="3" Y="376"/>
+        <TopLine Value="389"/>
+        <CursorPos X="53" Y="395"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit19>
@@ -871,10 +870,11 @@ override_dh_auto_install:
         <Filename Value="plugins/plugin_decimate.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_decimate"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="26"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="18"/>
-        <CursorPos X="23" Y="24"/>
+        <TopLine Value="153"/>
+        <CursorPos X="3" Y="156"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit65>
@@ -1169,123 +1169,127 @@ override_dh_auto_install:
         <Loaded Value="True"/>
       </Unit93>
     </Units>
-    <JumpHistory Count="29" HistoryIndex="28">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="core/track.pas"/>
-        <Caret Line="133" Column="1" TopLine="125"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position1>
       <Position2>
         <Filename Value="core/track.pas"/>
-        <Caret Line="66" Column="13" TopLine="53"/>
+        <Caret Line="66" Column="14" TopLine="42"/>
       </Position2>
       <Position3>
         <Filename Value="core/track.pas"/>
-        <Caret Line="294" Column="13" TopLine="270"/>
+        <Caret Line="337" Column="20" TopLine="319"/>
       </Position3>
       <Position4>
-        <Filename Value="core/track.pas"/>
-        <Caret Line="300" Column="59" TopLine="276"/>
-      </Position4>
-      <Position5>
-        <Filename Value="core/track.pas"/>
-        <Caret Line="334" Column="29" TopLine="310"/>
-      </Position5>
-      <Position6>
-        <Filename Value="core/track.pas"/>
-        <Caret Line="340" Column="28" TopLine="316"/>
-      </Position6>
-      <Position7>
-        <Filename Value="core/track.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
-      </Position7>
-      <Position8>
-        <Filename Value="core/track.pas"/>
-        <Caret Line="66" Column="14" TopLine="42"/>
-      </Position8>
-      <Position9>
-        <Filename Value="core/track.pas"/>
-        <Caret Line="337" Column="20" TopLine="319"/>
-      </Position9>
-      <Position10>
         <Filename Value="simplejack.pas"/>
         <Caret Line="603" Column="17" TopLine="590"/>
-      </Position10>
-      <Position11>
+      </Position4>
+      <Position5>
         <Filename Value="core/pluginhost.pas"/>
         <Caret Line="77" Column="14" TopLine="66"/>
-      </Position11>
-      <Position12>
+      </Position5>
+      <Position6>
         <Filename Value="core/pluginhost.pas"/>
         <Caret Line="574" Column="79" TopLine="561"/>
+      </Position6>
+      <Position7>
+        <Filename Value="components/dialcontrol.pas"/>
+        <Caret Line="934" Column="3" TopLine="931"/>
+      </Position7>
+      <Position8>
+        <Filename Value="components/dialcontrol.pas"/>
+        <Caret Line="898" Column="56" TopLine="888"/>
+      </Position8>
+      <Position9>
+        <Filename Value="components/dialcontrol.pas"/>
+        <Caret Line="194" Column="9" TopLine="179"/>
+      </Position9>
+      <Position10>
+        <Filename Value="components/dialcontrol.pas"/>
+        <Caret Line="226" Column="35" TopLine="202"/>
+      </Position10>
+      <Position11>
+        <Filename Value="components/dialcontrol.pas"/>
+        <Caret Line="701" Column="63" TopLine="677"/>
+      </Position11>
+      <Position12>
+        <Filename Value="components/dialcontrol.pas"/>
+        <Caret Line="705" Column="63" TopLine="681"/>
       </Position12>
       <Position13>
         <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="934" Column="3" TopLine="931"/>
+        <Caret Line="740" Column="7" TopLine="716"/>
       </Position13>
       <Position14>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="898" Column="56" TopLine="888"/>
-      </Position14>
-      <Position15>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="194" Column="9" TopLine="179"/>
-      </Position15>
-      <Position16>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="226" Column="35" TopLine="202"/>
-      </Position16>
-      <Position17>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="701" Column="63" TopLine="677"/>
-      </Position17>
-      <Position18>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="705" Column="63" TopLine="681"/>
-      </Position18>
-      <Position19>
-        <Filename Value="components/dialcontrol.pas"/>
-        <Caret Line="740" Column="7" TopLine="716"/>
-      </Position19>
-      <Position20>
         <Filename Value="gui/pluginhostgui.pas"/>
         <Caret Line="439" Column="46" TopLine="424"/>
-      </Position20>
-      <Position21>
-        <Filename Value="gui/pluginhostgui.pas"/>
-        <Caret Line="417" Column="31" TopLine="460"/>
-      </Position21>
-      <Position22>
+      </Position14>
+      <Position15>
         <Filename Value="gui/pluginnodegui.pas"/>
         <Caret Line="165" Column="1" TopLine="151"/>
-      </Position22>
-      <Position23>
+      </Position15>
+      <Position16>
         <Filename Value="plugins/plugin_bassline.pas"/>
         <Caret Line="263" Column="1" TopLine="11"/>
+      </Position16>
+      <Position17>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="171" Column="17" TopLine="151"/>
+      </Position17>
+      <Position18>
+        <Filename Value="gui/pluginhostgui.pas"/>
+        <Caret Line="492" Column="30" TopLine="464"/>
+      </Position18>
+      <Position19>
+        <Filename Value="gui/pluginnodegui.pas"/>
+        <Caret Line="217" Column="3" TopLine="212"/>
+      </Position19>
+      <Position20>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="408" Column="24" TopLine="391"/>
+      </Position20>
+      <Position21>
+        <Filename Value="gui/pluginnodegui.pas"/>
+        <Caret Line="218" Column="25" TopLine="189"/>
+      </Position21>
+      <Position22>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="340" Column="3" TopLine="337"/>
+      </Position22>
+      <Position23>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="180" Column="1" TopLine="169"/>
       </Position23>
       <Position24>
         <Filename Value="core/plugin.pas"/>
-        <Caret Line="171" Column="17" TopLine="151"/>
+        <Caret Line="1106" Column="1" TopLine="1084"/>
       </Position24>
       <Position25>
-        <Filename Value="gui/pluginhostgui.pas"/>
-        <Caret Line="492" Column="30" TopLine="464"/>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position25>
       <Position26>
-        <Filename Value="gui/pluginnodegui.pas"/>
-        <Caret Line="217" Column="3" TopLine="212"/>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="203" Column="53" TopLine="198"/>
       </Position26>
       <Position27>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="408" Column="24" TopLine="391"/>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="247" Column="15" TopLine="241"/>
       </Position27>
       <Position28>
-        <Filename Value="gui/pluginnodegui.pas"/>
-        <Caret Line="218" Column="25" TopLine="189"/>
+        <Filename Value="core/plugin.pas"/>
+        <Caret Line="265" Column="53" TopLine="258"/>
       </Position28>
       <Position29>
-        <Filename Value="core/plugin.pas"/>
-        <Caret Line="340" Column="3" TopLine="337"/>
+        <Filename Value="core/sampler.pas"/>
+        <Caret Line="376" Column="3" TopLine="362"/>
       </Position29>
+      <Position30>
+        <Filename Value="plugins/plugin_decimate.pas"/>
+        <Caret Line="24" Column="23" TopLine="18"/>
+      </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
       <Item0 Name="SVN active" Value="-1"/>

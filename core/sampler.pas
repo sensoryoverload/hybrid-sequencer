@@ -391,8 +391,8 @@ type
     procedure Finalize; override;
     procedure Process(AMidiBuffer: TMidiBuffer; AInputBuffer: PSingle;
       AOutputBuffer: PSingle; AFrames: Integer); override;
-    function GetLatency: Integer;
-    procedure SetLatency(AValue: Integer);
+    function GetLatency: Integer; override;
+    procedure SetLatency(AValue: Integer); override;
     procedure Assign(Source:TPersistent); override;
     property Selected: Boolean read FSelected write FSelected;
     property SelectedSample: TSample read FSelectedSample write FSelectedSample;
