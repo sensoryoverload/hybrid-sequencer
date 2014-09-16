@@ -488,7 +488,7 @@ begin
     end;
   end;
 
-  DBLog(lLogLatency, 1);
+// uncomment to debug latency compensation:  DBLog(lLogLatency, 1);
 end;
 
 { TModelThread }

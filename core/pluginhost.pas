@@ -429,6 +429,7 @@ begin
       begin
         if TPluginNode(FNodeList[lIndex]).Active then
         begin
+          // Process plugin
           if lIndex = 0 then
           begin
             TPluginNode(FNodeList[lIndex]).Process(
@@ -444,6 +445,20 @@ begin
               lPreviousOutputBuffer,
               TPluginNode(FNodeList[lIndex]).OutputBuffer,
               AFrames);
+          end;
+
+          lPreviousOutputBuffer := TPluginNode(FNodeList[lIndex]).OutputBuffer;
+        end
+        else
+        begin
+          // Passthrough audio to next in chain
+          if lIndex = 0 then
+          begin
+            Move(AInputBuffer^, TPluginNode(FNodeList[lIndex]).OutputBuffer^, AFrames * sizeof(single) * FChannels);
+          end
+          else
+          begin
+            Move(lPreviousOutputBuffer^, TPluginNode(FNodeList[lIndex]).OutputBuffer^, AFrames * sizeof(single) * FChannels);
           end;
 
           lPreviousOutputBuffer := TPluginNode(FNodeList[lIndex]).OutputBuffer;

@@ -237,6 +237,20 @@ type
     property Latency: Integer read FLatency write FLatency;
   end;
 
+  { TPluginActivateCommand }
+  TPluginActivateCommand = class(TCommand)
+  private
+    FOldActive: Boolean;
+    FActive: Boolean;
+    FModel: TPluginNode;
+  protected
+    procedure DoExecute; override;
+    procedure DoRollback; override;
+  public
+    procedure Initialize; override;
+    property Active: Boolean read FActive write FActive;
+  end;
+
   { TMementoNode }
 
   TMementoNode = class(TPluginNode)
@@ -332,6 +346,38 @@ implementation
 
 uses
   pluginhost;
+
+{ TPluginActivateCommand }
+
+procedure TPluginActivateCommand.DoExecute;
+begin
+  if assigned(FModel) then
+  begin
+    DBLog(Format('TPluginEnableCommand: Plugin "%s", Setting active = "%s"', [FModel.PluginName, BoolToStr(FModel.Active)]));
+
+    FOldActive := FModel.Active;
+    FModel.Active := FActive;
+
+    FModel.Notify;
+  end;
+end;
+
+procedure TPluginActivateCommand.DoRollback;
+begin
+  if Assigned(FModel) then
+  begin
+    FModel.Active := FOldActive;
+
+    FModel.Notify;
+
+    DBLog(Format('TPluginEnableCommand: Plugin "%s", Setting active = "%s"', [FModel.PluginName, BoolToStr(FModel.Active)]));
+  end;
+end;
+
+procedure TPluginActivateCommand.Initialize;
+begin
+  FModel := TPluginNode(GObjectMapper.GetModelObject(ObjectID));
+end;
 
 { TPluginLatencyCommand }
 

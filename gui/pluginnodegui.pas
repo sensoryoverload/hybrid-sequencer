@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, StdCtrls, ValEdit,
   ExtCtrls, Menus, ActnList, globalconst, plugin, dialcontrol, global_command,
-  global, utils;
+  global, utils, Graphics;
 
 type
   TNotifyStopDragging = procedure(Sender: TObject; ADropLocation: Integer) of object;
@@ -122,6 +122,15 @@ begin
     Width := (lPlugin.InputControlCount div 8) * 100 + 100;
     SequenceNr := lPlugin.SequenceNr;
     pnlTop.Caption := lPlugin.PluginName;
+
+    if lPlugin.Active then
+    begin
+      pnlTop.Color := clHighlight;
+    end
+    else
+    begin
+      pnlTop.Color := clLtGray;
+    end;
   end;
 
   Invalidate;
@@ -273,14 +282,24 @@ begin
 end;
 
 procedure TGenericPluginGUI.acEnabledPluginExecute(Sender: TObject);
+var
+  lPluginActivateCommand: TPluginActivateCommand;
 begin
-  //todo
+  lPluginActivateCommand := TPluginActivateCommand.Create(Self.ObjectID);
+  try
+    lPluginActivateCommand.ObjectID := Self.ObjectID;
+    lPluginActivateCommand.Active := not (Sender as TAction).Checked;
+    lPluginActivateCommand.Persist := True;
+
+    GCommandQueue.PushCommand(lPluginActivateCommand);
+  except
+    lPluginActivateCommand.Free;
+  end;
 end;
 
 procedure TGenericPluginGUI.acEnabledPluginUpdate(Sender: TObject);
 begin
-  // todo
-  (Sender as TAction).Enabled := True;
+  (Sender as TAction).Checked := TPluginNode(FModel).Active;
 end;
 
 procedure TGenericPluginGUI.DoParameterChange(Sender: TObject);
