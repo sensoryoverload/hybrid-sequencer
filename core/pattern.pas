@@ -310,6 +310,8 @@ var
 begin
   FPattern.BeginUpdate;
 
+  DBLog(Format('start TCreateAutomationDataCommand, DeviceId %s ParameterId %s', [FDeviceId, FParameterId]));
+
   // First find if there is already a automation track
   lAutomationParameter := FPattern.FindAutomationParameter(FDeviceId, FParameterId);
 
@@ -728,6 +730,8 @@ var
   lRightAutomationData: TAutomationData;
   lRightLocation: Integer;
   lRightValue: Single;
+  lValueRange: Single;
+  lFrameRange: Single;
   lCalculatedValue: Single;
   lPlugin: TPluginNode;
   lPortIndex: Integer;
@@ -804,13 +808,17 @@ begin
 
               if (lLeftLocation < FPatternCursor) and (lRightLocation > FPatternCursor) then
               begin
+                lValueRange := lport.UpperBound - lPort.LowerBound;
+
                 lLeftValue :=
-                  lLeftAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+                  lLeftAutomationData.DataValue * lValueRange + lPort.LowerBound;
 
                 lRightValue :=
-                  lRightAutomationData.DataValue * (lport.UpperBound - lPort.LowerBound);
+                  lRightAutomationData.DataValue * lValueRange + lPort.LowerBound;
 
-                if lRightLocation - lLeftLocation <> 0 then
+                lFrameRange := lRightLocation - lLeftLocation;
+
+                if lFrameRange <> 0 then
                 begin
                   if lRightLocation <> lLeftLocation then
                   begin
@@ -818,9 +826,7 @@ begin
                     lCalculatedValue :=
                       lLeftValue + (lRightValue - lLeftValue) *
                       (
-                        (FPatternCursor - lLeftLocation)
-                        /
-                        (lRightLocation - lLeftLocation)
+                        (FPatternCursor - lLeftLocation) / lFrameRange
                       );
                   end
                   else

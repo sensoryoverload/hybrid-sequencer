@@ -199,6 +199,8 @@ Caption, LowerBound, UpperBound, IsBoundedAbove, IsBoundedBelow, IsInteger, IsLo
   CreatePortParameter('Feedback 2', 0, 1, True, True, False, False, False, False, 0, Feedback2, nil);
   CreatePortParameter('Panning 2', -1, 1, True, True, True, False, False, False, 0, Panning2, nil);
   CreatePortParameter('DryWet ratio', -1, 1, True, True, True, False, False, False, 0, DryWet, nil);
+
+  inherited;
 end;
 
 procedure TPluginDelay.UpdateParameters;

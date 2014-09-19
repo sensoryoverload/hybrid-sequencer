@@ -95,7 +95,6 @@ type
     FIsDirty: Boolean;
     FForceRedraw: Boolean;
     FEditMode: TEditMode;
-    FSelectedAutomationDevice: TAutomationDevice;
     FSelectedAutomationDeviceId: string;
     FSelectedAutomationParameter: TAutomationDataList;
     FSelectedAutomationParameterId: string;
@@ -860,6 +859,7 @@ begin
 
             lAutomationScreenY := Round(Height - lAutomationData.DataValue * Height);
             lAutomationScreenX := ConvertTimeToScreen(lAutomationData.Location) + FOffset;
+
             FBitmap.Canvas.Brush.Color := clRed;
             FBitmap.Canvas.LineTo(
               lAutomationScreenX,
@@ -1675,8 +1675,8 @@ begin
   FModel.SelectedAutomationParameterId := AValue;
 
   FSelectedAutomationParameter := FModel.FindAutomationParameter(
-    FModel.SelectedAutomationDeviceId,
-    FModel.SelectedAutomationParameterId);
+    FSelectedAutomationDeviceId,
+    FSelectedAutomationParameterId);
 end;
 
 procedure TWaveGUI.DeleteMarkerGUI(AObjectID: string);

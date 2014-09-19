@@ -646,6 +646,8 @@ begin
         @FOutputControls[Pred(FOutputControlCount)]);
     end;
   end;
+
+  inherited;
 end;
 
 procedure TPluginLADSPA.Activate;

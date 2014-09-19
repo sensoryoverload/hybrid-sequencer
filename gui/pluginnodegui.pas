@@ -170,13 +170,13 @@ begin
   FLatencyParameter.Caption := 'Latency';
   FLatencyParameter.Min := 0;
   FLatencyParameter.Max := Round(GSettings.SampleRate / 4);
-  FLatencyParameter.Left := 10 + (Succ(lPlugin.InputControlCount) div 10) * 90;
+  FLatencyParameter.Left := 10 + (lPlugin.InputControlCount div 10) * 90;
   FLatencyParameter.Width := 80;
   FLatencyParameter.Height := 13;
-  FLatencyParameter.Top := (Succ(lPlugin.InputControlCount) mod 8) * 20 + 30;
+  FLatencyParameter.Top := (lPlugin.InputControlCount mod 8) * 20 + 30;
   FLatencyParameter.Parent := pnlControls;
 
-  FParameterList.AddObject(IntToStr(Succ(lPlugin.InputControlCount)), FLatencyParameter);
+  FParameterList.AddObject(IntToStr(lPlugin.InputControlCount), FLatencyParameter);
 end;
 
 procedure TGenericPluginGUI.Disconnect;
