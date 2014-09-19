@@ -1112,6 +1112,7 @@ end;
 
 procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
 begin
+  ScreenUpdater.Enabled := False;
   Application.ProcessMessages;
   try
     acUndoUpdate(Self);
@@ -1157,6 +1158,7 @@ begin
       DBLog('Hybrid error: ' + e.Message);
     end;
   end;
+  ScreenUpdater.Enabled := True;
 end;
 
 procedure TMainApp.Formdestroy(Sender: Tobject);
@@ -1269,7 +1271,7 @@ begin
 
   GAudioStruct.Attach(MainApp);
 
-  ScreenUpdater.Interval := 50;
+  ScreenUpdater.Interval := 100;
   ScreenUpdater.Enabled := True;
 
   pnlVarious.Width := 0;

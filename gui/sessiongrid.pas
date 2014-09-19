@@ -1099,7 +1099,7 @@ begin
 
   ControlStyle := ControlStyle + [csAcceptsControls];
 
-  DoubleBuffered := True;
+  DoubleBuffered := False;
 
   FBGRABitmap := TBGRABitmap.Create(Width, Height);
 
@@ -2050,7 +2050,6 @@ end;
 procedure TSessionGrid.ReSize;
 var
   lIndex: integer;
-
 begin
   inherited;
 
