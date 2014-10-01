@@ -228,6 +228,8 @@ type
     FMouseY: integer;
     FMouseDownL: boolean;
     FMouseDownR: boolean;
+    FOldWidth: Integer;
+    FOldHeight: Integer;
     FMode: TMode;
     FTempPatternName: string;
     FRenameCursorPosition: integer;
@@ -279,6 +281,7 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: integer); override;
     procedure DblClick; override;
     procedure ReSize; override;
+    procedure EraseBackground(DC: HDC); override;
     // Scrolling vertically through the patterns
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): boolean; override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): boolean; override;
@@ -292,7 +295,6 @@ type
 
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
     procedure UpdateView(AForceRedraw: boolean = False); override;
-    procedure EraseBackground(DC: HDC); override;
     procedure DragDrop(Source: TObject; X, Y: integer); override;
     function PatternAtMouseXY(X, Y: integer): TPattern;
     procedure SelectTrack(ASelected: TTrackView);
@@ -447,13 +449,24 @@ class procedure TWavePatternFlyWeight.Render(X, Y: integer;
 var
   pts: array of TPointF;
   lTrimmedPatternName: string;
+  lColor: TColor;
 begin
+  // Give selected pattern a white color
+  if Assigned(APattern) and (APattern = GSettings.SelectedObject) then
+  begin
+    lColor := clWhite;
+  end
+  else
+  begin
+    lColor := clAqua;
+  end;
+
   ABGRABitmap.Rectangle(
     X,
     Y,
     X + TRACK_WIDTH,
     Y + PATTERN_HEIGHT,
-    ColorToBGRA(clBlue), ColorToBGRA(clYellow), dmset);
+    ColorToBGRA(clBlue), ColorToBGRA(lColor), dmset);
 
   ABGRABitmap.DrawVertLine(X + 15, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clBlue));
 
@@ -501,8 +514,9 @@ begin
   end
   else
   begin
-    lColor := clYellow;
+    lColor := clAqua;
   end;
+
   ABGRABitmap.Rectangle(
     X,
     Y,
@@ -585,6 +599,9 @@ begin
     // SetBalance
     FPanControl.Value := TTrack(FUpdateSubject).Pan;
 
+    // SetLatency
+    FLatencyControl.Value := TTrack(FUpdateSubject).InternalLatency;
+
     // SetInput
 
     // SetOutput
@@ -664,8 +681,6 @@ begin
     begin
       FTarget.Visible := False;
     end;
-
-    FSessionGrid.Invalidate;
   end;
 end;
 
@@ -1261,8 +1276,6 @@ begin
         // Changed waveforms
       end;
     end;
-
-    Invalidate;
   end;
 
   for lIndex := 0 to Pred(FTrackViewList.Count) do
@@ -1271,18 +1284,13 @@ begin
   end;
 end;
 
-procedure TSessionGrid.EraseBackground(DC: HDC);
-begin
-  inherited EraseBackground(DC);
-end;
-
 procedure TSessionGrid.Paint;
 begin
   if FJustDrawCursors then
   begin
     FJustDrawCursors := False;
 
-    FBGRABitmap.Draw(Canvas, 0, 0, False);
+    FBGRABitmap.Draw(Canvas, 0, 0, True);
 
     DrawCursors(Canvas);
   end
@@ -1302,7 +1310,7 @@ begin
         FBGRABitmap, FSelectedPattern);
     end;
 
-    FBGRABitmap.Draw(Canvas, 0, 0, False);
+    FBGRABitmap.Draw(Canvas, 0, 0, True);
 
     DrawCursors(Canvas);
   end;
@@ -1408,11 +1416,10 @@ begin
       lCreateMidiPattern.SourceType := fsMidi;
 
       GCommandQueue.PushCommand(lCreateMidiPattern);
+      Invalidate;
     except
       lCreateMidiPattern.Free;
     end;
-
-    Invalidate;
   end;
 end;
 
@@ -1431,11 +1438,11 @@ begin
         lDeletePatternCommand.ObjectID := FSelectedPattern.ObjectID;
 
         GCommandQueue.PushCommand(lDeletePatternCommand);
+        Invalidate;
       except
         lDeletePatternCommand.Free;
       end;
 
-      Invalidate;
     end;
   end;
 end;
@@ -1450,6 +1457,7 @@ begin
     lCreateTrack.TrackType := ATrackType;
 
     GCommandQueue.PushCommand(lCreateTrack);
+    Invalidate;
   except
     on e: Exception do
     begin
@@ -1457,8 +1465,6 @@ begin
       lCreateTrack.Free;
     end;
   end;
-
-  Invalidate;
 end;
 
 procedure TSessionGrid.DoCreateTrack(Sender: TObject);
@@ -1495,6 +1501,7 @@ begin
       lDeleteTrackCommand.ObjectIdList.Add(lTrack.ObjectID);
 
       GCommandQueue.PushCommand(lDeleteTrackCommand);
+      invalidate;
     except
       GCommandQueue.Free;
     end;
@@ -1691,6 +1698,8 @@ begin
   end;
 
   CalculateTrackOffsets;
+
+  Invalidate;
 end;
 
 procedure TSessionGrid.SetScrollIndex(AValue: integer);
@@ -1730,6 +1739,7 @@ begin
         lCreatePattern.Position := (Y div PATTERN_HEIGHT) + ScrollIndex;
 
         GCommandQueue.PushCommand(lCreatePattern);
+        Invalidate;
       except
         lCreatePattern.Free;
       end;
@@ -2053,24 +2063,37 @@ var
 begin
   inherited;
 
-  if Assigned(FBGRABitmap) then
+  if (FOldWidth <> Width) or (FOldHeight <> Height) then
   begin
-    FBGRABitmap.Free;
-  end;
-  FBGRABitmap := TBGRABitmap.Create(Width, Height);
-
-  FVisiblePatternCount := (Height - TRACK_CONTROL_HEIGHT) div PATTERN_HEIGHT;
-
-  if Assigned(FTrackViewList) then
-  begin
-    for lIndex := 0 to Pred(FTrackViewList.Count) do
+    if Assigned(FBGRABitmap) then
     begin
-      FTrackViewList[lIndex].TrackControls.Top :=
-        Height - FTrackViewList[lIndex].TrackControls.Height;
+      FBGRABitmap.Free;
+    end;
+    FBGRABitmap := TBGRABitmap.Create(Width, Height);
+
+    FOldWidth := Width;
+    FOldHeight := Height;
+
+    FVisiblePatternCount := (Height - TRACK_CONTROL_HEIGHT) div PATTERN_HEIGHT;
+
+    if Assigned(FTrackViewList) then
+    begin
+      for lIndex := 0 to Pred(FTrackViewList.Count) do
+      begin
+        FTrackViewList[lIndex].TrackControls.Top :=
+          Height - FTrackViewList[lIndex].TrackControls.Height;
+      end;
+
+      CalculateTrackOffsets;
     end;
 
-    CalculateTrackOffsets;
+    Invalidate;
   end;
+end;
+
+procedure TSessionGrid.EraseBackground(DC: HDC);
+begin
+  inherited EraseBackground(DC);
 end;
 
 function TSessionGrid.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): boolean;

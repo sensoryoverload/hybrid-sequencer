@@ -1139,12 +1139,20 @@ begin
 
     // Update views
     Self.UpdateView;
+
     FSessionGrid.UpdateView;
     FPatternView.UpdateView;
 
     Inc(FLowPriorityInterval);
     if FLowPriorityInterval > 10 then
+    begin
+      FSessionGrid.JustDrawCursors := False;
       FLowPriorityInterval := 0;
+    end
+    else
+    begin
+      FSessionGrid.JustDrawCursors := True;
+    end;
     Inc(FMediumPriorityInterval);
     if FMediumPriorityInterval > 5 then
       FMediumPriorityInterval := 0;

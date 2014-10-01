@@ -331,16 +331,16 @@ procedure TTrackLatencyCommand.DoExecute;
 begin
   DBLog('start Execute TTrackLatencyCommand ' + ObjectID);
 
-  FTrack.InternalLatency := FLatency;
+  FTrack.BeginUpdate;
 
   if Persist then
   begin
-    FTrack.BeginUpdate;
-
-    FOldLatency := FLatency;
-
-    FTrack.EndUpdate;
+    FOldLatency := FTrack.InternalLatency;
   end;
+
+  FTrack.InternalLatency := FLatency;
+
+  FTrack.EndUpdate;
 
   DBLog('end Execute TTrackPanCommand');
 end;
@@ -349,14 +349,14 @@ procedure TTrackLatencyCommand.DoRollback;
 begin
   DBLog('start Rollback TTrackLatencyCommand ' + ObjectID);
 
+  FTrack.BeginUpdate;
+
   if Persist then
   begin
-    FTrack.BeginUpdate;
-
     FTrack.InternalLatency := FOldLatency;
-
-    FTrack.EndUpdate;
   end;
+
+  FTrack.EndUpdate;
 
   DBLog('end Rollback TTrackLatencyCommand');
 end;
@@ -1057,16 +1057,16 @@ begin
 
   DBLog(Format('Setting Pan to %f (0=L, 1=R)', [FPan]));
 
-  FTrack.Pan := FPan;
+  FTrack.BeginUpdate;
 
   if Persist then
   begin
-    FTrack.BeginUpdate;
-
-    FOldPan := FPan;
-
-    FTrack.EndUpdate;
+    FOldPan := FTrack.Pan;
   end;
+
+  FTrack.Pan := FPan;
+
+  FTrack.EndUpdate;
 
   DBLog('end Execute TTrackPanCommand');
 end;
@@ -1076,14 +1076,16 @@ procedure TTrackPanCommand.DoRollback;
 begin
   DBLog('start Rollback TTrackBalanceCommand ' + ObjectID);
 
+  DBLog(Format('Setting Pan to %f (0=L, 1=R)', [FOldPan]));
+
+  FTrack.BeginUpdate;
+
   if Persist then
   begin
-    FTrack.BeginUpdate;
-
     FTrack.Pan := FOldPan;
-
-    FTrack.EndUpdate;
   end;
+
+  FTrack.EndUpdate;
 
   DBLog('end Rollback TTrackBalanceCommand');
 end;

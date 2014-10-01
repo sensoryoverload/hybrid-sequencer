@@ -547,6 +547,7 @@ end;
 
 procedure TListSelect.SetItemIndex(AValue: Integer);
 begin
+  if FItemIndex = AValue then exit;
   FItemIndex := AValue;
 
   Invalidate;
@@ -609,10 +610,9 @@ begin
     if Assigned(FOnChange) then
     begin
       FOnChange(Self);
+      Invalidate;
     end;
   end;
-
-  Invalidate;
 end;
 
 function TListSelect.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint
@@ -625,10 +625,10 @@ begin
     if Assigned(FOnChange) then
     begin
       FOnChange(Self);
+      Invalidate;
     end;
   end;
 
-  Invalidate;
 end;
 
 procedure TListSelect.EraseBackground(DC: HDC);
@@ -694,6 +694,7 @@ end;
 
 procedure TParameterControl.SetValue(const AValue: Single);
 begin
+  if FValue = AValue then exit;
   FValue := AValue;
 
   if (FOrientation = oHorizontal) or (FOrientation = oBalance) then
@@ -770,6 +771,7 @@ begin
   ParentColor := True;
   Size := 100;
   ShowValue := True;
+  FValue := 0.0000001; // Autoinitialize
 
   FChanging := False;
 end;
@@ -938,9 +940,8 @@ begin
     if Assigned(FOnChange) then
     begin
       FOnChange(Self);
+      Invalidate;
     end;
-
-    Invalidate;
   end;
 
   inherited MouseMove(Shift, X, Y);
@@ -1185,9 +1186,8 @@ begin
   if FDialMoving and (not FMidiMappingMode) then
   begin
     CalcInternals(FOldY - FY);
+    Invalidate;
   end;
-
-  Invalidate;
 end;
 
 function TDialControl.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint
@@ -1399,6 +1399,7 @@ end;
 
 procedure TToggleControl.SetSwitchedOn(const AValue: Boolean);
 begin
+  if FSwitchedOn = AValue then exit;
   FSwitchedOn := AValue;
   Invalidate;
 end;
@@ -1528,6 +1529,7 @@ end;
 
 procedure TVolumeControl.SetPosition(const AValue: Single);
 begin
+  if FPosition = AValue then exit;
   FPosition := AValue;
   Invalidate;
 end;
