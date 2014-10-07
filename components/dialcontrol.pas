@@ -121,6 +121,9 @@ Type
 
   TToggleControl = class(TCustomControl, IFeedBack)
   private
+    FBGRABitmap: TBGRABitmap;
+    FOldWidth: Integer;
+    FOldHeight: Integer;
     FColor: TColor;
     FFontSize: Integer;
     FFontStyle: TFontStyles;
@@ -134,11 +137,12 @@ Type
     procedure SetCaptionOn(const AValue: string);
     procedure SetColor(AValue: TColor);
     procedure SetSwitchedOn(const AValue: Boolean);
-
+  protected
   public
     constructor Create(AOwner : TComponent); override;
     destructor Destroy; override;
     procedure EraseBackground(DC: HDC); override;
+    procedure Resize; override;
     procedure Paint; override;
     procedure UpdateControl;
     property FontSize: Integer read FFontSize write FFontSize;
@@ -161,6 +165,9 @@ Type
 
   TListSelect = class(TCustomControl)
   private
+    FBGRABitmap: TBGRABitmap;
+    FOldWidth: Integer;
+    FOldHeight: Integer;
     FItems: TStringList;
     FItemIndex: Integer;
     FPopupMenu: TPopupMenu;
@@ -175,6 +182,7 @@ Type
   public
     constructor Create(AOwner : TComponent); override;
     destructor Destroy; override;
+    procedure Resize; override;
     procedure EraseBackground(DC: HDC); override;
   published
     property Items: TStringList read FItems write FItems;
@@ -188,6 +196,9 @@ Type
 
   TParameterControl = class(TCustomControl)
   private
+    FBGRABitmap: TBGRABitmap;
+    FOldWidth: Integer;
+    FOldHeight: Integer;
     FBoolean: Boolean;
     FMax: Single;
     FMidiMappingMode: Boolean;
@@ -220,6 +231,7 @@ Type
     destructor Destroy; override;
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
+    procedure Resize; override;
     property MidiMappingMode: Boolean read FMidiMappingMode write FMidiMappingMode;
   published
     property Value: Single read FValue write SetValue;
@@ -391,6 +403,7 @@ Type
 
   TVolumeControl = class(TCustomControl, IFeedBack)
   private
+    Bitmap: TBitmap;
     FPosition: Single;
     FY: Integer;
     FFaderMoving: Boolean;
@@ -417,6 +430,7 @@ Type
     destructor Destroy; override;
     procedure EraseBackground(DC: HDC); override;
     procedure Paint; override;
+    procedure Resize; override;
     procedure Update; reintroduce;
     procedure UpdateControl;
     property Position: Single read FPosition write SetPosition;
@@ -633,40 +647,30 @@ end;
 
 procedure TListSelect.EraseBackground(DC: HDC);
 begin
-  inherited EraseBackground(DC);
+  //inherited EraseBackground(DC);
 end;
 
 procedure TListSelect.Paint;
-var
-  lBGRABitmap: TBGRABitmap;
-  lItemIndex: Integer;
 begin
-  lBGRABitmap := TBGRABitmap.Create(Width, Height);
-  try
-    Height := LISTITEM_HEIGHT;
-    lBGRABitmap.Rectangle(
-      0,
-      0,
-      Width,
-      Height,
-      ColorToBGRA(clBlack),
-      ColorToBGRA(clLtGray),
-      dmSet);
+  FBGRABitmap.Rectangle(
+    0,
+    0,
+    Width,
+    Height,
+    ColorToBGRA(clBlack),
+    ColorToBGRA(clLtGray),
+    dmSet);
 
-    if FItemIndex <> -1 then
-    begin
-      lBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
-      lBGRABitmap.TextOut(
-        1,
-        1,
-        FItems[FItemIndex],
-        ColorToBGRA(ColorToRGB(clBtnText)));
-    end;
-
-    lBGRABitmap.Draw(Canvas, 0, 0, True);
-  finally
-    lBGRABitmap.Free;
+  if FItemIndex <> -1 then
+  begin
+    FBGRABitmap.TextOut(
+      1,
+      1,
+      FItems[FItemIndex],
+      ColorToBGRA(ColorToRGB(clBtnText)));
   end;
+
+  FBGRABitmap.Draw(Canvas, 0, 0, True);
 end;
 
 constructor TListSelect.Create(AOwner: TComponent);
@@ -687,7 +691,26 @@ begin
   FItems.Free;
   FPopupMenu.Free;
 
+  FBGRABitmap.Free;
+
   inherited Destroy;
+end;
+
+procedure TListSelect.Resize;
+begin
+  if (Width <> FOldWidth) or (Height <> FOldHeight) then
+  begin
+    if Assigned(FBGRABitmap) then
+    begin
+      FBGRABitmap.Free;
+    end;
+    FBGRABitmap := TBGRABitmap.Create(Width, LISTITEM_HEIGHT);
+    FBGRABitmap.FontStyle := [fsBold];
+    FBGRABitmap.FontHeight := LISTITEM_HEIGHT - 4;
+
+    FOldWidth := Width;
+    FOldHeight := Height;
+  end;
 end;
 
 { TParameterControl }
@@ -778,72 +801,84 @@ end;
 
 destructor TParameterControl.Destroy;
 begin
+  if Assigned(FBGRABitmap) then
+  begin
+    FBGRABitmap.Free;
+  end;
+
   inherited Destroy;
 end;
 
 procedure TParameterControl.EraseBackground(DC: HDC);
 begin
-  inherited EraseBackground(DC);
+  //inherited EraseBackground(DC);
 end;
 
 procedure TParameterControl.Paint;
 var
-  lBGRABitmap: TBGRABitmap;
   lCaption: string;
 begin
-  lBGRABitmap := TBGRABitmap.Create(Width, Height);
-  try
-    lBGRABitmap.FontStyle := [fsBold];
-    if Orientation = oBalance then
+  if Orientation = oBalance then
+  begin
+    FBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+    FBGRABitmap.Rectangle(Width div 2, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+    FBGRABitmap.DrawVertLine(Width div 2, 0, Height, ColorToBGRA(clGray));
+    if ShowValue then
     begin
-      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
-      lBGRABitmap.Rectangle(Width div 2, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
-      lBGRABitmap.DrawVertLine(Width div 2, 0, Height, ColorToBGRA(clGray));
-      lBGRABitmap.FontHeight := Height - 1;
-      if ShowValue then
-      begin
-        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
-      end
-      else
-      begin
-        lCaption := FCaption
-      end;
-      lBGRABitmap.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+      lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
     end
-    else if Orientation = oHorizontal then
+    else
     begin
-      lBGRABitmap.Rectangle(0, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
-      lBGRABitmap.Rectangle(FScreenValue, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
-      lBGRABitmap.FontHeight := Height - 1;
-      if ShowValue then
-      begin
-        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
-      end
-      else
-      begin
-        lCaption := FCaption
-      end;
-      lBGRABitmap.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
-    end
-    else if Orientation = oVertical then
-    begin
-      lBGRABitmap.Rectangle(0, 0, Width, FScreenValue, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
-      lBGRABitmap.Rectangle(0, FScreenValue, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
-      lBGRABitmap.FontHeight := Width - 2;
-      if ShowValue then
-      begin
-        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
-      end
-      else
-      begin
-        lCaption := FCaption
-      end;
-      lBGRABitmap.TextOut(1, 1, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+      lCaption := FCaption
     end;
+    FBGRABitmap.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+  end
+  else if Orientation = oHorizontal then
+  begin
+    FBGRABitmap.Rectangle(0, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+    FBGRABitmap.Rectangle(FScreenValue, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+    if ShowValue then
+    begin
+      lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
+    end
+    else
+    begin
+      lCaption := FCaption
+    end;
+    FBGRABitmap.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+  end
+  else if Orientation = oVertical then
+  begin
+    FBGRABitmap.Rectangle(0, 0, Width, FScreenValue, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+    FBGRABitmap.Rectangle(0, FScreenValue, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+    if ShowValue then
+    begin
+      lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
+    end
+    else
+    begin
+      lCaption := FCaption
+    end;
+    FBGRABitmap.TextOut(1, 1, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+  end;
 
-    lBGRABitmap.Draw(Canvas, 0, 0, True);
-  finally
-    lBGRABitmap.Free;
+  FBGRABitmap.Draw(Canvas, 0, 0, True);
+end;
+
+procedure TParameterControl.Resize;
+begin
+  if (Width <> FOldWidth) or (Height <> FOldHeight) then
+  begin
+    if Assigned(FBGRABitmap) then
+    begin
+      FBGRABitmap.Free;
+    end;
+    FBGRABitmap := TBGRABitmap.Create(Width, Height);
+    FBGRABitmap.FontStyle := [fsBold];
+    FBGRABitmap.FontHeight := Height - 1;
+
+    FOldWidth := Width;
+    FOldHeight := Height;
   end;
 end;
 
@@ -1427,48 +1462,58 @@ end;
 
 destructor TToggleControl.Destroy;
 begin
+  if Assigned(FBGRABitmap) then
+  begin
+    FBGRABitmap.Free;
+  end;
+
   inherited Destroy;
 end;
 
 procedure TToggleControl.EraseBackground(DC: HDC);
 begin
-  inherited EraseBackground(DC);
+  //inherited EraseBackground(DC);
+end;
+
+procedure TToggleControl.Resize;
+begin
+  if (Width <> FOldWidth) or (Height <> FOldHeight) then
+  begin
+    if Assigned(FBGRABitmap) then
+    begin
+      FBGRABitmap.Free;
+    end;
+    FBGRABitmap := TBGRABitmap.Create(Width, Height);
+    FBGRABitmap.FontHeight := FFontSize;
+    FBGRABitmap.FontStyle := FFontStyle;
+
+    // Outline color
+    FBGRABitmap.PenStyle := psSolid;
+
+    FOldWidth := Width;
+    FOldHeight := Height;
+  end;
 end;
 
 procedure TToggleControl.Paint;
-var
-  lBGRABitmap: TBGRABitmap;
 begin
-  lBGRABitmap := TBGRABitmap.Create(Width, Height);
-  try
-    lBGRABitmap.FontHeight := FFontSize;
-    lBGRABitmap.FontStyle := FFontStyle;
+  if FSwitchedOn then
+    FCaption := FCaptionOn
+  else
+    FCaption := FCaptionOff;
 
-    if FSwitchedOn then
-      FCaption := FCaptionOn
-    else
-      FCaption := FCaptionOff;
+  if FSwitchedOn then
+    FBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(FColor), dmSet)
+  else
+    FBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
 
-    // Outline color
-    lBGRABitmap.PenStyle := psSolid;
+  FBGRABitmap.TextOut(
+    (Width shr 1) - (FBGRABitmap.TextSize(FCaption).cx shr 1),
+    1,
+    FCaption,
+    ColorToBGRA(ColorToRGB(clBtnText)));
 
-    if FSwitchedOn then
-      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(FColor), dmSet)
-    else
-      lBGRABitmap.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
-
-    lBGRABitmap.TextOut(
-      (Width shr 1) - (lBGRABitmap.TextSize(FCaption).cx shr 1),
-      1,
-      FCaption,
-      ColorToBGRA(ColorToRGB(clBtnText)));
-
-    lBGRABitmap.Draw(Canvas, 0, 0, False);
-  finally
-    lBGRABitmap.Free;
-  end;
-
-  //inherited Paint;
+  FBGRABitmap.Draw(Canvas, 0, 0, False);
 end;
 
 procedure TToggleControl.UpdateControl;
@@ -1519,12 +1564,16 @@ end;
 
 procedure TVolumeControl.SetLevelLeft(const AValue: single);
 begin
+  if ChannelLevel[0] = AValue then exit;
   ChannelLevel[0] := AValue;
+  Invalidate;
 end;
 
 procedure TVolumeControl.SetLevelRight(const AValue: single);
 begin
+  if ChannelLevel[1] = AValue then exit;
   ChannelLevel[1] := AValue;
+  Invalidate;
 end;
 
 procedure TVolumeControl.SetPosition(const AValue: Single);
@@ -1559,6 +1608,7 @@ end;
 
 destructor TVolumeControl.Destroy;
 begin
+  Bitmap.Free;
 
   inherited Destroy;
 end;
@@ -1577,62 +1627,61 @@ var
   HeightScale: Integer;
   i: Integer;
   ChannelOffset: Integer;
-  Bitmap: TBitmap;
 begin
-  Bitmap := TBitmap.Create;
-  try
-    // Initializes the Bitmap Size
-    Bitmap.Height := Height;
-    Bitmap.Width := Width;
+  // Draws the background
+  Bitmap.Canvas.Pen.Color := clBtnFace;
+  Bitmap.Canvas.Brush.Color := clBtnFace;
+  Bitmap.Canvas.FillRect(0, 0, Width, Height);
 
-    // Draws the background
-    Bitmap.Canvas.Pen.Color := clBtnFace;
-    Bitmap.Canvas.Brush.Color := clBtnFace;
-    Bitmap.Canvas.FillRect(0, 0, Width, Height);
+  // Draw Levels for all channels
+  for i := 0 to ChannelCount - 1 do
+  begin
+    ChannelOffset := i * 5 + 11;
+    HeightScale:= Round(Height * ChannelLevel[i]);
 
-    // Draw Levels for all channels
-    for i := 0 to ChannelCount - 1 do
-    begin
-      ChannelOffset := i * 5 + 11;
-      HeightScale:= Round(Height * ChannelLevel[i]);
+    // In the RED!
+    Bitmap.Canvas.Brush.Color:= clRed;
+    Bitmap.Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, 20);
 
-      // In the RED!
-      Bitmap.Canvas.Brush.Color:= clRed;
-      Bitmap.Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, 20);
+    // You've been warned
+    Bitmap.Canvas.Brush.Color:= clYellow;
+    Bitmap.Canvas.FillRect(ChannelOffset, 21, ChannelOffset + 4, 40);
 
-      // You've been warned
-      Bitmap.Canvas.Brush.Color:= clYellow;
-      Bitmap.Canvas.FillRect(ChannelOffset, 21, ChannelOffset + 4, 40);
+    // Behaving signal
+    Bitmap.Canvas.Brush.Color:= clLime;
+    Bitmap.Canvas.FillRect(ChannelOffset, 41, ChannelOffset + 4, Height - 1);
 
-      // Behaving signal
-      Bitmap.Canvas.Brush.Color:= clLime;
-      Bitmap.Canvas.FillRect(ChannelOffset, 41, ChannelOffset + 4, Height - 1);
-
-      // Signal level
-      Bitmap.Canvas.Brush.Color:= clLtGray;
-      Bitmap.Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, Height - HeightScale);
-    end;
-
-    Bitmap.Canvas.Brush.Color:= RGBToColor(50, 50, 50);
-    Bitmap.Canvas.FillRect(4, 0, 6, Height);
-
-    // Draw FaderHandle
-    FY := Round(Bitmap.Height - FADER_HEIGHT_HALF - (FPosition * ((Bitmap.Height - FADER_HEIGHT) * DIVBY100)));
-    Bitmap.Canvas.Brush.Color:= RGBToColor(255, 255, 255);
-    Bitmap.Canvas.Pen.Color:= RGBToColor(50, 50, 50);
-    Bitmap.Canvas.RoundRect(0, FY - FADER_HEIGHT_HALF, 10, FY + FADER_HEIGHT_HALF, 4, 4);
-
-    Bitmap.Canvas.Brush.Color:= RGBToColor(50, 50, 50);
-    Bitmap.Canvas.FillRect(0, FY - 1, 10, FY + 1);
-
-    // Volume in range 0..100
-    //Bitmap.Canvas.TextOut(0, 0, Format('%f', [FPosition]));
-    Canvas.Draw(0, 0, Bitmap);
-  finally
-    Bitmap.Free;
+    // Signal level
+    Bitmap.Canvas.Brush.Color:= clLtGray;
+    Bitmap.Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, Height - HeightScale);
   end;
 
-  inherited Paint;
+  Bitmap.Canvas.Brush.Color:= RGBToColor(50, 50, 50);
+  Bitmap.Canvas.FillRect(4, 0, 6, Height);
+
+  // Draw FaderHandle
+  FY := Round(Bitmap.Height - FADER_HEIGHT_HALF - (FPosition * ((Bitmap.Height - FADER_HEIGHT) * DIVBY100)));
+  Bitmap.Canvas.Brush.Color:= RGBToColor(255, 255, 255);
+  Bitmap.Canvas.Pen.Color:= RGBToColor(50, 50, 50);
+  Bitmap.Canvas.RoundRect(0, FY - FADER_HEIGHT_HALF, 10, FY + FADER_HEIGHT_HALF, 4, 4);
+
+  Bitmap.Canvas.Brush.Color:= RGBToColor(50, 50, 50);
+  Bitmap.Canvas.FillRect(0, FY - 1, 10, FY + 1);
+
+  // Volume in range 0..100
+  //Bitmap.Canvas.TextOut(0, 0, Format('%f', [FPosition]));
+  Canvas.Draw(0, 0, Bitmap);
+end;
+
+procedure TVolumeControl.Resize;
+begin
+  if Assigned(Bitmap) then
+  begin
+    Bitmap.Free;
+  end;
+  Bitmap := TBitmap.Create;
+  Bitmap.Height := Height;
+  Bitmap.Width := Width;
 end;
 
 procedure TVolumeControl.Update;
@@ -1682,7 +1731,7 @@ begin
     if Assigned(FOnChange) then
       FOnChange(Self);
 
-    Paint;
+    Invalidate;
   end
 end;
 

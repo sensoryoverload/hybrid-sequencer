@@ -102,6 +102,7 @@ type
     FOldY: Integer;
     FMouseX: Integer;
     FMouseY: Integer;
+    FMouseButtonDown: Boolean;
     FOrgNoteX: Integer;
     FOrgNoteY: Integer;
     FMouseNoteX: Integer;
@@ -1550,6 +1551,7 @@ begin
 
   FMouseX := X;
   FMouseY := Y;
+  FMouseButtonDown := True;
 
   if FEditMode = emPatternEdit then
   begin
@@ -1608,6 +1610,8 @@ procedure TMidiPatternGUI.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
   Y: Integer);
 begin
   inherited MouseUp(Button, Shift, X, Y);
+
+  FMouseButtonDown := False;
 
   if FEditMode = emPatternEdit then
   begin
@@ -1686,83 +1690,86 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  if FDragging then
+  if FMouseButtonDown then
   begin
-    lNoteAction := FNoteAction;
-  end
-  else
-  begin
-    NoteUnderCursor(X, Y, lNoteAction);
-  end;
-
-  if FEditMode = emPatternEdit then
-  begin
-    case lNoteAction of
-      naAdjustRight: Screen.Cursor := crSizeWE;
-      naAdjustLeft: Screen.Cursor := crSizeWE;
-      naDrag: Screen.Cursor := crSize;
+    if FDragging then
+    begin
+      lNoteAction := FNoteAction;
+    end
     else
-      Screen.Cursor := crArrow;
+    begin
+      NoteUnderCursor(X, Y, lNoteAction);
     end;
 
-    if Assigned(FDraggedLoopMarker) then
+    if FEditMode = emPatternEdit then
     begin
-      HandleLoopMarkerMouseMove(Shift, X, Y);
-    end
-    else if Assigned(FDraggedNote) then
-    begin
-      HandleNoteMouseMove(Shift, X, Y);
-    end
-    else
-    begin
-      if FRubberBandMode then
+{      case lNoteAction of
+        naAdjustRight: Screen.Cursor := crSizeWE;
+        naAdjustLeft: Screen.Cursor := crSizeWE;
+        naDrag: Screen.Cursor := crSize;
+      else
+        Screen.Cursor := crArrow;
+      end;}
+
+      if Assigned(FDraggedLoopMarker) then
       begin
-        // If rubberband changed
-        if (FRubberBandSelect.BottomRight.X <> X) or
-          (FRubberBandSelect.BottomRight.Y <> Y) then
-        begin
-          FRubberBandSelect.BottomRight.X := X;
-          FRubberBandSelect.BottomRight.Y := Y;
-
-          // Select midinotes in rubberband
-          NoteListByRect(FRubberBandSelect);
-        end;
-      end;
-
-      if FZoomingMode then
+        HandleLoopMarkerMouseMove(Shift, X, Y);
+      end
+      else if Assigned(FDraggedNote) then
       begin
-        if ssCtrl in Shift then
+        HandleNoteMouseMove(Shift, X, Y);
+      end
+      else
+      begin
+        if FRubberBandMode then
         begin
-          ZoomFactorY := FOldZoomFactorY + (X - FOldX) * 2;
-          FNoteOffset := FOldNoteOffset + Round((X - FOldX) / 5) + (Y - FOldY);
-        end
-        else
-        begin
-          FOffset := FOldLocationOffset + (X - FOldX);
-
-          if FOffset > 0 then
+          // If rubberband changed
+          if (FRubberBandSelect.BottomRight.X <> X) or
+            (FRubberBandSelect.BottomRight.Y <> Y) then
           begin
-            FOffset := 0;
+            FRubberBandSelect.BottomRight.X := X;
+            FRubberBandSelect.BottomRight.Y := Y;
+
+            // Select midinotes in rubberband
+            NoteListByRect(FRubberBandSelect);
           end;
-
-          FNoteOffset := FOldNoteOffset + (Y - FOldY);
         end;
+
+        if FZoomingMode then
+        begin
+          if ssCtrl in Shift then
+          begin
+            ZoomFactorY := FOldZoomFactorY + (X - FOldX) * 2;
+            FNoteOffset := FOldNoteOffset + Round((X - FOldX) / 5) + (Y - FOldY);
+          end
+          else
+          begin
+            FOffset := FOldLocationOffset + (X - FOldX);
+
+            if FOffset > 0 then
+            begin
+              FOffset := 0;
+            end;
+
+            FNoteOffset := FOldNoteOffset + (Y - FOldY);
+          end;
+        end;
+
+        FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
+        FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
       end;
-
-      FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
-      FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
+    end
+    else if FEditMode = emAutomationEdit then
+    begin
+      HandleAutomationEditMouseMove(Shift, X, Y);
+    end
+    else if FEditMode = emControllerEdit then
+    begin
+      HandleControllerEditMouseMove(Shift, X, Y);
     end;
-  end
-  else if FEditMode = emAutomationEdit then
-  begin
-    HandleAutomationEditMouseMove(Shift, X, Y);
-  end
-  else if FEditMode = emControllerEdit then
-  begin
-    HandleControllerEditMouseMove(Shift, X, Y);
-  end;
 
-  UpdateView(True);
+    UpdateView(True);
+  end;
 end;
 
 procedure TMidiPatternGUI.DblClick;

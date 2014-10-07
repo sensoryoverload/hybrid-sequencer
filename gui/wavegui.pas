@@ -154,6 +154,7 @@ type
     FSampleStartLocation: Integer;
     FMouseX: Integer;
     FMouseY: Integer;
+    FMouseButtonDown: Boolean;
     FMaximumVisibleRange: Integer;
 
     function ConvertScreenToTime(AX: Integer): Integer;
@@ -1009,6 +1010,7 @@ var
 begin
   FMouseX := X;
   FMouseY := Y;
+  FMouseButtonDown := True;
 
   if FEditMode = emPatternEdit then
   begin
@@ -1148,6 +1150,7 @@ var
 begin
   FMouseX := X;
   FMouseY := Y;
+  FMouseButtonDown := False;
 
   if FEditMode = emPatternEdit then
   begin
@@ -1233,14 +1236,14 @@ begin
 
     if FDragSlice then
     begin
-      Screen.Cursor := crSizeWE;
+      //Screen.Cursor := crSizeWE;
     end
     else
     begin
       lMarker := GetSliceAt(Round((lXRelative - SampleStart.Location) * FBpmAdder), FMargin);
 
       FHighlightMarker := nil;
-      Screen.Cursor := crArrow;
+      //Screen.Cursor := crArrow;
 
       if Assigned(lMarker) then
       begin
@@ -1250,7 +1253,7 @@ begin
 
           if lMarker.Locked then
           begin
-            Screen.Cursor := crSizeWE;
+        //    Screen.Cursor := crSizeWE;
           end;
         end;
       end;
@@ -1297,9 +1300,9 @@ begin
     HandleAutomationEditMouseMove(Shift, X, Y);
   end;
 
-  inherited MouseMove(Shift, X, Y);
-
   UpdateView(True);
+
+  inherited MouseMove(Shift, X, Y);
 end;
 
 procedure TWaveGUI.HandleAutomationEditMouseDown(Button: TMouseButton;
