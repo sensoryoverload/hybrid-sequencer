@@ -826,10 +826,12 @@ end;
 
 procedure TTrackView.DoOnTrackClick(Sender: TObject);
 begin
+  writeln('TTrackView.DoOnTrackClick');
   if Self.TrackType = ttNormal then
   begin
     if Assigned(SessionGrid.OnPatternRefreshGUI) then
     begin
+       writeln(Self.Model.ObjectID);
       GSettings.SelectedObject := Self.Model;
       SessionGrid.SelectTrack(Self);
       SessionGrid.OnPatternRefreshGUI(GSettings.SelectedObject);
@@ -887,17 +889,14 @@ begin
   FSessionGrid := TSessionGrid(TheOwner);
 
   FTrackControls := TControlLiteContainer.Create;
-  //FTrackControls.ParentFont := True;
   FTrackControls.Width := TRACK_WIDTH;
   FTrackControls.Height := TRACK_CONTROL_HEIGHT;
   FTrackControls.Left := 0;
   FTrackControls.Top := FSessionGrid.Height - FTrackControls.Height;
-  //FTrackControls.BevelOuter := bvRaised;
-  //FTrackControls.Parent := FSessionGrid;
   FTrackControls.OnClick := @DoOnTrackClick;
+  FTrackControls.Parent := FSessionGrid;
 
   FTarget := TListSelectLite.Create(FTrackControls);
-  //FTarget.ParentFont := True;
   FTarget.Top := 3;
   FTarget.Left := 4;
   FTarget.Height := 12;
@@ -922,6 +921,7 @@ begin
   FPanControl.ShowValue := False;
   FPanControl.OnStartChange := @BalanceStartChange;
   FPanControl.OnChange := @BalanceChange;
+  FPanControl.Parent := FTrackControls;
 
   FVolumeFader := TVolumeControlLite.Create(FTrackControls);
   FVolumeFader.Height := 140;
@@ -930,6 +930,7 @@ begin
   FVolumeFader.Top := 50;
   FVolumeFader.OnChange := @LevelChange;
   FVolumeFader.OnStartChange := @LevelStartChange;
+  FVolumeFader.Parent := FTrackControls;
 
   FActiveSwitch := TToggleControlLite.Create(FTrackControls);
   FActiveSwitch.Left := 30;
@@ -941,6 +942,7 @@ begin
   FActiveSwitch.FontSize := 10;
   FActiveSwitch.FontStyle := [fsBold];
   FActiveSwitch.OnChange := @ActiveSwitchChange;
+  FActiveSwitch.Parent := FTrackControls;
 
   FLatencyControl := TParameterControlLite.Create(FTrackControls);
   FLatencyControl.Orientation := oHorizontalLite;
@@ -955,6 +957,7 @@ begin
   FLatencyControl.ShowValue := False;
   FLatencyControl.OnStartChange := @LatencyStartChange;
   FLatencyControl.OnChange := @LatencyChange;
+  FLatencyControl.Parent := FTrackControls;
 
   FMidiPatternFlyWeight := TMidiPatternFlyWeight.Create;
   FWavePatternFlyWeight := TWavePatternFlyWeight.Create;
@@ -1763,13 +1766,15 @@ procedure TSessionGrid.SelectTrack(ASelected: TTrackView);
 var
   lTrackIndex: integer;
 begin
+  writeln(DateTimeToStr(Now) + ' --------');
   if not Assigned(ASelected) then
   begin
     // Something other than a track is clicked, so unselect all tracks
     for lTrackIndex := 0 to Pred(FTrackViewList.Count) do
     begin
-      //FTrackViewList[lTrackIndex].TrackControls.BevelInner := bvRaised;
+      FTrackViewList[lTrackIndex].TrackControls.Selected := False;
       FTrackViewList[lTrackIndex].TrackControls.Invalidate;
+      writeln(Format('%d, %s', [lTrackIndex, BoolToStr(FTrackViewList[lTrackIndex].TrackControls.Selected, True)]));
     end;
   end
   else
@@ -1779,13 +1784,15 @@ begin
     begin
       if FTrackViewList[lTrackIndex].ObjectID = ASelected.ObjectID then
       begin
-        //FTrackViewList[lTrackIndex].TrackControls.BevelInner := bvLowered;
+        FTrackViewList[lTrackIndex].TrackControls.Selected := True;
         GSettings.SelectedObject := FTrackViewList[lTrackIndex].Model;
       end
       else
       begin
-        //FTrackViewList[lTrackIndex].TrackControls.BevelInner := bvRaised;
+        FTrackViewList[lTrackIndex].TrackControls.Selected := False;
       end;
+
+      writeln(Format('%d, %s', [lTrackIndex, BoolToStr(FTrackViewList[lTrackIndex].TrackControls.Selected, True)]));
 
       FTrackViewList[lTrackIndex].TrackControls.Invalidate;
     end;

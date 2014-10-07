@@ -22,12 +22,15 @@ type
     FHeight: Integer;
     FLeft: Integer;
     FOnClick: TNotifyEvent;
+    FParent: TWinControl;
+    FSelected: Boolean;
     FTop: Integer;
     FWidth: Integer;
     FInvalidated: Boolean;
     FFocusedControl: TBaseControlLite;
 
     function FindControl(X, Y: Integer): TBaseControlLite;
+    function GetClientOrigin: TPoint;
     procedure SetHeight(AValue: Integer);
     procedure SetLeft(AValue: Integer);
     procedure SetTop(AValue: Integer);
@@ -47,10 +50,14 @@ type
     property Top: Integer read FTop write SetTop;
     property Height: Integer read FHeight write SetHeight;
     property Width: Integer read FWidth write SetWidth;
+    property Selected: Boolean read FSelected write FSelected;
+    property ClientOrigin: TPoint read GetClientOrigin;
 
     property Controls: TObjectList read FControls write FControls;
     property Canvas: TBGRABitmap read FCanvas write FCanvas;
     property OnClick: TNotifyEvent read FOnClick write FOnClick;
+
+    property Parent: TWinControl read FParent write FParent;
   end;
 
   { TBaseControlLite }
@@ -254,12 +261,27 @@ begin
   for lIndex := 0 to Pred(FControls.Count) do
   begin
     lControl := TBaseControlLite(FControls[lIndex]);
-    if (lControl.Left < X) and (lControl.Left + lControl.width > X) and
-      (lControl.Top < Y) and (lControl.Top + lControl.Height > Y) then
+    if Assigned(lControl.Parent) then
     begin
-      Result := lControl;
-      break;
+      if (lControl.Left < X) and (lControl.Left + lControl.width > X) and
+        (lControl.Top < Y) and (lControl.Top + lControl.Height > Y) then
+      begin
+        Result := lControl;
+        break;
+      end;
     end;
+  end;
+end;
+
+function TControlLiteContainer.GetClientOrigin: TPoint;
+begin
+  if Assigned(FParent) then
+  begin
+    Result := FParent.ClientOrigin;
+  end
+  else
+  begin
+    Result := Point(0, 0);
   end;
 end;
 
@@ -293,6 +315,8 @@ begin
 
   FFocusedControl := nil;
 
+  FSelected := False;
+
   FInvalidated := False;
 end;
 
@@ -312,16 +336,30 @@ procedure TControlLiteContainer.Paint;
 var
   lIndex: Integer;
   lControl: TBaseControlLite;
+  lBackColor: TColor;
 begin
+  if FSelected then
+  begin
+    lBackColor := RGBToColor(100, 100, 100);
+  end
+  else
+  begin
+    lBackColor := clLtGray;
+  end;
+  FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, lBackColor);
+
   for lIndex := 0 to Pred(FControls.Count) do
   begin
     lControl := TBaseControlLite(FControls[lIndex]);
-    if lControl.Invalidated then
+    if Assigned(lControl.Parent) then
     begin
-      lControl.Paint;
-      lControl.Invalidated := False;
+      if lControl.Invalidated then
+      begin
+        lControl.Paint;
+        lControl.Invalidated := False;
+      end;
+      FCanvas.PutImage(FLeft + lControl.Left, FTop + lControl.Top, lControl.Canvas, dmSet);
     end;
-    FCanvas.PutImage(FLeft + lControl.Left, FTop + lControl.Top, lControl.Canvas, dmSet);
   end;
 
   FInvalidated := False;
@@ -984,13 +1022,11 @@ begin
     FPopupMenu.Items.Add(lMenuItem);
   end;
 
-//  writeln(format('Popup x %d y %d', [x, y]));
-
   if Assigned(FParent) then
   begin
     FPopupMenu.PopUp(
-      Parent.Left + Self.Left,
-      Parent.Top + Self.Top + LISTITEM_HEIGHT);
+      FParent.ClientOrigin.X + Parent.Left + Self.Left,
+      FParent.ClientOrigin.Y + Parent.Top + Self.Top + LISTITEM_HEIGHT);
   end
   else
   begin
