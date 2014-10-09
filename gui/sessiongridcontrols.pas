@@ -336,17 +336,15 @@ procedure TControlLiteContainer.Paint;
 var
   lIndex: Integer;
   lControl: TBaseControlLite;
-  lBackColor: TColor;
 begin
   if FSelected then
   begin
-    lBackColor := RGBToColor(100, 100, 100);
+    FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, clWhite);
   end
   else
   begin
-    lBackColor := clLtGray;
+    FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, RGBToColor(100, 100, 100));
   end;
-  FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, lBackColor);
 
   for lIndex := 0 to Pred(FControls.Count) do
   begin
@@ -395,15 +393,15 @@ begin
       X - FFocusedControl.Left - FLeft,
       Y - FFocusedControl.Top - FTop);
     FFocusedControl := nil;
-  end
-  else
-  begin
-    // Container clicked
-    if Assigned(FOnClick) then
-    begin
-      FOnClick(Self);
-    end;
   end;
+
+  // Container clicked
+  if Assigned(FOnClick) then
+  begin
+    FOnClick(Self);
+  end;
+
+  FSelected := True;
 end;
 
 procedure TControlLiteContainer.MouseMove(Shift: TShiftState; X, Y: Integer);
@@ -1004,6 +1002,8 @@ begin
   end;
 
   FPopupMenu.Close;
+
+  Invalidate;
 end;
 
 procedure TListSelectLite.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
@@ -1084,6 +1084,8 @@ begin
 
   Width := 50;
   Height := LISTITEM_HEIGHT;
+
+  FCanvas.FontStyle := [fsBold];
 
   FInvalidated := False;
 
