@@ -226,6 +226,8 @@ type
     FMouseY: integer;
     FMouseDownL: boolean;
     FMouseDownR: boolean;
+    FOldWidth: Integer;
+    FOldHeight: Integer;
     FCurrentTrackView: TTrackView;
     FMode: TMode;
     FTempPatternName: string;
@@ -289,6 +291,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure Invalidate; override;
     procedure Update(Subject: THybridPersistentModel); reintroduce; override;
     procedure UpdateView(AForceRedraw: boolean = False); override;
     procedure EraseBackground(DC: HDC); override;
@@ -684,6 +687,11 @@ begin
       FTarget.Visible := False;
     end;
   end;
+
+  if not FSessionGrid.JustDrawCursors then
+  begin
+    FTrackControls.Invalidate;
+  end;
 end;
 
 procedure TTrackView.Render(AX, AY: integer; ABGRABitmap: TBGRABitmap);
@@ -695,42 +703,46 @@ var
 begin
   { todo sort patternlist on position, better performance when
     able to break out of the loop}
-  for lIndex := 0 to Pred(FSessionGrid.VisiblePatternCount) do
+  if FTrackControls.Invalidated then
   begin
-    lFound := False;
-
-    for lListIndex := 0 to Pred(TTrack(Model).PatternList.Count) do
+    ABGRABitmap.FillRect(Left, 0, Left + TRACK_WIDTH, SessionGrid.Height - TRACK_CONTROL_HEIGHT, ColorToBGRA(clLtGray), dmSet);
+    for lIndex := 0 to Pred(FSessionGrid.VisiblePatternCount) do
     begin
-      lPattern := TPattern(TTrack(Model).PatternList[lListIndex]);
+      lFound := False;
 
-      if lPattern.Position = lIndex + FSessionGrid.ScrollIndex then
+      for lListIndex := 0 to Pred(TTrack(Model).PatternList.Count) do
       begin
-        lFound := True;
-        break;
+        lPattern := TPattern(TTrack(Model).PatternList[lListIndex]);
+
+        if lPattern.Position = lIndex + FSessionGrid.ScrollIndex then
+        begin
+          lFound := True;
+          break;
+        end;
       end;
-    end;
 
-    if lFound then
-    begin
-      if TTrack(Model).TrackType <> ttMaster then
+      if lFound then
       begin
-        if lPattern is TMidiPattern then
+        if TTrack(Model).TrackType <> ttMaster then
         begin
-          FMidiPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+          if lPattern is TMidiPattern then
+          begin
+            FMidiPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+          end
+          else if lPattern is TWavePattern then
+          begin
+            FWavePatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+          end;
         end
-        else if lPattern is TWavePattern then
+        else
         begin
-          FWavePatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+          FMasterPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
         end;
       end
       else
       begin
-        FMasterPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+        FNullPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, nil);
       end;
-    end
-    else
-    begin
-      FNullPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, nil);
     end;
   end;
 
@@ -1215,6 +1227,11 @@ begin
   inherited Destroy;
 end;
 
+procedure TSessionGrid.Invalidate;
+begin
+  inherited Invalidate;
+end;
+
 {
   This update method has the function of analysing what actually changed based on the
   subject classtype and subsequently only updates what's necessary.
@@ -1230,6 +1247,8 @@ procedure TSessionGrid.UpdateView(AForceRedraw: boolean = False);
 var
   lIndex: integer;
 begin
+  if not Assigned(FTrackViewList) then exit;
+
   if AForceRedraw then
   begin
     FIsDirty := True;
@@ -1268,46 +1287,33 @@ begin
     TTrackView(FTrackViewList[lIndex]).UpdateView(True);
   end;
 
-//  FJustDrawCursors := False;
-
   Invalidate;
 end;
 
 procedure TSessionGrid.EraseBackground(DC: HDC);
 begin
-  inherited EraseBackground(DC);
+  //inherited EraseBackground(DC);
 end;
 
 procedure TSessionGrid.Paint;
 begin
-  {if FJustDrawCursors then
+  // Draw the tracks
+  DrawTrackList(FBGRABitmap);
+
+  // Draw dragging
+  if FDragging then
   begin
-    FJustDrawCursors := False;
-
-    FBGRABitmap.Draw(Canvas, 0, 0, True);
-
-    DrawCursors(Canvas);
-  end
-  else}
-  begin
-    FBGRABitmap.FillRect(0, 0, Width, Height, ColorToBGRA(clLtGray), dmSet);
-
-    // Draw the tracks
-    DrawTrackList(FBGRABitmap);
-
-    // Draw dragging
-    if FDragging then
-    begin
-      FDraggedPattern.Render(
-        FMouseX - FDragStart.XOffset,
-        FMouseY - FDragStart.YOffset,
-        FBGRABitmap, FSelectedPattern);
-    end;
-
-    FBGRABitmap.Draw(Canvas, 0, 0, True);
-
-    DrawCursors(Canvas);
+    FDraggedPattern.Render(
+      FMouseX - FDragStart.XOffset,
+      FMouseY - FDragStart.YOffset,
+      FBGRABitmap, FSelectedPattern);
   end;
+
+  FBGRABitmap.Draw(Canvas, 0, 0, True);
+
+  DrawCursors(Canvas);
+
+  FJustDrawCursors := False;
 end;
 
 procedure TSessionGrid.DrawCursors(ACanvas: TCanvas);
@@ -2077,30 +2083,34 @@ procedure TSessionGrid.ReSize;
 var
   lIndex: integer;
 begin
-  inherited;
-
-  if Assigned(FBGRABitmap) then
+  if (Width <> FOldWidth) or (Height <> FOldHeight) then
   begin
-    FBGRABitmap.Free;
-  end;
-  FBGRABitmap := TBGRABitmap.Create(Width, Height);
+    FOldWidth := Width;
+    FOldHeight := Height;
 
-  FVisiblePatternCount := (Height - TRACK_CONTROL_HEIGHT) div PATTERN_HEIGHT;
-
-  if Assigned(FTrackViewList) then
-  begin
-    for lIndex := 0 to Pred(FTrackViewList.Count) do
+    if Assigned(FBGRABitmap) then
     begin
-      FTrackViewList[lIndex].TrackControls.Top :=
-        Height - FTrackViewList[lIndex].TrackControls.Height;
+      FBGRABitmap.Free;
+    end;
+    FBGRABitmap := TBGRABitmap.Create(Width, Height);
+
+    FVisiblePatternCount := (Height - TRACK_CONTROL_HEIGHT) div PATTERN_HEIGHT;
+
+    if Assigned(FTrackViewList) then
+    begin
+      for lIndex := 0 to Pred(FTrackViewList.Count) do
+      begin
+        FTrackViewList[lIndex].TrackControls.Top :=
+          Height - FTrackViewList[lIndex].TrackControls.Height;
+      end;
+
+      CalculateTrackOffsets;
     end;
 
-    CalculateTrackOffsets;
+    UpdateView(True);
   end;
 
-  FJustDrawCursors := False;
-
-  Invalidate;
+  inherited;
 end;
 
 function TSessionGrid.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): boolean;

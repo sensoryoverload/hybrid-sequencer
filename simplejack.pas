@@ -1143,6 +1143,8 @@ begin
     FSessionGrid.UpdateView;
     FPatternView.UpdateView;
 
+    Application.ProcessMessages;
+
     Inc(FMediumPriorityInterval);
     if FMediumPriorityInterval > 5 then
       FMediumPriorityInterval := 0;

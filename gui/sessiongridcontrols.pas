@@ -58,6 +58,7 @@ type
     property OnClick: TNotifyEvent read FOnClick write FOnClick;
 
     property Parent: TWinControl read FParent write FParent;
+    property Invalidated: Boolean read FInvalidated;
   end;
 
   { TBaseControlLite }
@@ -73,15 +74,18 @@ type
     FWidth: Integer;
     FInvalidated: Boolean;
     procedure SetHeight(AValue: Integer);
+    procedure SetLeft(AValue: Integer);
+    procedure SetTop(AValue: Integer);
     procedure SetWidth(AValue: Integer);
     procedure ResizeCanvas;
   public
     constructor Create(AOwner: TControlLiteContainer); virtual;
     destructor Destroy; override;
     procedure Paint; virtual;
+    procedure Invalidate;
 
-    property Left: Integer read FLeft write FLeft;
-    property Top: Integer read FTop write FTop;
+    property Left: Integer read FLeft write SetLeft;
+    property Top: Integer read FTop write SetTop;
     property Height: Integer read FHeight write SetHeight;
     property Width: Integer read FWidth write SetWidth;
     property Canvas: TBGRABitmap read FCanvas write FCanvas;
@@ -92,7 +96,6 @@ type
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); virtual;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y:Integer); virtual;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); virtual;
-    procedure Invalidate;
   end;
 
   TOrientationLite = (oHorizontalLite, oVerticalLite, oBalanceLite);
@@ -127,7 +130,6 @@ type
     procedure UpdateScale;
   public
     constructor Create(AOwner : TControlLiteContainer); override;
-    destructor Destroy; override;
     procedure Paint; override;
     property MidiMappingMode: Boolean read FMidiMappingMode write FMidiMappingMode;
   published
@@ -289,24 +291,28 @@ procedure TControlLiteContainer.SetHeight(AValue: Integer);
 begin
   if FHeight=AValue then Exit;
   FHeight:=AValue;
+  Invalidate;
 end;
 
 procedure TControlLiteContainer.SetLeft(AValue: Integer);
 begin
   if FLeft=AValue then Exit;
   FLeft:=AValue;
+  Invalidate;
 end;
 
 procedure TControlLiteContainer.SetTop(AValue: Integer);
 begin
   if FTop=AValue then Exit;
   FTop:=AValue;
+  Invalidate;
 end;
 
 procedure TControlLiteContainer.SetWidth(AValue: Integer);
 begin
   if FWidth=AValue then Exit;
   FWidth:=AValue;
+  Invalidate;
 end;
 
 constructor TControlLiteContainer.Create;
@@ -337,13 +343,17 @@ var
   lIndex: Integer;
   lControl: TBaseControlLite;
 begin
-  if FSelected then
+  if FInvalidated then
   begin
-    FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, clWhite);
-  end
-  else
-  begin
-    FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, RGBToColor(100, 100, 100));
+    FCanvas.FillRect(FLeft + 1, FTop + 1, FLeft + FWidth - 1, FTop + FHeight - 1, ColorToBGRA(clLtGray), dmSet);
+    if FSelected then
+    begin
+      FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, clWhite);
+    end
+    else
+    begin
+      FCanvas.Rectangle(FLeft, FTop, FLeft + FWidth, FTop + FHeight, RGBToColor(100, 100, 100));
+    end;
   end;
 
   for lIndex := 0 to Pred(FControls.Count) do
@@ -355,8 +365,8 @@ begin
       begin
         lControl.Paint;
         lControl.Invalidated := False;
+        FCanvas.PutImage(FLeft + lControl.Left, FTop + lControl.Top, lControl.Canvas, dmSet);
       end;
-      FCanvas.PutImage(FLeft + lControl.Left, FTop + lControl.Top, lControl.Canvas, dmSet);
     end;
   end;
 
@@ -364,8 +374,16 @@ begin
 end;
 
 procedure TControlLiteContainer.Invalidate;
+var
+  lIndex: Integer;
+  lControl: TBaseControlLite;
 begin
   FInvalidated := True;
+
+  for lIndex := 0 to Pred(FControls.Count) do
+  begin
+    TBaseControlLite(FControls[lIndex]).Invalidate;
+  end;
 end;
 
 procedure TControlLiteContainer.MouseDown(Button: TMouseButton;
@@ -422,6 +440,22 @@ begin
   ResizeCanvas;
 end;
 
+procedure TBaseControlLite.SetLeft(AValue: Integer);
+begin
+  if FLeft=AValue then Exit;
+  FLeft:=AValue;
+
+  ResizeCanvas;
+end;
+
+procedure TBaseControlLite.SetTop(AValue: Integer);
+begin
+  if FTop=AValue then Exit;
+  FTop:=AValue;
+
+  ResizeCanvas;
+end;
+
 procedure TBaseControlLite.SetWidth(AValue: Integer);
 begin
   if FWidth=AValue then Exit;
@@ -442,6 +476,11 @@ end;
 constructor TBaseControlLite.Create(AOwner: TControlLiteContainer);
 begin
   AOwner.Add(Self);
+
+  FWidth := 0;
+  FHeight := 0;
+
+  ResizeCanvas;
 
   FVisible := True;
 end;
@@ -487,6 +526,7 @@ end;
 
 procedure TParameterControlLite.SetValue(const AValue: Single);
 begin
+  if FValue = AValue then exit;
   FValue := AValue;
 
   if (FOrientation = oHorizontalLite) or (FOrientation = oBalanceLite) then
@@ -503,6 +543,7 @@ end;
 
 procedure TParameterControlLite.SetMax(AValue: Single);
 begin
+  if FMax = AValue then exit;
   FMax := AValue;
 
   UpdateScale;
@@ -512,17 +553,20 @@ procedure TParameterControlLite.SetCaption(AValue: string);
 begin
   if FCaption = AValue then Exit;
   FCaption := AValue;
+  Invalidate;
 end;
 
 procedure TParameterControlLite.SetMin(AValue: Single);
 begin
+  if FMin = AValue then exit;
   FMin := AValue;
-
   UpdateScale;
+  Invalidate;
 end;
 
 procedure TParameterControlLite.SetOrientation(AValue: TOrientationLite);
 begin
+  if FOrientation = AValue then exit;
   FOrientation := AValue;
   if (Orientation = oHorizontalLite) or (Orientation = oBalanceLite) then
   begin
@@ -534,12 +578,14 @@ begin
     Width := 13;
     Height := Size;
   end;
+  Invalidate;
 end;
 
 procedure TParameterControlLite.SetSize(AValue: Integer);
 begin
   if FSize = AValue then Exit;
   FSize := AValue;
+  Invalidate;
 end;
 
 constructor TParameterControlLite.Create(AOwner: TControlLiteContainer);
@@ -549,12 +595,9 @@ begin
   Size := 100;
   ShowValue := True;
 
-  FChanging := False;
-end;
+  Canvas.FontStyle := [fsBold];
 
-destructor TParameterControlLite.Destroy;
-begin
-  inherited Destroy;
+  FChanging := False;
 end;
 
 procedure TParameterControlLite.Paint;
@@ -563,7 +606,6 @@ var
 begin
   if FInvalidated then
   begin
-    Canvas.FontStyle := [fsBold];
     if Orientation = oBalanceLite then
     begin
       Canvas.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
@@ -695,10 +737,10 @@ end;
 
 procedure TParameterControlLite.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
-  UpdateScreenValue(X, Y);
-
   if FChanging then
   begin
+    UpdateScreenValue(X, Y);
+
     if Assigned(FOnChange) then
     begin
       FOnChange(Self);
@@ -712,19 +754,24 @@ end;
 
 procedure TToggleControlLite.SetCaptionOff(const AValue: string);
 begin
+  if FCaptionOff = AValue then exit;
   FCaptionOff:= AValue;
   FCaption:= FCaptionOff;
+  Invalidate;
 end;
 
 procedure TToggleControlLite.SetCaptionOn(const AValue: string);
 begin
+  if FCaptionOn = AValue then exit;
   FCaptionOn:= AValue;
+  Invalidate;
 end;
 
 procedure TToggleControlLite.SetColor(AValue: TColor);
 begin
   if FColor=AValue then Exit;
   FColor:=AValue;
+  Invalidate;
 end;
 
 procedure TToggleControlLite.SetSwitchedOn(const AValue: Boolean);
