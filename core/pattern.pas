@@ -520,7 +520,6 @@ var
   lIndex: Integer;
   lIndex2: Integer;
   lAutomationDataList: TAutomationDataList;
-  lAutomationData: TAutomationData;
 begin
   OkToPlay := True;
 

@@ -304,8 +304,6 @@ type
 
     // Engine
     FMidiDataCursor: TMidiData;
-    FWindowStart: Single;
-    FWindowEnd: Single;
     FLooped: Boolean;
 
     FMidiBuffer: TMidiBuffer;

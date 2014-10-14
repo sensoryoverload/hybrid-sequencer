@@ -254,7 +254,6 @@ type
 
     procedure CalculateTrackOffsets;
     procedure CreateTrackType(ATrackType: TTrackType);
-    procedure DrawCursors(ACanvas: TCanvas);
     procedure DrawTrackList(ABGRABitmap: TBGRABitmap);
     procedure GetDragPosition(X, Y: integer; var ADragPosition: TDragPosition);
     procedure DoRenamePattern(Sender: TObject);
@@ -462,6 +461,7 @@ var
   pts: array of TPointF;
   lTrimmedPatternName: string;
   lColor: TColor;
+  lCursor: Integer;
 begin
   // Give selected pattern a white color
   if Assigned(APattern) and (APattern = GSettings.SelectedObject) then
@@ -506,6 +506,9 @@ begin
       X + 24, Y + 1,
       Format('%s', [lTrimmedPatternName]),
       ColorToBGRA(clBtnText));
+
+    lCursor := Round(APattern.PatternCursor * (TRACK_WIDTH / APattern.LoopEnd.Value));
+    ABGRABitmap.DrawVertLine(X + lCursor, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clRed));
   end;
 end;
 
@@ -517,6 +520,7 @@ var
   pts: array of TPointF;
   lTrimmedPatternName: string;
   lColor: TColor;
+  lCursor: Integer;
 begin
   // Give selected pattern a white color
   if Assigned(APattern) and (APattern = GSettings.SelectedObject) then
@@ -559,6 +563,9 @@ begin
     X + 24, Y + 1,
     Format('%s', [lTrimmedPatternName]),
     ColorToBGRA(clBtnText));
+
+  lCursor := Round(APattern.PatternCursor * (TRACK_WIDTH / APattern.LoopEnd.Value));
+  ABGRABitmap.DrawVertLine(X + lCursor, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clRed));
 end;
 
 function TTrackViewList.Add(ATrackView: TTrackView): integer;
@@ -703,48 +710,43 @@ var
   lPattern: TPattern;
   lFound: boolean;
 begin
-  { todo sort patternlist on position, better performance when
-    able to break out of the loop}
-  if FTrackControls.Invalidated then
+  ABGRABitmap.FillRect(Left, 0, Left + TRACK_WIDTH, SessionGrid.Height - TRACK_CONTROL_HEIGHT, ColorToBGRA(clLtGray), dmSet);
+  for lIndex := 0 to Pred(FSessionGrid.VisiblePatternCount) do
   begin
-    ABGRABitmap.FillRect(Left, 0, Left + TRACK_WIDTH, SessionGrid.Height - TRACK_CONTROL_HEIGHT, ColorToBGRA(clLtGray), dmSet);
-    for lIndex := 0 to Pred(FSessionGrid.VisiblePatternCount) do
+    lFound := False;
+
+    for lListIndex := 0 to Pred(TTrack(Model).PatternList.Count) do
     begin
-      lFound := False;
+      lPattern := TPattern(TTrack(Model).PatternList[lListIndex]);
 
-      for lListIndex := 0 to Pred(TTrack(Model).PatternList.Count) do
+      if lPattern.Position = lIndex + FSessionGrid.ScrollIndex then
       begin
-        lPattern := TPattern(TTrack(Model).PatternList[lListIndex]);
-
-        if lPattern.Position = lIndex + FSessionGrid.ScrollIndex then
-        begin
-          lFound := True;
-          break;
-        end;
+        lFound := True;
+        break;
       end;
+    end;
 
-      if lFound then
+    if lFound then
+    begin
+      if TTrack(Model).TrackType <> ttMaster then
       begin
-        if TTrack(Model).TrackType <> ttMaster then
+        if lPattern is TMidiPattern then
         begin
-          if lPattern is TMidiPattern then
-          begin
-            FMidiPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
-          end
-          else if lPattern is TWavePattern then
-          begin
-            FWavePatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
-          end;
+          FMidiPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
         end
-        else
+        else if lPattern is TWavePattern then
         begin
-          FMasterPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
+          FWavePatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
         end;
       end
       else
       begin
-        FNullPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, nil);
+        FMasterPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, lPattern);
       end;
+    end
+    else
+    begin
+      FNullPatternFlyWeight.Render(Left, lIndex * PATTERN_HEIGHT, ABGRABitmap, nil);
     end;
   end;
 
@@ -1313,22 +1315,7 @@ begin
 
   FBGRABitmap.Draw(Canvas, 0, 0, True);
 
-  DrawCursors(Canvas);
-
   FJustDrawCursors := False;
-end;
-
-procedure TSessionGrid.DrawCursors(ACanvas: TCanvas);
-var
-  lIndex: integer;
-begin
-  if not Assigned(Model) then
-    exit;
-
-  for lIndex := 0 to Pred(FTrackViewList.Count) do
-  begin
-    FTrackViewList[lIndex].RenderCursor(ACanvas);
-  end;
 end;
 
 procedure TSessionGrid.DrawTrackList(ABGRABitmap: TBGRABitmap);
@@ -1751,6 +1738,7 @@ begin
 
         GCommandQueue.PushCommand(lCreatePattern);
 
+        FJustDrawCursors := False;
         UpdateView(True);
       except
         lCreatePattern.Free;
@@ -2010,6 +1998,7 @@ begin
     FCurrentTrackView := nil;
   end;
 
+  FJustDrawCursors := False;
   UpdateView(True);
 
   inherited MouseUp(Button, Shift, X, Y);
@@ -2118,6 +2107,7 @@ begin
       CalculateTrackOffsets;
     end;
 
+    FJustDrawCursors := False;
     UpdateView(True);
   end;
 
