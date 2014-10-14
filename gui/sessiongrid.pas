@@ -215,6 +215,8 @@ type
     FTrackNormalCount: integer;
     FTrackReturnCount: integer;
     FVisiblePatternCount: integer;
+    FNormalTrackTotalWidth: Integer;
+    FRoutingSectionTotalWidth: Integer;
     FJustDrawCursors: boolean;
     FDragging: boolean;
     FMouseDownX: integer;
@@ -1336,6 +1338,13 @@ begin
   if not Assigned(Model) then
     exit;
 
+  ABGRABitmap.FillRect(
+    FNormalTrackTotalWidth,
+    0,
+    Width - FRoutingSectionTotalWidth,
+    Height,
+    ColorToBGRA(clLtGray), dmSet);
+
   for lIndex := 0 to Pred(FTrackViewList.Count) do
   begin
     FTrackViewList[lIndex].Render(0, 0, ABGRABitmap);
@@ -1657,7 +1666,9 @@ begin
       end;
     end;
   end;
-
+  FNormalTrackTotalWidth := lTrackNormalIndex * TRACK_WIDTH;
+  FRoutingSectionTotalWidth :=
+    (lTrackReturnIndex + lTrackGroupIndex + lTrackMasterIndex) * TRACK_WIDTH;
 end;
 
 procedure TSessionGrid.CreateTrackGUI(AObjectID: string);
