@@ -210,7 +210,6 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
   public
     constructor Create(AOwner : TControlLiteContainer); override;
-    destructor Destroy; override;
     procedure Paint; override;
     procedure Update; reintroduce;
     procedure UpdateControl;
@@ -242,7 +241,6 @@ type
     constructor Create(AOwner : TControlLiteContainer); override;
     destructor Destroy; override;
     procedure Paint; override;
-    procedure Invalidate;
   published
     property Items: TStringList read FItems write FItems;
     property ItemIndex: Integer read FItemIndex write SetItemIndex;
@@ -547,6 +545,7 @@ begin
   FMax := AValue;
 
   UpdateScale;
+  Invalidate;
 end;
 
 procedure TParameterControlLite.SetCaption(AValue: string);
@@ -594,6 +593,7 @@ begin
 
   Size := 100;
   ShowValue := True;
+  FValue := 0.0000001; // Autoinitialize
 
   Canvas.FontStyle := [fsBold];
 
@@ -604,54 +604,51 @@ procedure TParameterControlLite.Paint;
 var
   lCaption: string;
 begin
-  if FInvalidated then
+  if Orientation = oBalanceLite then
   begin
-    if Orientation = oBalanceLite then
+    Canvas.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+    Canvas.Rectangle(Width div 2, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+    Canvas.DrawVertLine(Width div 2, 0, Height, ColorToBGRA(clGray));
+    Canvas.FontHeight := Height - 1;
+    if ShowValue then
     begin
-      Canvas.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
-      Canvas.Rectangle(Width div 2, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
-      Canvas.DrawVertLine(Width div 2, 0, Height, ColorToBGRA(clGray));
-      Canvas.FontHeight := Height - 1;
-      if ShowValue then
-      begin
-        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
-      end
-      else
-      begin
-        lCaption := FCaption
-      end;
-      Canvas.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+      lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
     end
-    else if Orientation = oHorizontalLite then
+    else
     begin
-      Canvas.Rectangle(0, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
-      Canvas.Rectangle(FScreenValue, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
-      Canvas.FontHeight := Height - 1;
-      if ShowValue then
-      begin
-        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
-      end
-      else
-      begin
-        lCaption := FCaption
-      end;
-      Canvas.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
-    end
-    else if Orientation = oVerticalLite then
-    begin
-      Canvas.Rectangle(0, 0, Width, FScreenValue, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
-      Canvas.Rectangle(0, FScreenValue, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
-      Canvas.FontHeight := Width - 2;
-      if ShowValue then
-      begin
-        lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
-      end
-      else
-      begin
-        lCaption := FCaption
-      end;
-      Canvas.TextOut(1, 1, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+      lCaption := FCaption
     end;
+    Canvas.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+  end
+  else if Orientation = oHorizontalLite then
+  begin
+    Canvas.Rectangle(0, 0, FScreenValue, Height, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+    Canvas.Rectangle(FScreenValue, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+    Canvas.FontHeight := Height - 1;
+    if ShowValue then
+    begin
+      lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
+    end
+    else
+    begin
+      lCaption := FCaption
+    end;
+    Canvas.TextOut(1, 0, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
+  end
+  else if Orientation = oVerticalLite then
+  begin
+    Canvas.Rectangle(0, 0, Width, FScreenValue, ColorToBGRA(clBlack), ColorToBGRA(clGray), dmSet);
+    Canvas.Rectangle(0, FScreenValue, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+    Canvas.FontHeight := Width - 2;
+    if ShowValue then
+    begin
+      lCaption := FCaption + ' ' + FormatFloat('#.#', FValue)
+    end
+    else
+    begin
+      lCaption := FCaption
+    end;
+    Canvas.TextOut(1, 1, lCaption, ColorToBGRA(ColorToRGB(clBtnText)));
   end;
 end;
 
@@ -799,31 +796,28 @@ end;
 
 procedure TToggleControlLite.Paint;
 begin
-  if FInvalidated then
-  begin
-    Canvas.FillRect(0, 0, Width, Height, ColorToBGRA(clGray), dmSet);
-    Canvas.FontHeight := FFontSize;
-    Canvas.FontStyle := FFontStyle;
+  Canvas.FillRect(0, 0, Width, Height, ColorToBGRA(clGray), dmSet);
+  Canvas.FontHeight := FFontSize;
+  Canvas.FontStyle := FFontStyle;
 
-    if FSwitchedOn then
-      FCaption := FCaptionOn
-    else
-      FCaption := FCaptionOff;
+  if FSwitchedOn then
+    FCaption := FCaptionOn
+  else
+    FCaption := FCaptionOff;
 
-    // Outline color
-    Canvas.PenStyle := psSolid;
+  // Outline color
+  Canvas.PenStyle := psSolid;
 
-    if FSwitchedOn then
-      Canvas.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(FColor), dmSet)
-    else
-      Canvas.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
+  if FSwitchedOn then
+    Canvas.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(FColor), dmSet)
+  else
+    Canvas.Rectangle(0, 0, Width, Height, ColorToBGRA(clBlack), ColorToBGRA(clLtGray), dmSet);
 
-    Canvas.TextOut(
-      (Width shr 1) - (Canvas.TextSize(FCaption).cx shr 1),
-      1,
-      FCaption,
-      ColorToBGRA(ColorToRGB(clBtnText)));
-  end;
+  Canvas.TextOut(
+    (Width shr 1) - (Canvas.TextSize(FCaption).cx shr 1),
+    1,
+    FCaption,
+    ColorToBGRA(ColorToRGB(clBtnText)));
 end;
 
 procedure TToggleControlLite.UpdateControl;
@@ -918,12 +912,6 @@ begin
   FFaderMoving:= False;
 end;
 
-destructor TVolumeControlLite.Destroy;
-begin
-
-  inherited Destroy;
-end;
-
 procedure TVolumeControlLite.Paint;
 const
   FADER_HEIGHT = 24;
@@ -933,42 +921,38 @@ var
   i: Integer;
   ChannelOffset: Integer;
 begin
-  if FInvalidated then
+  // Draws the background
+  Canvas.FillRect(0, 0, Width, Height, clLtGray);
+
+  // Draw Levels for all channels
+  for i := 0 to ChannelCount - 1 do
   begin
-    // Draws the background
-//    Canvas.FillRect(0, 0, Width, Height, clBtnFace);
-    Canvas.FillRect(0, 0, Width, Height, clLtGray);
+    ChannelOffset := i * 5 + 11;
+    HeightScale:= Round(Height * ChannelLevel[i]);
 
-    // Draw Levels for all channels
-    for i := 0 to ChannelCount - 1 do
-    begin
-      ChannelOffset := i * 5 + 11;
-      HeightScale:= Round(Height * ChannelLevel[i]);
+    // In the RED!
+    Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, 20, clRed);
 
-      // In the RED!
-      Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, 20, clRed);
+    // You've been warned
+    Canvas.FillRect(ChannelOffset, 21, ChannelOffset + 4, 40, clYellow);
 
-      // You've been warned
-      Canvas.FillRect(ChannelOffset, 21, ChannelOffset + 4, 40, clYellow);
+    // Behaving signal
+    Canvas.FillRect(ChannelOffset, 41, ChannelOffset + 4, Height - 1, clLime);
 
-      // Behaving signal
-      Canvas.FillRect(ChannelOffset, 41, ChannelOffset + 4, Height - 1, clLime);
-
-      // Signal level
-      Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, Height - HeightScale, clLtGray);
-    end;
-
-    Canvas.FillRect(4, 0, 6, Height, RGBToColor(50, 50, 50));
-
-    // Draw FaderHandle
-    FY := Round(Height - FADER_HEIGHT_HALF - (FPosition * ((Height - FADER_HEIGHT) * DIVBY100)));
-    Canvas.RoundRect(
-      0, FY - FADER_HEIGHT_HALF, 10, FY + FADER_HEIGHT_HALF,
-      4, 4,
-      ColorToBGRA(RGBToColor(50, 50, 50)), ColorToBGRA(RGBToColor(255, 255, 255)));
-
-    Canvas.FillRect(0, FY - 1, 10, FY + 1, RGBToColor(50, 50, 50));
+    // Signal level
+    Canvas.FillRect(ChannelOffset, 1, ChannelOffset + 4, Height - HeightScale, clLtGray);
   end;
+
+  Canvas.FillRect(4, 0, 6, Height, RGBToColor(50, 50, 50));
+
+  // Draw FaderHandle
+  FY := Round(Height - FADER_HEIGHT_HALF - (FPosition * ((Height - FADER_HEIGHT) * DIVBY100)));
+  Canvas.RoundRect(
+    0, FY - FADER_HEIGHT_HALF, 10, FY + FADER_HEIGHT_HALF,
+    4, 4,
+    ColorToBGRA(RGBToColor(50, 50, 50)), ColorToBGRA(RGBToColor(255, 255, 255)));
+
+  Canvas.FillRect(0, FY - 1, 10, FY + 1, RGBToColor(50, 50, 50));
 end;
 
 procedure TVolumeControlLite.Update;
@@ -990,6 +974,8 @@ begin
     FOnStartChange(Self);
 
   FFaderMoving := True;
+
+  Invalidate;
 end;
 
 procedure TVolumeControlLite.MouseUp(Button: TMouseButton; Shift: TShiftState; X,
@@ -1001,6 +987,8 @@ begin
     FOnEndChange(Self);
 
   FFaderMoving := False;
+
+  Invalidate;
 end;
 
 procedure TVolumeControlLite.MouseMove(Shift: TShiftState; X, Y: Integer);
@@ -1085,41 +1073,31 @@ end;
 
 procedure TListSelectLite.Paint;
 begin
-  if FInvalidated then
-  begin
-    Height := LISTITEM_HEIGHT;
-    Canvas.Rectangle(
-      0,
-      0,
-      Width,
-      Height,
-      ColorToBGRA(clBlack),
-      ColorToBGRA(clLtGray),
-      dmSet);
+  Height := LISTITEM_HEIGHT;
+  Canvas.Rectangle(
+    0,
+    0,
+    Width,
+    Height,
+    ColorToBGRA(clBlack),
+    ColorToBGRA(clLtGray),
+    dmSet);
 
-    if FVisible then
+  if FVisible then
+  begin
+    if FItemIndex < FItems.Count then
     begin
-      if FItemIndex < FItems.Count then
+      if FItemIndex <> -1 then
       begin
-        if FItemIndex <> -1 then
-        begin
-          Canvas.FontHeight := LISTITEM_HEIGHT - 4;
-          Canvas.TextOut(
-            1,
-            1,
-            FItems[FItemIndex],
-            ColorToBGRA(ColorToRGB(clBtnText)));
-        end;
+        Canvas.FontHeight := LISTITEM_HEIGHT - 4;
+        Canvas.TextOut(
+          1,
+          1,
+          FItems[FItemIndex],
+          ColorToBGRA(ColorToRGB(clBtnText)));
       end;
     end;
-
-    FInvalidated := False;
   end;
-end;
-
-procedure TListSelectLite.Invalidate;
-begin
-  FInvalidated := True;
 end;
 
 constructor TListSelectLite.Create(AOwner: TControlLiteContainer);

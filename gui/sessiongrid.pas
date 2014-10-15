@@ -203,6 +203,7 @@ type
     FUpdateSubject: THybridPersistentModel;
     FIsDirty: boolean;
     FBGRABitmap: TBGRABitmap;
+    FBGRABitmapDragging: TBGRABitmap;
     FDragStart: TDragPosition;
     FDragDrop: TDragPosition;
     FDraggedPattern: TPatternFlyWeight;
@@ -481,6 +482,13 @@ begin
 
   ABGRABitmap.DrawVertLine(X + 15, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clBlue));
 
+  lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
+  ABGRABitmap.FontHeight := 12;
+  ABGRABitmap.TextOut(
+    X + 24, Y + 1,
+    Format('%s', [lTrimmedPatternName]),
+    ColorToBGRA(clBtnText));
+
   if Assigned(APattern) then
   begin
     if APattern.Playing then
@@ -490,6 +498,9 @@ begin
         Y + 4,
         X + 11,
         Y + 11, ColorToBGRA(clBlue));
+
+      lCursor := Round(APattern.PatternCursor * (TRACK_WIDTH / APattern.LoopEnd.Value));
+      ABGRABitmap.DrawVertLine(X + lCursor, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clRed));
     end
     else
     begin
@@ -499,18 +510,9 @@ begin
       pts[2] := PointF(X + 4, Y + 11);
       ABGRABitmap.FillPolyAntialias(pts, ColorToBGRA(clBlue));
     end;
-
-    lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
-    ABGRABitmap.FontHeight := 12;
-    ABGRABitmap.TextOut(
-      X + 24, Y + 1,
-      Format('%s', [lTrimmedPatternName]),
-      ColorToBGRA(clBtnText));
-
-    lCursor := Round(APattern.PatternCursor * (TRACK_WIDTH / APattern.LoopEnd.Value));
-    ABGRABitmap.DrawVertLine(X + lCursor, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clRed));
   end;
 end;
+
 
 { TMidiPatternFlyWeight }
 
@@ -531,6 +533,7 @@ begin
   begin
     lColor := clGray;
   end;
+
   ABGRABitmap.Rectangle(
     X,
     Y,
@@ -540,6 +543,13 @@ begin
 
   ABGRABitmap.DrawVertLine(X + 15, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clBlue));
 
+  lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
+  ABGRABitmap.FontHeight := 12;
+  ABGRABitmap.TextOut(
+    X + 24, Y + 1,
+    Format('%s', [lTrimmedPatternName]),
+    ColorToBGRA(clBtnText));
+
   if APattern.Playing then
   begin
     ABGRABitmap.FillRectAntialias(
@@ -547,6 +557,9 @@ begin
       Y + 4,
       X + 11,
       Y + 11, ColorToBGRA(clBlue));
+
+    lCursor := Round(APattern.PatternCursor * (TRACK_WIDTH / APattern.LoopEnd.Value));
+    ABGRABitmap.DrawVertLine(X + lCursor, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clRed));
   end
   else
   begin
@@ -556,16 +569,6 @@ begin
     pts[2] := PointF(X + 4, Y + 11);
     ABGRABitmap.FillPolyAntialias(pts, ColorToBGRA(clBlue));
   end;
-
-  lTrimmedPatternName := RightStr(APattern.PatternName, TRACK_WIDTH div 8);
-  ABGRABitmap.FontHeight := 12;
-  ABGRABitmap.TextOut(
-    X + 24, Y + 1,
-    Format('%s', [lTrimmedPatternName]),
-    ColorToBGRA(clBtnText));
-
-  lCursor := Round(APattern.PatternCursor * (TRACK_WIDTH / APattern.LoopEnd.Value));
-  ABGRABitmap.DrawVertLine(X + lCursor, Y, Y + PATTERN_HEIGHT, ColorToBGRA(clRed));
 end;
 
 function TTrackViewList.Add(ATrackView: TTrackView): integer;
@@ -1116,6 +1119,7 @@ begin
   DoubleBuffered := False;
 
   FBGRABitmap := TBGRABitmap.Create(Width, Height);
+  FBGRABitmapDragging := TBGRABitmap.Create(TRACK_WIDTH, PATTERN_HEIGHT);
 
   ReSize;
 
@@ -1228,6 +1232,8 @@ begin
 
   FBGRABitmap.Free;
 
+  FBGRABitmapDragging.Free;
+
   inherited Destroy;
 end;
 
@@ -1304,16 +1310,22 @@ begin
   // Draw the tracks
   DrawTrackList(FBGRABitmap);
 
-  // Draw dragging
+  FBGRABitmap.Draw(Canvas, 0, 0, True);
+
   if FDragging then
   begin
     FDraggedPattern.Render(
+      0,
+      0,
+      FBGRABitmapDragging,
+      FSelectedPattern);
+
+    FBGRABitmapDragging.Draw(
+      Canvas,
       FMouseX - FDragStart.XOffset,
       FMouseY - FDragStart.YOffset,
-      FBGRABitmap, FSelectedPattern);
+      True);
   end;
-
-  FBGRABitmap.Draw(Canvas, 0, 0, True);
 
   FJustDrawCursors := False;
 end;
@@ -2009,16 +2021,10 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  // Detect start of dragging
   if FMouseDownL and (not FDragging) and Assigned(FSelectedPattern) then
   begin
     FDragging :=
       (abs(FMouseDownX - X) > 5) or (abs(FMouseDownY - Y) > 5);
-  end;
-
-  if FMouseDownL then
-  begin
-    Invalidate;
   end;
 
   FLastMouseX := X;
