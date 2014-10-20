@@ -663,7 +663,10 @@ begin
         // Only mix if there is a target configured
         if Assigned(lTrack.TargetTrack) then
         begin
-          MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+          if Assigned(lTrack.TargetTrack.InputBuffer) then
+          begin
+            MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+          end;
         end;
       end
       else
@@ -759,6 +762,7 @@ end;
 procedure TMainApp.acUndoExecute(Sender: TObject);
 var
   lCommand: TCommand;
+  lCommandClassName: string;
   lTrimIndex: Integer;
 begin
   // Undo
@@ -770,7 +774,11 @@ begin
     if Assigned(lCommand) then
     begin
       try
-        DBLog(Format('Rolling back command class: %s', [lCommand.ClassName]));
+        lCommandClassName := lCommand.ClassName;
+
+        DBLog('------------------------------------------------');
+        DBLog('start rollback TCommand.Rollback: ' + lCommandClassName);
+
         lCommand.Initialize;
         lCommand.Rollback;
         lCommand.Finalize;
@@ -788,6 +796,8 @@ begin
         end;
 
         Dec(GHistoryIndex);
+        DBLog('finished rollback TCommand.Rollback: ' + lCommandClassName);
+        DBLog('------------------------------------------------');
       except
         on e:exception do
         begin

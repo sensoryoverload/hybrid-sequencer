@@ -136,11 +136,11 @@ function DumpCallStack: string;
 
 function fmod(AValue, AModulo: Double): Double; inline;
 procedure ConvertBufferMonoToStereo(ASource, ATarget: PSingle; AFrames: Integer); inline;
-procedure SplitStereoToDualMono(ASource, ATargetLeft, ATargetRight: PSingle; AFrames: Integer);
-procedure CombineDualMonoToStereo(ASourceLeft, ASourceRight, ATarget: PSingle; AFrames: Integer);
+procedure SplitStereoToDualMono(ASource, ATargetLeft, ATargetRight: PSingle; AFrames: Integer); inline;
+procedure CombineDualMonoToStereo(ASourceLeft, ASourceRight, ATarget: PSingle; AFrames: Integer); inline;
 procedure ConvertBufferStereoToMono(ASource, ATarget: PSingle; AFrames: Integer); inline;
 procedure CopyBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer); inline;
-procedure MixToBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer);
+procedure MixToBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Integer); inline;
 
 var
   FLogging: Boolean;

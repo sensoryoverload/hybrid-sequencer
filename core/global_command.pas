@@ -386,21 +386,11 @@ end;
 
 procedure TCommand.Execute;
 begin
-  DBLog(Format('----- start of %s', [Self.ClassName]));
-  DBLog('');
-
   DoExecute;
-
-  DBLog('');
-  DBLog(Format('----- end of %s', [Self.ClassName]));
 end;
 
 procedure TCommand.Rollback;
 begin
-  DBLog('');
-  DBLog('--------------------------------------------------------');
-  DBLog('');
-
   DoRollback;
 end;
 
