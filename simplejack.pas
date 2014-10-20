@@ -663,10 +663,7 @@ begin
         // Only mix if there is a target configured
         if Assigned(lTrack.TargetTrack) then
         begin
-          if Assigned(lTrack.TargetTrack.InputBuffer) then
-          begin
-            MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
-          end;
+          MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
         end;
       end
       else

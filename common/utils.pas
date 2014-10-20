@@ -692,9 +692,12 @@ procedure MixToBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: In
 var
   i: Integer;
 begin
-  for i := 0 to Pred(AFrames * AChannels) do
+  if Assigned(ASource) and Assigned(ATarget) then
   begin
-    ATarget[i] := ATarget[i] + ASource[i];
+    for i := 0 to Pred(AFrames * AChannels) do
+    begin
+      ATarget[i] := ATarget[i] + ASource[i];
+    end;
   end;
 end;
 
