@@ -1000,7 +1000,7 @@ begin
   for lMarkerIndex := Pred(FSliceList.Count) downto 0 do
   begin
     DBLog('Removing marker: ' + TMarker(FSliceList[lMarkerIndex]).ObjectID);
-    TMarker(FSliceList[lMarkerIndex]).Free;
+    FSliceList.Delete(lMarkerIndex);
   end;
 end;
 

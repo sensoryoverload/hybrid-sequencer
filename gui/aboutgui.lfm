@@ -1,15 +1,15 @@
 object fmAbout: TfmAbout
   Left = 648
   Height = 505
-  Top = 358
+  Top = 269
   Width = 385
   Caption = 'About'
   ClientHeight = 505
   ClientWidth = 385
-  LCLVersion = '1.1'
+  LCLVersion = '1.0.14.0'
   object lblApplication: TLabel
     Left = 0
-    Height = 269
+    Height = 354
     Top = 0
     Width = 385
     Align = alTop
@@ -18,11 +18,11 @@ object fmAbout: TfmAbout
   end
   object lblThirdParty: TLabel
     Left = 0
-    Height = 186
-    Top = 269
+    Height = 101
+    Top = 354
     Width = 385
     Align = alClient
-    Caption = #10'Used libraries:'#10#10'    Lazarus LCL (lazarus.freepascal.org)'#10'    SoundTouch (surina.net/soundtouch) '#10'    Jack (jackaudio.org)'#10'    LADSPA (http://www.ladspa.org/)'#10'    '
+    Caption = #10'Used libraries:'#10#10'    Lazarus LCL (lazarus.freepascal.org)'#10'    SoundTouch (surina.net/soundtouch) '#10'    Jack (jackaudio.org)'#10'    LADSPA (http://www.ladspa.org/)'#10'    BGRABitmap (http://wiki.lazarus.freepascal.org/BGRABitmap)'#10'    '
     ParentColor = False
   end
   object pnlControlBar: TPanel

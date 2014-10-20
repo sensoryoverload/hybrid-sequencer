@@ -782,9 +782,9 @@ begin
 
         for lTrimIndex := Pred(GHistoryQueue.Count) downto GHistoryIndex do
         begin
-          DBLog('Deleting history: %d start',lTrimIndex);
+          DBLog(Format('Deleting history: %d start', [lTrimIndex]));
           GHistoryQueue.Delete(lTrimIndex);
-          DBLog('Deleting history: %d end',lTrimIndex);
+          DBLog(Format('Deleting history: %d end', [lTrimIndex]));
         end;
 
         Dec(GHistoryIndex);
