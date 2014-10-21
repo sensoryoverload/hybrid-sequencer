@@ -640,13 +640,16 @@ var
   i: Integer;
   lAdder: Integer;
 begin
-  lAdder := 0;
-  for i := 0 to Pred(AFrames) do
+  if Assigned(ASource) and Assigned(ATargetLeft) and Assigned(ATargetRight) then
   begin
-    ATargetLeft[i] := ASource[lAdder];
-    ATargetRight[i] := ASource[lAdder + 1];
+    lAdder := 0;
+    for i := 0 to Pred(AFrames) do
+    begin
+      ATargetLeft[i] := ASource[lAdder];
+      ATargetRight[i] := ASource[lAdder + 1];
 
-    Inc(lAdder, 2);
+      Inc(lAdder, 2);
+    end;
   end;
 end;
 
@@ -655,13 +658,16 @@ var
   i: Integer;
   lAdder: Integer;
 begin
-  lAdder := 0;
-  for i := 0 to Pred(AFrames) do
+  if Assigned(ASourceLeft) and Assigned(ASourceRight) and Assigned(ATarget) then
   begin
-    ATarget[lAdder] := ASourceLeft[i];
-    ATarget[lAdder + 1] := ASourceRight[i];
+    lAdder := 0;
+    for i := 0 to Pred(AFrames) do
+    begin
+      ATarget[lAdder] := ASourceLeft[i];
+      ATarget[lAdder + 1] := ASourceRight[i];
 
-    Inc(lAdder, 2);
+      Inc(lAdder, 2);
+    end;
   end;
 end;
 
@@ -670,11 +676,14 @@ var
   i: Integer;
   lAdder: Integer;
 begin
-  lAdder := 0;
-  for i := 0 to Pred(AFrames) do
+  if Assigned(ASource) and Assigned(ATarget) then
   begin
-    ATarget[i] := (ASource[lAdder] + ASource[lAdder + 1]) * 0.5;
-    Inc(lAdder, 2);
+    lAdder := 0;
+    for i := 0 to Pred(AFrames) do
+    begin
+      ATarget[i] := (ASource[lAdder] + ASource[lAdder + 1]) * 0.5;
+      Inc(lAdder, 2);
+    end;
   end;
 end;
 
@@ -682,9 +691,12 @@ procedure CopyBuffer(ASource, ATarget: PSingle; AFrames: Integer; AChannels: Int
 var
   i: Integer;
 begin
-  for i := 0 to Pred(AFrames * AChannels) do
+  if Assigned(ASource) and Assigned(ATarget) then
   begin
-    ATarget[i] := ASource[i];
+    for i := 0 to Pred(AFrames * AChannels) do
+    begin
+      ATarget[i] := ASource[i];
+    end;
   end;
 end;
 

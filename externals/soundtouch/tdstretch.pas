@@ -348,7 +348,6 @@ begin
   if aOverlapMS > 0 then
   begin
     Self.overlapMs := aOverlapMS;
-    xcorr.OverlapLengthMs:=aoverlapMS;
   end;
 
   if aSequenceMS > 0 then
@@ -365,14 +364,12 @@ begin
   if aSeekWindowMS > 0 then
   begin
     Self.seekWindowMs := aSeekWindowMS;
-    xcorr.SeekWindowLengthMs:=aseekwindowMS;
     bAutoSeekSetting := FALSE;
   end
   else if aSeekWindowMS = 0 then
   begin
     // if zero, use automatic setting
     bAutoSeekSetting := TRUE;
-    xcorr.SeekWindowLengthMs:=40;
   end;
 
   calcSeqParameters;
@@ -755,7 +752,6 @@ begin
     seek := AUTOSEEK_C + AUTOSEEK_K * tempo;
     seek := CHECK_LIMITS(seek, AUTOSEEK_AT_MAX, AUTOSEEK_AT_MIN);
     seekWindowMs := Round(seek);
-    xcorr.SeekWindowLengthMs:=seekWindowMs;
   end;
 
 

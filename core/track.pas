@@ -367,16 +367,21 @@ procedure TTrackChangeTargetCommand.DoExecute;
 var
   lTrack: TTrack;
   lIndex: Integer;
+  lPlaying: Boolean;
 begin
   DBLog('start Execute TTrackChangeTargetCommand ' + ObjectID);
 
-  FTrack.TargetTrackId := FTargetTrackId;
+  FTrack.Playing := False;
 
   if Persist then
   begin
     FTrack.BeginUpdate;
 
-    FOldTargetTrackId := FTargetTrackId;
+    // Preserve old state
+    FOldTargetTrackId := FTrack.TargetTrackId;
+
+    // Set new state
+    FTrack.TargetTrackId := FTargetTrackId;
 
     if FTargetTrackId <> '' then
     begin
@@ -403,6 +408,8 @@ begin
     FTrack.EndUpdate;
   end;
 
+  FTrack.Playing := True;
+
   DBLog('end Execute TTrackChangeTargetCommand');
 end;
 
@@ -410,13 +417,17 @@ procedure TTrackChangeTargetCommand.DoRollback;
 var
   lTrack: TTrack;
   lIndex: Integer;
+  lPlaying: Boolean;
 begin
   DBLog('start Rollback TTrackChangeTargetCommand ' + ObjectID);
+
+  FTrack.Playing := False;
 
   if Persist then
   begin
     FTrack.BeginUpdate;
 
+    // Restore old state
     FTrack.TargetTrackId := FOldTargetTrackId;
 
     if FTrack.TargetTrackId <> '' then
@@ -443,6 +454,8 @@ begin
 
     FTrack.EndUpdate;
   end;
+
+  FTrack.Playing := True;
 
   DBLog('end Rollback TTrackChangeTargetCommand');
 end;

@@ -605,14 +605,14 @@ begin
 
     if Assigned(lTrack) then
     begin
-      lMidiBuffer := nil;
-
-      lPlayingPattern := lTrack.PlayingPattern;
-      if Assigned(lPlayingPattern) then
+      if lTrack.Playing then
       begin
-        if lPlayingPattern.OkToPlay then
+        lMidiBuffer := nil;
+
+        lPlayingPattern := lTrack.PlayingPattern;
+        if Assigned(lPlayingPattern) then
         begin
-          if lTrack.Playing then
+          if lPlayingPattern.OkToPlay then
           begin
 
             if lTrack.Active then
@@ -647,44 +647,44 @@ begin
             end;
           end;
         end;
-      end;
 
-      if lTrack.TrackType = ttGroup then
-      begin
-        CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
-      end;
-
-      // Mix audio into target audio buffer
-      if lTrack.TrackType <> ttMaster then
-      begin
-        // Track plugin/volume/panning processing
-        lTrack.Process(lMidiBuffer, lTrack.OutputBuffer, nframes);
-
-        // Only mix if there is a target configured
-        if Assigned(lTrack.TargetTrack) then
+        if lTrack.TrackType = ttGroup then
         begin
-          MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+          CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
         end;
-      end
-      else
-      begin
-        // Master just copies
-        CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
 
-        // Track plugin/volume/panning processing
-        lTrack.Process(lMidiBuffer, lTrack.OutputBuffer, nframes);
-
-        // Mix into output 1 (left) and 2 (right)
-        if lTrack.TrackType = ttMaster then
+        // Mix audio into target audio buffer
+        if lTrack.TrackType <> ttMaster then
         begin
-          SplitStereoToDualMono(lTrack.OutputBuffer, output_left, output_right, nframes);
-        end;
-      end;
+          // Track plugin/volume/panning processing
+          lTrack.Process(lMidiBuffer, lTrack.OutputBuffer, nframes);
 
-      // Flush midi buffer as this the end of the processing line
-      if Assigned(lMidiBuffer) then
-      begin
-        lMidiBuffer.Reset;
+          // Only mix if there is a target configured
+          if Assigned(lTrack.TargetTrack) then
+          begin
+            MixToBuffer(lTrack.OutputBuffer, lTrack.TargetTrack.InputBuffer, nframes, STEREO);
+          end;
+        end
+        else
+        begin
+          // Master just copies
+          CopyBuffer(lTrack.InputBuffer, lTrack.OutputBuffer, nframes, STEREO);
+
+          // Track plugin/volume/panning processing
+          lTrack.Process(lMidiBuffer, lTrack.OutputBuffer, nframes);
+
+          // Mix into output 1 (left) and 2 (right)
+          if lTrack.TrackType = ttMaster then
+          begin
+            SplitStereoToDualMono(lTrack.OutputBuffer, output_left, output_right, nframes);
+          end;
+        end;
+
+        // Flush midi buffer as this the end of the processing line
+        if Assigned(lMidiBuffer) then
+        begin
+          lMidiBuffer.Reset;
+        end;
       end;
     end;
   end;
