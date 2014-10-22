@@ -578,6 +578,7 @@ begin
     if Assigned(FOnChange) then
     begin
       FOnChange(Self);
+      Invalidate;
     end;
   end;
 
