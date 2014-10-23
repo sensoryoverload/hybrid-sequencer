@@ -374,7 +374,6 @@ end;
 procedure TControlLiteContainer.Invalidate;
 var
   lIndex: Integer;
-  lControl: TBaseControlLite;
 begin
   FInvalidated := True;
 
@@ -396,6 +395,14 @@ begin
       X - FFocusedControl.Left - FLeft,
       Y - FFocusedControl.Top - FTop);
   end;
+
+  // Container clicked
+  if Assigned(FOnClick) then
+  begin
+    FOnClick(Self);
+  end;
+
+  FSelected := True;
 end;
 
 procedure TControlLiteContainer.MouseUp(Button: TMouseButton;
@@ -410,14 +417,6 @@ begin
       Y - FFocusedControl.Top - FTop);
     FFocusedControl := nil;
   end;
-
-  // Container clicked
-  if Assigned(FOnClick) then
-  begin
-    FOnClick(Self);
-  end;
-
-  FSelected := True;
 end;
 
 procedure TControlLiteContainer.MouseMove(Shift: TShiftState; X, Y: Integer);
@@ -1089,7 +1088,7 @@ begin
     begin
       if FItemIndex <> -1 then
       begin
-        Canvas.FontHeight := LISTITEM_HEIGHT - 4;
+        Canvas.FontHeight := LISTITEM_HEIGHT - 2;
         Canvas.TextOut(
           1,
           1,

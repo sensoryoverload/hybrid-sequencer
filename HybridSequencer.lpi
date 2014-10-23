@@ -130,12 +130,12 @@ override_dh_auto_install:
         <MinVersion Major="1" Valid="True"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="113">
+    <Units Count="115">
       <Unit0>
         <Filename Value="HybridSequencer.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="HybridSequencer"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="5"/>
         <CursorPos X="24" Y="20"/>
@@ -149,10 +149,10 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="simplejack"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="1" Y="1"/>
+        <TopLine Value="10"/>
+        <CursorPos X="25" Y="30"/>
         <UsageCount Value="218"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -202,8 +202,8 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <UnitName Value="utils"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="110"/>
-        <CursorPos X="11" Y="125"/>
+        <TopLine Value="689"/>
+        <CursorPos X="5" Y="697"/>
         <UsageCount Value="212"/>
       </Unit6>
       <Unit7>
@@ -246,21 +246,21 @@ override_dh_auto_install:
         <Filename Value="core/global_command.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global_command"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="46"/>
-        <CursorPos X="1" Y="63"/>
+        <TopLine Value="387"/>
+        <CursorPos X="1" Y="395"/>
         <UsageCount Value="212"/>
+        <Loaded Value="True"/>
       </Unit11>
       <Unit12>
         <Filename Value="core/globalconst.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="globalconst"/>
-        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
         <TopLine Value="337"/>
         <CursorPos X="3" Y="345"/>
         <UsageCount Value="212"/>
-        <Loaded Value="True"/>
       </Unit12>
       <Unit13>
         <Filename Value="core/global_scriptactions.pas"/>
@@ -323,12 +323,10 @@ override_dh_auto_install:
         <Filename Value="core/sampler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sampler"/>
-        <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="389"/>
         <CursorPos X="53" Y="395"/>
         <UsageCount Value="212"/>
-        <Loaded Value="True"/>
       </Unit19>
       <Unit20>
         <Filename Value="core/samplestreamprovider.pas"/>
@@ -351,12 +349,17 @@ override_dh_auto_install:
       <Unit22>
         <Filename Value="gui/aboutgui.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="fmAbout"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
         <UnitName Value="aboutgui"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="1" Y="1"/>
+        <TopLine Value="33"/>
+        <CursorPos X="3" Y="35"/>
         <UsageCount Value="212"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit22>
       <Unit23>
         <Filename Value="gui/bankgui.pas"/>
@@ -511,10 +514,10 @@ override_dh_auto_install:
       <Unit38>
         <Filename Value="components/dialcontrol.pas"/>
         <UnitName Value="dialcontrol"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="397"/>
-        <CursorPos X="13" Y="407"/>
+        <TopLine Value="596"/>
+        <CursorPos X="1" Y="606"/>
         <UsageCount Value="238"/>
         <Loaded Value="True"/>
       </Unit38>
@@ -595,8 +598,8 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <UnitName Value="wavegui"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1289"/>
-        <CursorPos X="1" Y="1303"/>
+        <TopLine Value="422"/>
+        <CursorPos X="3" Y="439"/>
         <UsageCount Value="204"/>
       </Unit46>
       <Unit47>
@@ -613,9 +616,12 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <UnitName Value="wave"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="263"/>
-        <CursorPos X="41" Y="276"/>
+        <TopLine Value="840"/>
+        <CursorPos X="13" Y="858"/>
         <UsageCount Value="204"/>
+        <Bookmarks Count="1">
+          <Item0 X="25" Y="803" ID="1"/>
+        </Bookmarks>
       </Unit48>
       <Unit49>
         <Filename Value="core/pluginportmapper.pas"/>
@@ -659,7 +665,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="744"/>
         <CursorPos X="30" Y="765"/>
-        <UsageCount Value="96"/>
+        <UsageCount Value="94"/>
       </Unit53>
       <Unit54>
         <Filename Value="externals/soundtouch/ratetransposer.pas"/>
@@ -667,7 +673,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="195"/>
         <CursorPos X="3" Y="200"/>
-        <UsageCount Value="91"/>
+        <UsageCount Value="89"/>
       </Unit54>
       <Unit55>
         <Filename Value="bindings/librubberband/librubberband.pp"/>
@@ -713,16 +719,17 @@ override_dh_auto_install:
         <Filename Value="gui/sessiongrid.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sessiongrid"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1640"/>
-        <CursorPos X="1" Y="1650"/>
+        <TopLine Value="1979"/>
+        <CursorPos X="1" Y="1987"/>
         <UsageCount Value="207"/>
-        <Bookmarks Count="3">
-          <Item0 X="3" Y="1353" ID="6"/>
-          <Item1 X="3" Y="715" ID="8"/>
-          <Item2 X="17" Y="915" ID="4"/>
+        <Bookmarks Count="5">
+          <Item0 X="3" Y="1405" ID="6"/>
+          <Item1 X="3" Y="723" ID="8"/>
+          <Item2 X="17" Y="923" ID="4"/>
+          <Item3 X="1" Y="863" ID="1"/>
+          <Item4 X="1" Y="2010" ID="3"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit59>
@@ -734,8 +741,8 @@ override_dh_auto_install:
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="patternview"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="125"/>
-        <CursorPos X="1" Y="137"/>
+        <TopLine Value="573"/>
+        <CursorPos X="54" Y="578"/>
         <UsageCount Value="242"/>
       </Unit60>
       <Unit61>
@@ -869,7 +876,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="72"/>
         <CursorPos X="1" Y="75"/>
-        <UsageCount Value="96"/>
+        <UsageCount Value="94"/>
       </Unit74>
       <Unit75>
         <Filename Value="gui/patternoverview.pas"/>
@@ -886,7 +893,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="54" Y="1"/>
-        <UsageCount Value="156"/>
+        <UsageCount Value="154"/>
       </Unit76>
       <Unit77>
         <Filename Value="gui/renamepatterngui.pas"/>
@@ -906,7 +913,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="300"/>
         <CursorPos X="1" Y="321"/>
-        <UsageCount Value="281"/>
+        <UsageCount Value="279"/>
       </Unit78>
       <Unit79>
         <Filename Value="core/stretcher.pas"/>
@@ -923,7 +930,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="143"/>
         <CursorPos X="18" Y="167"/>
-        <UsageCount Value="350"/>
+        <UsageCount Value="348"/>
       </Unit80>
       <Unit81>
         <Filename Value="core/fftreal.pas"/>
@@ -931,7 +938,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="35"/>
         <CursorPos X="5" Y="50"/>
-        <UsageCount Value="107"/>
+        <UsageCount Value="105"/>
       </Unit81>
       <Unit82>
         <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-json/src/fpjsonrtti.pp"/>
@@ -939,7 +946,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="54"/>
         <CursorPos X="1" Y="98"/>
-        <UsageCount Value="228"/>
+        <UsageCount Value="226"/>
       </Unit82>
       <Unit83>
         <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-json/src/fpjson.pp"/>
@@ -947,7 +954,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="10"/>
         <CursorPos X="3" Y="31"/>
-        <UsageCount Value="228"/>
+        <UsageCount Value="226"/>
       </Unit83>
       <Unit84>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/objpas/math.pp"/>
@@ -955,7 +962,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="652"/>
         <CursorPos X="6" Y="655"/>
-        <UsageCount Value="172"/>
+        <UsageCount Value="170"/>
       </Unit84>
       <Unit85>
         <Filename Value="bindings/librubberband/urubberbandtest.pas"/>
@@ -963,7 +970,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="3"/>
-        <UsageCount Value="42"/>
+        <UsageCount Value="40"/>
       </Unit85>
       <Unit86>
         <Filename Value="core/sincfir.pas"/>
@@ -990,9 +997,9 @@ override_dh_auto_install:
         <Filename Value="library/bgrabitmaptypes.pas"/>
         <UnitName Value="BGRABitmapTypes"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="606"/>
-        <CursorPos X="1" Y="611"/>
-        <UsageCount Value="184"/>
+        <TopLine Value="1161"/>
+        <CursorPos X="39" Y="1180"/>
+        <UsageCount Value="182"/>
       </Unit88>
       <Unit89>
         <Filename Value="../lazarus/lcl/menus.pp"/>
@@ -1000,7 +1007,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="395"/>
         <CursorPos X="15" Y="406"/>
-        <UsageCount Value="93"/>
+        <UsageCount Value="91"/>
       </Unit89>
       <Unit90>
         <Filename Value="plugins/plugin_delay.pas"/>
@@ -1008,7 +1015,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="11"/>
         <CursorPos X="1" Y="29"/>
-        <UsageCount Value="176"/>
+        <UsageCount Value="174"/>
       </Unit90>
       <Unit91>
         <Filename Value="bindings/libjack/transport.pp"/>
@@ -1016,14 +1023,14 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="15" Y="1"/>
-        <UsageCount Value="143"/>
+        <UsageCount Value="141"/>
       </Unit91>
       <Unit92>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/objpas/classes/classesh.inc"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1657"/>
-        <CursorPos X="3" Y="1670"/>
-        <UsageCount Value="139"/>
+        <TopLine Value="252"/>
+        <CursorPos X="15" Y="263"/>
+        <UsageCount Value="137"/>
       </Unit92>
       <Unit93>
         <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-base/src/contnrs.pp"/>
@@ -1031,51 +1038,46 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="830"/>
         <CursorPos X="3" Y="833"/>
-        <UsageCount Value="149"/>
+        <UsageCount Value="147"/>
       </Unit93>
       <Unit94>
         <Filename Value="../lazarus/lcl/controls.pp"/>
         <UnitName Value="Controls"/>
-        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2154"/>
         <CursorPos X="15" Y="2161"/>
-        <UsageCount Value="35"/>
-        <Bookmarks Count="2">
-          <Item0 X="3" Y="2194" ID="2"/>
-          <Item1 X="25" Y="1328" ID="3"/>
+        <UsageCount Value="33"/>
+        <Bookmarks Count="1">
+          <Item0 X="25" Y="1328" ID="3"/>
         </Bookmarks>
-        <Loaded Value="True"/>
       </Unit94>
       <Unit95>
         <Filename Value="../lazarus/lcl/include/wincontrol.inc"/>
-        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
         <TopLine Value="4940"/>
         <CursorPos X="3" Y="4947"/>
-        <UsageCount Value="21"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="19"/>
       </Unit95>
       <Unit96>
         <Filename Value="../lazarus/lcl/include/customcontrol.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="115"/>
         <CursorPos X="3" Y="128"/>
-        <UsageCount Value="21"/>
+        <UsageCount Value="19"/>
       </Unit96>
       <Unit97>
         <Filename Value="../lazarus/lcl/include/control.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="3451"/>
         <CursorPos X="3" Y="3459"/>
-        <UsageCount Value="34"/>
+        <UsageCount Value="32"/>
       </Unit97>
       <Unit98>
         <Filename Value="../lazarus/lcl/include/customcombobox.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="945"/>
         <CursorPos X="3" Y="954"/>
-        <UsageCount Value="5"/>
+        <UsageCount Value="3"/>
       </Unit98>
       <Unit99>
         <Filename Value="../lazarus/lcl/widgetset/wscontrols.pp"/>
@@ -1083,11 +1085,10 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="326"/>
         <CursorPos X="1" Y="330"/>
-        <UsageCount Value="16"/>
+        <UsageCount Value="14"/>
       </Unit99>
       <Unit100>
         <Filename Value="../../Desktop/sessiongridcontrols.pas"/>
-        <IsPartOfProject Value="True"/>
         <UnitName Value="sessiongridcontrols"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1007"/>
@@ -1098,17 +1099,17 @@ override_dh_auto_install:
         <Filename Value="library/bgragtkbitmap.pas"/>
         <UnitName Value="BGRAGtkBitmap"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="157"/>
-        <CursorPos X="3" Y="159"/>
-        <UsageCount Value="57"/>
+        <TopLine Value="1"/>
+        <CursorPos X="31" Y="14"/>
+        <UsageCount Value="56"/>
       </Unit101>
       <Unit102>
         <Filename Value="library/bgradefaultbitmap.pas"/>
         <UnitName Value="BGRADefaultBitmap"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="3950"/>
-        <CursorPos X="3" Y="3960"/>
-        <UsageCount Value="71"/>
+        <TopLine Value="385"/>
+        <CursorPos X="1" Y="385"/>
+        <UsageCount Value="70"/>
       </Unit102>
       <Unit103>
         <Filename Value="../lazarus/lcl/graphics.pp"/>
@@ -1116,23 +1117,27 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="2640"/>
         <CursorPos X="3" Y="2642"/>
-        <UsageCount Value="71"/>
+        <UsageCount Value="69"/>
       </Unit103>
       <Unit104>
         <Filename Value="../lazarus/lcl/include/canvas.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1009"/>
         <CursorPos X="3" Y="1018"/>
-        <UsageCount Value="54"/>
+        <UsageCount Value="52"/>
       </Unit104>
       <Unit105>
         <Filename Value="gui/sessiongridcontrols.pas"/>
         <UnitName Value="sessiongridcontrols"/>
-        <EditorIndex Value="8"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="54"/>
-        <CursorPos X="1" Y="60"/>
-        <UsageCount Value="45"/>
+        <TopLine Value="1084"/>
+        <CursorPos X="49" Y="1091"/>
+        <UsageCount Value="57"/>
+        <Bookmarks Count="1">
+          <Item0 X="1" Y="1091" ID="2"/>
+        </Bookmarks>
         <Loaded Value="True"/>
       </Unit105>
       <Unit106>
@@ -1141,21 +1146,21 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="1947"/>
         <CursorPos X="14" Y="1957"/>
-        <UsageCount Value="17"/>
+        <UsageCount Value="15"/>
       </Unit106>
       <Unit107>
         <Filename Value="../lazarus/lcl/include/containedaction.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="92"/>
         <CursorPos X="1" Y="104"/>
-        <UsageCount Value="4"/>
+        <UsageCount Value="2"/>
       </Unit107>
       <Unit108>
         <Filename Value="../lazarus/lcl/include/popupmenu.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="75"/>
         <CursorPos X="3" Y="77"/>
-        <UsageCount Value="17"/>
+        <UsageCount Value="15"/>
       </Unit108>
       <Unit109>
         <Filename Value="../lazarus/lcl/lclclasses.pp"/>
@@ -1163,7 +1168,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="37"/>
         <CursorPos X="3" Y="48"/>
-        <UsageCount Value="17"/>
+        <UsageCount Value="15"/>
       </Unit109>
       <Unit110>
         <Filename Value="../lazarus/lcl/extctrls.pp"/>
@@ -1171,7 +1176,7 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="940"/>
         <CursorPos X="3" Y="948"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="8"/>
         <Bookmarks Count="1">
           <Item0 X="1" Y="947" ID="1"/>
         </Bookmarks>
@@ -1181,133 +1186,152 @@ override_dh_auto_install:
         <WindowIndex Value="0"/>
         <TopLine Value="169"/>
         <CursorPos X="10" Y="176"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="8"/>
       </Unit111>
       <Unit112>
         <Filename Value="../lazarus/lcl/include/intfbasewinapi.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1564"/>
         <CursorPos X="3" Y="1567"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="8"/>
       </Unit112>
+      <Unit113>
+        <Filename Value="library/bgrabitmap.pas"/>
+        <UnitName Value="BGRABitmap"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="9"/>
+        <CursorPos X="31" Y="28"/>
+        <UsageCount Value="10"/>
+      </Unit113>
+      <Unit114>
+        <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/objpas/classes/lists.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="734"/>
+        <CursorPos X="3" Y="739"/>
+        <UsageCount Value="10"/>
+      </Unit114>
     </Units>
-    <JumpHistory Count="29" HistoryIndex="28">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="302" Column="36" TopLine="288"/>
+        <Caret Line="211" Column="21" TopLine="200"/>
       </Position1>
       <Position2>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="304" Column="38" TopLine="298"/>
+        <Caret Line="1127" Column="19" TopLine="1109"/>
       </Position2>
       <Position3>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="307" Column="58" TopLine="299"/>
+        <Caret Line="1321" Column="23" TopLine="1302"/>
       </Position3>
       <Position4>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="301" Column="14" TopLine="294"/>
+        <Caret Line="1389" Column="51" TopLine="1370"/>
       </Position4>
       <Position5>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="157" Column="15" TopLine="150"/>
+        <Caret Line="1392" Column="23" TopLine="1373"/>
       </Position5>
       <Position6>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="46" Column="28" TopLine="38"/>
+        <Caret Line="1401" Column="59" TopLine="1382"/>
       </Position6>
       <Position7>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="54" Column="28" TopLine="41"/>
+        <Caret Line="1443" Column="33" TopLine="1424"/>
       </Position7>
       <Position8>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="66" Column="28" TopLine="53"/>
+        <Caret Line="1447" Column="59" TopLine="1428"/>
       </Position8>
       <Position9>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="78" Column="28" TopLine="65"/>
+        <Caret Line="1833" Column="19" TopLine="1814"/>
       </Position9>
       <Position10>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="90" Column="28" TopLine="77"/>
+        <Caret Line="1905" Column="69" TopLine="1887"/>
       </Position10>
       <Position11>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="102" Column="28" TopLine="89"/>
+        <Caret Line="1920" Column="66" TopLine="1902"/>
       </Position11>
       <Position12>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="157" Column="22" TopLine="145"/>
+        <Caret Line="1971" Column="41" TopLine="1953"/>
       </Position12>
       <Position13>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="320" Column="48" TopLine="307"/>
+        <Caret Line="2007" Column="1" TopLine="1994"/>
       </Position13>
       <Position14>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="372" Column="43" TopLine="359"/>
+        <Caret Line="863" Column="1" TopLine="851"/>
       </Position14>
       <Position15>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="389" Column="46" TopLine="376"/>
+        <Caret Line="1816" Column="3" TopLine="1805"/>
       </Position15>
       <Position16>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="402" Column="42" TopLine="389"/>
+        <Caret Line="2010" Column="1" TopLine="2000"/>
       </Position16>
       <Position17>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="457" Column="46" TopLine="444"/>
+        <Caret Line="857" Column="29" TopLine="851"/>
       </Position17>
       <Position18>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="512" Column="46" TopLine="499"/>
+        <Caret Line="144" Column="29" TopLine="135"/>
       </Position18>
       <Position19>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="697" Column="29" TopLine="684"/>
+        <Caret Line="857" Column="36" TopLine="838"/>
       </Position19>
       <Position20>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="730" Column="42" TopLine="718"/>
+        <Caret Line="917" Column="44" TopLine="898"/>
       </Position20>
       <Position21>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="734" Column="42" TopLine="722"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position21>
       <Position22>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="739" Column="42" TopLine="727"/>
+        <Caret Line="865" Column="1" TopLine="855"/>
       </Position22>
       <Position23>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="744" Column="38" TopLine="732"/>
+        <Caret Line="223" Column="15" TopLine="214"/>
       </Position23>
       <Position24>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="772" Column="35" TopLine="760"/>
+        <Caret Line="224" Column="15" TopLine="214"/>
       </Position24>
       <Position25>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1295" Column="5" TopLine="1288"/>
+        <Caret Line="230" Column="15" TopLine="214"/>
       </Position25>
       <Position26>
         <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1286" Column="1" TopLine="1273"/>
+        <Caret Line="231" Column="15" TopLine="214"/>
       </Position26>
       <Position27>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="687" Column="1" TopLine="680"/>
+        <Filename Value="gui/sessiongridcontrols.pas"/>
+        <Caret Line="421" Column="1" TopLine="408"/>
       </Position27>
       <Position28>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Filename Value="gui/sessiongridcontrols.pas"/>
+        <Caret Line="383" Column="1" TopLine="370"/>
       </Position28>
       <Position29>
-        <Filename Value="simplejack.pas"/>
-        <Caret Line="1146" Column="31" TopLine="1139"/>
+        <Filename Value="gui/sessiongridcontrols.pas"/>
+        <Caret Line="1091" Column="1" TopLine="1082"/>
       </Position29>
+      <Position30>
+        <Filename Value="gui/sessiongridcontrols.pas"/>
+        <Caret Line="614" Column="3" TopLine="601"/>
+      </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
       <Item0 Name="SVN active" Value="-1"/>
@@ -1352,7 +1376,7 @@ override_dh_auto_install:
     <LCLWidgetType Value="gtk2"/>
   </CompilerOptions>
   <Debugging>
-    <BreakPoints Count="3">
+    <BreakPoints Count="4">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
@@ -1374,6 +1398,13 @@ override_dh_auto_install:
         <Source Value="core/pattern.pas"/>
         <Line Value="560"/>
       </Item3>
+      <Item4>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="simplejack.pas"/>
+        <Line Value="770"/>
+      </Item4>
     </BreakPoints>
     <Watches Count="1">
       <Item1>

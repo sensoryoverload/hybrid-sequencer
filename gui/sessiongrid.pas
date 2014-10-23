@@ -1982,7 +1982,7 @@ begin
             end;
           end;
         end
-        else
+        else if not Assigned(FCurrentTrackView) then
         begin
           // Unselect all tracks
           SelectTrack(nil);
