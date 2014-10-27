@@ -394,15 +394,17 @@ begin
       Shift,
       X - FFocusedControl.Left - FLeft,
       Y - FFocusedControl.Top - FTop);
-  end;
-
-  // Container clicked
-  if Assigned(FOnClick) then
+  end
+  else
   begin
-    FOnClick(Self);
-  end;
+    // Only focus container when not clicked on child component
+    if Assigned(FOnClick) then
+    begin
+      FOnClick(Self);
+    end;
 
-  FSelected := True;
+    FSelected := True;
+  end;
 end;
 
 procedure TControlLiteContainer.MouseUp(Button: TMouseButton;

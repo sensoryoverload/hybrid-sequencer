@@ -273,7 +273,6 @@ begin
   FDelaySmp := AValue;
 
   FWritePtr := FDelaySmp;
-  FReadPtr := 0;
 end;
 
 constructor TAudioRingBuffer.Create(ASampleRate: Integer);

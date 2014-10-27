@@ -1253,6 +1253,22 @@ begin
   end;
   Canvas.Draw(0, 0, FBitmap);
 
+  // Draw note cursor box
+  if FEditMode = emPatternEdit then
+  begin
+    Canvas.Pen.Color := clCream;
+    Canvas.Brush.Color := clCream;
+    lHighlightLocation := ConvertTimeToScreen(FNoteHighlightLocation) + FOffset;
+    lHighlightNote := ConvertNoteToScreen(FNoteHighlightNote) + FNoteOffset;
+    lHighlightWidth := Round(FQuantizeValue * FZoomFactorToScreenX);
+
+    Canvas.Rectangle(
+      lHighlightLocation,
+      lHighlightNote,
+      lHighlightLocation + lHighlightWidth,
+      lHighlightNote + FZoomNoteHeight);
+  end;
+
   // Draw cursor
   x := Round((FModel.RealCursorPosition * FZoomFactorToScreenX) + FOffset + FNoteInfoWidth);
   if FOldCursorPosition <> x then
@@ -1266,7 +1282,7 @@ begin
     FOldCursorPosition := x;
   end;
 
-  inherited Paint;
+//  inherited Paint;
 end;
 
 function TMidiPatternGUI.GetObjectID: string;
@@ -1690,84 +1706,84 @@ begin
   FMouseX := X;
   FMouseY := Y;
 
-  if FMouseButtonDown then
+  if FDragging then
   begin
-    if FDragging then
+    lNoteAction := FNoteAction;
+  end
+  else
+  begin
+    NoteUnderCursor(X, Y, lNoteAction);
+  end;
+
+  if FEditMode = emPatternEdit then
+  begin
+{      case lNoteAction of
+      naAdjustRight: Screen.Cursor := crSizeWE;
+      naAdjustLeft: Screen.Cursor := crSizeWE;
+      naDrag: Screen.Cursor := crSize;
+    else
+      Screen.Cursor := crArrow;
+    end;}
+
+    if Assigned(FDraggedLoopMarker) then
     begin
-      lNoteAction := FNoteAction;
+      HandleLoopMarkerMouseMove(Shift, X, Y);
+    end
+    else if Assigned(FDraggedNote) then
+    begin
+      HandleNoteMouseMove(Shift, X, Y);
     end
     else
     begin
-      NoteUnderCursor(X, Y, lNoteAction);
-    end;
-
-    if FEditMode = emPatternEdit then
-    begin
-{      case lNoteAction of
-        naAdjustRight: Screen.Cursor := crSizeWE;
-        naAdjustLeft: Screen.Cursor := crSizeWE;
-        naDrag: Screen.Cursor := crSize;
-      else
-        Screen.Cursor := crArrow;
-      end;}
-
-      if Assigned(FDraggedLoopMarker) then
+      if FRubberBandMode then
       begin
-        HandleLoopMarkerMouseMove(Shift, X, Y);
-      end
-      else if Assigned(FDraggedNote) then
-      begin
-        HandleNoteMouseMove(Shift, X, Y);
-      end
-      else
-      begin
-        if FRubberBandMode then
+        // If rubberband changed
+        if (FRubberBandSelect.BottomRight.X <> X) or
+          (FRubberBandSelect.BottomRight.Y <> Y) then
         begin
-          // If rubberband changed
-          if (FRubberBandSelect.BottomRight.X <> X) or
-            (FRubberBandSelect.BottomRight.Y <> Y) then
-          begin
-            FRubberBandSelect.BottomRight.X := X;
-            FRubberBandSelect.BottomRight.Y := Y;
+          FRubberBandSelect.BottomRight.X := X;
+          FRubberBandSelect.BottomRight.Y := Y;
 
-            // Select midinotes in rubberband
-            NoteListByRect(FRubberBandSelect);
-          end;
+          // Select midinotes in rubberband
+          NoteListByRect(FRubberBandSelect);
         end;
-
-        if FZoomingMode then
-        begin
-          if ssCtrl in Shift then
-          begin
-            ZoomFactorY := FOldZoomFactorY + (X - FOldX) * 2;
-            FNoteOffset := FOldNoteOffset + Round((X - FOldX) / 5) + (Y - FOldY);
-          end
-          else
-          begin
-            FOffset := FOldLocationOffset + (X - FOldX);
-
-            if FOffset > 0 then
-            begin
-              FOffset := 0;
-            end;
-
-            FNoteOffset := FOldNoteOffset + (Y - FOldY);
-          end;
-        end;
-
-        FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
-        FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
       end;
-    end
-    else if FEditMode = emAutomationEdit then
-    begin
-      HandleAutomationEditMouseMove(Shift, X, Y);
-    end
-    else if FEditMode = emControllerEdit then
-    begin
-      HandleControllerEditMouseMove(Shift, X, Y);
-    end;
 
+      if FZoomingMode then
+      begin
+        if ssCtrl in Shift then
+        begin
+          ZoomFactorY := FOldZoomFactorY + (X - FOldX) * 2;
+          FNoteOffset := FOldNoteOffset + Round((X - FOldX) / 5) + (Y - FOldY);
+        end
+        else
+        begin
+          FOffset := FOldLocationOffset + (X - FOldX);
+
+          if FOffset > 0 then
+          begin
+            FOffset := 0;
+          end;
+
+          FNoteOffset := FOldNoteOffset + (Y - FOldY);
+        end;
+      end;
+
+      FNoteHighlightLocation := QuantizeLocation(ConvertScreenToTime(X - FOffset));
+      FNoteHighlightNote := ConvertScreenToNote(Y - FNoteOffset);
+    end;
+  end
+  else if FEditMode = emAutomationEdit then
+  begin
+    HandleAutomationEditMouseMove(Shift, X, Y);
+  end
+  else if FEditMode = emControllerEdit then
+  begin
+    HandleControllerEditMouseMove(Shift, X, Y);
+  end;
+
+  if FMouseButtonDown then
+  begin
     UpdateView(True);
   end;
 end;
