@@ -1012,13 +1012,6 @@ object MainApp: TMainApp
       0000000000000000000000000000
     }
   end
-  object ScreenUpdater: TTimer
-    Enabled = False
-    Interval = 80
-    OnTimer = ScreenUpdaterTimer
-    left = 320
-    top = 64
-  end
   object SaveDialog1: TSaveDialog
     left = 411
     top = 200

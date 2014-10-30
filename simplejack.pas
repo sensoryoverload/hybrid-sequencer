@@ -84,6 +84,16 @@ type
     function PopMidiMessage(AJackMidiEvent: TMidiMessage): Boolean;
   end;
 
+  { TScreenUpdateThread }
+
+  TScreenUpdateThread = class(TThread)
+  private
+    FOnUpdateScreen: TNotifyEvent;
+    procedure Updater;
+  protected
+    procedure Execute; override;
+    property OnUpdateScreen: TNotifyEvent read FOnUpdateScreen write FOnUpdateScreen;
+  end;
 
   { TMainApp }
   TMainApp = class(Tform, IObserver)
@@ -126,7 +136,6 @@ type
     miOptions: TMenuItem;
     miEdit: TMenuItem;
     pnlTop: Tpanel;
-    ScreenUpdater: TTimer;
     ScrollBar1: TScrollBar;
     Splitter1: TSplitter;
     ToolBar1: TToolBar;
@@ -169,7 +178,7 @@ type
     procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure gbOutputClick(Sender: TObject);
     procedure miOpenLiveSetClick(Sender: TObject);
-    procedure ScreenUpdaterTimer(Sender: TObject);
+    procedure ScreenUpdater(Sender: TObject);
     procedure Formdestroy(Sender: Tobject);
     procedure Formcreate(Sender: Tobject);
     procedure ScrollBar1Change(Sender: TObject);
@@ -197,11 +206,11 @@ type
     FMappingMonitor: TfmMappingMonitor;
     FObjectID: string;
     FObjectOwnerID: string;
-    FLowPriorityInterval: Integer;
     FMediumPriorityInterval: Integer;
     FHighPriorityInterval: Integer;
     FNoJackMode: Boolean;
     FModel: TAudioStructure;
+    FScreenUpdateThread: TScreenUpdateThread;
 
     procedure CustomExceptionHandler(Sender: TObject; E: Exception);
     procedure UpdateTracks(TrackObject: TTrack);
@@ -704,6 +713,26 @@ begin
   Result := 0;
 end;
 
+{ TScreenUpdateThread }
+
+procedure TScreenUpdateThread.Updater;
+begin
+  if Assigned(FOnUpdateScreen) then
+  begin
+    FOnUpdateScreen(nil);
+  end;
+end;
+
+procedure TScreenUpdateThread.Execute;
+begin
+  while not Terminated do
+  begin
+    Synchronize(@Updater);
+
+    sleep(100);
+  end;
+end;
+
 { TMidiMessage }
 
 constructor TMidiMessage.Create(AJackMidiEvent: pjack_midi_event_t);
@@ -1117,9 +1146,8 @@ begin
   end;
 end;
 
-procedure TMainApp.ScreenUpdaterTimer(Sender: TObject);
+procedure TMainApp.ScreenUpdater(Sender: TObject);
 begin
-  ScreenUpdater.Enabled := False;
   try
     acUndoUpdate(Self);
     acRedoUpdate(Self);
@@ -1127,7 +1155,7 @@ begin
     // Update object mapping
     if FShowMapping then
     begin
-      if FLowPriorityInterval = 0 then
+      if FMediumPriorityInterval = 0 then
       begin
         MainApp.MappingMonitor.UpdateGrid;
       end;
@@ -1150,8 +1178,6 @@ begin
     FSessionGrid.UpdateView;
     FPatternView.UpdateView;
 
-    Application.ProcessMessages;
-
     Inc(FMediumPriorityInterval);
     if FMediumPriorityInterval > 5 then
       FMediumPriorityInterval := 0;
@@ -1165,15 +1191,12 @@ begin
       DBLog('Hybrid error: ' + e.Message);
     end;
   end;
-  ScreenUpdater.Enabled := True;
 end;
 
 procedure TMainApp.Formdestroy(Sender: Tobject);
 var
    i: Integer;
 begin
-  ScreenUpdater.Enabled := False;
-
   if Assigned(GAudioStruct) then
   begin
     GAudioStruct.Detach(MainApp);
@@ -1193,6 +1216,8 @@ begin
 
   if Assigned(GAudioStruct) then
     GAudioStruct.Free;
+
+  FScreenUpdateThread.Free;
 End;
 
 procedure TMainApp.Formcreate(Sender: Tobject);
@@ -1278,8 +1303,8 @@ begin
 
   GAudioStruct.Attach(MainApp);
 
-  ScreenUpdater.Interval := 100;
-  ScreenUpdater.Enabled := True;
+  FScreenUpdateThread := TScreenUpdateThread.Create(False);
+  FScreenUpdateThread.OnUpdateScreen := @ScreenUpdater;
 
   pnlVarious.Width := 0;
 

@@ -149,11 +149,17 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="simplejack"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="10"/>
-        <CursorPos X="25" Y="30"/>
+        <TopLine Value="1818"/>
+        <CursorPos X="1" Y="1840"/>
         <UsageCount Value="218"/>
+        <Bookmarks Count="3">
+          <Item0 X="12" Y="1149" ID="1"/>
+          <Item1 X="29" Y="95" ID="3"/>
+          <Item2 X="37" Y="718" ID="4"/>
+        </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -164,11 +170,13 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mapmonitor"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="66"/>
-        <CursorPos X="1" Y="74"/>
+        <TopLine Value="36"/>
+        <CursorPos X="3" Y="56"/>
         <ComponentState Value="1"/>
         <UsageCount Value="201"/>
+        <Loaded Value="True"/>
       </Unit2>
       <Unit3>
         <Filename Value="common/appcolors.pas"/>
@@ -201,10 +209,15 @@ override_dh_auto_install:
         <Filename Value="common/utils.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="utils"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="689"/>
-        <CursorPos X="5" Y="697"/>
+        <TopLine Value="79"/>
+        <CursorPos X="3" Y="95"/>
         <UsageCount Value="212"/>
+        <Bookmarks Count="1">
+          <Item0 X="12" Y="405" ID="2"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
       </Unit6>
       <Unit7>
         <Filename Value="core/audiostructure.pas"/>
@@ -246,7 +259,7 @@ override_dh_auto_install:
         <Filename Value="core/global_command.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global_command"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="387"/>
         <CursorPos X="1" Y="395"/>
@@ -353,9 +366,9 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="aboutgui"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="33"/>
+        <TopLine Value="32"/>
         <CursorPos X="3" Y="35"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
@@ -380,10 +393,12 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="midigui"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1329"/>
-        <CursorPos X="1" Y="1344"/>
+        <TopLine Value="1681"/>
+        <CursorPos X="1" Y="1695"/>
         <UsageCount Value="212"/>
+        <Loaded Value="True"/>
       </Unit24>
       <Unit25>
         <Filename Value="gui/plugingui.pas"/>
@@ -422,10 +437,12 @@ override_dh_auto_install:
         <Filename Value="common/fx.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fx"/>
+        <EditorIndex Value="12"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="70"/>
-        <CursorPos X="14" Y="84"/>
+        <TopLine Value="260"/>
+        <CursorPos X="5" Y="276"/>
         <UsageCount Value="211"/>
+        <Loaded Value="True"/>
       </Unit28>
       <Unit29>
         <Filename Value="gui/optionsgui.pas"/>
@@ -514,7 +531,7 @@ override_dh_auto_install:
       <Unit38>
         <Filename Value="components/dialcontrol.pas"/>
         <UnitName Value="dialcontrol"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="596"/>
         <CursorPos X="1" Y="606"/>
@@ -719,17 +736,14 @@ override_dh_auto_install:
         <Filename Value="gui/sessiongrid.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sessiongrid"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1979"/>
-        <CursorPos X="1" Y="1987"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
         <UsageCount Value="207"/>
-        <Bookmarks Count="5">
+        <Bookmarks Count="2">
           <Item0 X="3" Y="1405" ID="6"/>
           <Item1 X="3" Y="723" ID="8"/>
-          <Item2 X="17" Y="923" ID="4"/>
-          <Item3 X="1" Y="863" ID="1"/>
-          <Item4 X="1" Y="2010" ID="3"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit59>
@@ -856,10 +870,12 @@ override_dh_auto_install:
         <Filename Value="plugins/plugin_bassline_gui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_bassline_gui"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
         <TopLine Value="4"/>
         <CursorPos X="1" Y="22"/>
         <UsageCount Value="214"/>
+        <Loaded Value="True"/>
       </Unit72>
       <Unit73>
         <Filename Value="plugins/plugin_bassline.pas"/>
@@ -1012,10 +1028,12 @@ override_dh_auto_install:
       <Unit90>
         <Filename Value="plugins/plugin_delay.pas"/>
         <UnitName Value="plugin_delay"/>
+        <EditorIndex Value="11"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="11"/>
-        <CursorPos X="1" Y="29"/>
+        <TopLine Value="37"/>
+        <CursorPos X="1" Y="44"/>
         <UsageCount Value="174"/>
+        <Loaded Value="True"/>
       </Unit90>
       <Unit91>
         <Filename Value="bindings/libjack/transport.pp"/>
@@ -1129,15 +1147,11 @@ override_dh_auto_install:
       <Unit105>
         <Filename Value="gui/sessiongridcontrols.pas"/>
         <UnitName Value="sessiongridcontrols"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1084"/>
-        <CursorPos X="49" Y="1091"/>
-        <UsageCount Value="57"/>
-        <Bookmarks Count="1">
-          <Item0 X="1" Y="1091" ID="2"/>
-        </Bookmarks>
+        <TopLine Value="388"/>
+        <CursorPos X="1" Y="397"/>
+        <UsageCount Value="59"/>
         <Loaded Value="True"/>
       </Unit105>
       <Unit106>
@@ -1213,124 +1227,124 @@ override_dh_auto_install:
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="211" Column="21" TopLine="200"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="720" Column="20" TopLine="701"/>
       </Position1>
       <Position2>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1127" Column="19" TopLine="1109"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="728" Column="20" TopLine="709"/>
       </Position2>
       <Position3>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1321" Column="23" TopLine="1302"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1151" Column="28" TopLine="1132"/>
       </Position3>
       <Position4>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1389" Column="51" TopLine="1370"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1153" Column="11" TopLine="1134"/>
       </Position4>
       <Position5>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1392" Column="23" TopLine="1373"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1197" Column="11" TopLine="1179"/>
       </Position5>
       <Position6>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1401" Column="59" TopLine="1382"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1225" Column="11" TopLine="1206"/>
       </Position6>
       <Position7>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1443" Column="33" TopLine="1424"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1314" Column="42" TopLine="1293"/>
       </Position7>
       <Position8>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1447" Column="59" TopLine="1428"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1161" Column="19" TopLine="1153"/>
       </Position8>
       <Position9>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1833" Column="19" TopLine="1814"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="210" Column="25" TopLine="201"/>
       </Position9>
       <Position10>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1905" Column="69" TopLine="1887"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1161" Column="30" TopLine="1142"/>
       </Position10>
       <Position11>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1920" Column="66" TopLine="1902"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position11>
       <Position12>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1971" Column="41" TopLine="1953"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="210" Column="1" TopLine="192"/>
       </Position12>
       <Position13>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="2007" Column="1" TopLine="1994"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1150" Column="15" TopLine="1131"/>
       </Position13>
       <Position14>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="863" Column="1" TopLine="851"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position14>
       <Position15>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1816" Column="3" TopLine="1805"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="130" Column="13" TopLine="121"/>
       </Position15>
       <Position16>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="2010" Column="1" TopLine="2000"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="87" Column="14" TopLine="76"/>
       </Position16>
       <Position17>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="857" Column="29" TopLine="851"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="89" Column="12" TopLine="76"/>
       </Position17>
       <Position18>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="144" Column="29" TopLine="135"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="181" Column="28" TopLine="163"/>
       </Position18>
       <Position19>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="857" Column="36" TopLine="838"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="213" Column="35" TopLine="195"/>
       </Position19>
       <Position20>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="917" Column="44" TopLine="898"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="716" Column="12" TopLine="697"/>
       </Position20>
       <Position21>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="718" Column="20" TopLine="699"/>
       </Position21>
       <Position22>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="865" Column="1" TopLine="855"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="726" Column="20" TopLine="707"/>
       </Position22>
       <Position23>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="223" Column="15" TopLine="214"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1149" Column="33" TopLine="1130"/>
       </Position23>
       <Position24>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="224" Column="15" TopLine="214"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1220" Column="12" TopLine="1202"/>
       </Position24>
       <Position25>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="230" Column="15" TopLine="214"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1308" Column="3" TopLine="1288"/>
       </Position25>
       <Position26>
-        <Filename Value="gui/sessiongrid.pas"/>
-        <Caret Line="231" Column="15" TopLine="214"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position26>
       <Position27>
-        <Filename Value="gui/sessiongridcontrols.pas"/>
-        <Caret Line="421" Column="1" TopLine="408"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1307" Column="1" TopLine="1296"/>
       </Position27>
       <Position28>
-        <Filename Value="gui/sessiongridcontrols.pas"/>
-        <Caret Line="383" Column="1" TopLine="370"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1152" Column="1" TopLine="1149"/>
       </Position28>
       <Position29>
-        <Filename Value="gui/sessiongridcontrols.pas"/>
-        <Caret Line="1091" Column="1" TopLine="1082"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="1195" Column="1" TopLine="1173"/>
       </Position29>
       <Position30>
-        <Filename Value="gui/sessiongridcontrols.pas"/>
-        <Caret Line="614" Column="3" TopLine="601"/>
+        <Filename Value="simplejack.pas"/>
+        <Caret Line="87" Column="1" TopLine="70"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
@@ -1376,7 +1390,7 @@ override_dh_auto_install:
     <LCLWidgetType Value="gtk2"/>
   </CompilerOptions>
   <Debugging>
-    <BreakPoints Count="4">
+    <BreakPoints Count="3">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
@@ -1398,13 +1412,6 @@ override_dh_auto_install:
         <Source Value="core/pattern.pas"/>
         <Line Value="560"/>
       </Item3>
-      <Item4>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="simplejack.pas"/>
-        <Line Value="770"/>
-      </Item4>
     </BreakPoints>
     <Watches Count="1">
       <Item1>
