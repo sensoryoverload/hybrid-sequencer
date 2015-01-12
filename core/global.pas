@@ -229,6 +229,92 @@ type
     property Frames: Integer read GetFrames;
   end;
 
+  { TAudioStreamBlock }
+
+  TAudioStreamBlock = class
+  private
+    FBlockOffset: Integer;
+    FBlockOffsetHalf: Integer;
+    FSize: Integer;
+    procedure SetBlockOffset(AValue: Integer);
+    procedure SetSize(AValue: Integer);
+  public
+    Buffer: PSingle;
+    property BlockOffset: Integer read FBlockOffset write SetBlockOffset;
+    property BlockOffsetHalf: Integer read FBlockOffsetHalf write FBlockOffsetHalf;
+    constructor Create;
+    property Size: Integer read FSize write SetSize;
+  end;
+
+  TAudioStreamRequestState = (rsIdle, rsRequested, rsReady);
+
+  TAudioStreamPages = array[0..1] of TAudioStreamBlock;
+
+  { TAudioStream }
+
+  TAudioStream = class
+  private
+    FSampleHandle: PSndFile;
+    FSampleInfo: SF_INFO;
+
+    FFilename: string;
+    // Page flipping buffer
+    FPage: TAudioStreamPages;
+    FSize: Integer;
+    FActivePage: Integer;
+    FPageRequest: TAudioStreamRequestState;
+    FOffset: Integer;
+    FBlockOffset: Integer;
+    FChannelCount: Integer;
+    FFrameCount: Integer;
+    FSampleRate: Integer;
+
+    // Memory block with full wave but decimated by 64 for the gui
+    FDecimatedData: PSingle;
+
+    procedure LoadBlock;
+    procedure SetSize(AValue: Integer);
+    procedure CreateLoadPeakFile;
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    // Return the audio at offset. The function itself will calculate
+    // the actual offset in the memory block
+    function Audio(AOffset: Integer): Single;
+
+    function SetFilename(AValue: string): Boolean;
+    property Filename: string read FFilename;
+    property BlockOffset: Integer read FBlockOffset;
+    property Size: Integer read FSize write SetSize;
+    property Page: TAudioStreamPages read FPage;
+    property ActivePage: Integer read FActivePage write FActivePage;
+    property PageRequest: TAudioStreamRequestState read FPageRequest write FPageRequest;
+
+    property ChannelCount: Integer read FChannelCount;
+    property FrameCount: Integer read FFrameCount;
+    property SampleRate: Integer read FSampleRate;
+  end;
+
+  { TAudioStreamListSingleton }
+
+  TAudioStreamListSingleton = class(TThread)
+  private
+    FStreams: TObjectList;
+  public
+    constructor Create(CreateSuspended: Boolean);
+    destructor Destroy; override;
+
+    // Creates a new stream and return its reference
+    function CreateStream(AFileName: string): TAudioStream;
+
+    // Destroyes an existing stream
+    procedure DestroyStream(AAudioStream: TAudioStream);
+
+    // Actual thread
+    procedure Execute; override;
+  end;
+
 
 var
   GObjectMapper: TObjectMapper;
@@ -238,7 +324,7 @@ var
 implementation
 
 uses
-  utils, xmlread, xmlwrite, dom;
+  utils, xmlread, xmlwrite, dom, BaseUnix;
 
 { TJackAudio }
 
@@ -251,6 +337,214 @@ end;
 procedure jack_shutdown(arg: pointer); cdecl;
 begin
   exit;
+end;
+
+{ TAudioStreamBlock }
+
+procedure TAudioStreamBlock.SetSize(AValue: Integer);
+begin
+  if FSize=AValue then Exit;
+  FSize:=AValue;
+
+  if Assigned(Buffer) then
+  begin
+    FreeMem(Buffer);
+  end;
+  Getmem(Buffer, FSize * SizeOf(Single) * STEREO);
+end;
+
+procedure TAudioStreamBlock.SetBlockOffset(AValue: Integer);
+begin
+  if FBlockOffset=AValue then Exit;
+  FBlockOffset:=AValue;
+end;
+
+constructor TAudioStreamBlock.Create;
+begin
+  // 1 seconds buffer by default
+  Size := Round(GSettings.SampleRate);
+end;
+
+{ TAudioStreamListSingleton }
+
+function CreateStream: TAudioStream;
+begin
+
+end;
+
+function DestroyStream(AAudioStream: TAudioStream): Boolean;
+begin
+
+end;
+
+destructor TAudioStreamListSingleton.Destroy;
+begin
+  FStreams.Free;
+
+  inherited Destroy;
+end;
+
+constructor TAudioStreamListSingleton.Create(CreateSuspended: Boolean);
+begin
+  inherited Create(CreateSuspended);
+
+  FStreams := TObjectList.Create(False);
+end;
+
+function TAudioStreamListSingleton.CreateStream(AFileName: string): TAudioStream;
+var
+  lAudioStream: TAudioStream;
+begin
+  lAudioStream := TAudioStream.Create;
+  if lAudioStream.SetFilename(AFileName) then
+  begin
+    FStreams.Add(lAudioStream);
+
+    Result := lAudioStream;
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+procedure TAudioStreamListSingleton.DestroyStream(AAudioStream: TAudioStream);
+begin
+  FStreams.Remove(AAudioStream);
+end;
+
+procedure TAudioStreamListSingleton.Execute;
+var
+  i: Integer;
+  lLoadingPage: Integer;
+  lAudioStream: TAudioStream;
+begin
+  while not Terminated do
+  begin
+    // For each stream do
+    for i := 0 to Pred(FStreams.Count) do
+    begin
+      lAudioStream := TAudioStream(FStreams[i]);
+
+      if Assigned(lAudioStream) then
+      begin
+        if lAudioStream.PageRequest = rsRequested then
+        begin
+          lAudioStream.LoadBlock;
+
+          lAudioStream.PageRequest := rsReady
+        end;
+      end;
+    end;
+  end;
+end;
+
+{ TAudioStream }
+
+procedure TAudioStream.SetSize(AValue: Integer);
+var
+  i: Integer;
+begin
+  if FSize=AValue then Exit;
+  FSize:=AValue;
+
+  for i := 0 to 1 do
+  begin
+    FPage[i].Size := FSize;
+  end;
+end;
+
+// Creates a peakfile for the current file next to the original file
+procedure TAudioStream.CreateLoadPeakFile;
+begin
+  // Check fileexists
+  // Check file hash against stored hash to detect edits
+  // If so store new hash and rebuild peak file
+  // Peak file should also store calculated BPM
+end;
+
+constructor TAudioStream.Create;
+begin
+  inherited Create;
+
+  FPage[0] := TAudioStreamBlock.Create;
+  FPage[1] := TAudioStreamBlock.Create;
+
+  FActivePage := 0;
+end;
+
+destructor TAudioStream.Destroy;
+begin
+  sf_close(FSampleHandle);
+
+  inherited Destroy;
+end;
+
+// Calculate offset in memory block and return result
+function TAudioStream.Audio(AOffset: Integer): Single;
+begin
+  FOffset := AOffset;
+
+  if FPageRequest = rsReady then
+  begin
+    FActivePage := 1 - FActivePage;
+
+    FPageRequest := rsIdle;
+  end
+  else
+  begin
+    if FOffset > FPage[FActivePage].BlockOffsetHalf then
+    begin
+      // request new page, this should be picked up in the thread and a new block
+      // should be loaded and FNewPageRequested should be set to false subsequently
+      FPageRequest := rsRequested;
+    end;
+  end;
+
+  Result := FPage[FActivePage].Buffer[AOffset - FPage[FActivePage].BlockOffset];
+end;
+
+procedure TAudioStream.LoadBlock;
+var
+  lPage: TAudioStreamBlock;
+  lLoadingPage: Integer;
+  lReadCount: Integer;
+begin
+  lLoadingPage := 1 - FActivePage;
+
+  lPage := TAudioStreamBlock(FPage[lLoadingPage]);
+  lPage.BlockOffset := FOffset;
+  lPage.BlockOffsetHalf := lpage.BlockOffset + lPage.Size div 2;
+
+  sf_seek(FSampleHandle, lPage.BlockOffset, SEEK_SET);
+  lReadCount := sf_read_float(FSampleHandle, lPage.Buffer, lPage.Size);
+
+  FPageRequest := rsReady;
+end;
+
+function TAudioStream.SetFilename(AValue: string): Boolean;
+var
+  lSampleInfo: SF_INFO;
+begin
+  if FFilename=AValue then Exit;
+  FFilename:=AValue;
+
+  FSampleHandle := sf_open(StringToPChar(FFilename), SFM_READ, lSampleInfo);
+
+  if Assigned(FSampleHandle) then
+  begin
+    FChannelCount := lSampleInfo.channels;
+    FFrameCount := lSampleInfo.frames;
+    FSampleRate := lSampleInfo.samplerate;
+
+    Result := True;
+  end
+  else
+  begin
+    DBLog(sf_strerror(FSampleHandle));
+
+    Result := False;
+  end
 end;
 
 function TJackAudio.GetFrames: Integer;
