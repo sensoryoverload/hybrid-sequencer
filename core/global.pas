@@ -229,6 +229,32 @@ type
     property Frames: Integer read GetFrames;
   end;
 
+  { TAudioPeak }
+
+  TAudioPeak = class
+  private
+    FData: PSingle;
+    FDataSize: Integer;
+    FFileHandle: File;
+
+    // Memory block with full wave but decimated by 64 for the gui
+    FDecimatedData: PSingle;
+    FDecimatedDataCount: Integer;
+    FPeakFilename: string;
+    FFileHash: string[16];
+    FBPM: Single;
+  protected
+    procedure BuildDecimatedData;
+  public
+    function LoadFromFile(AFileName: string): Boolean;
+    procedure SaveToFile(AFileName: string = '');
+    property Data: PSingle read FData write FData;
+    property DataSize: Integer read FDataSize write FDataSize;
+    property DecimatedData: PSingle read FDecimatedData;
+    property PeakFileName: string read FPeakFilename;
+    property BPM: Single read FBPM;
+  end;
+
   { TAudioStreamBlock }
 
   TAudioStreamBlock = class
@@ -257,6 +283,8 @@ type
     FSampleHandle: PSndFile;
     FSampleInfo: SF_INFO;
 
+    FAudioPeak: TAudioPeak;
+    FPeakFilename: String;
     FFilename: string;
     // Page flipping buffer
     FPage: TAudioStreamPages;
@@ -269,12 +297,8 @@ type
     FFrameCount: Integer;
     FSampleRate: Integer;
 
-    // Memory block with full wave but decimated by 64 for the gui
-    FDecimatedData: PSingle;
-
     procedure LoadBlock;
     procedure SetSize(AValue: Integer);
-    procedure CreateLoadPeakFile;
   public
     constructor Create;
     destructor Destroy; override;
@@ -320,11 +344,12 @@ var
   GObjectMapper: TObjectMapper;
   GSettings: TSettings;
   GJackAudio: TJackAudio;
+  GAudioStreamListSingleton: TAudioStreamListSingleton;
 
 implementation
 
 uses
-  utils, xmlread, xmlwrite, dom, BaseUnix;
+  utils, xmlread, xmlwrite, dom, BaseUnix, md5;
 
 { TJackAudio }
 
@@ -337,6 +362,71 @@ end;
 procedure jack_shutdown(arg: pointer); cdecl;
 begin
   exit;
+end;
+
+{ TAudioPeak }
+
+procedure TAudioPeak.BuildDecimatedData;
+var
+  i: Integer;
+begin
+  // Build decimated buffer for fast displaying in gui where
+  // a high resolution is not of high importance
+{  for i := 0 to (FWave.ReadCount div DECIMATED_CACHE_DISTANCE) - 1 do
+  begin
+    lWaveBuffer := TChannel(FWave.ChannelList[0]).Buffer;
+    lValue:= 0;
+    for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
+    begin
+      lValue:= lValue + lWaveBuffer[i * DECIMATED_CACHE_DISTANCE + j];
+    end;
+    DecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
+  end;}
+end;
+
+function TAudioPeak.LoadFromFile(AFileName: string): Boolean;
+begin
+  if FileExists(AFileName) then
+  begin
+    AssignFile(FFileHandle, AFileName);
+    Reset(FFileHandle);
+    BlockRead(FFileHandle, FBPM, 1);
+    BlockRead(FFileHandle, FFileHash, 1);
+    BlockRead(FFileHandle, FDecimatedDataCount, 1);
+    if Assigned(FDecimatedData) then
+    begin
+      FreeMem(FDecimatedData);
+    end;
+    GetMem(FDecimatedData, FDecimatedDataCount * SizeOf(Single));
+    BlockRead(FFileHandle, FDecimatedData, FDecimatedDataCount);
+    CloseFile(FFileHandle);
+  end
+  else
+  begin
+    BuildDecimatedData;
+    DBLog('Error loading peak file: ' + AFileName);
+    Result := False;
+  end;
+end;
+
+procedure TAudioPeak.SaveToFile(AFileName: string);
+begin
+  AssignFile(FFileHandle, AFileName);
+  if FileExists(AFileName) then
+  begin
+    Reset(FFileHandle);
+  end
+  else
+  begin
+    Rewrite(FFileHandle);
+  end;
+
+  FFileHash := MD5Print(MD5File(AFileName));
+  BlockWrite(FFileHandle, FBPM, 1);
+  BlockWrite(FFileHandle, FFileHash, 1);
+  BlockWrite(FFileHandle, FDecimatedDataCount, 1);
+  BlockWrite(FFileHandle, FDecimatedData, FDecimatedDataCount);
+  CloseFile(FFileHandle);
 end;
 
 { TAudioStreamBlock }
@@ -366,16 +456,6 @@ begin
 end;
 
 { TAudioStreamListSingleton }
-
-function CreateStream: TAudioStream;
-begin
-
-end;
-
-function DestroyStream(AAudioStream: TAudioStream): Boolean;
-begin
-
-end;
 
 destructor TAudioStreamListSingleton.Destroy;
 begin
@@ -454,18 +534,11 @@ begin
   end;
 end;
 
-// Creates a peakfile for the current file next to the original file
-procedure TAudioStream.CreateLoadPeakFile;
-begin
-  // Check fileexists
-  // Check file hash against stored hash to detect edits
-  // If so store new hash and rebuild peak file
-  // Peak file should also store calculated BPM
-end;
-
 constructor TAudioStream.Create;
 begin
   inherited Create;
+
+  FAudioPeak := TAudioPeak.Create;
 
   FPage[0] := TAudioStreamBlock.Create;
   FPage[1] := TAudioStreamBlock.Create;
@@ -476,6 +549,8 @@ end;
 destructor TAudioStream.Destroy;
 begin
   sf_close(FSampleHandle);
+
+  FAudioPeak.Free;
 
   inherited Destroy;
 end;
@@ -536,6 +611,10 @@ begin
     FChannelCount := lSampleInfo.channels;
     FFrameCount := lSampleInfo.frames;
     FSampleRate := lSampleInfo.samplerate;
+
+    FPeakFilename := ChangeFileExt(FFilename, '.pk');
+    FAudioPeak.LoadFromFile(FPeakFilename);
+    FAudioPeak.SaveToFile(FPeakFilename);
 
     Result := True;
   end
@@ -988,6 +1067,7 @@ begin
 end;
 
 initialization
+  GAudioStreamListSingleton := TAudioStreamListSingleton.Create(False);
   GJackAudio := TJackAudio.Create;
   GObjectMapper := TObjectMapper.Create;
   GSettings := TSettings.Create;
@@ -998,6 +1078,7 @@ finalization
   GObjectMapper.Free;
   GSettings.Save('config.xml');
   GSettings.Free;
+  GAudioStreamListSingleton.Free;
 
 end.
 
