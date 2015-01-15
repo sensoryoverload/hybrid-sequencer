@@ -149,8 +149,8 @@ begin
 
   SetLength(FWaveImage, Width);
 
-  lFrac := FWavePattern.Wave.Frames div Width;
-  for lIndex := 0 to Pred(FWavePattern.Wave.Frames div lFrac) do
+  lFrac := FWavePattern.Wave.FrameCount div Width;
+{  for lIndex := 0 to Pred(FWavePattern.Wave.FrameCount div lFrac) do
   begin
     lLow := 1000;
     lHigh := -1000;
@@ -169,7 +169,7 @@ begin
 
     FWaveImage[lIndex].LowValue := lLow;
     FWaveImage[lIndex].HighValue := lHigh;
-  end;
+  end;}
 
   Invalidate;
 end;

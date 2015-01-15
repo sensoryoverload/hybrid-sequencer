@@ -24,7 +24,8 @@ unit stretcher;
 interface
 
 uses
-  Classes, SysUtils, contnrs, utils, math, globalconst, uCrossCorrelateFFT;
+  Classes, SysUtils, contnrs, utils, math, globalconst, uCrossCorrelateFFT,
+  global;
 
 type
   { TStretcher }
@@ -72,7 +73,7 @@ type
     FInterpolationAlgorithm: TInterpolationAlgorithm;
     procedure GetSample(
       ACursor: Single;
-      ASourceBuffer: PSingle;
+      ASourceBuffer: TAudioStream;
       var ALeftValue: Single;
       var ARightValue: Single;
       AChannelCount: Integer);
@@ -86,7 +87,7 @@ type
       AStartIndex: Integer;
       var ASampleCursor: Single;
       var ASliceCounter: Single;
-      ASourceBuffer: PSingle;
+      ASourceBuffer: TAudioStream;
       ATargetBuffer: PSingle;
       AFrameIndex: Integer;
       AChannelCount: Integer);
@@ -128,13 +129,14 @@ end;
 
 procedure TStretcher.GetSample(
   ACursor: Single;
-  ASourceBuffer: PSingle;
+  ASourceBuffer: TAudioStream;
   var ALeftValue: Single;
   var ARightValue: Single;
   AChannelCount: Integer);
 var
   lFracPosition: Single;
   lBufferOffset: integer;
+  lBuffer: PSingle;
 begin
   lBufferOffset := Round(ACursor * AChannelCount);
 
@@ -147,28 +149,30 @@ begin
       begin
         ALeftValue := hermite4(
           lFracPosition,
-          ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 1]),
-          ASourceBuffer[lBufferOffset],
-          ASourceBuffer[lBufferOffset + 1],
-          ASourceBuffer[lBufferOffset + 2]);
-
+          ifthen(lBufferOffset <= 1, 0,
+          ASourceBuffer.Audio(lBufferOffset - 1)),
+          ASourceBuffer.Audio(lBufferOffset),
+          ASourceBuffer.Audio(lBufferOffset + 1),
+          ASourceBuffer.Audio(lBufferOffset + 2));
         ARightValue := ALeftValue;
       end
       else
       begin
         ALeftValue := hermite4(
           lFracPosition,
-          ifthen(lBufferOffset <= 1, 0, ASourceBuffer[lBufferOffset - 2]),
-          ASourceBuffer[lBufferOffset],
-          ASourceBuffer[lBufferOffset + 2],
-          ASourceBuffer[lBufferOffset + 4]);
+          ifthen(lBufferOffset <= 1, 0,
+          ASourceBuffer.Audio(lBufferOffset - 2)),
+          ASourceBuffer.Audio(lBufferOffset),
+          ASourceBuffer.Audio(lBufferOffset + 2),
+          ASourceBuffer.Audio(lBufferOffset + 4));
 
         ARightValue := hermite4(
           lFracPosition,
-          ifthen(lBufferOffset + 1 <= 2, 0, ASourceBuffer[lBufferOffset - 1]),
-          ASourceBuffer[lBufferOffset + 1],
-          ASourceBuffer[lBufferOffset + 3],
-          ASourceBuffer[lBufferOffset + 5]);
+          ifthen(lBufferOffset + 1 <= 2, 0,
+          ASourceBuffer.Audio(lBufferOffset - 1)),
+          ASourceBuffer.Audio(lBufferOffset + 1),
+          ASourceBuffer.Audio(lBufferOffset + 3),
+          ASourceBuffer.Audio(lBufferOffset + 5));
       end;
     end;
     iaLinear:
@@ -179,13 +183,13 @@ begin
     begin
       if AChannelCount = 1 then
       begin
-        ALeftValue := ASourceBuffer[lBufferOffset];
-        ARightValue := ASourceBuffer[lBufferOffset];
+        ALeftValue := ASourceBuffer.Audio(lBufferOffset);
+        ARightValue := ASourceBuffer.Audio(lBufferOffset);
       end
       else
       begin
-        ALeftValue := ASourceBuffer[lBufferOffset];
-        ARightValue := ASourceBuffer[lBufferOffset + 1];
+        ALeftValue := ASourceBuffer.Audio(lBufferOffset);
+        ARightValue := ASourceBuffer.Audio(lBufferOffset + 1);
       end;
     end;
   end;
@@ -218,7 +222,7 @@ procedure TStretcher.Process(
   AStartIndex: Integer;
   var ASampleCursor: Single;
   var ASliceCounter: Single;
-  ASourceBuffer: PSingle;
+  ASourceBuffer: TAudioStream;
   ATargetBuffer: PSingle;
   AFrameIndex: Integer;
   AChannelCount: Integer);
@@ -297,8 +301,8 @@ begin
 
           // Crosscorrelate last played audio with audio at the real cursor
           lOffset := FCrossCorrelate.Process(
-            @ASourceBuffer[Round(FSliceMainCursor)],
-            @ASourceBuffer[lSeekwindowOffset],
+            ASourceBuffer.AudioBlock(Round(FSliceMainCursor)),
+            ASourceBuffer.AudioBlock(lSeekwindowOffset),
             2);
 
           // Old cursor

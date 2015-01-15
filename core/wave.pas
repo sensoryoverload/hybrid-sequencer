@@ -200,7 +200,7 @@ type
     FWSOLAStretcher: TSoundTouch;
     FTransientThreshold: Integer;
     FBufferDataSize: PtrUInt;
-    FWave: TWaveFile;
+    FWave: TAudioStream;
     FRealBPM: Single;
     FPatternLength: Integer;
     FBPMscale: Single;
@@ -224,7 +224,7 @@ type
     FInterpolationAlgorithm: TInterpolationAlgorithm;
 
     function CalculateSampleCursor: Boolean;
-    procedure GetSampleAtCursor(ASampleCursor: Single; ASourceBuffer: PSingle;
+    procedure GetSampleAtCursor(ASampleCursor: Single; ASourceBuffer: TAudioStream;
       ATargetBuffer: PSingle; AFrameIndex: Integer; AChannelCount: Integer);
     procedure SetCursorRamp(const AValue: Single);
     procedure SetPitchAlgorithm(AValue: TPitchAlgorithm);
@@ -247,7 +247,6 @@ type
 
     lFrames: Longint;
     lAudioPlaying: Boolean;
-    lBuffer: PSingle;
     lFramePacket: TFrameData;
     FLastSliceIndex: Integer;
     lStartingSliceIndex: Integer;
@@ -270,7 +269,7 @@ type
     procedure CalculateLoopMarkers;
     procedure AutoMarkerProcess(ACalculateStatistics: Boolean = True);
     function GetSliceAt(Location: Integer; AMargin: single): TMarker;
-    function WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
+    function WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
     function StartOfWarpLocation(ALocation: single): Integer;
     procedure Flush;
     function Latency: Integer; override;
@@ -280,7 +279,7 @@ type
     procedure ProcessAdvance; override;
 
     property TimeStretch: TSoundTouch read FWSOLAStretcher write FWSOLAStretcher;
-    property Wave: TWaveFile read FWave write FWave;
+    property Wave: TAudioStream read FWave write FWave;
     property WorkBuffer: Pjack_default_audio_sample_t read FWorkBuffer write FWorkBuffer;
     property CurrentSlice: TMarker read FCurrentSlice write FCurrentSlice;
     property SelectedSlice: TMarker read FSelectedSlice write FSelectedSlice;
@@ -786,10 +785,6 @@ begin
   FSampleStart := TLoopMarker.Create(AObjectOwner, ltStart);
   FSampleEnd := TLoopMarker.Create(AObjectOwner, ltEnd);
 
-  FWave := TWaveFile.Create(AObjectOwner, True);
-  FWave.BufferFormat := bfInterleave;
-
-
   // Initalize settings
   FDragSlice := False;
   FZooming := False;
@@ -904,8 +899,8 @@ begin
 
   Result := False;
   DBLog('Loading: ' + AFilename);
-  FWave.BufferFormat := bfInterleave;
-  FWave.LoadSample(AFilename);
+
+  FWave := GAudioStreamListSingleton.CreateStream(AFilename);
 
   ChannelCount := FWave.ChannelCount;
 
@@ -920,7 +915,7 @@ begin
   if Assigned(FDecimatedData) then
     Freemem(FDecimatedData);
 
-  FBufferDataSize:= FWave.DataSize;
+  FBufferDataSize:= FWave.Size * FWave.ChannelCount * SizeOf(Single);
 
   if FBufferDataSize > 0 then
   begin
@@ -928,58 +923,16 @@ begin
 
     FBufferDataSize := FBufferDataSize + MAX_LATENCY;
 
-    GetMem(FDecimatedData, FBufferDataSize div DECIMATED_CACHE_DISTANCE);
-    FBufferFrames := FWave.Frames;
-    DBLog(Format('FramesCount %d', [FBufferFrames]));
+    FBufferFrames := FWave.FrameCount;
 
     AddSlice(0, SLICE_UNDELETABLE, True);
-    AddSlice(FWave.Frames, SLICE_UNDELETABLE, True);
+    AddSlice(FWave.FrameCount, SLICE_UNDELETABLE, True);
 
     CurrentSlice:= TMarker(SliceList[0]);
     CurrentSliceIndex:= 0;
 
     // Init default values
     CursorAdder:= 0;
-
-    // Normalize sample in-place
-    NormalizeInMemorySample(TChannel(FWave.ChannelList[0]).Buffer, FWave.ReadCount);
-
-    // Build decimated buffer for fast displaying in gui where
-    // a high resolution is not of high importance
-    for i := 0 to (FWave.ReadCount div DECIMATED_CACHE_DISTANCE) - 1 do
-    begin
-      lWaveBuffer := TChannel(FWave.ChannelList[0]).Buffer;
-      lValue:= 0;
-      for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
-      begin
-        lValue:= lValue + lWaveBuffer[i * DECIMATED_CACHE_DISTANCE + j];
-      end;
-      DecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
-    end;
-
-    // Calculated BPM
-    lBPMDetect := TBPMDetect.Create(FWave.ChannelCount, FWave.SampleRate);
-    try
-      try
-        SamplesRead := 0;
-        for i := 0 to (FWave.ReadCount div DECIMATED_BLOCK_SAMPLES) - 1 do
-        begin
-          lBPMDetect.inputSamples(TChannel(FWave.ChannelList[0]).Buffer + i * DECIMATED_BLOCK_SAMPLES, DECIMATED_BLOCK_SAMPLES);
-          inc(SamplesRead, DECIMATED_BLOCK_SAMPLES);
-        end;
-        lBPMDetect.inputSamples(TChannel(FWave.ChannelList[0]).Buffer + SamplesRead, FWave.ReadCount - SamplesRead);
-        RealBPM := lBPMDetect.getBpm;
-        DBLog('Calculated BPM: ' + FloatToStr(RealBPM));
-
-      except
-        on e: exception do
-        begin
-          DBLog('Error: ' + e.Message);
-        end;
-      end;
-    finally
-      lBPMDetect.Free;
-    end;
 
     AutoMarkerProcess(True);
 
@@ -1341,7 +1294,7 @@ end;
   AFrameData: Structure returned with info about the sampleframe
 
 }
-function TWavePattern.WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData; ABuffer: PSingle): Boolean;
+function TWavePattern.WarpedLocation(AStartIndex: Integer; ALocation: single; var AFrameData: TFrameData): Boolean;
 var
   i: Integer;
   lSliceStart: TMarker;
@@ -1420,8 +1373,8 @@ end;
 
 procedure TWavePattern.UpdateSampleScale;
 begin
-  FSampleScale := FWave.Frames / (FSampleEnd.Value - FSampleStart.Value);
-  FSampleScaleInverse := (FSampleEnd.Value - FSampleStart.Value) / FWave.Frames;
+  FSampleScale := FWave.FrameCount / (FSampleEnd.Value - FSampleStart.Value);
+  FSampleScaleInverse := (FSampleEnd.Value - FSampleStart.Value) / FWave.FrameCount;
 
   DBLog(Format('FSampleScale %f FSampleScaleInverse %f', [FSampleScale, FSampleScaleInverse]));
 end;
@@ -1446,7 +1399,7 @@ end;
   Get a sample out of the buffer and interpolate it
 }
 procedure TWavePattern.GetSampleAtCursor(ASampleCursor: Single;
-  ASourceBuffer: PSingle; ATargetBuffer: PSingle; AFrameIndex: Integer; AChannelCount: Integer);
+  ASourceBuffer: TAudioStream; ATargetBuffer: PSingle; AFrameIndex: Integer; AChannelCount: Integer);
 var
   lFracPosition: Single;
   lBufferOffset: integer;
@@ -1465,8 +1418,8 @@ begin
     ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];}
 
     // Make dual mono
-    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
-    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset];
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer.Audio(lBufferOffset);
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer.Audio(lBufferOffset);
   end
   else
   begin
@@ -1484,8 +1437,8 @@ begin
       ASourceBuffer[lBufferOffset + 3],
       ASourceBuffer[lBufferOffset + 5]);}
 
-    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer[lBufferOffset];
-    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer[lBufferOffset + 1];
+    ATargetBuffer[AFrameIndex * 2] := ASourceBuffer.Audio(lBufferOffset);
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer.Audio(lBufferOffset + 1);
   end;
 end;
 
@@ -1510,25 +1463,23 @@ begin
 
     if lInSample then
     begin
-      lBuffer := TChannel(Wave.ChannelList[0]).Buffer;
-
       if PitchAlgorithm = paSliceStretch then
       begin
         FSliceStretcher.Pitch := Pitch;
         FSliceStretcher.Tempo := GAudioStruct.BPMScale;
         FSliceStretcher.SampleScale := FSampleScale;
-        FSliceStretcher.Process(StartingSliceIndex, FSampleCursor, FSliceCounter, lBuffer, ABuffer, AFrameIndex, FWave.ChannelCount);
+        FSliceStretcher.Process(StartingSliceIndex, FSampleCursor, FSliceCounter, FWave, ABuffer, AFrameIndex, FWave.ChannelCount);
       end
       else
       begin
-        if WarpedLocation(StartingSliceIndex, FSampleCursor, lFramePacket, lBuffer) then
+        if WarpedLocation(StartingSliceIndex, FSampleCursor, lFramePacket) then
         begin
           CursorAdder := lFramePacket.Location;
           CursorRamp := lFramePacket.Ramp;
 
-          if Trunc(CursorAdder) < (Wave.Frames * FWave.ChannelCount) then
+          if Trunc(CursorAdder) < (Wave.FrameCount * FWave.ChannelCount) then
           begin
-            GetSampleAtCursor(CursorAdder, lBuffer, WorkBuffer, AFrameIndex, Wave.ChannelCount);
+            GetSampleAtCursor(CursorAdder, FWave, WorkBuffer, AFrameIndex, Wave.ChannelCount);
 
             // Scale buffer up to now when the scaling-factor has changed or
             // the end of the buffer has been reached.
@@ -1640,7 +1591,7 @@ begin
   end;
 
   // Determine bars
-  BarCount := FWave.Frames div (2 * FWave.SampleRate);
+  BarCount := FWave.FrameCount div (2 * FWave.SampleRate);
 
   // BarCount should be at least 1 else it will appear as a blank pattern
   if BarCount < 1 then
@@ -1659,7 +1610,7 @@ begin
   SampleEnd.Value := LoopEnd.Value;
 
   DBLog(Format('FWave.Frames %d BarCount %d, BarLength %d, LoopLength.Value %d SampleEnd.Value %d FWave.SampleRate %d FWave.ChannelCount %d',
-    [FWave.Frames, BarCount, BarLength, LoopLength.Value, SampleEnd.Value, FWave.SampleRate, FWave.ChannelCount]));
+    [FWave.FrameCount, BarCount, BarLength, LoopLength.Value, SampleEnd.Value, FWave.SampleRate, FWave.ChannelCount]));
 
   UpdateSampleScale;
 
@@ -1694,28 +1645,17 @@ begin
 
   SortSlices;
 
-  lDetermineTransients := TDetermineTransients.Create(Round(GSettings.SampleRate));
-  try
-    lDetermineTransients.Sensitivity := FSensitivity;
-    lDetermineTransients.Process(TChannel(Wave.ChannelList[0]).Buffer, FWave.Frames, FWave.ChannelCount);
-    if lDetermineTransients.Transients.Count = 0 then
+  lDoAddSlice := True;
+  for i := Low(FWave.AudioPeak.TransientMarkers) to High(FWave.AudioPeak.TransientMarkers) do
+  begin
+    if i > 0 then
     begin
-      DBLog('no transients');
+      lDoAddSlice := FWave.AudioPeak.TransientMarkers[i] - FWave.AudioPeak.TransientMarkers[i - 1] > (GSettings.SampleRate * 0.125);
     end;
-    lDoAddSlice := True;
-    for i := 0 to Pred(lDetermineTransients.Transients.Count) do
+    if lDoAddSlice then
     begin
-      if i > 0 then
-      begin
-        lDoAddSlice := lDetermineTransients.Transients[i] - lDetermineTransients.Transients[i - 1] > (GSettings.SampleRate * 0.125);
-      end;
-      if lDoAddSlice then
-      begin
-        AddSlice(lDetermineTransients.Transients[i], SLICE_VIRTUAL, True);
-      end;
+      AddSlice(FWave.AudioPeak.TransientMarkers[i], SLICE_VIRTUAL, True);
     end;
-  finally
-    lDetermineTransients.Free;
   end;
 end;
 

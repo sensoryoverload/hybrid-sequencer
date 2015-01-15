@@ -650,8 +650,7 @@ begin
       end;
     end;
 
-    if (TChannel(FModel.Wave.ChannelList[0]).Buffer <> nil) and
-      (FModel.Wave.Frames > 0) then
+    if FModel.Wave.FrameCount > 0 then
     begin
       ChannelHeight := (FBitmap.Height - FTransportBarHeight) div FModel.Wave.ChannelCount;
       for ChannelLoop := 0 to Pred(FModel.Wave.ChannelCount) do
@@ -736,7 +735,7 @@ begin
                     (Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div
                     DECIMATED_CACHE_DISTANCE];
 
-                  if PositionInData1 < FModel.Wave.ReadCount then
+                  if PositionInData1 < FModel.Wave.FrameCount then
                   begin
                     // Make sure the value is limited to the screen range
                     if DataValue > 1 then DataValue := 1;
@@ -950,7 +949,7 @@ end;
 procedure TWaveGUI.UpdateSampleScale;
 begin
   // Original to Scaled BPM rate factor
-  FBpmFactor := (SampleEnd.Location - SampleStart.Location) / FModel.Wave.Frames;
+  FBpmFactor := (SampleEnd.Location - SampleStart.Location) / FModel.Wave.FrameCount;
   FBpmAdder := 1 / FBpmFactor;
   FSampleStartLocation := Round(SampleStart.Location * FZoomFactorToScreen);
 end;

@@ -27,6 +27,9 @@ uses
   Classes, SysUtils, ContNrs, globalconst, jacktypes, sndfile,
   XMLConf, Menus, jack, transport;
 
+const
+  DECIMATED_CACHE_DISTANCE = 64;
+
 type
   TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
 
@@ -229,28 +232,40 @@ type
     property Frames: Integer read GetFrames;
   end;
 
+  TArrayOfIntegers = array of Integer;
+
   { TAudioPeak }
 
   TAudioPeak = class
   private
     FData: PSingle;
-    FDataSize: Integer;
+    FDataSampleInfo: SF_INFO;
     FFileHandle: File;
 
     // Memory block with full wave but decimated by 64 for the gui
     FDecimatedData: PSingle;
     FDecimatedDataCount: Integer;
+
+    FTransientMarkers: TArrayOfIntegers;
+    FTransientMarkerCount: Integer;
+
     FPeakFilename: string;
     FFileHash: string[16];
     FBPM: Single;
-  protected
-    procedure BuildDecimatedData;
+
+    procedure Calculate;
+    procedure CalculateBPM;
+    procedure CalculateMD5Hash;
+    procedure CalculateDecimatedData;
+    procedure CalculateAutomaticMarkers;
   public
     function LoadFromFile(AFileName: string): Boolean;
-    procedure SaveToFile(AFileName: string = '');
+    procedure SaveToFile;
     property Data: PSingle read FData write FData;
-    property DataSize: Integer read FDataSize write FDataSize;
+    property DataSampleInfo: SF_INFO read FDataSampleInfo write FDataSampleInfo;
     property DecimatedData: PSingle read FDecimatedData;
+    property DecimatedDataCount: Integer read FDecimatedDataCount;
+    property TransientMarkers: TArrayOfIntegers read FTransientMarkers;
     property PeakFileName: string read FPeakFilename;
     property BPM: Single read FBPM;
   end;
@@ -307,6 +322,9 @@ type
     // the actual offset in the memory block
     function Audio(AOffset: Integer): Single;
 
+    // Get the pointer to the beginning of the memoryblock with relative offset
+    function AudioBlock(AOffset: Integer): PSingle;
+
     function SetFilename(AValue: string): Boolean;
     property Filename: string read FFilename;
     property BlockOffset: Integer read FBlockOffset;
@@ -318,6 +336,9 @@ type
     property ChannelCount: Integer read FChannelCount;
     property FrameCount: Integer read FFrameCount;
     property SampleRate: Integer read FSampleRate;
+
+    property AudioPeak: TAudioPeak read FAudioPeak;
+
   end;
 
   { TAudioStreamListSingleton }
@@ -349,7 +370,7 @@ var
 implementation
 
 uses
-  utils, xmlread, xmlwrite, dom, BaseUnix, md5;
+  utils, xmlread, xmlwrite, dom, BaseUnix, md5, bpmdetect, determinetransients;
 
 { TJackAudio }
 
@@ -366,53 +387,137 @@ end;
 
 { TAudioPeak }
 
-procedure TAudioPeak.BuildDecimatedData;
-var
-  i: Integer;
+procedure TAudioPeak.Calculate;
 begin
-  // Build decimated buffer for fast displaying in gui where
-  // a high resolution is not of high importance
-{  for i := 0 to (FWave.ReadCount div DECIMATED_CACHE_DISTANCE) - 1 do
+  CalculateMD5Hash;
+  CalculateDecimatedData;
+  CalculateAutomaticMarkers;
+  CalculateBPM;
+end;
+
+procedure TAudioPeak.CalculateMD5Hash;
+begin
+  // Calculate MD5 hash
+  FFileHash := MD5Print(MD5File(FPeakFilename));
+end;
+
+procedure TAudioPeak.CalculateBPM;
+var
+  i, j: Integer;
+  lSamplesRead: Integer;
+  lBPMDetect: TBPMDetect;
+begin
+  // Calculated BPM
+  lBPMDetect := TBPMDetect.Create(FDataSampleInfo.channels, FDataSampleInfo.samplerate);
+  try
+    try
+      lSamplesRead := 0;
+      for i := 0 to Pred(FDataSampleInfo.frames div DECIMATED_BLOCK_SAMPLES) do
+      begin
+        lBPMDetect.inputSamples(FData + i * DECIMATED_BLOCK_SAMPLES, DECIMATED_BLOCK_SAMPLES);
+        Inc(lSamplesRead, DECIMATED_BLOCK_SAMPLES);
+      end;
+      lBPMDetect.inputSamples(FData + lSamplesRead, FDataSampleInfo.frames - lSamplesRead);
+      FBPM := lBPMDetect.getBpm;
+      DBLog('Calculated BPM: ' + FloatToStr(FBPM));
+
+    except
+      on e: exception do
+      begin
+        DBLog('Error: ' + e.Message);
+      end;
+    end;
+  finally
+    lBPMDetect.Free;
+  end;
+end;
+
+procedure TAudioPeak.CalculateDecimatedData;
+var
+  i, j: Integer;
+  lValue: Single;
+  lOffset: Integer;
+begin
+  // Calculate decimated version of audio by averaging
+  FDecimatedDataCount := FDataSampleInfo.frames div DECIMATED_CACHE_DISTANCE;
+  for i := 0 to Pred(FDecimatedDataCount) do
   begin
-    lWaveBuffer := TChannel(FWave.ChannelList[0]).Buffer;
-    lValue:= 0;
+    lValue := 0;
+    lOffset := 0;
     for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
     begin
-      lValue:= lValue + lWaveBuffer[i * DECIMATED_CACHE_DISTANCE + j];
+      lValue := lValue + FData[lOffset + j];
+      Inc(lOffset, DECIMATED_CACHE_DISTANCE);
     end;
     DecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
-  end;}
+  end;
+end;
+
+procedure TAudioPeak.CalculateAutomaticMarkers;
+var
+  i: Integer;
+  WindowLength: Integer;
+  lCurrentSlice: TMarker;
+  lFirstSlice: Boolean;
+  lDetermineTransients: TDetermineTransients;
+  lDoAddSlice: Boolean;
+begin
+  WindowLength := 0;
+
+  lDetermineTransients := TDetermineTransients.Create(FDataSampleInfo.samplerate);
+  try
+    lDetermineTransients.Sensitivity := 1.5;
+    lDetermineTransients.Process(FData, FDataSampleInfo.frames, FDataSampleInfo.channels);
+    if lDetermineTransients.Transients.Count = 0 then
+    begin
+      DBLog('no transients');
+    end;
+    lDoAddSlice := True;
+    for i := 0 to Pred(lDetermineTransients.Transients.Count) do
+    begin
+      if i > 0 then
+      begin
+        SetLength(FTransientMarkers, Succ(High(FTransientMarkers)));
+        lDoAddSlice := lDetermineTransients.Transients[i] - lDetermineTransients.Transients[i - 1] > (GSettings.SampleRate * 0.125);
+      end;
+      if lDoAddSlice then
+      begin
+        FTransientMarkers[High(FTransientMarkers)] := lDetermineTransients.Transients[i];
+      end;
+    end;
+    FTransientMarkerCount := Length(FTransientMarkers);
+  finally
+    lDetermineTransients.Free;
+  end;
 end;
 
 function TAudioPeak.LoadFromFile(AFileName: string): Boolean;
 begin
-  if FileExists(AFileName) then
+  FPeakFilename := ChangeFileExt(AFilename, '.pk');
+
+  if FileExists(FPeakFilename) then
   begin
-    AssignFile(FFileHandle, AFileName);
+    AssignFile(FFileHandle, FPeakFilename);
     Reset(FFileHandle);
     BlockRead(FFileHandle, FBPM, 1);
     BlockRead(FFileHandle, FFileHash, 1);
     BlockRead(FFileHandle, FDecimatedDataCount, 1);
-    if Assigned(FDecimatedData) then
-    begin
-      FreeMem(FDecimatedData);
-    end;
-    GetMem(FDecimatedData, FDecimatedDataCount * SizeOf(Single));
     BlockRead(FFileHandle, FDecimatedData, FDecimatedDataCount);
+    BlockRead(FFileHandle, FTransientMarkerCount, 1);
+    BlockRead(FFileHandle, FTransientMarkers, FTransientMarkerCount);
     CloseFile(FFileHandle);
   end
   else
   begin
-    BuildDecimatedData;
-    DBLog('Error loading peak file: ' + AFileName);
+    Calculate;
     Result := False;
   end;
 end;
 
-procedure TAudioPeak.SaveToFile(AFileName: string);
+procedure TAudioPeak.SaveToFile;
 begin
-  AssignFile(FFileHandle, AFileName);
-  if FileExists(AFileName) then
+  AssignFile(FFileHandle, FPeakFilename);
+  if FileExists(FPeakFilename) then
   begin
     Reset(FFileHandle);
   end
@@ -421,11 +526,12 @@ begin
     Rewrite(FFileHandle);
   end;
 
-  FFileHash := MD5Print(MD5File(AFileName));
   BlockWrite(FFileHandle, FBPM, 1);
   BlockWrite(FFileHandle, FFileHash, 1);
   BlockWrite(FFileHandle, FDecimatedDataCount, 1);
   BlockWrite(FFileHandle, FDecimatedData, FDecimatedDataCount);
+  BlockWrite(FFileHandle, FTransientMarkerCount, 1);
+  BlockWrite(FFileHandle, FTransientMarkers, FTransientMarkerCount);
   CloseFile(FFileHandle);
 end;
 
@@ -496,7 +602,6 @@ end;
 procedure TAudioStreamListSingleton.Execute;
 var
   i: Integer;
-  lLoadingPage: Integer;
   lAudioStream: TAudioStream;
 begin
   while not Terminated do
@@ -579,6 +684,11 @@ begin
   Result := FPage[FActivePage].Buffer[AOffset - FPage[FActivePage].BlockOffset];
 end;
 
+function TAudioStream.AudioBlock(AOffset: Integer): PSingle;
+begin
+  Result := @FPage[FActivePage].Buffer[AOffset - FPage[FActivePage].BlockOffset];
+end;
+
 procedure TAudioStream.LoadBlock;
 var
   lPage: TAudioStreamBlock;
@@ -612,9 +722,9 @@ begin
     FFrameCount := lSampleInfo.frames;
     FSampleRate := lSampleInfo.samplerate;
 
-    FPeakFilename := ChangeFileExt(FFilename, '.pk');
-    FAudioPeak.LoadFromFile(FPeakFilename);
-    FAudioPeak.SaveToFile(FPeakFilename);
+    FAudioPeak.DataSampleInfo := lSampleInfo;
+    FAudioPeak.LoadFromFile(FFilename);
+    FAudioPeak.SaveToFile;
 
     Result := True;
   end
