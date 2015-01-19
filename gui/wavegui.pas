@@ -521,9 +521,39 @@ var
   lAutomationData: TAutomationData;
   lAutomationScreenY: Integer;
   lAutomationScreenX: Integer;
+  lDecimatedOffset: Integer;
 begin
   if not Assigned(FModel) then exit;
 
+(*  if Assigned(FModel.Wave) then
+  begin
+    writeln('FModel.Wave assigned');
+
+    if Assigned(FModel.Wave.AudioPeak) then
+    begin
+      writeln('FModel.Wave.AudioPeak assigned');
+
+      if Assigned(FModel.Wave.AudioPeak.DecimatedData) then
+      begin
+        writeln('FModel.Wave.AudioPeak.DecimatedData assigned');
+      end
+      else
+      begin
+        writeln('FModel.Wave.AudioPeak.DecimatedData NOT assigned');
+      end;
+    end
+    else
+    begin
+      writeln('FModel.Wave.AudioPeak NOT assigned');
+    end;
+  end
+  else
+  begin
+    writeln('FModel.Wave NOT assigned');
+  end;
+
+  exit;
+      *)
   if FIsDirty or FForceRedraw then
   begin
     if FIsDirty then
@@ -702,17 +732,31 @@ begin
                 if FZoomFactorToData > 50 then
                 begin
                   // Subsampling sample values when zoomed in
-                  DataValue := FModel.DecimatedData[
+                  lDecimatedOffset :=
                     Round(PositionInData1 *
                     FModel.Wave.ChannelCount + ChannelLoop) div
-                    DECIMATED_CACHE_DISTANCE];
+                    DECIMATED_CACHE_DISTANCE;
+                  writeln(Format('DecimatedDataCount %d lDecimatedOffset %d', [FModel.Wave.AudioPeak.DecimatedDataCount, lDecimatedOffset]));
+                  if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
+                  begin
+                    DataValue := FModel.DecimatedData[lDecimatedOffset];
+                  end;
 
                   // Seek maxima
                   for SubSampleLoop := Round(PositionInData1) to Round(PositionInData2) - 1 do
                   begin
-                    DataValue := FModel.DecimatedData[
-                        (SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div
-                        DECIMATED_CACHE_DISTANCE];
+                    lDecimatedOffset :=
+                      (SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div
+                      DECIMATED_CACHE_DISTANCE;
+                    //writeln(Format('DecimatedDataCount %d lDecimatedOffset %d', [FModel.Wave.AudioPeak.DecimatedDataCount, lDecimatedOffset]));
+                    if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
+                    begin
+                      DataValue := FModel.DecimatedData[lDecimatedOffset];
+                    end
+                    else
+                    begin
+                      DataValue := 0;
+                    end;
 
                     if DataValue < MinValue then MinValue := DataValue;
                     if DataValue > MaxValue then MaxValue := DataValue;
@@ -731,9 +775,18 @@ begin
                 else
                 begin
                   // Pixelview
-                  DataValue := FModel.DecimatedData[
+                  lDecimatedOffset :=
                     (Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div
-                    DECIMATED_CACHE_DISTANCE];
+                    DECIMATED_CACHE_DISTANCE;
+                  writeln(Format('DecimatedDataCount %d lDecimatedOffset %d', [FModel.Wave.AudioPeak.DecimatedDataCount, lDecimatedOffset]));
+                  if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
+                  begin
+                    DataValue := FModel.DecimatedData[lDecimatedOffset];
+                  end
+                  else
+                  begin
+                    DataValue := 0;
+                  end;
 
                   if PositionInData1 < FModel.Wave.FrameCount then
                   begin

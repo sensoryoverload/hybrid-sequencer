@@ -912,16 +912,9 @@ begin
 
   WaveFileName := AFileName;
 
-  if Assigned(FDecimatedData) then
-    Freemem(FDecimatedData);
-
-  FBufferDataSize:= FWave.Size * FWave.ChannelCount * SizeOf(Single);
-
-  if FBufferDataSize > 0 then
+  if FWave.FrameCount > 0 then
   begin
     // Timestretch latency makes the cursor start at an offset and go paSoundTouch the normal end of the sample
-
-    FBufferDataSize := FBufferDataSize + MAX_LATENCY;
 
     FBufferFrames := FWave.FrameCount;
 

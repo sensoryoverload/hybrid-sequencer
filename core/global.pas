@@ -440,6 +440,12 @@ var
 begin
   // Calculate decimated version of audio by averaging
   FDecimatedDataCount := FDataSampleInfo.frames div DECIMATED_CACHE_DISTANCE;
+  if Assigned(FDecimatedData) then
+  begin
+    FreeMem(FDecimatedData);
+  end;
+  FDecimatedData := GetMem(FDecimatedDataCount * SizeOf(Single));
+
   for i := 0 to Pred(FDecimatedDataCount) do
   begin
     lValue := 0;
@@ -461,6 +467,7 @@ var
   lFirstSlice: Boolean;
   lDetermineTransients: TDetermineTransients;
   lDoAddSlice: Boolean;
+  lTransientValue: Integer;
 begin
   WindowLength := 0;
 
@@ -477,12 +484,13 @@ begin
     begin
       if i > 0 then
       begin
-        SetLength(FTransientMarkers, Succ(High(FTransientMarkers)));
         lDoAddSlice := lDetermineTransients.Transients[i] - lDetermineTransients.Transients[i - 1] > (GSettings.SampleRate * 0.125);
       end;
       if lDoAddSlice then
       begin
-        FTransientMarkers[High(FTransientMarkers)] := lDetermineTransients.Transients[i];
+        SetLength(FTransientMarkers, Succ(Length(FTransientMarkers)));
+        lTransientValue := lDetermineTransients.Transients[i];
+        FTransientMarkers[High(FTransientMarkers)] := lTransientValue;
       end;
     end;
     FTransientMarkerCount := Length(FTransientMarkers);
@@ -492,20 +500,24 @@ begin
 end;
 
 function TAudioPeak.LoadFromFile(AFileName: string): Boolean;
+var
+  lFileStream: TFileStream;
 begin
   FPeakFilename := ChangeFileExt(AFilename, '.pk');
 
   if FileExists(FPeakFilename) then
   begin
-    AssignFile(FFileHandle, FPeakFilename);
-    Reset(FFileHandle);
-    BlockRead(FFileHandle, FBPM, 1);
-    BlockRead(FFileHandle, FFileHash, 1);
-    BlockRead(FFileHandle, FDecimatedDataCount, 1);
-    BlockRead(FFileHandle, FDecimatedData, FDecimatedDataCount);
-    BlockRead(FFileHandle, FTransientMarkerCount, 1);
-    BlockRead(FFileHandle, FTransientMarkers, FTransientMarkerCount);
-    CloseFile(FFileHandle);
+    lFileStream := TFileStream.Create(FPeakFilename, fmOpenRead or fmShareDenyNone);
+    try
+      lFileStream.ReadBuffer(FBPM, SizeOf(FBPM));
+      FFileHash := lFileStream.ReadAnsiString;
+      lFileStream.ReadBuffer(FDecimatedDataCount, SizeOf(FDecimatedDataCount));
+      lFileStream.ReadBuffer(FDecimatedData, FDecimatedDataCount * SizeOf(Single));
+      lFileStream.ReadBuffer(FTransientMarkerCount, SizeOf(Integer));
+      lFileStream.ReadBuffer(FTransientMarkers, FTransientMarkerCount * SizeOf(Single));
+    finally
+      lFileStream.Free;
+    end;
   end
   else
   begin
@@ -515,24 +527,46 @@ begin
 end;
 
 procedure TAudioPeak.SaveToFile;
+var
+  lFileStream: TFileStream;
+  lFlags: word;
 begin
-  AssignFile(FFileHandle, FPeakFilename);
-  if FileExists(FPeakFilename) then
-  begin
-    Reset(FFileHandle);
-  end
-  else
-  begin
-    Rewrite(FFileHandle);
-  end;
+  try
+    if FPeakFilename <> '' then
+    begin
+      if FileExists(FPeakFilename) then
+      begin
+        DeleteFile(FPeakFilename);
+      end;
 
-  BlockWrite(FFileHandle, FBPM, 1);
-  BlockWrite(FFileHandle, FFileHash, 1);
-  BlockWrite(FFileHandle, FDecimatedDataCount, 1);
-  BlockWrite(FFileHandle, FDecimatedData, FDecimatedDataCount);
-  BlockWrite(FFileHandle, FTransientMarkerCount, 1);
-  BlockWrite(FFileHandle, FTransientMarkers, FTransientMarkerCount);
-  CloseFile(FFileHandle);
+      DBLog('1');
+      lFileStream := TFileStream.Create(FPeakFilename, fmCreate);
+      DBLog('2');
+      try
+        lFileStream.WriteBuffer(FBPM, SizeOf(FBPM));
+        DBLog('3');
+        lFileStream.WriteAnsiString(FFileHash);
+        DBLog('4');
+        lFileStream.WriteBuffer(FDecimatedDataCount, SizeOf(FDecimatedDataCount));
+        DBLog('5');
+        lFileStream.WriteBuffer(FDecimatedData[0], FDecimatedDataCount * SizeOf(Single));
+        DBLog('6');
+        lFileStream.WriteBuffer(FTransientMarkerCount, SizeOf(Integer));
+        DBLog('7');
+        lFileStream.WriteBuffer(FTransientMarkers[0], FTransientMarkerCount * SizeOf(Integer));
+        DBLog('8');
+      finally
+        DBLog('9');
+        lFileStream.Free;
+        DBLog('10');
+      end;
+    end
+  except
+    on e: exception do
+    begin
+      DBLog(e.Message);
+    end;
+  end;
 end;
 
 { TAudioStreamBlock }
@@ -721,6 +755,13 @@ begin
     FChannelCount := lSampleInfo.channels;
     FFrameCount := lSampleInfo.frames;
     FSampleRate := lSampleInfo.samplerate;
+
+    if Assigned(FAudioPeak.Data) then
+    begin
+      FreeMem(FAudioPeak.Data);
+    end;
+    FAudioPeak.Data := GetMem(lSampleInfo.frames * lSampleInfo.channels * SizeOf(Single));
+    sf_read_float(FSampleHandle, FAudioPeak.Data, lSampleInfo.frames);
 
     FAudioPeak.DataSampleInfo := lSampleInfo;
     FAudioPeak.LoadFromFile(FFilename);
