@@ -446,16 +446,17 @@ begin
   end;
   FDecimatedData := GetMem(FDecimatedDataCount * SizeOf(Single));
 
+  lOffset := 0;
   for i := 0 to Pred(FDecimatedDataCount) do
   begin
     lValue := 0;
-    lOffset := 0;
     for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
     begin
-      lValue := lValue + FData[lOffset + j];
-      Inc(lOffset, DECIMATED_CACHE_DISTANCE);
+      lValue := lValue + FData[lOffset + (j*FDataSampleInfo.channels)];
     end;
-    DecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
+    Inc(lOffset, DECIMATED_CACHE_DISTANCE);
+    FDecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
+    writeln(Format('FDecimatedData[%d] = %f', [i, FDecimatedData[i]]));
   end;
 end;
 
@@ -505,7 +506,7 @@ var
 begin
   FPeakFilename := ChangeFileExt(AFilename, '.pk');
 
-  if FileExists(FPeakFilename) then
+  {if FileExists(FPeakFilename) then
   begin
     lFileStream := TFileStream.Create(FPeakFilename, fmOpenRead or fmShareDenyNone);
     try
@@ -519,7 +520,7 @@ begin
       lFileStream.Free;
     end;
   end
-  else
+  else }
   begin
     Calculate;
     Result := False;
@@ -531,6 +532,7 @@ var
   lFileStream: TFileStream;
   lFlags: word;
 begin
+  exit;
   try
     if FPeakFilename <> '' then
     begin
@@ -649,6 +651,7 @@ begin
       begin
         if lAudioStream.PageRequest = rsRequested then
         begin
+          DBLog('TAudioStreamListSingleton.Execute, lAudioStream.LoadBlock ' + lAudioStream.Filename);
           lAudioStream.LoadBlock;
 
           lAudioStream.PageRequest := rsReady
@@ -701,13 +704,15 @@ begin
 
   if FPageRequest = rsReady then
   begin
+    DBLog('TAudioStream.Audio, FPageRequest = rsReady');
     FActivePage := 1 - FActivePage;
 
     FPageRequest := rsIdle;
   end
   else
   begin
-    if FOffset > FPage[FActivePage].BlockOffsetHalf then
+    if (FOffset > FPage[FActivePage].BlockOffsetHalf) or
+      (FOffset <= FPage[FActivePage].BlockOffset) then
     begin
       // request new page, this should be picked up in the thread and a new block
       // should be loaded and FNewPageRequested should be set to false subsequently
@@ -720,7 +725,26 @@ end;
 
 function TAudioStream.AudioBlock(AOffset: Integer): PSingle;
 begin
+  if FPageRequest = rsReady then
+  begin
+    DBLog('TAudioStream.Audio, FPageRequest = rsReady');
+    FActivePage := 1 - FActivePage;
+
+    FPageRequest := rsIdle;
+  end
+  else
+  begin
+    if (FOffset > FPage[FActivePage].BlockOffsetHalf) or
+      (FOffset <= FPage[FActivePage].BlockOffset) then
+    begin
+      // request new page, this should be picked up in the thread and a new block
+      // should be loaded and FNewPageRequested should be set to false subsequently
+      FPageRequest := rsRequested;
+    end;
+  end;
+
   Result := @FPage[FActivePage].Buffer[AOffset - FPage[FActivePage].BlockOffset];
+  DBLog('TAudioStream.AudioBlock ' + inttostr(AOffset));
 end;
 
 procedure TAudioStream.LoadBlock;
@@ -737,6 +761,8 @@ begin
 
   sf_seek(FSampleHandle, lPage.BlockOffset, SEEK_SET);
   lReadCount := sf_read_float(FSampleHandle, lPage.Buffer, lPage.Size);
+
+  DBLog('TAudioStream.LoadBlock BlockOffset: ' + inttostr(lPage.BlockOffset));
 
   FPageRequest := rsReady;
 end;

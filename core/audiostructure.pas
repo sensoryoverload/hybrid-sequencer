@@ -425,8 +425,6 @@ var
     // Putting this after the recurse will order the list backwards.
     FTrackOrder.AddObject(IntToStr(APriority), ATrack);
 
-//    DBLog(Format('Priority %d Type %d TrackId %s', [APriority, ATrack.TrackType, ATrack.TrackId]));
-
     Dec(APriority);
   end;
 

@@ -525,35 +525,6 @@ var
 begin
   if not Assigned(FModel) then exit;
 
-(*  if Assigned(FModel.Wave) then
-  begin
-    writeln('FModel.Wave assigned');
-
-    if Assigned(FModel.Wave.AudioPeak) then
-    begin
-      writeln('FModel.Wave.AudioPeak assigned');
-
-      if Assigned(FModel.Wave.AudioPeak.DecimatedData) then
-      begin
-        writeln('FModel.Wave.AudioPeak.DecimatedData assigned');
-      end
-      else
-      begin
-        writeln('FModel.Wave.AudioPeak.DecimatedData NOT assigned');
-      end;
-    end
-    else
-    begin
-      writeln('FModel.Wave.AudioPeak NOT assigned');
-    end;
-  end
-  else
-  begin
-    writeln('FModel.Wave NOT assigned');
-  end;
-
-  exit;
-      *)
   if FIsDirty or FForceRedraw then
   begin
     if FIsDirty then
@@ -736,10 +707,10 @@ begin
                     Round(PositionInData1 *
                     FModel.Wave.ChannelCount + ChannelLoop) div
                     DECIMATED_CACHE_DISTANCE;
-                  writeln(Format('DecimatedDataCount %d lDecimatedOffset %d', [FModel.Wave.AudioPeak.DecimatedDataCount, lDecimatedOffset]));
+
                   if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
                   begin
-                    DataValue := FModel.DecimatedData[lDecimatedOffset];
+                    DataValue := FModel.Wave.AudioPeak.DecimatedData[lDecimatedOffset];
                   end;
 
                   // Seek maxima
@@ -748,10 +719,10 @@ begin
                     lDecimatedOffset :=
                       (SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div
                       DECIMATED_CACHE_DISTANCE;
-                    //writeln(Format('DecimatedDataCount %d lDecimatedOffset %d', [FModel.Wave.AudioPeak.DecimatedDataCount, lDecimatedOffset]));
+
                     if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
                     begin
-                      DataValue := FModel.DecimatedData[lDecimatedOffset];
+                      DataValue := FModel.Wave.AudioPeak.DecimatedData[lDecimatedOffset];
                     end
                     else
                     begin
@@ -778,10 +749,10 @@ begin
                   lDecimatedOffset :=
                     (Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div
                     DECIMATED_CACHE_DISTANCE;
-                  writeln(Format('DecimatedDataCount %d lDecimatedOffset %d', [FModel.Wave.AudioPeak.DecimatedDataCount, lDecimatedOffset]));
+
                   if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
                   begin
-                    DataValue := FModel.DecimatedData[lDecimatedOffset];
+                    DataValue := FModel.Wave.AudioPeak.DecimatedData[lDecimatedOffset];
                   end
                   else
                   begin
