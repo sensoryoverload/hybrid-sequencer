@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, Controls, wave, wavegui, graphics,
   track, LCLType, globalconst, global_command, global, pattern, ComCtrls,
-  imglist, LCLintf, Menus, PatternGUI;
+  imglist, LCLintf, Menus, PatternGUI, wavecommand;
 
 type
 

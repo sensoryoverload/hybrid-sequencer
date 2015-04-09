@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, StdCtrls, Spin,
   ExtCtrls, ComCtrls, Menus, globalconst, dialcontrol, wavegui, pattern, wave,
-  pluginhost, pluginhostgui, plugin, patternoverview, LCLintf;
+  pluginhost, pluginhostgui, plugin, patternoverview, LCLintf, wavecommand;
 
 type
   { TWavePatternControlGUI }

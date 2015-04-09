@@ -436,27 +436,50 @@ procedure TAudioPeak.CalculateDecimatedData;
 var
   i, j: Integer;
   lValue: Single;
+  lLeftValue: Single;
+  lRightValue: Single;
   lOffset: Integer;
 begin
   // Calculate decimated version of audio by averaging
-  FDecimatedDataCount := FDataSampleInfo.frames div DECIMATED_CACHE_DISTANCE;
+  FDecimatedDataCount := FDataSampleInfo.frames * FDataSampleInfo.channels div DECIMATED_CACHE_DISTANCE;
   if Assigned(FDecimatedData) then
   begin
     FreeMem(FDecimatedData);
   end;
   FDecimatedData := GetMem(FDecimatedDataCount * SizeOf(Single));
 
-  lOffset := 0;
-  for i := 0 to Pred(FDecimatedDataCount) do
+  if FDataSampleInfo.channels = 1 then
   begin
-    lValue := 0;
-    for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
+    lOffset := 0;
+    for i := 0 to Pred(FDecimatedDataCount) do
     begin
-      lValue := lValue + FData[lOffset + (j*FDataSampleInfo.channels)];
+      lValue := 0;
+      for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
+      begin
+        lValue := lValue + FData[lOffset + j];
+      end;
+      Inc(lOffset, DECIMATED_CACHE_DISTANCE);
+      FDecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
+  //    writeln(Format('FDecimatedData[%d] = %f', [i, FDecimatedData[i]]));
     end;
-    Inc(lOffset, DECIMATED_CACHE_DISTANCE);
-    FDecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
-    writeln(Format('FDecimatedData[%d] = %f', [i, FDecimatedData[i]]));
+  end
+  else if FDataSampleInfo.channels = 2 then
+  begin
+    lOffset := 0;
+    for i := 0 to Pred(FDecimatedDataCount) do
+    begin
+      lLeftValue := 0;
+      lRightValue := 0;
+      for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
+      begin
+        lLeftValue := lLeftValue + FData[lOffset + j * 2];
+        lRightValue := lRightValue + FData[lOffset + j * 2 + 1];
+      end;
+      Inc(lOffset, DECIMATED_CACHE_DISTANCE);
+      FDecimatedData[i] := lLeftValue / DECIMATED_CACHE_DISTANCE;
+      FDecimatedData[i + 1] := lRightValue / DECIMATED_CACHE_DISTANCE;
+  //    writeln(Format('FDecimatedData[%d] = %f', [i, FDecimatedData[i]]));
+    end;
   end;
 end;
 
@@ -725,6 +748,11 @@ end;
 
 function TAudioStream.AudioBlock(AOffset: Integer): PSingle;
 begin
+// new
+
+  FOffset := AOffset * FChannelCount;
+
+// end new
   if FPageRequest = rsReady then
   begin
     DBLog('TAudioStream.Audio, FPageRequest = rsReady');

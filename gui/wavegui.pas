@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, Controls, LCLType, Graphics, globalconst, global, jacktypes,
-  ComCtrls, pattern, global_command, wave, utils, ContNrs, Forms, plugin;
+  ComCtrls, pattern, global_command, wave, utils, ContNrs, Forms, plugin,
+  wavecommand;
 
 const
   DECIMATED_CACHE_DISTANCE = 64;
