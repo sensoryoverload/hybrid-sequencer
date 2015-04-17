@@ -222,10 +222,9 @@ override_dh_auto_install:
         <Filename Value="core/global.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="8"/>
-        <TopLine Value="802"/>
-        <CursorPos Y="821"/>
+        <TopLine Value="1261"/>
+        <CursorPos Y="1286"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit10>
@@ -550,11 +549,11 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <UnitName Value="wave"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="369"/>
-        <CursorPos X="24" Y="382"/>
+        <TopLine Value="1098"/>
+        <CursorPos X="5" Y="1123"/>
         <UsageCount Value="204"/>
         <Bookmarks Count="1">
-          <Item0 X="28" Y="98" ID="1"/>
+          <Item0 ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit48>
@@ -783,9 +782,10 @@ override_dh_auto_install:
         <Filename Value="core/stretcher.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="stretcher"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="336"/>
-        <CursorPos Y="356"/>
+        <TopLine Value="405"/>
+        <CursorPos Y="430"/>
         <UsageCount Value="709"/>
         <Loaded Value="True"/>
       </Unit79>
@@ -1023,126 +1023,126 @@ override_dh_auto_install:
         <Loaded Value="True"/>
       </Unit115>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="27">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="core/global.pas"/>
-        <Caret Line="819" TopLine="799"/>
+        <Caret Line="821" TopLine="801"/>
       </Position1>
       <Position2>
         <Filename Value="core/global.pas"/>
-        <Caret Line="821" TopLine="801"/>
+        <Caret Line="829" TopLine="817"/>
       </Position2>
       <Position3>
         <Filename Value="core/global.pas"/>
-        <Caret Line="829" TopLine="817"/>
+        <Caret Line="646" TopLine="633"/>
       </Position3>
       <Position4>
         <Filename Value="core/global.pas"/>
-        <Caret Line="646" TopLine="633"/>
+        <Caret Line="648" TopLine="633"/>
       </Position4>
       <Position5>
         <Filename Value="core/global.pas"/>
-        <Caret Line="648" TopLine="633"/>
+        <Caret Line="654" TopLine="633"/>
       </Position5>
       <Position6>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="654" TopLine="633"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="369" TopLine="357"/>
       </Position6>
       <Position7>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="369" TopLine="357"/>
+        <Caret Line="371" TopLine="357"/>
       </Position7>
       <Position8>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="371" TopLine="357"/>
+        <Caret Line="377" TopLine="357"/>
       </Position8>
       <Position9>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="377" TopLine="357"/>
+        <Caret Line="379" TopLine="359"/>
       </Position9>
       <Position10>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="379" TopLine="359"/>
+        <Caret Line="383" TopLine="363"/>
       </Position10>
       <Position11>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="383" TopLine="363"/>
+        <Caret Line="385" TopLine="365"/>
       </Position11>
       <Position12>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="385" TopLine="365"/>
+        <Caret Line="386" TopLine="366"/>
       </Position12>
       <Position13>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="386" TopLine="366"/>
+        <Caret Line="388" TopLine="368"/>
       </Position13>
       <Position14>
         <Filename Value="core/wave.pas"/>
-        <Caret Line="388" TopLine="368"/>
+        <Caret Line="382" Column="24" TopLine="369"/>
       </Position14>
       <Position15>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="382" Column="24" TopLine="369"/>
-      </Position15>
-      <Position16>
         <Filename Value="simplejack.pas"/>
         <Caret Line="95" Column="29" TopLine="82"/>
+      </Position15>
+      <Position16>
+        <Filename Value="core/global.pas"/>
+        <Caret Line="753" Column="23" TopLine="737"/>
       </Position16>
       <Position17>
         <Filename Value="core/global.pas"/>
-        <Caret Line="753" Column="23" TopLine="737"/>
+        <Caret Line="803" TopLine="790"/>
       </Position17>
       <Position18>
         <Filename Value="core/global.pas"/>
-        <Caret Line="803" TopLine="790"/>
+        <Caret Line="805" TopLine="790"/>
       </Position18>
       <Position19>
         <Filename Value="core/global.pas"/>
-        <Caret Line="805" TopLine="790"/>
+        <Caret Line="807" TopLine="790"/>
       </Position19>
       <Position20>
         <Filename Value="core/global.pas"/>
-        <Caret Line="807" TopLine="790"/>
+        <Caret Line="809" TopLine="790"/>
       </Position20>
       <Position21>
         <Filename Value="core/global.pas"/>
-        <Caret Line="809" TopLine="790"/>
+        <Caret Line="810" TopLine="790"/>
       </Position21>
       <Position22>
         <Filename Value="core/global.pas"/>
-        <Caret Line="810" TopLine="790"/>
+        <Caret Line="811" TopLine="790"/>
       </Position22>
       <Position23>
         <Filename Value="core/global.pas"/>
-        <Caret Line="811" TopLine="790"/>
+        <Caret Line="813" TopLine="792"/>
       </Position23>
       <Position24>
         <Filename Value="core/global.pas"/>
-        <Caret Line="813" TopLine="792"/>
+        <Caret Line="817" TopLine="796"/>
       </Position24>
       <Position25>
         <Filename Value="core/global.pas"/>
-        <Caret Line="817" TopLine="796"/>
+        <Caret Line="818" TopLine="797"/>
       </Position25>
       <Position26>
         <Filename Value="core/global.pas"/>
-        <Caret Line="818" TopLine="797"/>
+        <Caret Line="820" TopLine="800"/>
       </Position26>
       <Position27>
         <Filename Value="core/global.pas"/>
-        <Caret Line="820" TopLine="800"/>
+        <Caret Line="821" Column="18" TopLine="801"/>
       </Position27>
       <Position28>
         <Filename Value="core/global.pas"/>
-        <Caret Line="821" Column="18" TopLine="801"/>
+        <Caret Line="767" Column="21" TopLine="752"/>
       </Position28>
       <Position29>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="530" Column="3" TopLine="526"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="391" Column="17" TopLine="381"/>
       </Position29>
       <Position30>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="392" Column="3" TopLine="390"/>
+        <Filename Value="core/stretcher.pas"/>
+        <Caret Line="344" Column="24" TopLine="336"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
@@ -1205,14 +1205,14 @@ override_dh_auto_install:
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
         <Source Value="core/global.pas"/>
-        <Line Value="803"/>
+        <Line Value="1"/>
       </Item4>
       <Item5>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
         <Source Value="core/global.pas"/>
-        <Line Value="821"/>
+        <Line Value="1"/>
       </Item5>
     </BreakPoints>
     <Watches Count="1">

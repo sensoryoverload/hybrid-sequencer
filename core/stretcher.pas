@@ -138,7 +138,7 @@ var
   lBufferOffset: integer;
   lBuffer: PSingle;
 begin
-  lBufferOffset := Round(ACursor * AChannelCount);
+  lBufferOffset := Round(ACursor{ * AChannelCount});
 
   case FInterpolationAlgorithm of
     iaHermite:
@@ -189,7 +189,7 @@ begin
       else
       begin
         ALeftValue := ASourceBuffer.Audio(lBufferOffset);
-        ARightValue := ASourceBuffer.Audio(lBufferOffset + 1);
+        ARightValue := ASourceBuffer.Audio(lBufferOffset); // !!!! TODO This should return right channel of sample
       end;
     end;
   end;

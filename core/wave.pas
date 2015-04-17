@@ -862,7 +862,7 @@ var
   lBufferOffset: integer;
 begin
   lFracPosition := Frac(ASampleCursor);
-  lBufferOffset := Round(ASampleCursor * AChannelCount);
+  lBufferOffset := Round(ASampleCursor{ * AChannelCount});
 
   if AChannelCount = 1 then
   begin
@@ -895,7 +895,8 @@ begin
       ASourceBuffer[lBufferOffset + 5]);}
 
     ATargetBuffer[AFrameIndex * 2] := ASourceBuffer.Audio(lBufferOffset);
-    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer.Audio(lBufferOffset + 1);
+    // !!!! Todo This should take the right sample instead of the left sample
+    ATargetBuffer[AFrameIndex * 2 + 1] := ASourceBuffer.Audio(lBufferOffset);
   end;
 end;
 
@@ -916,8 +917,6 @@ begin
     if AFrameIndex = 0 then
     begin
       StartingSliceIndex := StartOfWarpLocation(FSampleCursor);
-
-      writeln(format('FWave.ChannelCount %d', [FWave.ChannelCount]));
     end;
 
     if lInSample then

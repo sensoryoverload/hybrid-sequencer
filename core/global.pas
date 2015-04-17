@@ -306,7 +306,7 @@ type
     FSize: Integer;
     FActivePage: Integer;
     FPageRequest: TAudioStreamRequestState;
-    FOffset: Integer;
+    FFrameOffset: Integer;
     FBlockOffset: Integer;
     FChannelCount: Integer;
     FFrameCount: Integer;
@@ -723,7 +723,7 @@ end;
 // Calculate offset in memory block and return result
 function TAudioStream.Audio(AOffset: Integer): Single;
 begin
-  FOffset := AOffset;
+  FFrameOffset := AOffset;
 
   if FPageRequest = rsReady then
   begin
@@ -734,8 +734,8 @@ begin
   end
   else
   begin
-    if (FOffset > FPage[FActivePage].BlockOffsetHalf) or
-      (FOffset <= FPage[FActivePage].BlockOffset) then
+    if (AOffset * FChannelCount > FPage[FActivePage].BlockOffsetHalf) or
+      (AOffset * FChannelCount <= FPage[FActivePage].BlockOffset) then
     begin
       // request new page, this should be picked up in the thread and a new block
       // should be loaded and FNewPageRequested should be set to false subsequently
@@ -743,16 +743,13 @@ begin
     end;
   end;
 
-  Result := FPage[FActivePage].Buffer[AOffset - FPage[FActivePage].BlockOffset];
+  Result := FPage[FActivePage].Buffer[(AOffset - FPage[FActivePage].BlockOffset) * FChannelCount];
 end;
 
 function TAudioStream.AudioBlock(AOffset: Integer): PSingle;
 begin
-// new
+  FFrameOffset := AOffset;
 
-  FOffset := AOffset * FChannelCount;
-
-// end new
   if FPageRequest = rsReady then
   begin
     DBLog('TAudioStream.Audio, FPageRequest = rsReady');
@@ -762,8 +759,8 @@ begin
   end
   else
   begin
-    if (FOffset > FPage[FActivePage].BlockOffsetHalf) or
-      (FOffset <= FPage[FActivePage].BlockOffset) then
+    if (AOffset * FChannelCount > FPage[FActivePage].BlockOffsetHalf) or
+      (AOffset * FChannelCount <= FPage[FActivePage].BlockOffset) then
     begin
       // request new page, this should be picked up in the thread and a new block
       // should be loaded and FNewPageRequested should be set to false subsequently
@@ -771,7 +768,7 @@ begin
     end;
   end;
 
-  Result := @FPage[FActivePage].Buffer[AOffset - FPage[FActivePage].BlockOffset];
+  Result := @FPage[FActivePage].Buffer[(AOffset - FPage[FActivePage].BlockOffset) * FChannelCount];
   DBLog('TAudioStream.AudioBlock ' + inttostr(AOffset));
 end;
 
@@ -784,11 +781,11 @@ begin
   lLoadingPage := 1 - FActivePage;
 
   lPage := TAudioStreamBlock(FPage[lLoadingPage]);
-  lPage.BlockOffset := FOffset;
-  lPage.BlockOffsetHalf := lpage.BlockOffset + lPage.Size div 2;
+  lPage.BlockOffset := FFrameOffset;
+  lPage.BlockOffsetHalf := lPage.BlockOffset + lPage.Size;
 
   sf_seek(FSampleHandle, lPage.BlockOffset, SEEK_SET);
-  lReadCount := sf_read_float(FSampleHandle, lPage.Buffer, lPage.Size);
+  lReadCount := sf_read_float(FSampleHandle, lPage.Buffer, lPage.Size * FChannelCount);
 
   DBLog('TAudioStream.LoadBlock BlockOffset: ' + inttostr(lPage.BlockOffset));
 
@@ -815,7 +812,7 @@ begin
       FreeMem(FAudioPeak.Data);
     end;
     FAudioPeak.Data := GetMem(lSampleInfo.frames * lSampleInfo.channels * SizeOf(Single));
-    sf_read_float(FSampleHandle, FAudioPeak.Data, lSampleInfo.frames);
+    sf_read_float(FSampleHandle, FAudioPeak.Data, lSampleInfo.frames * lSampleInfo.channels);
 
     FAudioPeak.DataSampleInfo := lSampleInfo;
     FAudioPeak.LoadFromFile(FFilename);
