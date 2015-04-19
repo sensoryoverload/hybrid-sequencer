@@ -75,7 +75,7 @@ type
 implementation
 
 uses
-  utils;
+  utils, trackcommand;
 
 { TMidiPatternGUI }
 

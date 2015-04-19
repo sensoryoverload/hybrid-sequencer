@@ -126,7 +126,7 @@ override_dh_auto_install:
         <MinVersion Major="1" Valid="True"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="118">
+    <Units Count="119">
       <Unit0>
         <Filename Value="HybridSequencer.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -142,7 +142,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="simplejack"/>
-        <EditorIndex Value="15"/>
+        <EditorIndex Value="17"/>
         <TopLine Value="82"/>
         <CursorPos X="29" Y="95"/>
         <UsageCount Value="218"/>
@@ -160,7 +160,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mapmonitor"/>
-        <EditorIndex Value="16"/>
+        <EditorIndex Value="18"/>
         <TopLine Value="36"/>
         <CursorPos X="3" Y="56"/>
         <ComponentState Value="1"/>
@@ -191,7 +191,7 @@ override_dh_auto_install:
         <Filename Value="common/utils.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="utils"/>
-        <EditorIndex Value="17"/>
+        <EditorIndex Value="19"/>
         <TopLine Value="79"/>
         <CursorPos X="3" Y="95"/>
         <UsageCount Value="212"/>
@@ -232,7 +232,7 @@ override_dh_auto_install:
         <Filename Value="core/global_command.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global_command"/>
-        <EditorIndex Value="20"/>
+        <EditorIndex Value="22"/>
         <TopLine Value="387"/>
         <CursorPos Y="395"/>
         <UsageCount Value="212"/>
@@ -315,8 +315,8 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <UnitName Value="track"/>
         <EditorIndex Value="14"/>
-        <TopLine Value="912"/>
-        <CursorPos Y="924"/>
+        <TopLine Value="481"/>
+        <CursorPos Y="498"/>
         <UsageCount Value="212"/>
         <Loaded Value="True"/>
       </Unit21>
@@ -327,7 +327,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="aboutgui"/>
-        <EditorIndex Value="21"/>
+        <EditorIndex Value="23"/>
         <TopLine Value="32"/>
         <CursorPos X="3" Y="35"/>
         <UsageCount Value="212"/>
@@ -350,7 +350,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="midigui"/>
-        <EditorIndex Value="18"/>
+        <EditorIndex Value="20"/>
         <TopLine Value="227"/>
         <CursorPos X="51" Y="234"/>
         <UsageCount Value="212"/>
@@ -387,7 +387,7 @@ override_dh_auto_install:
         <Filename Value="common/fx.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fx"/>
-        <EditorIndex Value="26"/>
+        <EditorIndex Value="28"/>
         <TopLine Value="260"/>
         <CursorPos X="5" Y="276"/>
         <UsageCount Value="211"/>
@@ -461,7 +461,7 @@ override_dh_auto_install:
       <Unit38>
         <Filename Value="components/dialcontrol.pas"/>
         <UnitName Value="dialcontrol"/>
-        <EditorIndex Value="19"/>
+        <EditorIndex Value="21"/>
         <TopLine Value="596"/>
         <CursorPos Y="606"/>
         <UsageCount Value="238"/>
@@ -502,7 +502,6 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="midipatterncontrolgui"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="10"/>
         <TopLine Value="68"/>
         <CursorPos X="70" Y="86"/>
@@ -524,9 +523,15 @@ override_dh_auto_install:
       <Unit45>
         <Filename Value="gui/midipatterngui.pas"/>
         <IsPartOfProject Value="True"/>
-        <TopLine Value="261"/>
-        <CursorPos X="24" Y="273"/>
+        <UnitName Value="midipatterngui"/>
+        <EditorIndex Value="16"/>
+        <TopLine Value="66"/>
+        <CursorPos X="22" Y="78"/>
         <UsageCount Value="200"/>
+        <Bookmarks Count="1">
+          <Item0 X="8" Y="78" ID="1"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
       </Unit45>
       <Unit46>
         <Filename Value="gui/wavegui.pas"/>
@@ -546,8 +551,8 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <UnitName Value="wavepatterngui"/>
         <EditorIndex Value="6"/>
-        <TopLine Value="14"/>
-        <CursorPos X="51" Y="30"/>
+        <TopLine Value="64"/>
+        <CursorPos X="22" Y="78"/>
         <UsageCount Value="202"/>
         <Loaded Value="True"/>
       </Unit47>
@@ -559,9 +564,6 @@ override_dh_auto_install:
         <TopLine Value="26"/>
         <CursorPos Y="36"/>
         <UsageCount Value="204"/>
-        <Bookmarks Count="1">
-          <Item0 ID="1"/>
-        </Bookmarks>
         <Loaded Value="True"/>
       </Unit48>
       <Unit49>
@@ -593,13 +595,13 @@ override_dh_auto_install:
         <Filename Value="externals/soundtouch/tdstretch.pas"/>
         <TopLine Value="744"/>
         <CursorPos X="30" Y="765"/>
-        <UsageCount Value="93"/>
+        <UsageCount Value="92"/>
       </Unit53>
       <Unit54>
         <Filename Value="externals/soundtouch/ratetransposer.pas"/>
         <TopLine Value="195"/>
         <CursorPos X="3" Y="200"/>
-        <UsageCount Value="88"/>
+        <UsageCount Value="87"/>
       </Unit54>
       <Unit55>
         <Filename Value="bindings/librubberband/librubberband.pp"/>
@@ -636,7 +638,10 @@ override_dh_auto_install:
         <Filename Value="gui/sessiongrid.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sessiongrid"/>
-        <EditorIndex Value="22"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="24"/>
+        <TopLine Value="301"/>
+        <CursorPos X="51" Y="318"/>
         <UsageCount Value="207"/>
         <Bookmarks Count="2">
           <Item0 X="3" Y="1405" ID="6"/>
@@ -739,7 +744,7 @@ override_dh_auto_install:
         <Filename Value="plugins/plugin_bassline_gui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_bassline_gui"/>
-        <EditorIndex Value="24"/>
+        <EditorIndex Value="26"/>
         <TopLine Value="4"/>
         <CursorPos Y="22"/>
         <UsageCount Value="214"/>
@@ -756,7 +761,7 @@ override_dh_auto_install:
         <Filename Value="plugins/tb303.pas"/>
         <TopLine Value="72"/>
         <CursorPos Y="75"/>
-        <UsageCount Value="93"/>
+        <UsageCount Value="92"/>
       </Unit74>
       <Unit75>
         <Filename Value="gui/patternoverview.pas"/>
@@ -768,7 +773,7 @@ override_dh_auto_install:
       <Unit76>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/inc/heaptrc.pp"/>
         <CursorPos X="54"/>
-        <UsageCount Value="153"/>
+        <UsageCount Value="152"/>
       </Unit76>
       <Unit77>
         <Filename Value="gui/renamepatterngui.pas"/>
@@ -783,7 +788,7 @@ override_dh_auto_install:
         <Filename Value="externals/soundtouch/peakfinder.pas"/>
         <TopLine Value="300"/>
         <CursorPos Y="321"/>
-        <UsageCount Value="278"/>
+        <UsageCount Value="277"/>
       </Unit78>
       <Unit79>
         <Filename Value="core/stretcher.pas"/>
@@ -799,36 +804,36 @@ override_dh_auto_install:
         <Filename Value="core/ucrosscorrelatefft.pas"/>
         <TopLine Value="143"/>
         <CursorPos X="18" Y="167"/>
-        <UsageCount Value="347"/>
+        <UsageCount Value="346"/>
       </Unit80>
       <Unit81>
         <Filename Value="core/fftreal.pas"/>
         <TopLine Value="35"/>
         <CursorPos X="5" Y="50"/>
-        <UsageCount Value="104"/>
+        <UsageCount Value="103"/>
       </Unit81>
       <Unit82>
         <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-json/src/fpjsonrtti.pp"/>
         <TopLine Value="54"/>
         <CursorPos Y="98"/>
-        <UsageCount Value="225"/>
+        <UsageCount Value="224"/>
       </Unit82>
       <Unit83>
         <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-json/src/fpjson.pp"/>
         <TopLine Value="10"/>
         <CursorPos X="3" Y="31"/>
-        <UsageCount Value="225"/>
+        <UsageCount Value="224"/>
       </Unit83>
       <Unit84>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/objpas/math.pp"/>
         <TopLine Value="652"/>
         <CursorPos X="6" Y="655"/>
-        <UsageCount Value="169"/>
+        <UsageCount Value="168"/>
       </Unit84>
       <Unit85>
         <Filename Value="bindings/librubberband/urubberbandtest.pas"/>
         <CursorPos Y="3"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="38"/>
       </Unit85>
       <Unit86>
         <Filename Value="core/sincfir.pas"/>
@@ -850,18 +855,18 @@ override_dh_auto_install:
         <Filename Value="library/bgrabitmaptypes.pas"/>
         <TopLine Value="1161"/>
         <CursorPos X="39" Y="1180"/>
-        <UsageCount Value="181"/>
+        <UsageCount Value="180"/>
       </Unit88>
       <Unit89>
         <Filename Value="../lazarus/lcl/menus.pp"/>
         <TopLine Value="395"/>
         <CursorPos X="15" Y="406"/>
-        <UsageCount Value="90"/>
+        <UsageCount Value="89"/>
       </Unit89>
       <Unit90>
         <Filename Value="plugins/plugin_delay.pas"/>
         <UnitName Value="plugin_delay"/>
-        <EditorIndex Value="25"/>
+        <EditorIndex Value="27"/>
         <TopLine Value="37"/>
         <CursorPos Y="44"/>
         <UsageCount Value="174"/>
@@ -870,25 +875,25 @@ override_dh_auto_install:
       <Unit91>
         <Filename Value="bindings/libjack/transport.pp"/>
         <CursorPos X="15"/>
-        <UsageCount Value="140"/>
+        <UsageCount Value="139"/>
       </Unit91>
       <Unit92>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/objpas/classes/classesh.inc"/>
         <TopLine Value="252"/>
         <CursorPos X="15" Y="263"/>
-        <UsageCount Value="136"/>
+        <UsageCount Value="135"/>
       </Unit92>
       <Unit93>
         <Filename Value="/usr/share/fpcsrc/2.6.2/packages/fcl-base/src/contnrs.pp"/>
         <TopLine Value="830"/>
         <CursorPos X="3" Y="833"/>
-        <UsageCount Value="146"/>
+        <UsageCount Value="145"/>
       </Unit93>
       <Unit94>
         <Filename Value="../lazarus/lcl/controls.pp"/>
         <TopLine Value="2154"/>
         <CursorPos X="15" Y="2161"/>
-        <UsageCount Value="32"/>
+        <UsageCount Value="31"/>
         <Bookmarks Count="1">
           <Item0 X="25" Y="1328" ID="3"/>
         </Bookmarks>
@@ -897,99 +902,99 @@ override_dh_auto_install:
         <Filename Value="../lazarus/lcl/include/wincontrol.inc"/>
         <TopLine Value="4940"/>
         <CursorPos X="3" Y="4947"/>
-        <UsageCount Value="18"/>
+        <UsageCount Value="17"/>
       </Unit95>
       <Unit96>
         <Filename Value="../lazarus/lcl/include/customcontrol.inc"/>
         <TopLine Value="115"/>
         <CursorPos X="3" Y="128"/>
-        <UsageCount Value="18"/>
+        <UsageCount Value="17"/>
       </Unit96>
       <Unit97>
         <Filename Value="../lazarus/lcl/include/control.inc"/>
         <TopLine Value="3451"/>
         <CursorPos X="3" Y="3459"/>
-        <UsageCount Value="31"/>
+        <UsageCount Value="30"/>
       </Unit97>
       <Unit98>
         <Filename Value="../lazarus/lcl/include/customcombobox.inc"/>
         <TopLine Value="945"/>
         <CursorPos X="3" Y="954"/>
-        <UsageCount Value="2"/>
+        <UsageCount Value="1"/>
       </Unit98>
       <Unit99>
         <Filename Value="../lazarus/lcl/widgetset/wscontrols.pp"/>
         <TopLine Value="326"/>
         <CursorPos Y="330"/>
-        <UsageCount Value="13"/>
+        <UsageCount Value="12"/>
       </Unit99>
       <Unit100>
         <Filename Value="../../Desktop/sessiongridcontrols.pas"/>
         <TopLine Value="1007"/>
         <CursorPos Y="1029"/>
-        <UsageCount Value="202"/>
+        <UsageCount Value="201"/>
       </Unit100>
       <Unit101>
         <Filename Value="library/bgragtkbitmap.pas"/>
         <CursorPos X="31" Y="14"/>
-        <UsageCount Value="55"/>
+        <UsageCount Value="54"/>
       </Unit101>
       <Unit102>
         <Filename Value="library/bgradefaultbitmap.pas"/>
         <TopLine Value="385"/>
         <CursorPos Y="385"/>
-        <UsageCount Value="69"/>
+        <UsageCount Value="68"/>
       </Unit102>
       <Unit103>
         <Filename Value="../lazarus/lcl/graphics.pp"/>
         <TopLine Value="2640"/>
         <CursorPos X="3" Y="2642"/>
-        <UsageCount Value="68"/>
+        <UsageCount Value="67"/>
       </Unit103>
       <Unit104>
         <Filename Value="../lazarus/lcl/include/canvas.inc"/>
         <TopLine Value="1009"/>
         <CursorPos X="3" Y="1018"/>
-        <UsageCount Value="51"/>
+        <UsageCount Value="50"/>
       </Unit104>
       <Unit105>
         <Filename Value="gui/sessiongridcontrols.pas"/>
         <UnitName Value="sessiongridcontrols"/>
-        <EditorIndex Value="23"/>
+        <EditorIndex Value="25"/>
         <TopLine Value="388"/>
         <CursorPos Y="397"/>
-        <UsageCount Value="65"/>
+        <UsageCount Value="66"/>
         <Loaded Value="True"/>
       </Unit105>
       <Unit106>
         <Filename Value="../lazarus/lcl/comctrls.pp"/>
         <TopLine Value="1947"/>
         <CursorPos X="14" Y="1957"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="13"/>
       </Unit106>
       <Unit107>
         <Filename Value="../lazarus/lcl/include/containedaction.inc"/>
         <TopLine Value="92"/>
         <CursorPos Y="104"/>
-        <UsageCount Value="1"/>
+        <UsageCount Value="0"/>
       </Unit107>
       <Unit108>
         <Filename Value="../lazarus/lcl/include/popupmenu.inc"/>
         <TopLine Value="75"/>
         <CursorPos X="3" Y="77"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="13"/>
       </Unit108>
       <Unit109>
         <Filename Value="../lazarus/lcl/lclclasses.pp"/>
         <TopLine Value="37"/>
         <CursorPos X="3" Y="48"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="13"/>
       </Unit109>
       <Unit110>
         <Filename Value="../lazarus/lcl/extctrls.pp"/>
         <TopLine Value="940"/>
         <CursorPos X="3" Y="948"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
         <Bookmarks Count="1">
           <Item0 Y="947" ID="1"/>
         </Bookmarks>
@@ -998,25 +1003,25 @@ override_dh_auto_install:
         <Filename Value="../lazarus/lcl/include/winapih.inc"/>
         <TopLine Value="169"/>
         <CursorPos X="10" Y="176"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
       </Unit111>
       <Unit112>
         <Filename Value="../lazarus/lcl/include/intfbasewinapi.inc"/>
         <TopLine Value="1564"/>
         <CursorPos X="3" Y="1567"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
       </Unit112>
       <Unit113>
         <Filename Value="library/bgrabitmap.pas"/>
         <TopLine Value="9"/>
         <CursorPos X="31" Y="28"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit113>
       <Unit114>
         <Filename Value="/usr/share/fpcsrc/2.6.2/rtl/objpas/classes/lists.inc"/>
         <TopLine Value="734"/>
         <CursorPos X="3" Y="739"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit114>
       <Unit115>
         <Filename Value="core/wavecommand.pas"/>
@@ -1025,7 +1030,7 @@ override_dh_auto_install:
         <EditorIndex Value="5"/>
         <TopLine Value="242"/>
         <CursorPos Y="260"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="30"/>
         <Loaded Value="True"/>
       </Unit115>
       <Unit116>
@@ -1035,7 +1040,7 @@ override_dh_auto_install:
         <EditorIndex Value="11"/>
         <TopLine Value="514"/>
         <CursorPos X="43" Y="523"/>
-        <UsageCount Value="24"/>
+        <UsageCount Value="27"/>
         <Loaded Value="True"/>
       </Unit116>
       <Unit117>
@@ -1043,129 +1048,138 @@ override_dh_auto_install:
         <EditorIndex Value="4"/>
         <TopLine Value="420"/>
         <CursorPos X="3" Y="429"/>
-        <UsageCount Value="12"/>
+        <UsageCount Value="13"/>
         <Loaded Value="True"/>
       </Unit117>
+      <Unit118>
+        <Filename Value="core/trackcommand.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="trackcommand"/>
+        <EditorIndex Value="15"/>
+        <TopLine Value="149"/>
+        <CursorPos X="45" Y="166"/>
+        <UsageCount Value="23"/>
+        <Loaded Value="True"/>
+      </Unit118>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="1286" TopLine="1261"/>
+        <Filename Value="core/globalconst.pas"/>
       </Position1>
       <Position2>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="34" TopLine="25"/>
-      </Position2>
-      <Position3>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="119" Column="24" TopLine="110"/>
-      </Position3>
-      <Position4>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="120" Column="24" TopLine="110"/>
-      </Position4>
-      <Position5>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="143" Column="21" TopLine="134"/>
-      </Position5>
-      <Position6>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="108" TopLine="101"/>
-      </Position6>
-      <Position7>
-        <Filename Value="gui/wavegui.pas"/>
-        <Caret Line="710" Column="35" TopLine="705"/>
-      </Position7>
-      <Position8>
-        <Filename Value="core/globalconst.pas"/>
-        <Caret Line="377" TopLine="364"/>
-      </Position8>
-      <Position9>
-        <Filename Value="core/wave.pas"/>
-        <Caret Line="1123" Column="5" TopLine="1098"/>
-      </Position9>
-      <Position10>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="35" TopLine="19"/>
-      </Position10>
-      <Position11>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="31" Column="27" TopLine="26"/>
-      </Position11>
-      <Position12>
-        <Filename Value="core/midi.pas"/>
-        <Caret Line="572" TopLine="559"/>
-      </Position12>
-      <Position13>
-        <Filename Value="core/midicommand.pas"/>
-        <Caret Line="894" Column="12" TopLine="889"/>
-      </Position13>
-      <Position14>
-        <Filename Value="gui/midigui.pas"/>
-        <Caret Line="1695" TopLine="1681"/>
-      </Position14>
-      <Position15>
-        <Filename Value="gui/midigui.pas"/>
-        <Caret Line="238" Column="30" TopLine="229"/>
-      </Position15>
-      <Position16>
-        <Filename Value="core/midicommand.pas"/>
-        <Caret Line="89" Column="3" TopLine="71"/>
-      </Position16>
-      <Position17>
-        <Filename Value="core/midicommand.pas"/>
-        <Caret Line="8" Column="25" TopLine="6"/>
-      </Position17>
-      <Position18>
-        <Filename Value="core/midicommand.pas"/>
-        <Caret Line="23" Column="28" TopLine="14"/>
-      </Position18>
-      <Position19>
-        <Filename Value="core/midicommand.pas"/>
-        <Caret Line="8" Column="46"/>
-      </Position19>
-      <Position20>
-        <Filename Value="core/globalconst.pas"/>
-        <Caret Line="62" Column="9" TopLine="52"/>
-      </Position20>
-      <Position21>
-        <Filename Value="core/globalconst.pas"/>
-      </Position21>
-      <Position22>
         <Filename Value="core/globalconst.pas"/>
         <Caret Line="199" Column="38" TopLine="183"/>
-      </Position22>
-      <Position23>
+      </Position2>
+      <Position3>
         <Filename Value="core/midicommand.pas"/>
         <Caret Line="8" Column="55"/>
-      </Position23>
-      <Position24>
+      </Position3>
+      <Position4>
         <Filename Value="core/midicommand.pas"/>
         <Caret Line="212" TopLine="206"/>
-      </Position24>
-      <Position25>
+      </Position4>
+      <Position5>
         <Filename Value="core/midicommand.pas"/>
         <Caret Line="216" Column="18" TopLine="208"/>
-      </Position25>
-      <Position26>
+      </Position5>
+      <Position6>
         <Filename Value="core/midicommand.pas"/>
         <Caret Line="244" Column="22" TopLine="235"/>
-      </Position26>
-      <Position27>
+      </Position6>
+      <Position7>
         <Filename Value="core/midicommand.pas"/>
         <Caret Line="523" Column="29" TopLine="514"/>
-      </Position27>
-      <Position28>
+      </Position7>
+      <Position8>
         <Filename Value="core/midi.pas"/>
         <Caret Line="36" TopLine="31"/>
-      </Position28>
-      <Position29>
+      </Position8>
+      <Position9>
         <Filename Value="gui/midipatterncontrolgui.pas"/>
         <Caret Line="201" TopLine="186"/>
-      </Position29>
-      <Position30>
+      </Position9>
+      <Position10>
         <Filename Value="gui/midipatterncontrolgui.pas"/>
         <Caret Line="512" Column="13" TopLine="503"/>
+      </Position10>
+      <Position11>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="10" Column="21"/>
+      </Position11>
+      <Position12>
+        <Filename Value="gui/wavepatterngui.pas"/>
+        <Caret Line="30" Column="51" TopLine="14"/>
+      </Position12>
+      <Position13>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="759" TopLine="742"/>
+      </Position13>
+      <Position14>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="8" Column="43" TopLine="3"/>
+      </Position14>
+      <Position15>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="40" Column="27" TopLine="31"/>
+      </Position15>
+      <Position16>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="8" Column="56"/>
+      </Position16>
+      <Position17>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="166" Column="9" TopLine="159"/>
+      </Position17>
+      <Position18>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="231" Column="44" TopLine="218"/>
+      </Position18>
+      <Position19>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="166" Column="24" TopLine="153"/>
+      </Position19>
+      <Position20>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="308" Column="13" TopLine="298"/>
+      </Position20>
+      <Position21>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="166" Column="33" TopLine="152"/>
+      </Position21>
+      <Position22>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="324" Column="7" TopLine="315"/>
+      </Position22>
+      <Position23>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="8" Column="64"/>
+      </Position23>
+      <Position24>
+        <Filename Value="core/trackcommand.pas"/>
+        <Caret Line="410" Column="17" TopLine="400"/>
+      </Position24>
+      <Position25>
+        <Filename Value="gui/midipatterngui.pas"/>
+        <Caret Line="273" Column="24" TopLine="261"/>
+      </Position25>
+      <Position26>
+        <Filename Value="gui/midipatterngui.pas"/>
+        <Caret Line="180" Column="21" TopLine="170"/>
+      </Position26>
+      <Position27>
+        <Filename Value="gui/midipatterngui.pas"/>
+        <Caret Line="78" Column="8" TopLine="68"/>
+      </Position27>
+      <Position28>
+        <Filename Value="gui/midipatterngui.pas"/>
+        <Caret Line="180" Column="21" TopLine="170"/>
+      </Position28>
+      <Position29>
+        <Filename Value="gui/midipatterngui.pas"/>
+        <Caret Line="183" Column="21" TopLine="170"/>
+      </Position29>
+      <Position30>
+        <Filename Value="gui/sessiongrid.pas"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">

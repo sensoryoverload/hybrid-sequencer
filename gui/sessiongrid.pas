@@ -315,7 +315,7 @@ implementation
 
 uses
   ComCtrls, Utils, audiostructure, midi, wave, global_command,
-  global, FileUtil, renamepatterngui;
+  global, FileUtil, renamepatterngui, trackcommand;
 
 { TMasterPatternFlyWeight }
 
