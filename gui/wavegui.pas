@@ -30,7 +30,6 @@ uses
   wavecommand;
 
 const
-  DECIMATED_CACHE_DISTANCE = 64;
   GRAYSCALE_10 = TColor($000000);
   GRAYSCALE_20 = TColor($080808);
   GRAYSCALE_30 = TColor($111111);

@@ -27,20 +27,7 @@ uses
   Classes, SysUtils, ContNrs, globalconst, jacktypes, sndfile,
   XMLConf, Menus, jack, transport;
 
-const
-  DECIMATED_CACHE_DISTANCE = 64;
-
 type
-  TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
-
-  TShuffle = class(TObject)
-  public
-    x: Integer;
-    oldx: Integer;
-    step: Integer;
-    trackobject: TObject;
-  end;
-
   // TMidiData is the real data to be send to plugins, outputs, etc
   // It is generated at loadtime from objects defined in XML
   // These objects contain more information about the mididata and should be the
@@ -115,7 +102,6 @@ type
     FEditMode: Byte;
     FModifier: TShiftState;
     FFrames: Integer;
-    FOnShuffleRefresh: TShuffleRefreshEvent;
     FIDCounter: Integer;
     FEscapeAction: Boolean;
     FSampleRate: single;
@@ -141,7 +127,6 @@ type
     property EditMode: Byte read FEditMode write FEditMode;
     property Modifier: TShiftState read FModifier write SetModifier;
     property Frames: Integer read FFrames write SetFrames;
-    property OnShuffleRefresh: TShuffleRefreshEvent read FOnShuffleRefresh write FOnShuffleRefresh;
     property EscapeAction: Boolean read FEscapeAction write FEscapeAction default false;
     property SampleRate: single read FSampleRate write SetSampleRate;
     property HalfSampleRate: single read FHalfSampleRate write FHalfSampleRate;

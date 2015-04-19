@@ -83,7 +83,7 @@ type
 
 implementation
 
-uses utils, global_command, track, pluginhostgui, plugin;
+uses utils, global_command, track, pluginhostgui, plugin, midicommand;
 
 { TMidiPatternControlGUI }
 

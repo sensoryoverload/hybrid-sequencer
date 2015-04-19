@@ -374,7 +374,6 @@ type
   end;
 
 
-  TShuffleRefreshEvent = procedure(TrackObject: TObject) of object;
   TTracksRefreshGUIEvent = procedure(TrackObject: TObject) of object;
   TPatternRefreshGUIEvent = procedure(TrackObject: TObject) of object;
   TApplicationGUIEvent = procedure(AObject: TObject) of object;

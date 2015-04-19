@@ -231,7 +231,7 @@ type
 implementation
 
 uses
-  utils, appcolors, sampler, ComCtrls;
+  utils, appcolors, sampler, ComCtrls, midicommand;
 
 procedure TMidiPatternGUI.acDeleteNoteExecute(Sender: TObject);
 var
