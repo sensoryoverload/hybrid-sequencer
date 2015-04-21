@@ -25,7 +25,7 @@ interface
 
 uses
   Classes, SysUtils, contnrs, utils, math, globalconst, uCrossCorrelateFFT,
-  global;
+  global, audiothread;
 
 type
   { TStretcher }

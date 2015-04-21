@@ -126,7 +126,7 @@ override_dh_auto_install:
         <MinVersion Major="1" Valid="True"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="119">
+    <Units Count="120">
       <Unit0>
         <Filename Value="HybridSequencer.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -142,7 +142,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="simplejack"/>
-        <EditorIndex Value="16"/>
+        <EditorIndex Value="17"/>
         <TopLine Value="82"/>
         <CursorPos X="29" Y="95"/>
         <UsageCount Value="218"/>
@@ -160,7 +160,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="mapmonitor"/>
-        <EditorIndex Value="17"/>
+        <EditorIndex Value="18"/>
         <TopLine Value="36"/>
         <CursorPos X="3" Y="56"/>
         <ComponentState Value="1"/>
@@ -191,7 +191,7 @@ override_dh_auto_install:
         <Filename Value="common/utils.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="utils"/>
-        <EditorIndex Value="18"/>
+        <EditorIndex Value="19"/>
         <TopLine Value="79"/>
         <CursorPos X="3" Y="95"/>
         <UsageCount Value="212"/>
@@ -222,22 +222,17 @@ override_dh_auto_install:
         <Filename Value="core/global.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="11"/>
-        <TopLine Value="645"/>
-        <CursorPos Y="657"/>
+        <TopLine Value="224"/>
+        <CursorPos X="20" Y="241"/>
         <UsageCount Value="212"/>
-        <Bookmarks Count="2">
-          <Item0 Y="748" ID="1"/>
-          <Item1 Y="657" ID="2"/>
-        </Bookmarks>
         <Loaded Value="True"/>
       </Unit10>
       <Unit11>
         <Filename Value="core/global_command.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="global_command"/>
-        <EditorIndex Value="21"/>
+        <EditorIndex Value="22"/>
         <TopLine Value="387"/>
         <CursorPos Y="395"/>
         <UsageCount Value="212"/>
@@ -281,7 +276,7 @@ override_dh_auto_install:
         <Filename Value="core/pattern.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="pattern"/>
-        <EditorIndex Value="13"/>
+        <EditorIndex Value="14"/>
         <TopLine Value="33"/>
         <CursorPos X="3" Y="48"/>
         <UsageCount Value="212"/>
@@ -319,7 +314,7 @@ override_dh_auto_install:
         <Filename Value="core/track.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="track"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="13"/>
         <TopLine Value="497"/>
         <CursorPos Y="514"/>
         <UsageCount Value="212"/>
@@ -332,7 +327,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="aboutgui"/>
-        <EditorIndex Value="22"/>
+        <EditorIndex Value="23"/>
         <TopLine Value="32"/>
         <CursorPos X="3" Y="35"/>
         <UsageCount Value="212"/>
@@ -355,7 +350,7 @@ override_dh_auto_install:
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="midigui"/>
-        <EditorIndex Value="19"/>
+        <EditorIndex Value="20"/>
         <TopLine Value="227"/>
         <CursorPos X="51" Y="234"/>
         <UsageCount Value="212"/>
@@ -392,7 +387,7 @@ override_dh_auto_install:
         <Filename Value="common/fx.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fx"/>
-        <EditorIndex Value="27"/>
+        <EditorIndex Value="28"/>
         <TopLine Value="260"/>
         <CursorPos X="5" Y="276"/>
         <UsageCount Value="211"/>
@@ -435,9 +430,10 @@ override_dh_auto_install:
       <Unit34>
         <Filename Value="bindings/libsndfile/sndfile.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="sndfile"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="272"/>
-        <CursorPos Y="288"/>
+        <TopLine Value="493"/>
+        <CursorPos X="12" Y="505"/>
         <UsageCount Value="205"/>
       </Unit34>
       <Unit35>
@@ -464,7 +460,7 @@ override_dh_auto_install:
       <Unit38>
         <Filename Value="components/dialcontrol.pas"/>
         <UnitName Value="dialcontrol"/>
-        <EditorIndex Value="20"/>
+        <EditorIndex Value="21"/>
         <TopLine Value="596"/>
         <CursorPos Y="606"/>
         <UsageCount Value="238"/>
@@ -525,7 +521,7 @@ override_dh_auto_install:
         <Filename Value="gui/midipatterngui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="midipatterngui"/>
-        <EditorIndex Value="15"/>
+        <EditorIndex Value="16"/>
         <TopLine Value="66"/>
         <CursorPos X="22" Y="78"/>
         <UsageCount Value="200"/>
@@ -554,9 +550,10 @@ override_dh_auto_install:
         <Filename Value="core/wave.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wave"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="1097"/>
-        <CursorPos Y="1122"/>
+        <TopLine Value="13"/>
+        <CursorPos X="70" Y="31"/>
         <UsageCount Value="204"/>
         <Loaded Value="True"/>
       </Unit48>
@@ -632,7 +629,7 @@ override_dh_auto_install:
         <Filename Value="gui/sessiongrid.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sessiongrid"/>
-        <EditorIndex Value="23"/>
+        <EditorIndex Value="24"/>
         <TopLine Value="301"/>
         <CursorPos X="51" Y="318"/>
         <UsageCount Value="207"/>
@@ -737,7 +734,7 @@ override_dh_auto_install:
         <Filename Value="plugins/plugin_bassline_gui.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="plugin_bassline_gui"/>
-        <EditorIndex Value="25"/>
+        <EditorIndex Value="26"/>
         <TopLine Value="4"/>
         <CursorPos Y="22"/>
         <UsageCount Value="214"/>
@@ -788,8 +785,8 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <UnitName Value="stretcher"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="178"/>
-        <CursorPos X="68" Y="202"/>
+        <TopLine Value="13"/>
+        <CursorPos X="22" Y="28"/>
         <UsageCount Value="709"/>
         <Loaded Value="True"/>
       </Unit79>
@@ -859,7 +856,7 @@ override_dh_auto_install:
       <Unit90>
         <Filename Value="plugins/plugin_delay.pas"/>
         <UnitName Value="plugin_delay"/>
-        <EditorIndex Value="26"/>
+        <EditorIndex Value="27"/>
         <TopLine Value="37"/>
         <CursorPos Y="44"/>
         <UsageCount Value="174"/>
@@ -947,10 +944,10 @@ override_dh_auto_install:
       <Unit104>
         <Filename Value="gui/sessiongridcontrols.pas"/>
         <UnitName Value="sessiongridcontrols"/>
-        <EditorIndex Value="24"/>
+        <EditorIndex Value="25"/>
         <TopLine Value="388"/>
         <CursorPos Y="397"/>
-        <UsageCount Value="78"/>
+        <UsageCount Value="79"/>
         <Loaded Value="True"/>
       </Unit104>
       <Unit105>
@@ -1010,7 +1007,7 @@ override_dh_auto_install:
         <UnitName Value="wavecommand"/>
         <EditorIndex Value="4"/>
         <CursorPos X="8" Y="10"/>
-        <UsageCount Value="53"/>
+        <UsageCount Value="55"/>
         <Loaded Value="True"/>
       </Unit113>
       <Unit114>
@@ -1019,7 +1016,7 @@ override_dh_auto_install:
         <UnitName Value="midicommand"/>
         <EditorIndex Value="10"/>
         <CursorPos Y="18"/>
-        <UsageCount Value="49"/>
+        <UsageCount Value="51"/>
         <Loaded Value="True"/>
       </Unit114>
       <Unit115>
@@ -1033,10 +1030,10 @@ override_dh_auto_install:
         <Filename Value="core/trackcommand.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="trackcommand"/>
-        <EditorIndex Value="14"/>
+        <EditorIndex Value="15"/>
         <TopLine Value="149"/>
         <CursorPos X="45" Y="166"/>
-        <UsageCount Value="46"/>
+        <UsageCount Value="48"/>
         <Loaded Value="True"/>
       </Unit116>
       <Unit117>
@@ -1053,125 +1050,137 @@ override_dh_auto_install:
         <CursorPos X="3" Y="1328"/>
         <UsageCount Value="10"/>
       </Unit118>
+      <Unit119>
+        <Filename Value="core/audiothread.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="audiothread"/>
+        <EditorIndex Value="12"/>
+        <TopLine Value="135"/>
+        <CursorPos X="76" Y="147"/>
+        <UsageCount Value="22"/>
+        <Bookmarks Count="2">
+          <Item0 X="77" Y="147" ID="2"/>
+          <Item1 ID="1"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
+      </Unit119>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="435" Column="54" TopLine="414"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="461" Column="5" TopLine="441"/>
       </Position1>
       <Position2>
         <Filename Value="core/global.pas"/>
-        <Caret Line="522" Column="40" TopLine="501"/>
+        <Caret Line="365" Column="23" TopLine="355"/>
       </Position2>
       <Position3>
         <Filename Value="core/global.pas"/>
-        <Caret Line="524" Column="55" TopLine="503"/>
+        <Caret Line="224" Column="9" TopLine="206"/>
       </Position3>
       <Position4>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="525" Column="72" TopLine="504"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="141" Column="21" TopLine="127"/>
       </Position4>
       <Position5>
         <Filename Value="core/global.pas"/>
-        <Caret Line="526" Column="57" TopLine="505"/>
+        <Caret Line="686" TopLine="675"/>
       </Position5>
       <Position6>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="527" Column="77" TopLine="506"/>
+        <Filename Value="core/stretcher.pas"/>
+        <Caret Line="202" Column="68" TopLine="178"/>
       </Position6>
       <Position7>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="557" Column="43" TopLine="536"/>
+        <Filename Value="core/stretcher.pas"/>
+        <Caret Line="76" Column="22" TopLine="66"/>
       </Position7>
       <Position8>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="561" Column="58" TopLine="541"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="600" Column="3" TopLine="578"/>
       </Position8>
       <Position9>
         <Filename Value="core/global.pas"/>
-        <Caret Line="563" Column="78" TopLine="543"/>
+        <Caret Line="47" Column="14" TopLine="37"/>
       </Position9>
       <Position10>
         <Filename Value="core/global.pas"/>
-        <Caret Line="565" Column="60" TopLine="545"/>
       </Position10>
       <Position11>
         <Filename Value="core/global.pas"/>
-        <Caret Line="567" Column="83" TopLine="547"/>
+        <Caret Line="565" Column="21" TopLine="545"/>
       </Position11>
       <Position12>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="585" Column="36" TopLine="564"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="8" TopLine="6"/>
       </Position12>
       <Position13>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="587" Column="11" TopLine="566"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="125" Column="15" TopLine="113"/>
       </Position13>
       <Position14>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="588" Column="8" TopLine="567"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="8" Column="38"/>
       </Position14>
       <Position15>
         <Filename Value="core/global.pas"/>
-        <Caret Line="594" Column="30" TopLine="573"/>
+        <Caret Line="565" Column="21" TopLine="545"/>
       </Position15>
       <Position16>
         <Filename Value="core/global.pas"/>
-        <Caret Line="606" Column="7" TopLine="585"/>
       </Position16>
       <Position17>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="673" Column="31" TopLine="652"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="159" Column="38" TopLine="147"/>
       </Position17>
       <Position18>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="677" Column="8" TopLine="656"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="147" Column="45" TopLine="136"/>
       </Position18>
       <Position19>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="681" Column="27" TopLine="660"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="204" Column="38" TopLine="193"/>
       </Position19>
       <Position20>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="737" Column="28" TopLine="727"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="147" Column="58" TopLine="135"/>
       </Position20>
       <Position21>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="764" Column="34" TopLine="744"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="272" Column="103" TopLine="260"/>
       </Position21>
       <Position22>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="275" Column="50" TopLine="263"/>
+        <Filename Value="core/audiothread.pas"/>
       </Position22>
       <Position23>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="663" Column="29" TopLine="647"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="147" Column="66" TopLine="135"/>
       </Position23>
       <Position24>
         <Filename Value="core/global.pas"/>
-        <Caret Line="657" TopLine="647"/>
+        <Caret Line="222" Column="25" TopLine="210"/>
       </Position24>
       <Position25>
         <Filename Value="core/global.pas"/>
       </Position25>
       <Position26>
         <Filename Value="core/global.pas"/>
-        <Caret Line="863" Column="8" TopLine="843"/>
+        <Caret Line="242" Column="8" TopLine="224"/>
       </Position26>
       <Position27>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="866" Column="8" TopLine="846"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="147" Column="67" TopLine="135"/>
       </Position27>
       <Position28>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="869" Column="8" TopLine="849"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="368" TopLine="359"/>
       </Position28>
       <Position29>
-        <Filename Value="core/global.pas"/>
-        <Caret Line="872" Column="8" TopLine="852"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="1122" TopLine="1097"/>
       </Position29>
       <Position30>
-        <Filename Value="core/global.pas"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="79" Column="13" TopLine="70"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">

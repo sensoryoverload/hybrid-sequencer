@@ -28,7 +28,7 @@ uses
  Classes, SysUtils, Controls, Graphics, LCLType, Forms, ExtCtrls, ctypes, sndfile,
  jacktypes, StdCtrls, Dialogs, Spin, bpmdetect, beattrigger, Utils,
  globalconst, soundtouch, contnrs, global_command,
- ShellCtrls, global, flqueue, math, ringbuffer, pattern,
+ ShellCtrls, global, flqueue, math, ringbuffer, pattern, audiothread,
  audiostructure, smbPitchShift, audioutils, stretcher, determinetransients;
 
 const
