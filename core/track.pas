@@ -210,7 +210,7 @@ begin
   DBLog('start TWaveFormTrack.DoCreateInstance');
 
   // create model pattern
-  if SameText(UpperCase(AClassName), 'TWAVEPATTERN') then
+  if SameText(AClassName, 'TWAVEPATTERN') then
   begin
     lWavePattern := TWavePattern.Create(ObjectID, MAPPED);
 
@@ -221,7 +221,7 @@ begin
 
     FSelectedPattern := lWavePattern;
   end
-  else if SameText(UpperCase(AClassName), 'TMIDIPATTERN') then
+  else if SameText(AClassName, 'TMIDIPATTERN') then
   begin
     lMidiPattern := TMidiPattern.Create(ObjectID, MAPPED);
 
