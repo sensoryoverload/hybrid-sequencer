@@ -71,12 +71,9 @@ type
     FSamplerate: Integer;
 
     FInterpolationAlgorithm: TInterpolationAlgorithm;
-    procedure GetSample(
-      ACursor: Single;
-      ASourceBuffer: TAudioStream;
-      var ALeftValue: Single;
-      var ARightValue: Single;
-      AChannelCount: Integer);
+    procedure GetSample(ACursor: Single; ASourceBuffer: TAudioStream;
+      var ALeftValue: Single; var ARightValue: Single; AChannelCount: Integer;
+      AMainCursor: Boolean);
     procedure SetOverlapLengthMs(AValue: Integer);
     procedure SetSeekwindowMs(AValue: Integer);
     procedure SetSequencewindowMs(AValue: Integer);
@@ -132,13 +129,14 @@ procedure TStretcher.GetSample(
   ASourceBuffer: TAudioStream;
   var ALeftValue: Single;
   var ARightValue: Single;
-  AChannelCount: Integer);
+  AChannelCount: Integer;
+  AMainCursor: Boolean);
 var
   lFracPosition: Single;
   lBufferOffset: integer;
   lBuffer: PSingle;
 begin
-  lBufferOffset := Round(ACursor{ * AChannelCount});
+  lBufferOffset := Round(ACursor);
 
   case FInterpolationAlgorithm of
     iaHermite:
@@ -150,10 +148,10 @@ begin
         ALeftValue := hermite4(
           lFracPosition,
           ifthen(lBufferOffset <= 1, 0,
-          ASourceBuffer.Audio(lBufferOffset - 1)),
-          ASourceBuffer.Audio(lBufferOffset),
-          ASourceBuffer.Audio(lBufferOffset + 1),
-          ASourceBuffer.Audio(lBufferOffset + 2));
+          ASourceBuffer.Audio(lBufferOffset - 1, AMainCursor)),
+          ASourceBuffer.Audio(lBufferOffset, AMainCursor),
+          ASourceBuffer.Audio(lBufferOffset + 1, AMainCursor),
+          ASourceBuffer.Audio(lBufferOffset + 2, AMainCursor));
         ARightValue := ALeftValue;
       end
       else
@@ -161,18 +159,18 @@ begin
         ALeftValue := hermite4(
           lFracPosition,
           ifthen(lBufferOffset <= 1, 0,
-          ASourceBuffer.Audio(lBufferOffset - 2)),
-          ASourceBuffer.Audio(lBufferOffset),
-          ASourceBuffer.Audio(lBufferOffset + 2),
-          ASourceBuffer.Audio(lBufferOffset + 4));
+          ASourceBuffer.Audio(lBufferOffset - 2, AMainCursor)),
+          ASourceBuffer.Audio(lBufferOffset, AMainCursor),
+          ASourceBuffer.Audio(lBufferOffset + 2, AMainCursor),
+          ASourceBuffer.Audio(lBufferOffset + 4, AMainCursor));
 
         ARightValue := hermite4(
           lFracPosition,
           ifthen(lBufferOffset + 1 <= 2, 0,
-          ASourceBuffer.Audio(lBufferOffset - 1)),
-          ASourceBuffer.Audio(lBufferOffset + 1),
-          ASourceBuffer.Audio(lBufferOffset + 3),
-          ASourceBuffer.Audio(lBufferOffset + 5));
+          ASourceBuffer.Audio(lBufferOffset - 1, AMainCursor)),
+          ASourceBuffer.Audio(lBufferOffset + 1, AMainCursor),
+          ASourceBuffer.Audio(lBufferOffset + 3, AMainCursor),
+          ASourceBuffer.Audio(lBufferOffset + 5, AMainCursor));
       end;
     end;
     iaLinear:
@@ -183,13 +181,13 @@ begin
     begin
       if AChannelCount = 1 then
       begin
-        ALeftValue := ASourceBuffer.Audio(lBufferOffset);
-        ARightValue := ASourceBuffer.Audio(lBufferOffset);
+        ALeftValue := ASourceBuffer.Audio(lBufferOffset, AMainCursor);
+        ARightValue := ASourceBuffer.Audio(lBufferOffset, AMainCursor);
       end
       else
       begin
-        ALeftValue := ASourceBuffer.Audio(lBufferOffset);
-        ARightValue := ASourceBuffer.Audio(lBufferOffset); // !!!! TODO This should return right channel of sample
+        ALeftValue := ASourceBuffer.Audio(lBufferOffset, AMainCursor);
+        ARightValue := ASourceBuffer.Audio(lBufferOffset, AMainCursor); // !!!! TODO This should return right channel of sample
       end;
     end;
   end;
@@ -301,8 +299,8 @@ begin
 
           // Crosscorrelate last played audio with audio at the real cursor
           lOffset := FCrossCorrelate.Process(
-            ASourceBuffer.AudioBlock(Round(FSliceMainCursor)),
-            ASourceBuffer.AudioBlock(lSeekwindowOffset),
+            ASourceBuffer.AudioBlock(Round(FSliceMainCursor), True),
+            ASourceBuffer.AudioBlock(lSeekwindowOffset, False),
             2);
 
           // Old cursor
@@ -395,13 +393,13 @@ begin
       end;
 
       // Get normal stream
-      GetSample(FSliceMainCursor, ASourceBuffer, lLeftValueMain, lRightValueMain, AChannelCount);
+      GetSample(FSliceMainCursor, ASourceBuffer, lLeftValueMain, lRightValueMain, AChannelCount, True);
 
       // Get overlap stream
-      GetSample(FSliceOverlapCursor, ASourceBuffer, lLeftValueOverlap, lRightValueOverlap, AChannelCount);
+      GetSample(FSliceOverlapCursor, ASourceBuffer, lLeftValueOverlap, lRightValueOverlap, AChannelCount, False);
 
       // Get transient stream
-      GetSample(FTransientMainCursor, ASourceBuffer, lLeftValueTransient, LRightValueTransient, AChannelCount);
+      GetSample(FTransientMainCursor, ASourceBuffer, lLeftValueTransient, LRightValueTransient, AChannelCount, False);
 
       // Mix both streams together
       ATargetBuffer[AFrameIndex * 2] :=

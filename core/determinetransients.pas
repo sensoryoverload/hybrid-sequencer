@@ -50,7 +50,7 @@ type
     FTransients: TIntegerList;
     procedure SetSensitivity(AValue: Single);
   public
-    constructor Create(ASampleRate: Integer); reintroduce;
+    constructor Create(ASampleRate: Integer);
     destructor Destroy; override;
     function Process(ABuffer: PSingle; AFrames: Integer; AChannelCount: Integer = 2): Integer;
 

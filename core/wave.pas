@@ -335,10 +335,10 @@ begin
 
   BeginUpdate;
 
-  if FWaveFileName <> '' then
+{  if FWaveFileName <> '' then
   begin
     LoadSample(FWaveFileName);
-  end;
+  end;}
 
   EndUpdate;
 end;
@@ -1066,7 +1066,10 @@ begin
   SampleStart.Value := 0;
   SampleEnd.Value := LoopEnd.Value;
 
-  DBLog(Format('FWave.Frames %d BarCount %d, BarLength %d, LoopLength.Value %d SampleEnd.Value %d FWave.SampleRate %d FWave.ChannelCount %d',
+  //FWave.LoopStart := SampleStart.Value;
+  //FWave.LoopEnd := SampleEnd.Value;
+
+  writeln(Format('FWave.Frames %d BarCount %d, BarLength %d, LoopLength.Value %d SampleEnd.Value %d FWave.SampleRate %d FWave.ChannelCount %d',
     [FWave.FrameCount, BarCount, BarLength, LoopLength.Value, SampleEnd.Value, FWave.SampleRate, FWave.ChannelCount]));
 
   UpdateSampleScale;
