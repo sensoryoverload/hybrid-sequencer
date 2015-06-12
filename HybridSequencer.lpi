@@ -405,7 +405,7 @@ override_dh_auto_install:
         <Filename Value="bindings/libsndfile/sndfile.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="sndfile"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <TopLine Value="534"/>
         <CursorPos X="12" Y="545"/>
         <UsageCount Value="205"/>
@@ -497,9 +497,13 @@ override_dh_auto_install:
       <Unit46>
         <Filename Value="gui/wavegui.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="7" Y="18"/>
+        <UnitName Value="wavegui"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="747"/>
+        <CursorPos X="24" Y="760"/>
         <UsageCount Value="204"/>
+        <Loaded Value="True"/>
       </Unit46>
       <Unit47>
         <Filename Value="gui/wavepatterngui.pas"/>
@@ -513,9 +517,9 @@ override_dh_auto_install:
         <Filename Value="core/wave.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="wave"/>
-        <EditorIndex Value="5"/>
-        <TopLine Value="1055"/>
-        <CursorPos Y="1069"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="361"/>
+        <CursorPos X="14" Y="368"/>
         <UsageCount Value="204"/>
         <Loaded Value="True"/>
       </Unit48>
@@ -742,7 +746,7 @@ override_dh_auto_install:
         <Filename Value="core/stretcher.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="stretcher"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="7"/>
         <TopLine Value="200"/>
         <CursorPos Y="209"/>
         <UsageCount Value="709"/>
@@ -751,7 +755,7 @@ override_dh_auto_install:
       <Unit80>
         <Filename Value="core/ucrosscorrelatefft.pas"/>
         <UnitName Value="uCrossCorrelateFFT"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <TopLine Value="123"/>
         <CursorPos X="19" Y="137"/>
         <UsageCount Value="342"/>
@@ -760,7 +764,7 @@ override_dh_auto_install:
       <Unit81>
         <Filename Value="core/fftreal.pas"/>
         <UnitName Value="FFTReal"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="115"/>
         <CursorPos Y="122"/>
         <UsageCount Value="99"/>
@@ -966,14 +970,14 @@ override_dh_auto_install:
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="8" Y="10"/>
-        <UsageCount Value="90"/>
+        <UsageCount Value="91"/>
       </Unit113>
       <Unit114>
         <Filename Value="core/midicommand.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos Y="18"/>
-        <UsageCount Value="86"/>
+        <UsageCount Value="87"/>
       </Unit114>
       <Unit115>
         <Filename Value="/usr/share/fpcsrc/2.6.4/rtl/objpas/classes/classesh.inc"/>
@@ -988,7 +992,7 @@ override_dh_auto_install:
         <EditorIndex Value="-1"/>
         <TopLine Value="433"/>
         <CursorPos Y="439"/>
-        <UsageCount Value="83"/>
+        <UsageCount Value="84"/>
       </Unit116>
       <Unit117>
         <Filename Value="/usr/share/fpcsrc/2.6.4/rtl/objpas/classes/cregist.inc"/>
@@ -1008,15 +1012,14 @@ override_dh_auto_install:
         <Filename Value="core/audiothread.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="audiothread"/>
-        <IsVisibleTab Value="True"/>
-        <TopLine Value="292"/>
-        <CursorPos Y="302"/>
-        <UsageCount Value="57"/>
+        <TopLine Value="249"/>
+        <CursorPos Y="255"/>
+        <UsageCount Value="58"/>
         <Bookmarks Count="4">
-          <Item0 Y="522" ID="2"/>
-          <Item1 X="64" Y="698" ID="3"/>
-          <Item2 Y="681" ID="4"/>
-          <Item3 Y="586" ID="1"/>
+          <Item0 X="64" Y="698" ID="3"/>
+          <Item1 Y="681" ID="4"/>
+          <Item2 X="49" Y="283" ID="1"/>
+          <Item3 X="11" Y="174" ID="2"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit119>
@@ -1037,15 +1040,15 @@ override_dh_auto_install:
       <Unit122>
         <Filename Value="core/determinetransients.pas"/>
         <UnitName Value="determinetransients"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="82"/>
-        <CursorPos Y="91"/>
+        <CursorPos Y="82"/>
         <UsageCount Value="11"/>
         <Loaded Value="True"/>
       </Unit122>
       <Unit123>
         <Filename Value="/usr/share/fpcsrc/2.6.4/rtl/inc/objpash.inc"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="193"/>
         <CursorPos X="21" Y="201"/>
         <UsageCount Value="10"/>
@@ -1055,123 +1058,121 @@ override_dh_auto_install:
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="202" TopLine="194"/>
+        <Caret Line="74" TopLine="66"/>
       </Position1>
       <Position2>
         <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="214" TopLine="206"/>
+        <Caret Line="82" TopLine="68"/>
       </Position2>
       <Position3>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="222" TopLine="214"/>
+        <Filename Value="core/fftreal.pas"/>
+        <Caret Line="122" TopLine="115"/>
       </Position3>
       <Position4>
-        <Filename Value="core/audiothread.pas"/>
-        <Caret Line="302" TopLine="292"/>
+        <Filename Value="core/determinetransients.pas"/>
+        <Caret Line="126" TopLine="119"/>
       </Position4>
       <Position5>
         <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="92" Column="13" TopLine="82"/>
+        <Caret Line="91" TopLine="82"/>
       </Position5>
       <Position6>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="228" TopLine="220"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="174" Column="14" TopLine="168"/>
       </Position6>
       <Position7>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="91" TopLine="82"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="300" Column="58" TopLine="291"/>
       </Position7>
       <Position8>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="117" TopLine="106"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="266" Column="31" TopLine="265"/>
       </Position8>
       <Position9>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="658" Column="5" TopLine="642"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="36" Column="40" TopLine="30"/>
       </Position9>
       <Position10>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="49" TopLine="49"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="174" Column="11" TopLine="161"/>
       </Position10>
       <Position11>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="124" TopLine="117"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="262" TopLine="249"/>
       </Position11>
       <Position12>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="125" TopLine="117"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="1069" TopLine="1055"/>
       </Position12>
       <Position13>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="74" TopLine="66"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="368" Column="20" TopLine="361"/>
       </Position13>
       <Position14>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="122" TopLine="117"/>
+        <Filename Value="core/wave.pas"/>
+        <Caret Line="367" Column="20" TopLine="361"/>
       </Position14>
       <Position15>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="211" TopLine="202"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="495" Column="3" TopLine="494"/>
       </Position15>
       <Position16>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="122" TopLine="115"/>
+        <Filename Value="core/audiothread.pas"/>
       </Position16>
       <Position17>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="211" TopLine="202"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="94" Column="18" TopLine="83"/>
       </Position17>
       <Position18>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="79" Column="32" TopLine="68"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="126" Column="54" TopLine="115"/>
       </Position18>
       <Position19>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="126" TopLine="119"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="559" Column="68" TopLine="547"/>
       </Position19>
       <Position20>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="93" Column="2" TopLine="82"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="575" Column="68" TopLine="563"/>
       </Position20>
       <Position21>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="122" TopLine="115"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="586" Column="97" TopLine="574"/>
       </Position21>
       <Position22>
-        <Filename Value="core/stretcher.pas"/>
-        <Caret Line="209" TopLine="200"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="624" Column="69" TopLine="612"/>
       </Position22>
       <Position23>
-        <Filename Value="core/ucrosscorrelatefft.pas"/>
-        <Caret Line="86" TopLine="77"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="640" Column="69" TopLine="628"/>
       </Position23>
       <Position24>
-        <Filename Value="core/ucrosscorrelatefft.pas"/>
-        <Caret Line="109" Column="7" TopLine="102"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="652" Column="98" TopLine="640"/>
       </Position24>
       <Position25>
-        <Filename Value="core/ucrosscorrelatefft.pas"/>
-        <Caret Line="137" Column="19" TopLine="123"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="646" Column="22" TopLine="636"/>
       </Position25>
       <Position26>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="74" TopLine="66"/>
+        <Filename Value="core/audiothread.pas"/>
       </Position26>
       <Position27>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="82" TopLine="68"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="22" Column="11" TopLine="10"/>
       </Position27>
       <Position28>
-        <Filename Value="core/fftreal.pas"/>
-        <Caret Line="122" TopLine="115"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="23" Column="19" TopLine="11"/>
       </Position28>
       <Position29>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="126" TopLine="119"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="42" Column="56" TopLine="30"/>
       </Position29>
       <Position30>
-        <Filename Value="core/determinetransients.pas"/>
-        <Caret Line="91" TopLine="82"/>
+        <Filename Value="core/audiothread.pas"/>
+        <Caret Line="43" Column="61" TopLine="31"/>
       </Position30>
     </JumpHistory>
     <CustomSessionData Count="2">
@@ -1207,7 +1208,7 @@ override_dh_auto_install:
     </Other>
   </CompilerOptions>
   <Debugging>
-    <BreakPoints Count="10">
+    <BreakPoints Count="9">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
@@ -1234,50 +1235,43 @@ override_dh_auto_install:
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
         <Source Value="core/determinetransients.pas"/>
-        <Line Value="82"/>
+        <Line Value="126"/>
       </Item4>
       <Item5>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
-        <Source Value="core/determinetransients.pas"/>
-        <Line Value="126"/>
+        <Source Value="core/fftreal.pas"/>
+        <Line Value="122"/>
       </Item5>
       <Item6>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
         <Source Value="core/fftreal.pas"/>
-        <Line Value="122"/>
+        <Line Value="143"/>
       </Item6>
       <Item7>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
         <Source Value="core/fftreal.pas"/>
-        <Line Value="143"/>
+        <Line Value="228"/>
       </Item7>
       <Item8>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
-        <Source Value="core/fftreal.pas"/>
-        <Line Value="228"/>
+        <Source Value="core/determinetransients.pas"/>
+        <Line Value="74"/>
       </Item8>
       <Item9>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
-        <Source Value="core/determinetransients.pas"/>
-        <Line Value="74"/>
-      </Item9>
-      <Item10>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
         <Source Value="core/stretcher.pas"/>
         <Line Value="209"/>
-      </Item10>
+      </Item9>
     </BreakPoints>
     <Watches Count="1">
       <Item1>

@@ -720,15 +720,7 @@ begin
                       (SubSampleLoop * FModel.Wave.ChannelCount + ChannelLoop) div
                       DECIMATED_CACHE_DISTANCE;
 
-                    if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
-                    begin
-                      DataValue := FModel.Wave.AudioPeak.DecimatedData[lDecimatedOffset];
-                    end
-                    else
-                    begin
-                      DataValue := 0;
-                    end;
-
+                    DataValue := FModel.Wave.AudioPeak.DecimatedData[lDecimatedOffset];
                     if DataValue < MinValue then MinValue := DataValue;
                     if DataValue > MaxValue then MaxValue := DataValue;
                   end;
@@ -750,14 +742,7 @@ begin
                     (Round(PositionInData1) * FModel.Wave.ChannelCount + ChannelLoop) div
                     DECIMATED_CACHE_DISTANCE;
 
-                  if lDecimatedOffset < FModel.Wave.AudioPeak.DecimatedDataCount then
-                  begin
-                    DataValue := FModel.Wave.AudioPeak.DecimatedData[lDecimatedOffset];
-                  end
-                  else
-                  begin
-                    DataValue := 0;
-                  end;
+                  DataValue := FModel.Wave.AudioPeak.DecimatedData[lDecimatedOffset];
 
                   if PositionInData1 < FModel.Wave.FrameCount then
                   begin

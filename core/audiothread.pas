@@ -221,12 +221,13 @@ var
   lOffset: Integer;
 begin
   // Calculate decimated version of audio by averaging
-  FDecimatedDataCount := FDataSampleInfo.frames * FDataSampleInfo.channels div DECIMATED_CACHE_DISTANCE;
+  FDecimatedDataCount := FDataSampleInfo.frames div DECIMATED_CACHE_DISTANCE;
   if Assigned(FDecimatedData) then
   begin
     FreeMem(FDecimatedData);
   end;
-  FDecimatedData := GetMem(FDecimatedDataCount * SizeOf(Single));
+
+  FDecimatedData := GetMem(FDecimatedDataCount * SizeOf(Single) * FDataSampleInfo.channels);
 
   if FDataSampleInfo.channels = 1 then
   begin
@@ -240,7 +241,6 @@ begin
       end;
       Inc(lOffset, DECIMATED_CACHE_DISTANCE);
       FDecimatedData[i] := lValue / DECIMATED_CACHE_DISTANCE;
-  //    writeln(Format('FDecimatedData[%d] = %f', [i, FDecimatedData[i]]));
     end;
   end
   else if FDataSampleInfo.channels = 2 then
@@ -252,13 +252,12 @@ begin
       lRightValue := 0;
       for j := 0 to Pred(DECIMATED_CACHE_DISTANCE) do
       begin
-        lLeftValue := lLeftValue + FData[lOffset + j * 2];
-        lRightValue := lRightValue + FData[lOffset + j * 2 + 1];
+        lLeftValue := lLeftValue + FData[lOffset + j];
+        lRightValue := lRightValue + FData[lOffset + j + 1];
       end;
-      Inc(lOffset, DECIMATED_CACHE_DISTANCE);
-      FDecimatedData[i] := lLeftValue / DECIMATED_CACHE_DISTANCE;
-      FDecimatedData[i + 1] := lRightValue / DECIMATED_CACHE_DISTANCE;
-  //    writeln(Format('FDecimatedData[%d] = %f', [i, FDecimatedData[i]]));
+      Inc(lOffset, DECIMATED_CACHE_DISTANCE * STEREO);
+      FDecimatedData[i * STEREO] := lLeftValue / DECIMATED_CACHE_DISTANCE;
+      FDecimatedData[i * STEREO + 1] := lRightValue / DECIMATED_CACHE_DISTANCE;
     end;
   end;
 end;
