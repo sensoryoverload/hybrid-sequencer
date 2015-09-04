@@ -5,10 +5,38 @@ unit audiothread;
 interface
 
 uses
-  Classes, SysUtils, sndfile, contnrs;
+  Classes, SysUtils, sndfile, contnrs, globalconst;
 
 type
   TArrayOfIntegers = array of Integer;
+  TArrayOfSingles = array of Single;
+
+  { TPeakFile }
+
+  TPeakFile = class(THybridPersistentModel)
+  private
+    FBPM: Single;
+    FDecimatedDataString: string;
+    FDecimatedDataCount: Integer;
+    FFileHash: string;
+    FTransientMarkerCount: Integer;
+    FTransientMarkers: TArrayOfIntegers;
+    procedure SetBPM(AValue: Single);
+    procedure SetDecimatedDataCount(AValue: Integer);
+    procedure SetFileHash(AValue: string);
+    procedure SetTransientMarkerCount(AValue: Integer);
+    procedure SetTransientMarkers(AValue: TArrayOfIntegers);
+  public
+    procedure SetDecimatedData(ADecimatedData: PSingle);
+    procedure GetDecimatedData(var ADecimatedData: PSingle);
+  published
+    property BPM: Single read FBPM write SetBPM;
+    property FileHash: string read FFileHash write SetFileHash;
+    property DecimatedData: string read FDecimatedDataString write FDecimatedDataString;
+    property DecimatedDataCount: Integer read FDecimatedDataCount write SetDecimatedDataCount;
+    property TransientMarkers: TArrayOfIntegers read FTransientMarkers write SetTransientMarkers;
+    property TransientMarkerCount: Integer read FTransientMarkerCount write SetTransientMarkerCount;
+  end;
 
   { TAudioPeak }
 
@@ -163,7 +191,64 @@ var
 implementation
 
 uses
-  md5, bpmdetect, determinetransients, utils, globalconst, global, BaseUnix;
+  md5, bpmdetect, determinetransients, utils, global, BaseUnix;
+
+{ TPeakFile }
+
+procedure TPeakFile.SetBPM(AValue: Single);
+begin
+  if FBPM=AValue then Exit;
+  FBPM:=AValue;
+end;
+
+procedure TPeakFile.SetDecimatedDataCount(AValue: Integer);
+begin
+  if FDecimatedDataCount=AValue then Exit;
+  FDecimatedDataCount:=AValue;
+end;
+
+procedure TPeakFile.SetFileHash(AValue: string);
+begin
+  if FFileHash=AValue then Exit;
+  FFileHash:=AValue;
+end;
+
+procedure TPeakFile.SetTransientMarkerCount(AValue: Integer);
+begin
+  if FTransientMarkerCount=AValue then Exit;
+  FTransientMarkerCount:=AValue;
+end;
+
+procedure TPeakFile.SetTransientMarkers(AValue: TArrayOfIntegers);
+begin
+  if FTransientMarkers=AValue then Exit;
+  FTransientMarkers:=AValue;
+end;
+
+procedure TPeakFile.SetDecimatedData(ADecimatedData: PSingle);
+var
+  lStringStream: TStringStream;
+  lMemoryStream: TMemoryStream;
+  lSize: Integer;
+begin
+  lMemoryStream := TMemoryStream.Create;
+  lStringStream := TStringStream.Create('');
+  try
+    lSize := FDecimatedDataCount * SizeOf(Single);
+    lMemoryStream.Write(ADecimatedData^, lSize);
+    //FDecimatedDataString := lMemoryStream.SaveToFile();
+    //lStringStream.CopyFrom(lMemoryStream, lSize);
+    //FDecimatedDataString := lStringStream.ReadString(lSize);
+  finally
+    lMemoryStream.Free;
+    lStringStream.Free;
+  end;
+end;
+
+procedure TPeakFile.GetDecimatedData(var ADecimatedData: PSingle);
+begin
+
+end;
 
 { TAudioPeak }
 
@@ -333,8 +418,10 @@ procedure TAudioPeak.SaveToFile;
 var
   lFileStream: TFileStream;
   lFlags: word;
+  lPeakFile: TPeakFile;
+
 begin
-  exit;
+  //exit;
   try
     if FPeakFilename <> '' then
     begin
@@ -343,6 +430,23 @@ begin
         DeleteFile(FPeakFilename);
       end;
 
+      lPeakFile := TPeakFile.Create('', False);
+      try
+        try
+         lPeakFile.SetDecimatedDataCount(FDecimatedDataCount);
+         lPeakFile.SetDecimatedData(FDecimatedData);
+         lPeakFile.SaveToFile(FPeakFilename);
+        except
+          on e: Exception do
+          begin
+            writeln('Error: ' + e.Message);
+          end;
+        end;
+      finally
+        lPeakFile.Free;
+      end;
+
+      (*
       DBLog('1');
       lFileStream := TFileStream.Create(FPeakFilename, fmCreate);
       DBLog('2');
@@ -364,6 +468,7 @@ begin
         lFileStream.Free;
         DBLog('10');
       end;
+      *)
     end
   except
     on e: exception do

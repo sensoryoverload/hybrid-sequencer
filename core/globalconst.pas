@@ -1263,7 +1263,7 @@ begin
       lPropXMLNode := AXMLNode.OwnerDocument.CreateElement(PropName);
       TDOMElement(lPropXMLNode).SetAttribute('Value', PropValue);
       TDOMElement(lPropXMLNode).SetAttribute('DataType', lPropType^.Name);
-
+      writeln(Format('Name: %s, Value: %s', [lPropType^.Name, PropValue]));
       AXMLNode.Appendchild(lPropXMLNode);
     end;
   end;
@@ -1289,10 +1289,14 @@ begin
   // pass xmldocument to iterate function
   // pass mode to iterate (Store,Retrieve) ie. Save to xml or load from xml
   // load from xml should create instance of property objects
+  writeln('Before SaveToXML');
   SaveToXML(Self, 0, RootNode);
+  writeln('After SaveToXML');
 
   // write to XML
+  writeln('Before writeXMLFile');
   writeXMLFile(xDoc, AXMLFileName);
+  writeln('After writeXMLFile to ' + AXMLFileName);
   // free memory
   Xdoc.free;
 
